@@ -3,10 +3,8 @@ describe "role lifecycle" do
   Chef::Log.init()
   Chef::Log.level=:info
   before(:all) do
-    connection_params = { :azure_subscription_id => "155a9851-88a8-49b4-98e4-58055f08f412",
-      :azure_pem_file => "AzureLinuxCert.pem",
-      :azure_host_name => "management-preview.core.windows-int.net",
-      :service_name => "hostedservices"}
+    include AzureSpecHelper
+    connection_params = TEST_PARAMS
     @connection = Azure::Connection.new(connection_params)
     arbitrary = rand(1000) + 1
     @params = { 

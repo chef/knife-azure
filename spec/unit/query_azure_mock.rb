@@ -14,11 +14,8 @@ module QueryAzureMock
     @deletebody = ''
     @deletecount = 0
 
-    params = {:azure_subscription_id => "155a9851-88a8-49b4-98e4-58055f08f412", :azure_pem_file => "AzureLinuxCert.pem",
-      :azure_host_name => "management-preview.core.windows-int.net",
-      :service_name => "hostedservices"}
     @receivedXML = Nokogiri::XML ''
-    @connection = Azure::Connection.new(params)
+    @connection = Azure::Connection.new(TEST_PARAMS)
     @connection.stub(:query_azure) do |name, verb, body|
       Chef::Log.info 'calling web service:' + name
       if verb == 'get' || verb == nil

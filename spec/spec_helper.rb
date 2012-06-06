@@ -1,4 +1,4 @@
-#$LOAD_PATH.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
+$LOAD_PATH.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
 require 'rspec'
 require 'equivalent-xml'
 require 'chef'
@@ -27,14 +27,15 @@ end
 Chef::Log.init(tmpFile('debug.log'), 'daily')
 Chef::Log.level=:debug
 
+TEST_PARAMS = {
+  :azure_subscription_id => "155a9851-88a8-49b4-98e4-58055f08f412",
+  :azure_pem_file => "AzureLinuxCert.pem",
+  :azure_host_name => "management-preview.core.windows-int.net",
+  :service_name => "hostedservices"
+}
+
 module AzureSpecHelper
   def readFile filename
     File.read(File.dirname(__FILE__) + "/unit/assets/#{filename}")
-  end
-
-  def test_params 
-    params = {:azure_subscription_id => "155a9851-88a8-49b4-98e4-58055f08f412", :azure_pem_file => "AzureLinuxCert.pem",
-      :azure_host_name => "management-preview.core.windows-int.net",
-      :service_name => "hostedservices"}
   end
 end
