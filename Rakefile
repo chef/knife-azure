@@ -11,19 +11,13 @@ rescue Bundler::BundlerError => e
 end
 require 'rake'
 
-require 'jeweler'
-Jeweler::Tasks.new do |gem|
-  # gem is a Gem::Specification... see http://docs.rubygems.org/read/chapter/20 for more options
-  gem.name = "knife-azure"
-  gem.homepage = "http://github.com/northwestcommercial/knife-azure"
-  gem.license = "MIT"
-  gem.summary = %Q{TODO: one-line summary of your gem}
-  gem.description = %Q{TODO: longer description of your gem}
-  gem.email = "barryfromseattle@gmail.com"
-  gem.authors = ["Barry Davis"]
-  # dependencies defined in Gemfile
+spec = eval(File.read("knife-azure.gemspec"))
+
+require 'rubygems/package_task'
+
+Gem::PackageTask.new(spec) do |pkg|
+  pkg.gem_spec = spec
 end
-Jeweler::RubygemsDotOrgTasks.new
 
 require 'rspec/core'
 require 'rspec/core/rake_task'
