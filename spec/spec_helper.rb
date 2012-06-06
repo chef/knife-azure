@@ -28,7 +28,7 @@ Chef::Log.init(tmpFile('debug.log'), 'daily')
 Chef::Log.level=:debug
 
 TEST_PARAMS = {
-  :azure_subscription_id => "155a9851-88a8-49b4-98e4-58055f08f412",
+  :azure_subscription_id => "YOUR_SUBSCRIPTION_ID_HERE"
   :azure_pem_file => "AzureLinuxCert.pem",
   :azure_host_name => "management-preview.core.windows-int.net",
   :service_name => "hostedservices"
