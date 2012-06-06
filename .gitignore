@@ -1,0 +1,6 @@
+# Do not include Gemfile.lock in a gem
+# http://yehudakatz.com/2010/12/16/clarifying-the-roles-of-the-gemspec-and-gemfile/
+Gemfile.lock
+
+# OS X Metadata file
+.DS_Store
