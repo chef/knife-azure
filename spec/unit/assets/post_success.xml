@@ -1,0 +1,6 @@
+<?xml version="1.0"?>
+<Operation xmlns="http://schemas.microsoft.com/windowsazure" xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+  <ID>878c6cd7-73d1-4527-949e-44eb7451547c</ID>
+  <Status>Succeeded</Status>
+  <HttpStatusCode>200</HttpStatusCode>
+</Operation>

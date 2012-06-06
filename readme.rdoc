@@ -1,0 +1,199 @@
+=Knife Azure
+
+Description: This plugin supports listing, creating, and deleting Azure instances bootstrapped with chef client.
+
+==Installation:
+Be sure you are running the latest version Chef. Versions earlier than 0.10.0 don’t support plugins:
+
+gem install chef
+This plugin is distributed as a Ruby Gem. To install it, run:
+
+gem install knife-azure 
+Depending on your system’s configuration, you may need to run this command with root privileges.
+
+
+==Configuration:
+Most configuration options can be specified either in your knife.rb file or as command line parameters.
+
+Options common and necessary for all subcommands:
+option :azure_subscription_id,
+  :short => "-S ID",
+  :long => "--azure-subscription-id ID",
+  :description => "Your Azure subscription ID",
+
+option :azure_pem_file,
+  :short => "-p FILENAME",
+  :long => "--azure-pem-filename FILENAME",
+  :description => "Your Azure PEM file name",
+
+option :azure_host_name,
+  :short => "-H HOSTNAME",
+  :long => "--azure_host_name HOSTNAME",
+  :description => "Your Azure host name",
+
+Options used with the Create subcommand:
+option :chef_node_name,
+  :short => "-N NAME",
+  :long => "--node-name NAME",
+  :description => "The Chef node name for your new node"
+
+option :ssh_user,
+  :short => "-x USERNAME",
+  :long => "--ssh-user USERNAME",
+  :description => "The ssh username",
+  :default => "root"
+
+option :ssh_password,
+  :short => "-P PASSWORD",
+  :long => "--ssh-password PASSWORD",
+  :description => "The ssh password"
+
+option :identity_file,
+  :short => "-i IDENTITY_FILE",
+  :long => "--identity-file IDENTITY_FILE",
+  :description => "The SSH identity file used for authentication"
+
+option :prerelease,
+  :long => "--prerelease",
+  :description => "Install the pre-release chef gems"
+
+option :bootstrap_version,
+  :long => "--bootstrap-version VERSION",
+  :description => "The version of Chef to install",
+
+option :distro,
+  :short => "-d DISTRO",
+  :long => "--distro DISTRO",
+  :description => "Bootstrap a distro using a template",
+  :default => "ubuntu10.04-gems"
+
+option :template_file,
+  :long => "--template-file TEMPLATE",
+  :description => "Full path to location of template to use",
+  :default => false
+
+option :run_list,
+  :short => "-r RUN_LIST",
+  :long => "--run-list RUN_LIST",
+  :description => "Comma separated list of roles/recipes to apply",
+  :default => []
+
+option :no_host_key_verify,
+  :long => "--no-host-key-verify",
+  :description => "Disable host key verification",
+  :boolean => true,
+  :default => false
+
+option :hosted_service_name,
+  :short => "-s NAME",
+  :long => "--hosted-service-name NAME",
+  :description => "specifies the name for the hosted service"
+
+option :role_name,
+  :short => "-R name",
+  :long => "-- role-name NAME",
+  :description => "specifies the name for the virtual machine"
+
+option :host_name,
+  :short => "-H NAME",
+  :long => "--host-name NAME",
+  :description => "specifies the host name for the virtual machine"
+
+option :media_location_prefix,
+  :short => "-m PREFIX",
+  :long => "--media-location-prefix PREFIX",
+  :description => "user account name (used for constructing os disk media link)"
+
+option :os_disk_name,
+  :short => "-o DISKNAME",
+  :long => "--os-disk-name DISKNAME",
+  :description => "unique name for specifying os disk (optional)"
+
+option :source_image,
+  :short => "-I IMAGE",
+  :long => "--source-image IMAGE",
+  :description => "disk image name to use to create virtual machine"
+
+option :role_size,
+  :short => "-z SIZE",
+  :long => "--role-size SIZE",
+  :description => "size of virtual machine (ExtraSmall, Small, Medium, Large, ExtraLarge)"
+
+option :tcp_endpoints,
+  :short => "-t PORT_LIST",
+  :long => "--tcp-endpoints PORT_LIST",
+  :description => "Comma separated list of TCP local and public ports to open i.e. '80:80,433:5000'"
+
+option :udp_endpoints,
+  :short => "-u PORT_LIST",
+  :long => "--udp-endpoints PORT_LIST",
+  :description => "Comma separated list of UDP local and public ports to open i.e. '80:80,433:5000'"
+
+
+====Here are some lines with example values in a knife.rb file:
+knife[:azure_subscription_id] = "YOUR-GUID"
+
+knife[:azure_pem_file] = "YOUR-CERT.pem"
+
+knife[:azure_host_name] = "azure-api-endpoint"
+
+knife[:hosted_service_name]='service001'
+
+knife[:role_name]='role105'
+
+knife[:host_name]='host105'
+
+knife[:ssh_user]='yoursshuser'
+
+knife[:ssh_password]='yoursshpw'
+
+knife[:media_location_prefix]='auxpreview104'
+
+knife[:os_disk_name]='disk107'
+
+knife[:distro]='centos5-gems'
+
+knife[:tcp_endpoints]='66'
+
+knife[:udp_endpoints]='77,88,99'
+
+# To use the CentOS image, the following lines are necessary
+
+#  note that the role_size must be Medium or larger
+
+knife[:source_image]='OpenLogic__OpenLogic-CentOS-62-20120509-en-us-30GB.vhd'
+
+knife[:role_size]='Medium'
+
+# Alternatively, at the present time you could use a SUSE image
+
+#  note that you can use Small or ExtraSmall for the role_size
+
+knife[:source_image]='SUSE__OpenSUSE64121-03192012-en-us-15GB.vhd'
+
+knife[:role_size]='Small'
+
+==Subcommands
+This plugin provides the following Knife subcommands. Specific command options can be found by invoking the subcommand with a --help flag
+
+===knife azure server create
+Provisions a new server in Azure and then perform a Chef bootstrap (using the SSH protocol). The goal of the bootstrap is to get Chef installed on the target system so it can run Chef Client with a Chef Server. The main assumption is a baseline OS installation exists (provided by the provisioning). It is primarily intended for Chef Client systems that talk to a Chef server. By default the server is bootstrapped using the ubuntu10.04-gems template. This can be overridden using the -d or --template-file command options.
+
+===knife azure server delete [role_name_to_delete]
+Deletes an existing server(role) in the currently configured AWS account. PLEASE NOTE - By default, this does not delete the associated node and client objects from the Chef server. To do so, add the --purge flag.
+
+===knife azure server list
+Outputs a list of all servers in the currently configured AWS account. PLEASE NOTE - this shows all instances associated with the account, some of which may not be currently managed by the Chef server.
+
+===knife azure server describe [role_name_to_describe]
+Outputs detail about a specific role, including all the ports that it has open
+
+===knife azure image list
+Outputs a list of all linux images that are available to use for provisioning. You should choose one of these to use for the :source_image parameter to the server create command.
+
+== Understanding Azure
+Azure implements the following hierarchy - subscription=>hosted service=>deployment=>role (and the guest operating system has a hostname as well, which uses the role as its container)
+
+These are generally a one to many relationship from top to bottom, however there are two anamolies relating to the deployment
+1) a hosted service can have more than one deployment, but that seems to be an artifact of the PAAS origins of Azure. PAAS allows there to be one staging and one production deployment per hosted service. It is my understanding (and how the code works) that there should be only one deployment per hosted service. Some initial internal code I examined used the technique of looking at the "production" deployment slot to iterate for existing roles. If a create request occurs and a deployment does not exist, it is created and given the same name as the hosted service and the deployment slot is marked as "production".
+2) Azure enforces that a deployment must include the initial role when it is created. It also will not allow you to delete a role if it is the last remaining role in a deployment; in that case you are required to delete the deployment.

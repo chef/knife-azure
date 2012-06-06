@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<CreateHostedService xmlns="http://schemas.microsoft.com/windowsazure">
+<ServiceName>service003</ServiceName>
+<Label>c2VydmljZTAwMw==</Label>
+<Description>Explicitly created hosted service</Description>
+<Location>Windows Azure Preview</Location>
+</CreateHostedService>
