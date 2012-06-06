@@ -11,4 +11,5 @@ Gemfile.lock
 # ignore any private keys floating around
 *.pem
 
+pkg/
 tmp/
