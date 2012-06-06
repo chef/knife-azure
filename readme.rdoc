@@ -11,6 +11,13 @@ This plugin is distributed as a Ruby Gem. To install it, run:
 gem install knife-azure 
 Depending on your system’s configuration, you may need to run this command with root privileges.
 
+==Requirements:
+
+Due to a bug in mixlib-authentication, Chef node names must be 91 characters or shorter. Chef uses the host name by default, however the host names provided by Azure are very long. 
+
+You must use the '-N NODE_NAME' flag with 'knife azure' to specify a node name to be used by Chef that is less than 91 characters.
+
+For more information, see http://tickets.opscode.com/browse/CHEF-3095
 
 ==Configuration:
 Most configuration options can be specified either in your knife.rb file or as command line parameters.
@@ -197,3 +204,7 @@ Azure implements the following hierarchy - subscription=>hosted service=>deploym
 These are generally a one to many relationship from top to bottom, however there are two anamolies relating to the deployment
 1) a hosted service can have more than one deployment, but that seems to be an artifact of the PAAS origins of Azure. PAAS allows there to be one staging and one production deployment per hosted service. It is my understanding (and how the code works) that there should be only one deployment per hosted service. Some initial internal code I examined used the technique of looking at the "production" deployment slot to iterate for existing roles. If a create request occurs and a deployment does not exist, it is created and given the same name as the hosted service and the deployment slot is marked as "production".
 2) Azure enforces that a deployment must include the initial role when it is created. It also will not allow you to delete a role if it is the last remaining role in a deployment; in that case you are required to delete the deployment.
+
+==Tests:
+
+The tests require a subscription id to be places in spec/spec_helper.rb and the associated private key to be placed in 'AzureLinuxCert.pem' in the top level directory. Then run 'rake spec'
