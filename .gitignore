@@ -4,3 +4,11 @@ Gemfile.lock
 
 # OS X Metadata file
 .DS_Store
+
+# vim temporary files
+*.swp
+
+# ignore any private keys floating around
+*.pem
+
+tmp/
