@@ -10,6 +10,7 @@ gemspec
 # Include everything needed to run rake, tests, features, etc.
 group :development do
   gem "rspec", "~> 2.8.0"
+  gem "rake"
   gem "rdoc", "~> 3.12"
   gem "bundler"
   gem "guard-rspec"
