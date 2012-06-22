@@ -43,7 +43,7 @@ class Chef
         :long => "--purge",
         :boolean => true,
         :default => false,
-        :description => "Destroy corresponding node and client on the Chef Server, in addition to destroying the EC2 node itself.  Assumes node and client have the same name as the server (if not, add the '--node-name' option)."
+        :description => "Destroy corresponding node and client on the Chef Server, in addition to destroying the Windows Azure node itself.  Assumes node and client have the same name as the server (if not, add the '--node-name' option)."
 
       option :chef_node_name,
         :short => "-N NAME",
