@@ -18,8 +18,8 @@ Gem::Specification.new do |s|
   s.files = %w(LICENSE README.rdoc) + Dir.glob("lib/**/*")
   s.homepage = "http://github.com/opscode/knife-azure"
   s.require_paths = ["lib"]
-  s.add_dependency(%q<rake>, ["> 0"])
-  s.add_dependency(%q<chef>, [">= 0.10.0"])
+  s.add_dependency(%q<rake>, ["~> 0.9.2.2"])
+  s.add_dependency(%q<chef>, [">= 10.0"])
   s.add_dependency(%q<rspec>, ["~> 2.8.0"])
   s.add_dependency(%q<rdoc>, ["~> 3.12"])
   s.add_dependency(%q<bundler>, [">= 0"])
