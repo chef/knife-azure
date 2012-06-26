@@ -18,6 +18,7 @@
 # limitations under the License.
 #
 
+require 'highline'
 require File.expand_path('../azure_base', __FILE__)
 
 class Chef
@@ -28,6 +29,10 @@ class Chef
 
       banner "knife azure image list (options)"
 
+      def h
+        @highline ||= HighLine.new
+      end
+
       def run
         $stdout.sync = true
 
@@ -35,23 +40,21 @@ class Chef
 
         image_list = [
           ui.color('Name', :bold),
-          #ui.color('Category', :bold),
-          #ui.color('Label', :bold),
-          #ui.color('OS', :bold),
-          #ui.color('Eula', :bold),
+          ui.color('Category', :bold),
+          ui.color('Label', :bold),
+          ui.color('OS', :bold),
         ]
         items = connection.images.all
         items.each do |image|
           if image.os == 'Linux'
             image_list << image.name.to_s
-            #image_list << image.category.to_s
-            #image_list << image.label.to_s
-            #image_list << image.os.to_s
-            #image_list << image.eula.to_s
+            image_list << image.category.to_s
+            image_list << image.label.to_s
+            image_list << image.os.to_s
           end
         end
-        puts ''
-        puts ui.list(image_list, :columns_across, 1)
+        puts "\n"
+        puts h.list(image_list, :columns_across, 4)
       end
     end
   end
