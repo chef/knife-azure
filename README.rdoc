@@ -2,13 +2,33 @@
 
 Description: This plugin supports listing, creating, and deleting Azure instances bootstrapped with chef client.
 
+==Generating the Management Certifcate (PEM)
+1. Download the settings file from http://go.microsoft.com/fwlink/?LinkId=254432
+2. Extract the data from the ManagementCertificate field into a separate file named - cert.pfx
+3. Decode the certificate file :
+
+base64 -d cert.pfx > cert_decoded.pfx
+
+4. Convert the decoded PFX file to a PEM file
+
+ openssl pkcs12 -in cert_decoded.pfx -out managementCertificate.pem -nodes
+
+Detailed Documentation is available : https://www.windowsazure.com/en-us/manage/linux/common-tasks/manage-certificates/
+
 ==Installation:
+The plugin relies on SSL for communication and hence requires the SSL certifcate is setup. 
+Typically the environment variable SSL_CERT_FILE(in Linux) points to the full path of the SSL Certificate file
+
 Be sure you are running the latest version Chef. Versions earlier than 0.10.0 don’t support plugins:
 
 gem install chef
-This plugin is distributed as a Ruby Gem. To install it, run:
+This plugin is distributed as a Ruby Gem. To install it, with missing dependencies run:
 
-gem install knife-azure 
+bundle install
+
+If you make any changes to the knife plugin and want to re-install the plugin:
+rake install
+
 Depending on your system’s configuration, you may need to run this command with root privileges.
 
 ==Requirements:
@@ -19,6 +39,8 @@ You must use the '-N NODE_NAME' flag with 'knife azure' to specify a node name t
 
 For more information, see http://tickets.opscode.com/browse/CHEF-3095
 
+
+
 ==Configuration:
 Most configuration options can be specified either in your knife.rb file or as command line parameters.
 
@@ -28,10 +50,10 @@ option :azure_subscription_id,
   :long => "--azure-subscription-id ID",
   :description => "Your Azure subscription ID",
 
-option :azure_pem_file,
+option :azure_mgmt_cert,
   :short => "-p FILENAME",
-  :long => "--azure-pem-filename FILENAME",
-  :description => "Your Azure PEM file name",
+  :long => "--azure-mgmt-cert FILENAME",
+  :description => "Your Azure Management Certificate File",
 
 option :azure_host_name,
   :short => "-H HOSTNAME",
@@ -72,7 +94,7 @@ option :distro,
   :short => "-d DISTRO",
   :long => "--distro DISTRO",
   :description => "Bootstrap a distro using a template",
-  :default => "chef-full"
+  :default => "ubuntu10.04-gems"
 
 option :template_file,
   :long => "--template-file TEMPLATE",
@@ -138,11 +160,11 @@ option :udp_endpoints,
 
 
 ====Here are some lines with example values in a knife.rb file:
-knife[:azure_subscription_id] = "YOUR-GUID"
+knife[:azure_subscription_id] = "155a9851-88a8-49b4-98e4-58055f08f412"
 
-knife[:azure_pem_file] = "YOUR-CERT.pem"
+knife[:azure_mgmt_cert] = "ManagementCertificate.pem"
 
-knife[:azure_host_name] = "azure-api-endpoint"
+knife[:azure_host_name] = "management-preview.core.windows-int.net"
 
 knife[:hosted_service_name]='service001'
 
@@ -150,9 +172,9 @@ knife[:role_name]='role105'
 
 knife[:host_name]='host105'
 
-knife[:ssh_user]='yoursshuser'
+knife[:ssh_user]='jetstream'
 
-knife[:ssh_password]='yoursshpw'
+knife[:ssh_password]='jetstream1!'
 
 knife[:media_location_prefix]='auxpreview104'
 
@@ -184,7 +206,7 @@ knife[:role_size]='Small'
 This plugin provides the following Knife subcommands. Specific command options can be found by invoking the subcommand with a --help flag
 
 ===knife azure server create
-Provisions a new server in Azure and then perform a Chef bootstrap (using the SSH protocol). The goal of the bootstrap is to get Chef installed on the target system so it can run Chef Client with a Chef Server. The main assumption is a baseline OS installation exists (provided by the provisioning). It is primarily intended for Chef Client systems that talk to a Chef server. By default the server is bootstrapped using the ubuntu10.04-gems template. This can be overridden using the -d or --template-file command options.
+Provisions a new server in Azure and then perform a Chef bootstrap (using the SSH protocol). The goal of the bootstrap is to get Chef installed on the target system so it can run Chef Client with a Chef Server. The main assumption is a baseline OS installation exists (provided by the provisioning). It is primarily intended for Chef Client systems that talk to a Chef server. By default the server is bootstrapped using the ubuntu10.04-gems template. This can be overridden using the -d or --template-file command options. (*** Note that at the current time only CentOS is supported for bootstrapping and required the :distro to be set to centos5-gems. There is a fix in the works from Christpher Brown in mixlib-authentication I believe that fixes an RSA encryption too long error that occurs for some hostnames during bootstrap. ***)
 
 ===knife azure server delete [role_name_to_delete]
 Deletes an existing server(role) in the currently configured AWS account. PLEASE NOTE - By default, this does not delete the associated node and client objects from the Chef server. To do so, add the --purge flag.
@@ -205,6 +227,17 @@ These are generally a one to many relationship from top to bottom, however there
 1) a hosted service can have more than one deployment, but that seems to be an artifact of the PAAS origins of Azure. PAAS allows there to be one staging and one production deployment per hosted service. It is my understanding (and how the code works) that there should be only one deployment per hosted service. Some initial internal code I examined used the technique of looking at the "production" deployment slot to iterate for existing roles. If a create request occurs and a deployment does not exist, it is created and given the same name as the hosted service and the deployment slot is marked as "production".
 2) Azure enforces that a deployment must include the initial role when it is created. It also will not allow you to delete a role if it is the last remaining role in a deployment; in that case you are required to delete the deployment.
 
-==Tests:
+== Notes on incompleteness (remove at some point)
+Two incidents caused this project to take much longer and caused the budget to be used up earlier than hoped. In March 2012 Azure IAAS was shut down for a month and the API substantially changed. In mid April JSON support was suddenly removed without warning, forcing major rework to change to using xml. In addition, on some days Azure will just begin returning "Internal error, try again" messages, reportedly because of internal congestion problems, which frustrated progress. The long and short of it is that there are areas that still need attention:
 
-The tests require a subscription id to be places in spec/spec_helper.rb and the associated private key to be placed in 'AzureLinuxCert.pem' in the top level directory. Then run 'rake spec'
+Naming – there has been some ambiguity about the names for items such as Hosted Services/Deployments/Roles. We need to pin down the nomenclature for options and messages that we are going to use to make sure we consistently use correct terms. For instance their portal (which was working until about a week ago) referred to ‘hosted services’ as ‘apps’.
+
+Images – there still needs to be work around what the story is for creating custom images as well as exactly how available images are referred to by the user. Currently we are just using the actual full names for the two images Microsoft has in place and they are lengthy. Back in February they had a tool that allowed us to customize an OS, create a .vhd and then push it up. This tool was broken when they did their early March refresh and we need to determine the timeframe for availability. Reportedly the newest internal node.js tool offers this capability.
+
+Data disks – this is not yet fully fleshed out nor publicly exposed.
+
+Virtual network configuration – this is not yet addressed.
+
+OS Disk deletion - when a role is deleted, its associated os disk is not deleted by default. The delete command needs to add this in the short term because there is a limit of number of disks allowed and I have been deleting them manually.
+
+

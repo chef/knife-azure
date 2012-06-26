@@ -10,6 +10,7 @@ rescue Bundler::BundlerError => e
   exit e.status_code
 end
 require 'rake'
+GEM_NAME = "knife-azure"
 
 spec = eval(File.read("knife-azure.gemspec"))
 
@@ -39,6 +40,14 @@ RSpec::Core::RakeTask.new(:rcov) do |spec|
 end
 
 task :default => :spec
+
+task :install => :package do
+  sh %{gem install pkg/#{GEM_NAME}-#{Knife::Azure::VERSION} --no-rdoc --no-ri}
+end 
+
+task :uninstall do
+  sh %{gem uninstall #{GEM_NAME} -x -v #{Knife::Azure::VERSION} }
+end
 
 require 'rdoc/task'
 Rake::RDocTask.new do |rdoc|
