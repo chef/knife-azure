@@ -165,7 +165,7 @@ class Azure
           }
           xml.Label Base64.encode64(params[:role_name]).strip
           xml.OSVirtualHardDisk {
-            xml.MediaLink 'http://' + params[:media_location_prefix] + 'imagestore.blob.core.azure-preview.com/os-disks/' + (params[:os_disk_name] || Time.now.strftime('disk_%Y_%m_%d_%H_%M'))
+            xml.MediaLink 'http://' + params[:storage_account] + '.blob.core.windows.net/vhds/' + (params[:os_disk_name] || Time.now.strftime('disk_%Y_%m_%d_%H_%M')) + '.vhd'
             xml.SourceImageName params[:source_image]
           }
           xml.RoleSize params[:role_size]

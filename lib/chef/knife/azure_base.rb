@@ -41,11 +41,11 @@ class Chef
             :description => "Your Azure subscription ID",
             :proc => Proc.new { |key| Chef::Config[:knife][:azure_subscription_id] = key }
 
-          option :azure_pem_file,
+          option :azure_mgmt_cert,
             :short => "-p FILENAME",
-            :long => "--azure-pem-filename FILENAME",
+            :long => "--azure-mgmt-cert FILENAME",
             :description => "Your Azure PEM file name",
-            :proc => Proc.new { |key| Chef::Config[:knife][:azure_pem_file] = key }
+            :proc => Proc.new { |key| Chef::Config[:knife][:azure_mgmt_cert] = key }
 
           option :azure_host_name,
             :short => "-H HOSTNAME",
@@ -59,12 +59,9 @@ class Chef
       def connection
         @connection ||= begin
                           connection = Azure::Connection.new(
-                            :azure_subscription_id => 
-                            config[:azure_subscription_id] || Chef::Config[:knife][:azure_subscription_id],
-                              :azure_pem_file => 
-                            config[:azure_pem_file] || Chef::Config[:knife][:azure_pem_file],
-                              :azure_host_name => 
-                            config[:azure_host_name] || Chef::Config[:knife][:azure_host_name]
+                            :azure_subscription_id => locate_config_value(:azure_subscription_id),
+                            :azure_mgmt_cert => locate_config_value(:azure_mgmt_cert),
+                            :azure_host_name => locate_config_value(:azure_host_name)
                           )
                         end        
       end
@@ -80,7 +77,7 @@ class Chef
         end
       end
 
-      def validate!(keys=[:azure_subscription_id, :azure_pem_file, :azure_host_name])
+      def validate!(keys=[:azure_subscription_id, :azure_mgmt_cert, :azure_host_name])
         errors = []
 
         keys.each do |k|
@@ -98,5 +95,3 @@ class Chef
     end
   end
 end
-
-

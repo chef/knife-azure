@@ -18,6 +18,7 @@
 require File.expand_path('../utility', __FILE__)
 require File.expand_path('../rest', __FILE__)
 require File.expand_path('../host', __FILE__)
+require File.expand_path('../storageaccount', __FILE__)
 require File.expand_path('../deploy', __FILE__)
 require File.expand_path('../role', __FILE__)
 require File.expand_path('../disk', __FILE__)
@@ -26,10 +27,11 @@ require File.expand_path('../image', __FILE__)
 class Azure
   class Connection
     include AzureAPI
-    attr_accessor :hosts, :rest, :images, :deploys, :roles, :disks
+    attr_accessor :hosts, :rest, :images, :deploys, :roles, :disks, :storageaccounts
     def initialize(params={})
       @rest = Rest.new(params)
       @hosts = Hosts.new(self)
+      @storageaccounts = StorageAccounts.new(self)
       @images = Images.new(self)
       @deploys = Deploys.new(self)
       @roles = Roles.new(self)

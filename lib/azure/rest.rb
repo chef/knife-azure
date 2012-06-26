@@ -24,7 +24,7 @@ module AzureAPI
   class Rest
     def initialize(params)
       @subscription_id = params[:azure_subscription_id]
-      @pem_file = File.read find_pem(params[:azure_pem_file])
+      @pem_file = File.read find_pem(params[:azure_mgmt_cert])
       @host_name = params[:azure_host_name]
     end
     def find_pem(name)
@@ -60,7 +60,7 @@ module AzureAPI
     def http_setup(uri)
       http = Net::HTTP.new(uri.host, uri.port)
       store = OpenSSL::X509::Store.new
-      store.add_cert(OpenSSL::X509::Certificate.new(File.read(find_pem("cacert.pem"))))
+      store.set_default_paths
       http.cert_store = store
       http.verify_mode = OpenSSL::SSL::VERIFY_PEER
       http.use_ssl = true

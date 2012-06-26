@@ -45,6 +45,9 @@ class Azure
       unless @connection.hosts.exists(params[:hosted_service_name])
         @connection.hosts.create(params)
       end 
+      unless @connection.storageaccounts.exists(params[:storage_account])
+        @connection.storageaccounts.create(params)
+      end
       params['deploy_name'] = find(params[:hosted_service_name])
       if params['deploy_name'] != nil
         role = Role.new(@connection)

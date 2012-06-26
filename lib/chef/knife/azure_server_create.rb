@@ -70,8 +70,7 @@ class Chef
         :short => "-d DISTRO",
         :long => "--distro DISTRO",
         :description => "Bootstrap a distro using a template",
-        :proc => Proc.new { |d| Chef::Config[:knife][:distro] = d },
-        :default => "chef-full"
+        :proc => Proc.new { |d| Chef::Config[:knife][:distro] = d }
 
       option :template_file,
         :long => "--template-file TEMPLATE",
@@ -97,6 +96,11 @@ class Chef
         :long => "--hosted-service-name NAME",
         :description => "specifies the name for the hosted service"
 
+      option :storage_account,
+        :short => "-a NAME",
+        :long => "--storage-account NAME",
+        :description => "specifies the name for the hosted service"
+
       option :role_name,
         :short => "-R name",
         :long => "--role-name NAME",
@@ -107,10 +111,10 @@ class Chef
         :long => "--host-name NAME",
         :description => "specifies the host name for the virtual machine"
 
-      option :media_location_prefix,
-        :short => "-m PREFIX",
-        :long => "--media-location-prefix PREFIX",
-        :description => "user account name (used for constructing os disk media link)"
+      option :service_location,
+        :short => "-m LOCATION",
+        :long => "--service-location LOCATION",
+        :description => "specify the Geographic location for the virtual machine and services"
 
       option :os_disk_name,
         :short => "-o DISKNAME",
@@ -137,6 +141,14 @@ class Chef
         :long => "--udp-endpoints PORT_LIST",
         :description => "Comma separated list of UDP local and public ports to open i.e. '80:80,433:5000'"
 
+
+      def strip_non_ascii(string)
+        string.gsub(/[^0-9a-z ]/i, '')
+      end
+
+      def random_string(len=10)
+        (0...len).map{65.+(rand(25)).chr}.join
+      end
 
       def tcp_test_ssh(fqdn, sshport)
         tcp_socket = TCPSocket.new(fqdn, sshport)
@@ -174,14 +186,13 @@ class Chef
         details << ui.color('winner is', :bold, :blue)
         [
           :azure_subscription_id, 
-          :azure_pem_file, 
+          :azure_mgmt_cert, 
           :azure_host_name,
-          :hosted_service_name, 
           :role_name, 
           :host_name, 
           :ssh_user, 
           :ssh_password, 
-          :media_location_prefix, 
+          :service_location, 
           :source_image, 
           :role_size
         ].each do |key|
@@ -195,11 +206,27 @@ class Chef
       end
       def run
         $stdout.sync = true
+        storage = nil
 
         Chef::Log.info("validating...")
         validate!
 
         Chef::Log.info("creating...")
+      
+        if not locate_config_value(:hosted_service_name)
+          config[:hosted_service_name] = [strip_non_ascii(locate_config_value(:role_name)), random_string].join
+        end
+
+        #If Storage Account is not specified, check if the geographic location has one to re-use 
+        if not locate_config_value(:storage_account)
+          storage_accts = connection.storageaccounts.all
+          storage = storage_accts.find { |storage_acct| storage_acct.location.to_s == locate_config_value(:service_location) }
+          if not storage
+            config[:storage_account] = [strip_non_ascii(locate_config_value(:role_name)), random_string].join.downcase
+          else
+            config[:storage_account] = storage.name.to_s
+          end
+        end
         server = connection.deploys.create(create_server_def)
 
         puts("\n")
@@ -249,14 +276,13 @@ class Chef
       def validate!
         super([
               :azure_subscription_id, 
-              :azure_pem_file, 
+              :azure_mgmt_cert, 
               :azure_host_name,
-              :hosted_service_name, 
               :role_name, 
               :host_name, 
               :ssh_user, 
               :ssh_password, 
-              :media_location_prefix, 
+              :service_location, 
               :source_image, 
               :role_size
         ])
@@ -265,11 +291,12 @@ class Chef
       def create_server_def
         server_def = {
           :hosted_service_name => locate_config_value(:hosted_service_name), 
+          :storage_account => locate_config_value(:storage_account),
           :role_name => locate_config_value(:role_name), 
           :host_name => locate_config_value(:host_name), 
-          :ssh_user => locate_config_value(:ssh_user), 
+          :ssh_user => locate_config_value(:ssh_user),
           :ssh_password => locate_config_value(:ssh_password), 
-          :media_location_prefix => locate_config_value(:media_location_prefix), 
+          :service_location => locate_config_value(:service_location), 
           :os_disk_name => locate_config_value(:os_disk_name), 
           :source_image => locate_config_value(:source_image), 
           :role_size => locate_config_value(:role_size),
