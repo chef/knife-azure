@@ -70,7 +70,8 @@ class Chef
         :short => "-d DISTRO",
         :long => "--distro DISTRO",
         :description => "Bootstrap a distro using a template",
-        :proc => Proc.new { |d| Chef::Config[:knife][:distro] = d }
+        :proc => Proc.new { |d| Chef::Config[:knife][:distro] = d },
+        :default => "chef-full"
 
       option :template_file,
         :long => "--template-file TEMPLATE",
@@ -95,6 +96,11 @@ class Chef
         :short => "-s NAME",
         :long => "--hosted-service-name NAME",
         :description => "specifies the name for the hosted service"
+
+      option :hosted_service_description,
+        :short => "-D DESCRIPTION",
+        :long => "--hosted_service_description DESCRIPTION",
+        :description => "Description for the hosted service"
 
       option :storage_account,
         :short => "-a NAME",

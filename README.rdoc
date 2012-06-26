@@ -3,11 +3,13 @@
 Description: This plugin supports listing, creating, and deleting Azure instances bootstrapped with chef client.
 
 ==Generating the Management Certifcate (PEM)
+The Management Certificate is required for successful communication with Windows Azure Platform via the REST APIs.
+Follow these steps to generate the certificate
 1. Download the settings file from http://go.microsoft.com/fwlink/?LinkId=254432
 2. Extract the data from the ManagementCertificate field into a separate file named - cert.pfx
 3. Decode the certificate file :
 
-base64 -d cert.pfx > cert_decoded.pfx
+ base64 -d cert.pfx > cert_decoded.pfx
 
 4. Convert the decoded PFX file to a PEM file
 
@@ -38,8 +40,6 @@ Due to a bug in mixlib-authentication, Chef node names must be 91 characters or 
 You must use the '-N NODE_NAME' flag with 'knife azure' to specify a node name to be used by Chef that is less than 91 characters.
 
 For more information, see http://tickets.opscode.com/browse/CHEF-3095
-
-
 
 ==Configuration:
 Most configuration options can be specified either in your knife.rb file or as command line parameters.
@@ -118,6 +118,11 @@ option :hosted_service_name,
   :long => "--hosted-service-name NAME",
   :description => "specifies the name for the hosted service"
 
+option :hosted_service_description,
+  :short => "-D DESCRIPTION",
+  :long => "--hosted_service_description DESCRIPTION",
+  :description => "Description for the hosted service"
+
 option :role_name,
   :short => "-R name",
   :long => "-- role-name NAME",
@@ -128,10 +133,10 @@ option :host_name,
   :long => "--host-name NAME",
   :description => "specifies the host name for the virtual machine"
 
-option :media_location_prefix,
-  :short => "-m PREFIX",
-  :long => "--media-location-prefix PREFIX",
-  :description => "user account name (used for constructing os disk media link)"
+option :storage_account,
+  :short => "-a NAME",
+  :long => "--storage-account NAME",
+  :description => "specifies the name for the hosted service"
 
 option :os_disk_name,
   :short => "-o DISKNAME",
