@@ -26,6 +26,7 @@ module AzureAPI
       @subscription_id = params[:azure_subscription_id]
       @pem_file = File.read find_pem(params[:azure_mgmt_cert])
       @host_name = params[:azure_host_name]
+      @verify_ssl = params[:verify_ssl_cert]
     end
     def find_pem(name)
       config_dir = Chef::Knife.chef_config_dir
@@ -62,7 +63,11 @@ module AzureAPI
       store = OpenSSL::X509::Store.new
       store.set_default_paths
       http.cert_store = store
-      http.verify_mode = OpenSSL::SSL::VERIFY_PEER
+      if @verify_ssl
+        http.verify_mode = OpenSSL::SSL::VERIFY_PEER
+      else
+        http.verify_mode = OpenSSL::SSL::VERIFY_NONE
+      end
       http.use_ssl = true
       http.cert = OpenSSL::X509::Certificate.new(@pem_file)
       http.key = OpenSSL::PKey::RSA.new(@pem_file)
