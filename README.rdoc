@@ -3,8 +3,9 @@
 Description: This plugin supports listing, creating, and deleting Azure instances bootstrapped with chef client.
 
 ==Generating the Management Certifcate (PEM)
-The Management Certificate is required for successful communication with Windows Azure Platform via the REST APIs.
+The Management Certificate is required for secure communication with the Windows Azure Platform via the REST APIs.
 Follow these steps to generate the certificate
+
 1. Download the settings file from http://go.microsoft.com/fwlink/?LinkId=254432
 2. Extract the data from the ManagementCertificate field into a separate file named - cert.pfx
 3. Decode the certificate file :
@@ -15,20 +16,21 @@ Follow these steps to generate the certificate
 
  openssl pkcs12 -in cert_decoded.pfx -out managementCertificate.pem -nodes
 
-Detailed Documentation is available : https://www.windowsazure.com/en-us/manage/linux/common-tasks/manage-certificates/
+It is possible to generate your own certificates and upload them. More Detailed Documentation about the Management Certificates is available : https://www.windowsazure.com/en-us/manage/linux/common-tasks/manage-certificates/
 
 ==Installation:
-The plugin relies on SSL for communication and hence requires the SSL certifcate is setup. 
-Typically the environment variable SSL_CERT_FILE(in Linux) points to the full path of the SSL Certificate file
+The plugin relies on SSL for communication and hence requires the SSL certifcate is setup. The Environment variable SSL_CERT_FILE should point to the full path of the SSL Certificate file.(optional)
 
 Be sure you are running the latest version Chef. Versions earlier than 0.10.0 don’t support plugins:
 
 gem install chef
+
 This plugin is distributed as a Ruby Gem. To install it, with missing dependencies run:
 
 bundle install
 
-If you make any changes to the knife plugin and want to re-install the plugin:
+If you make any changes to the knife plugin code and want to re-install the plugin:
+
 rake install
 
 Depending on your system’s configuration, you may need to run this command with root privileges.
@@ -59,6 +61,12 @@ option :azure_host_name,
   :short => "-H HOSTNAME",
   :long => "--azure_host_name HOSTNAME",
   :description => "Your Azure host name",
+
+option :verify_ssl_cert,
+  :long => "--verify-ssl-cert",
+  :description => "Verify SSL Certificates for communication over HTTPS",
+  :boolean => true,
+  :default => false
 
 Options used with the Create subcommand:
 option :chef_node_name,
@@ -138,6 +146,11 @@ option :storage_account,
   :long => "--storage-account NAME",
   :description => "specifies the name for the hosted service"
 
+option :service_location,
+  :short => "-m LOCATION",
+  :long => "--service-location LOCATION",
+  :description => "specify the Geographic location for the virtual machine and services. eg. West US, East US, North Europe East Asia etc"
+
 option :os_disk_name,
   :short => "-o DISKNAME",
   :long => "--os-disk-name DISKNAME",
@@ -171,6 +184,8 @@ knife[:azure_mgmt_cert] = "ManagementCertificate.pem"
 
 knife[:azure_host_name] = "management-preview.core.windows-int.net"
 
+knife[:service_location] = 'West US'
+
 knife[:hosted_service_name]='service001'
 
 knife[:role_name]='role105'
@@ -181,7 +196,7 @@ knife[:ssh_user]='jetstream'
 
 knife[:ssh_password]='jetstream1!'
 
-knife[:media_location_prefix]='auxpreview104'
+knife[:storage_account]='auxpreview104'
 
 knife[:os_disk_name]='disk107'
 
@@ -214,10 +229,10 @@ This plugin provides the following Knife subcommands. Specific command options c
 Provisions a new server in Azure and then perform a Chef bootstrap (using the SSH protocol). The goal of the bootstrap is to get Chef installed on the target system so it can run Chef Client with a Chef Server. The main assumption is a baseline OS installation exists (provided by the provisioning). It is primarily intended for Chef Client systems that talk to a Chef server. By default the server is bootstrapped using the ubuntu10.04-gems template. This can be overridden using the -d or --template-file command options. (*** Note that at the current time only CentOS is supported for bootstrapping and required the :distro to be set to centos5-gems. There is a fix in the works from Christpher Brown in mixlib-authentication I believe that fixes an RSA encryption too long error that occurs for some hostnames during bootstrap. ***)
 
 ===knife azure server delete [role_name_to_delete]
-Deletes an existing server(role) in the currently configured AWS account. PLEASE NOTE - By default, this does not delete the associated node and client objects from the Chef server. To do so, add the --purge flag.
+Deletes an existing server(role) in the currently configured Azure account. PLEASE NOTE - By default, this does not delete the associated node and client objects from the Chef server. To do so, add the --purge flag.
 
 ===knife azure server list
-Outputs a list of all servers in the currently configured AWS account. PLEASE NOTE - this shows all instances associated with the account, some of which may not be currently managed by the Chef server.
+Outputs a list of all servers in the currently configured Azure account. PLEASE NOTE - this shows all instances associated with the account, some of which may not be currently managed by the Chef server.
 
 ===knife azure server describe [role_name_to_describe]
 Outputs detail about a specific role, including all the ports that it has open
@@ -225,24 +240,13 @@ Outputs detail about a specific role, including all the ports that it has open
 ===knife azure image list
 Outputs a list of all linux images that are available to use for provisioning. You should choose one of these to use for the :source_image parameter to the server create command.
 
+
+===knife azure server describe
+Output additional information about the provisioned Virtual Machine
+
 == Understanding Azure
 Azure implements the following hierarchy - subscription=>hosted service=>deployment=>role (and the guest operating system has a hostname as well, which uses the role as its container)
 
 These are generally a one to many relationship from top to bottom, however there are two anamolies relating to the deployment
 1) a hosted service can have more than one deployment, but that seems to be an artifact of the PAAS origins of Azure. PAAS allows there to be one staging and one production deployment per hosted service. It is my understanding (and how the code works) that there should be only one deployment per hosted service. Some initial internal code I examined used the technique of looking at the "production" deployment slot to iterate for existing roles. If a create request occurs and a deployment does not exist, it is created and given the same name as the hosted service and the deployment slot is marked as "production".
 2) Azure enforces that a deployment must include the initial role when it is created. It also will not allow you to delete a role if it is the last remaining role in a deployment; in that case you are required to delete the deployment.
-
-== Notes on incompleteness (remove at some point)
-Two incidents caused this project to take much longer and caused the budget to be used up earlier than hoped. In March 2012 Azure IAAS was shut down for a month and the API substantially changed. In mid April JSON support was suddenly removed without warning, forcing major rework to change to using xml. In addition, on some days Azure will just begin returning "Internal error, try again" messages, reportedly because of internal congestion problems, which frustrated progress. The long and short of it is that there are areas that still need attention:
-
-Naming – there has been some ambiguity about the names for items such as Hosted Services/Deployments/Roles. We need to pin down the nomenclature for options and messages that we are going to use to make sure we consistently use correct terms. For instance their portal (which was working until about a week ago) referred to ‘hosted services’ as ‘apps’.
-
-Images – there still needs to be work around what the story is for creating custom images as well as exactly how available images are referred to by the user. Currently we are just using the actual full names for the two images Microsoft has in place and they are lengthy. Back in February they had a tool that allowed us to customize an OS, create a .vhd and then push it up. This tool was broken when they did their early March refresh and we need to determine the timeframe for availability. Reportedly the newest internal node.js tool offers this capability.
-
-Data disks – this is not yet fully fleshed out nor publicly exposed.
-
-Virtual network configuration – this is not yet addressed.
-
-OS Disk deletion - when a role is deleted, its associated os disk is not deleted by default. The delete command needs to add this in the short term because there is a limit of number of disks allowed and I have been deleting them manually.
-
-
