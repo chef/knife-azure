@@ -28,7 +28,7 @@
       </ConfigurationSets>
       <Label>dm0wMQ==</Label>
       <OSVirtualHardDisk>
-        <MediaLink>http://auxpreview104imagestore.blob.core.azure-preview.com/os-disks/disk004Test</MediaLink>
+        <MediaLink>http://storageaccount001.blob.core.windows.net/vhds/disk004Test.vhd</MediaLink>
         <SourceImageName>SUSE__OpenSUSE64121-03192012-en-us-15GB</SourceImageName>
       </OSVirtualHardDisk>
       <RoleSize>ExtraSmall</RoleSize>

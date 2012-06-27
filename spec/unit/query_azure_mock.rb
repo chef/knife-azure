@@ -32,6 +32,8 @@ module QueryAzureMock
           retval = Nokogiri::XML readFile('list_deployments_for_service002.xml')
         elsif name == 'hostedservices/service003/deploymentslots/Production'
           retval = Nokogiri::XML readFile('list_deployments_for_service003.xml')
+        elsif name == 'storageservices'
+          retval = Nokogiri::XML readFile('list_storageaccounts.xml')
         else
           Chef::Log.warn 'unknown get value:' + name
         end
