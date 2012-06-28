@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+  <StorageServices xmlns="http://schemas.microsoft.com/windowsazure">
+    <StorageService>
+      <Url>storage-service-address</Url>
+      <ServiceName>storage-service-name</ServiceName>
+      <StorageServiceProperties>
+        <Description>description</Description>
+        <AffinityGroup>affinity-group</AffinityGroup>
+        <Location>service-location</Location>
+        <Label>base64-encoded-label</Label>
+        <Status>status</Status>
+        <Endpoints>
+          <Endpoint>storage-service-blob-endpoint</Endpoint>
+          <Endpoint>storage-service-queue-endpoint</Endpoint>
+          <Endpoint>storage-service-table-endpoint</Endpoint>
+        </Endpoints>
+        <ExtendedProperties>
+          <ExtendedProperty>
+            <Name>property-name</Name>
+            <Value>property-value</Value>
+          </ExtendedProperty>
+        </ExtendedProperties>
+      </StorageServiceProperties>
+    </StorageService>
+  </StorageServices>
