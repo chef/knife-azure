@@ -61,6 +61,9 @@ class Chef
         end
       end
 
+      def is_image_windows?
+        return connection.images.all.select { |i| i.os == 'Windows' }.length > 0
+      end
       def connection
         @connection ||= begin
                           connection = Azure::Connection.new(

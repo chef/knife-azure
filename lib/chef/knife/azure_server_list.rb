@@ -39,8 +39,9 @@ class Chef
           ui.color('Deployment', :bold),
           ui.color('Role', :bold),
           ui.color('Host', :bold),
-          ui.color('SSH IP', :bold),
-          ui.color('SSH Port', :bold)
+          ui.color('IP Address', :bold),
+          ui.color('SSH Port', :bold),
+          ui.color('WinRM Port', :bold)
         ]
         items = connection.roles.all
         items.each do |server|
@@ -61,9 +62,10 @@ class Chef
           server_list << server.hostname.to_s
           server_list << server.sshipaddress.to_s
           server_list << server.sshport.to_s
+          server_list << server.winrmport.to_s
         end
         puts ''
-        puts ui.list(server_list, :columns_across, 7)
+        puts ui.list(server_list, :columns_across, 8)
       end
     end
   end

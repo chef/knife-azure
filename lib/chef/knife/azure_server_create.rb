@@ -18,24 +18,33 @@
 # limitations under the License.
 #
 
-require File.expand_path('../azure_base', __FILE__)
-
+require 'chef/knife/azure_base'
+require 'chef/knife/winrm_base'
 class Chef
   class Knife
     class AzureServerCreate < Knife
 
       include Knife::AzureBase
+      include Knife::WinrmBase
 
       deps do
         require 'readline'
         require 'chef/json_compat'
         require 'chef/knife/bootstrap'
+        require 'chef/knife/bootstrap_windows_winrm'
+        require 'chef/knife/bootstrap_windows_ssh'
+        require 'chef/knife/core/windows_bootstrap_context'
+        require 'chef/knife/winrm'
         Chef::Knife::Bootstrap.load_deps
       end
 
       banner "knife azure server create (options)"
 
       attr_accessor :initial_sleep_delay
+
+      option :bootstrap_protocol,
+        :long => "--bootstrap-protocol protocol",
+        :description => "Protocol to bootstrap windows servers. options: winrm/ssh"
 
       option :chef_node_name,
         :short => "-N NAME",
@@ -156,6 +165,28 @@ class Chef
         (0...len).map{65.+(rand(25)).chr}.join
       end
 
+      def tcp_test_winrm(ip_addr, port)
+	    hostname = ip_addr
+        socket = TCPSocket.new(hostname, port)
+	    return true
+      rescue SocketError
+        sleep 2
+        false
+      rescue Errno::ETIMEDOUT
+        false
+      rescue Errno::EPERM
+        false
+      rescue Errno::ECONNREFUSED
+        sleep 2
+        false
+      rescue Errno::EHOSTUNREACH
+        sleep 2
+        false
+      rescue Errno::ENETUNREACH
+        sleep 2
+        false
+      end
+
       def tcp_test_ssh(fqdn, sshport)
         tcp_socket = TCPSocket.new(fqdn, sshport)
         readable = IO.select([tcp_socket], nil, nil, 5)
@@ -176,7 +207,6 @@ class Chef
       rescue Errno::ECONNREFUSED
         sleep 2
         false
-        # This happens on EC2 quite often
       rescue Errno::EHOSTUNREACH
         sleep 2
         false
@@ -210,9 +240,15 @@ class Chef
         end 
         puts ui.list(details, :columns_across, 4)
       end
+      def is_platform_windows?
+        return RUBY_PLATFORM.scan('w32').size > 0
+      end
+
       def run
         $stdout.sync = true
         storage = nil
+
+        puts("bootstrap_protocol : #{locate_config_value(:bootstrap_protocol)}")
 
         Chef::Log.info("validating...")
         validate!
@@ -233,10 +269,43 @@ class Chef
             config[:storage_account] = storage.name.to_s
           end
         end
+        if is_platform_windows?
+          require 'em-winrs'
+        else
+          require 'gssapi'
+          require 'winrm'
+          require 'em-winrm'
+        end
+
         server = connection.deploys.create(create_server_def)
 
         puts("\n")
+        if is_image_windows?
+          if locate_config_value(:bootstrap_protocol) == 'ssh'
+            fqdn = server.sshipaddress
+            port = server.sshport
+            print "\n#{ui.color("Waiting for sshd on #{fqdn}:#{port}", :magenta)}"
 
+            print(".") until tcp_test_ssh(fqdn,port) {
+              sleep @initial_sleep_delay ||= 10
+              puts("done")
+           }
+
+          elsif locate_config_value(:bootstrap_protocol) == 'winrm'
+            fqdn = server.winrmipaddress
+            port = server.winrmport
+
+            print "\n#{ui.color("Waiting for winrm on #{fqdn}:#{port}", :magenta)}"
+
+            print(".") until tcp_test_winrm(fqdn,port) {
+              sleep @initial_sleep_delay ||= 10
+              puts("done")
+           }
+
+          end
+          sleep 15
+          bootstrap_for_windows_node(server,fqdn).run
+        else
         unless server && server.sshipaddress && server.sshport
           Chef::Log.fatal("server not created")
           exit 1
@@ -253,10 +322,55 @@ class Chef
         }
 
         sleep 15
+          bootstrap_for_node(server,fqdn,port).run
+        end
+      end
 
-        bootstrap_for_node(server,fqdn,port).run
+      def bootstrap_common_params(bootstrap)
+        
+        bootstrap.config[:run_list] = config[:run_list]
+        bootstrap.config[:prerelease] = config[:prerelease]
+        bootstrap.config[:bootstrap_version] = locate_config_value(:bootstrap_version)
+        bootstrap.config[:distro] = locate_config_value(:distro)
+        bootstrap.config[:template_file] = locate_config_value(:template_file)
+        bootstrap
+      end
 
-        puts "\n"
+
+      def bootstrap_for_windows_node(server, fqdn)
+        if locate_config_value(:bootstrap_protocol) == 'winrm' 
+            if is_platform_windows?
+              require 'em-winrs'
+            else
+              require 'gssapi'
+              require 'winrm'
+              require 'em-winrm'
+            end
+            bootstrap = Chef::Knife::BootstrapWindowsWinrm.new
+
+            bootstrap.config[:winrm_user] = locate_config_value(:winrm_user) || 'Administrator'
+            bootstrap.config[:winrm_password] = locate_config_value(:winrm_password) ||
+                                                  locate_config_value(:admin_password)
+            bootstrap.config[:winrm_transport] = locate_config_value(:winrm_transport)
+
+            bootstrap.config[:winrm_port] = locate_config_value(:winrm_port)
+     
+        elsif locate_config_value(:bootstrap_protocol) == 'ssh'
+            bootstrap = Chef::Knife::BootstrapWindowsSsh.new
+            bootstrap.config[:ssh_user] = locate_config_value(:ssh_user)
+            bootstrap.config[:ssh_password] = locate_config_value(:ssh_password)
+            bootstrap.config[:ssh_port] = locate_config_value(:ssh_port)
+            bootstrap.config[:identity_file] = locate_config_value(:identity_file)
+            bootstrap.config[:no_host_key_verify] = locate_config_value(:no_host_key_verify)
+        else
+            ui.error("Unsupported Bootstrapping Protocol. Supported : winrm, ssh")
+            exit 1
+        end
+        bootstrap.name_args = [fqdn]
+        bootstrap.config[:chef_node_name] = config[:chef_node_name] || server.id
+        bootstrap.config[:encrypted_data_bag_secret] = config[:encrypted_data_bag_secret]
+        bootstrap.config[:encrypted_data_bag_secret_file] = config[:encrypted_data_bag_secret_file]
+        bootstrap_common_params(bootstrap)
       end
 
       def bootstrap_for_node(server,fqdn,port)
@@ -286,8 +400,6 @@ class Chef
               :azure_host_name,
               :role_name, 
               :host_name, 
-              :ssh_user, 
-              :ssh_password, 
               :service_location, 
               :source_image, 
               :role_size
@@ -300,15 +412,23 @@ class Chef
           :storage_account => locate_config_value(:storage_account),
           :role_name => locate_config_value(:role_name), 
           :host_name => locate_config_value(:host_name), 
-          :ssh_user => locate_config_value(:ssh_user),
-          :ssh_password => locate_config_value(:ssh_password), 
           :service_location => locate_config_value(:service_location), 
           :os_disk_name => locate_config_value(:os_disk_name), 
           :source_image => locate_config_value(:source_image), 
           :role_size => locate_config_value(:role_size),
           :tcp_endpoints => locate_config_value(:tcp_endpoints),
-          :udp_endpoints => locate_config_value(:udp_endpoints)
+          :udp_endpoints => locate_config_value(:udp_endpoints),
+          :bootstrap_proto => locate_config_value(:bootstrap_protocol)
         }
+
+        if is_image_windows?
+          server_def[:os_type] = 'Windows'
+          server_def[:admin_password] = locate_config_value(:admin_password)
+        else
+          server_def[:os_type] = 'Linux'
+          server_def[:ssh_user] = locate_config_value(:ssh_user)
+          server_def[:ssh_password] = locate_config_value(:ssh_password)
+        end
         server_def
       end
     end

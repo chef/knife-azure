@@ -30,4 +30,5 @@ Gem::Specification.new do |s|
   s.add_dependency(%q<net-ssh-multi>, [">= 1.0.1"])
   s.add_dependency(%q<net-scp>, ["~> 1.0.4"])
   s.add_dependency(%q<nokogiri>,["~> 1.5.5"])
+  s.add_dependency(%q<knife-windows>,[">= 0"])
 end
