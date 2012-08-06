@@ -46,12 +46,10 @@ class Chef
         ]
         items = connection.images.all
         items.each do |image|
-          if image.os == 'Linux'
-            image_list << image.name.to_s
-            image_list << image.category.to_s
-            image_list << image.label.to_s
-            image_list << image.os.to_s
-          end
+          image_list << image.name.to_s
+          image_list << image.category.to_s
+          image_list << image.label.to_s
+          image_list << image.os.to_s
         end
         puts "\n"
         puts h.list(image_list, :columns_across, 4)
