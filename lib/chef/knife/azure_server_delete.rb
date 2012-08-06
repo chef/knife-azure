@@ -32,6 +32,12 @@ class Chef
 
       banner "knife azure server delete SERVER [SERVER] (options)"
 
+      option :purge_os_disk,
+        :long => "--purge-os-disk",
+        :boolean => true,
+        :default => true,
+        :description => "Destroy corresponding OS Disk"
+
       option :purge,
         :short => "-P",
         :long => "--purge",
@@ -67,7 +73,10 @@ class Chef
 
           begin
             server = connection.roles.find(name)
-
+            if not server
+              ui.warn("Server #{name} does not exist")
+              return
+            end
             puts "\n"
             msg_pair('Service', server.hostedservicename)
             msg_pair('Deployment', server.deployname)
@@ -78,8 +87,8 @@ class Chef
 
             puts "\n"
             confirm("Do you really want to delete this server")
-
-            connection.roles.delete(name)
+             
+            connection.roles.delete(name, params = { :purge_os_disk => locate_config_value(:purge_os_disk) })
 
             puts "\n"
             ui.warn("Deleted server #{server.name}")
@@ -92,8 +101,9 @@ class Chef
               ui.warn("Corresponding node and client for the #{name} server were not deleted and remain registered with the Chef Server")
             end
 
-          rescue NoMethodError
-            ui.error("Could not locate server '#{name}'.  Please verify it was provisioned.")
+          rescue Exception => ex
+            ui.error("#{ex.message}")
+            ui.error("#{ex.backtrace.join("\n")}")
           end
         end
       end

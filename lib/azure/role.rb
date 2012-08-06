@@ -18,6 +18,7 @@
 
 class Azure
   class Roles
+    include AzureUtility
     attr_accessor :connection, :roles
     def initialize(connection)
       @connection = connection
@@ -57,7 +58,7 @@ class Azure
     def exists(name)
       find(name) != nil
     end
-    def delete(name)
+    def delete(name, params)
       role = find(name)
       if role != nil
         if alone_on_host(name)
@@ -67,16 +68,28 @@ class Azure
           servicecall = "hostedservices/#{role.hostedservicename}/deployments" +
           "/#{role.deployname}/roles/#{role.name}"
         end
+        roleXML = nil
+        if params[:purge_os_disk]
+            roleXML = @connection.query_azure(servicecall, "get")
+        end
         @connection.query_azure(servicecall, "delete") 
+
+        if params[:purge_os_disk]
+          osdisk = roleXML.css(roleXML, 'OSVirtualHardDisk')
+          disk_name = xml_content(osdisk, 'DiskName')
+          servicecall = "disks/#{disk_name}"
+          @connection.query_azure(servicecall, "delete")
+        end
       end
-      #@connection.disks.clear_unattached
     end
   end
   class Role
     include AzureUtility
     attr_accessor :connection, :name, :status, :size, :ipaddress
     attr_accessor :sshport, :sshipaddress, :hostedservicename, :deployname
+    attr_accessor :winrmport, :winrmipaddress
     attr_accessor :hostname, :tcpports, :udpports
+
     def initialize(connection)
       @connection = connection
     end
@@ -90,11 +103,15 @@ class Azure
       @deployname = deployname
       @tcpports = Array.new
       @udpports = Array.new
+      
       endpoints = roleXML.css('InstanceEndpoint')
       endpoints.each do |endpoint|
         if xml_content(endpoint, 'Name').downcase == 'ssh'
           @sshport = xml_content(endpoint, 'PublicPort')
           @sshipaddress = xml_content(endpoint, 'Vip')
+        elsif xml_content(endpoint, 'Name').downcase == 'winrm'
+          @winrmport = xml_content(endpoint, 'PublicPort')
+          @winrmipaddress = xml_content(endpoint, 'Vip')
         else
           hash = Hash.new
           hash['Name'] = xml_content(endpoint, 'Name')
@@ -119,21 +136,45 @@ class Azure
           xml.OsVersion('i:nil' => 'true')
           xml.RoleType 'PersistentVMRole'
           xml.ConfigurationSets {
-            xml.ConfigurationSet('i:type' => 'LinuxProvisioningConfigurationSet') {
-            xml.ConfigurationSetType 'LinuxProvisioningConfiguration'
-            xml.HostName params[:host_name] 
-            xml.UserName params[:ssh_user]
-            xml.UserPassword params[:ssh_password]
-            xml.DisableSshPasswordAuthentication 'false'
-          }
+            if params[:os_type] == 'Linux'
+              
+              xml.ConfigurationSet('i:type' => 'LinuxProvisioningConfigurationSet') {
+              xml.ConfigurationSetType 'LinuxProvisioningConfiguration'
+              xml.HostName params[:host_name] 
+              xml.UserName params[:ssh_user]
+              xml.UserPassword params[:ssh_password]
+              xml.DisableSshPasswordAuthentication 'false'
+              }
+            elsif params[:os_type] == 'Windows'
+              xml.ConfigurationSet('i:type' => 'WindowsProvisioningConfigurationSet') {
+              xml.ConfigurationSetType 'WindowsProvisioningConfiguration'
+              xml.ComputerName params[:host_name] 
+              xml.AdminPassword params[:admin_password]
+              xml.ResetPasswordOnFirstLogon 'false'
+              xml.EnableAutomaticUpdates 'false'
+
+              }
+            end
+
           xml.ConfigurationSet('i:type' => 'NetworkConfigurationSet') {
             xml.ConfigurationSetType 'NetworkConfiguration'
             xml.InputEndpoints {
-              xml.InputEndpoint {
-              xml.LocalPort '22' 
-              xml.Name 'SSH'
-              xml.Protocol 'TCP'
-            }
+              if params[:bootstrap_proto].downcase == 'ssh'
+                xml.InputEndpoint {
+                xml.LocalPort '22' 
+                xml.Name 'SSH'
+                xml.Port '22'
+                xml.Protocol 'TCP'
+              }
+              elsif params[:bootstrap_proto].downcase == 'winrm'
+                xml.InputEndpoint {
+                  xml.LocalPort '5985'
+                  xml.Name 'WinRM'
+                  xml.Port '5985'
+                  xml.Protocol 'TCP'
+                }
+              end
+ 
             if params[:tcp_endpoints]
               params[:tcp_endpoints].split(',').each do |endpoint|
                 ports = endpoint.split(':')
@@ -142,6 +183,8 @@ class Azure
                   xml.Name 'tcpport_' + ports[0] + '_' + params[:host_name]
                   if ports.length > 1
                     xml.Port ports[1]
+                  else
+                    xml.Port ports[0]
                   end 
                   xml.Protocol 'TCP'
                 }
@@ -155,6 +198,8 @@ class Azure
                   xml.Name 'udpport_' + ports[0] + '_' + params[:host_name]
                   if ports.length > 1
                     xml.Port ports[1]
+                  else
+                    xml.Port ports[0]
                   end 
                   xml.Protocol 'UDP'
                 }
