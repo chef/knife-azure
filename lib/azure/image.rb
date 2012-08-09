@@ -51,8 +51,6 @@ class Azure
       @label = image.at_css('Label').content
       @name = image.at_css('Name').content
       @os = image.at_css('OS').content
-      @eula = image.at_css('Eula').content
-      @description = image.at_css('Description').content
     end
   end
 end
