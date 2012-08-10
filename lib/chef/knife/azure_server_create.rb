@@ -44,7 +44,8 @@ class Chef
 
       option :bootstrap_protocol,
         :long => "--bootstrap-protocol protocol",
-        :description => "Protocol to bootstrap windows servers. options: winrm/ssh"
+        :description => "Protocol to bootstrap windows servers. options: winrm/ssh",
+        :default => "winrm"
 
       option :chef_node_name,
         :short => "-N NAME",
@@ -248,13 +249,12 @@ class Chef
         $stdout.sync = true
         storage = nil
 
-        puts("bootstrap_protocol : #{locate_config_value(:bootstrap_protocol)}")
-
         Chef::Log.info("validating...")
         validate!
 
         Chef::Log.info("creating...")
       
+        Chef::Log.info("Using the #{locate_config_value(:bootstrap_protocol)} protocol for bootstrapping")
         if not locate_config_value(:hosted_service_name)
           config[:hosted_service_name] = [strip_non_ascii(locate_config_value(:role_name)), random_string].join
         end
