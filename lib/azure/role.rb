@@ -166,7 +166,7 @@ class Azure
                 xml.Port '22'
                 xml.Protocol 'TCP'
               }
-              elsif params[:bootstrap_proto].downcase == 'winrm'
+              elsif params[:bootstrap_proto].downcase == 'winrm' and params[:os_type] == 'Windows'
                 xml.InputEndpoint {
                   xml.LocalPort '5985'
                   xml.Name 'WinRM'

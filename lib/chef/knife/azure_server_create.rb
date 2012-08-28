@@ -306,8 +306,8 @@ class Chef
           sleep 15
           bootstrap_for_windows_node(server,fqdn).run
         else
-        unless server && server.sshipaddress && server.sshport
-          Chef::Log.fatal("server not created")
+          unless server && server.sshipaddress && server.sshport
+            Chef::Log.fatal("server not created")
           exit 1
         end
 
@@ -424,8 +424,10 @@ class Chef
         if is_image_windows?
           server_def[:os_type] = 'Windows'
           server_def[:admin_password] = locate_config_value(:admin_password)
+          server_def[:bootstrap_proto] = locate_config_value(:bootstrap_protocol)
         else
           server_def[:os_type] = 'Linux'
+          server_def[:bootstrap_proto] = 'ssh'
           server_def[:ssh_user] = locate_config_value(:ssh_user)
           server_def[:ssh_password] = locate_config_value(:ssh_password)
         end
