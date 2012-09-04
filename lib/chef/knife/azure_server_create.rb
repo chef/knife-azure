@@ -349,8 +349,7 @@ class Chef
             bootstrap = Chef::Knife::BootstrapWindowsWinrm.new
 
             bootstrap.config[:winrm_user] = locate_config_value(:winrm_user) || 'Administrator'
-            bootstrap.config[:winrm_password] = locate_config_value(:winrm_password) ||
-                                                  locate_config_value(:admin_password)
+            bootstrap.config[:winrm_password] = locate_config_value(:winrm_password)
             bootstrap.config[:winrm_transport] = locate_config_value(:winrm_transport)
 
             bootstrap.config[:winrm_port] = locate_config_value(:winrm_port)
@@ -423,7 +422,7 @@ class Chef
 
         if is_image_windows?
           server_def[:os_type] = 'Windows'
-          server_def[:admin_password] = locate_config_value(:admin_password)
+          server_def[:admin_password] = locate_config_value(:winrm_password)
           server_def[:bootstrap_proto] = locate_config_value(:bootstrap_protocol)
         else
           server_def[:os_type] = 'Linux'
