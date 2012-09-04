@@ -43,6 +43,14 @@ You must use the '-N NODE_NAME' flag with 'knife azure' to specify a node name t
 
 For more information, see http://tickets.opscode.com/browse/CHEF-3095
 
+==Requirements for Bootstrapping Windows:
+knife-azure depends on knife-windows: https://github.com/opscode/knife-windows to bootstrap Windows machines via winrm(Basic, NTLM and Kerberos) or ssh.
+
+The distro/template to be used for the same is: https://github.com/opscode/knife-windows/blob/master/lib/chef/knife/bootstrap/windows-chef-client-msi.erb
+
+Windows source images should have the WinRM service enabled and the authentication should be set accordingly(Basic, NTLM and Kerberos). 
+
+
 ==Configuration:
 Most configuration options can be specified either in your knife.rb file or as command line parameters.
 
@@ -176,6 +184,55 @@ option :udp_endpoints,
   :long => "--udp-endpoints PORT_LIST",
   :description => "Comma separated list of UDP local and public ports to open i.e. '80:80,433:5000'"
 
+====Options for Bootstrapping Windows nodes
+
+option :bootstrap_protocol,
+  :long => "--bootstrap-protocol protocol",
+  :description => "Protocol to bootstrap windows servers. options: winrm/ssh",
+  :default => "winrm"
+
+option :winrm_password
+  :short => "-P PASSWORD",
+  :long => "--winrm-password PASSWORD",
+  :description => "The WinRM password",
+
+option :winrm_port,
+  :short => "-p PORT",
+  :long => "--winrm-port PORT",
+  :description => "The WinRM port, by default this is 5985",
+  :default => "5985",
+
+option :identity_file,
+  :short => "-i IDENTITY_FILE",
+  :long => "--identity-file IDENTITY_FILE",
+  :description => "The SSH identity file used for authentication"
+
+option :winrm_transport,
+  :short => "-t TRANSPORT",
+  :long => "--winrm-transport TRANSPORT",
+  :description => "The WinRM transport type.  valid choices are [ssl, plaintext]",
+  :default => 'plaintext',
+
+option :kerberos_keytab_file,
+  :short => "-i KEYTAB_FILE",
+  :long => "--keytab-file KEYTAB_FILE",
+  :description => "The Kerberos keytab file used for authentication",
+
+option :kerberos_realm,
+  :short => "-R KERBEROS_REALM",
+  :long => "--kerberos-realm KERBEROS_REALM",
+  :description => "The Kerberos realm used for authentication",
+
+option :kerberos_service,
+  :short => "-S KERBEROS_SERVICE",
+  :long => "--kerberos-service KERBEROS_SERVICE",
+  :description => "The Kerberos service used for authentication",
+
+option :ca_trust_file,
+  :short => "-f CA_TRUST_FILE",
+  :long => "--ca-trust-file CA_TRUST_FILE",
+  :description => "The Certificate Authority (CA) trust file used for SSL transport",
+
 
 ====Here are some lines with example values in a knife.rb file:
 knife[:azure_subscription_id] = "155a9851-88a8-49b4-98e4-58055f08f412"
@@ -221,6 +278,21 @@ knife[:role_size]='Medium'
 knife[:source_image]='SUSE__OpenSUSE64121-03192012-en-us-15GB.vhd'
 
 knife[:role_size]='Small'
+
+
+==== Sample knife.rb for bootstrapping Windows Node with Basic Authentication
+
+knife[:bootstrap_protocol] = 'winrm'
+
+knife[:winrm_password] = 'mgcvTuvV2Rh'
+
+knife[:winrm_transport] = 'plaintext'
+
+knife[:winrm_port] = '5985'
+
+knife[:distro] = 'windows-chef-client-msi'
+
+knife[:source_image]='w2k12Basic.vhd'
 
 ==Subcommands
 This plugin provides the following Knife subcommands. Specific command options can be found by invoking the subcommand with a --help flag
