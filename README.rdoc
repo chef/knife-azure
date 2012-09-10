@@ -10,11 +10,25 @@ Follow these steps to generate the certificate
 2. Extract the data from the ManagementCertificate field into a separate file named - cert.pfx
 3. Decode the certificate file :
 
+==== On Linux/Mac
  base64 -d cert.pfx > cert_decoded.pfx
+ 
+==== On Windows
+You can decode and extract the PFX file using powershell or a free windows base 64 decoder such as http://www.fourmilab.ch/webtools/base64/base64.zip,
+
+ base64.exe -d cert.pfx -> cert_decoded.pfx
 
 4. Convert the decoded PFX file to a PEM file
 
+==== On Linux/Mac
  openssl pkcs12 -in cert_decoded.pfx -out managementCertificate.pem -nodes
+
+==== On Windows
+ Use powershell & run following command. If openssl.exe not already installed it can be downloaded from http://www.openssl.org/related/binaries.html (Note: openssl dependents on Microsoft Visual C++ Redistributable package (x86) which must be installed for openssl to function properly). 
+
+ openssl base64 -d -A -in cert_decoded.pfx -out cert_decode.der
+
+ openssl pkcs12 -in cert_decoded.der -out managementCertificate.pem -nodes
 
 It is possible to generate your own certificates and upload them. More Detailed Documentation about the Management Certificates is available : https://www.windowsazure.com/en-us/manage/linux/common-tasks/manage-certificates/
 
@@ -36,8 +50,6 @@ rake install
 Depending on your system’s configuration, you may need to run this command with root privileges.
 
 ==Requirements:
-
-Due to a bug in mixlib-authentication, Chef node names must be 91 characters or shorter. Chef uses the host name by default, however the host names provided by Azure are very long. 
 
 You must use the '-N NODE_NAME' flag with 'knife azure' to specify a node name to be used by Chef that is less than 91 characters.
 
