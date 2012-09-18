@@ -21,6 +21,7 @@
             <InputEndpoint>
               <LocalPort>22</LocalPort>
               <Name>SSH</Name>
+              <Port>22</Port>
               <Protocol>TCP</Protocol>
             </InputEndpoint>
           </InputEndpoints>
