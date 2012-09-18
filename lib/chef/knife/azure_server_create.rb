@@ -166,25 +166,25 @@ class Chef
       end
 
       def tcp_test_winrm(ip_addr, port)
-	    hostname = ip_addr
+  	    hostname = ip_addr
         socket = TCPSocket.new(hostname, port)
-	    return true
-      rescue SocketError
-        sleep 2
-        false
-      rescue Errno::ETIMEDOUT
-        false
-      rescue Errno::EPERM
-        false
-      rescue Errno::ECONNREFUSED
-        sleep 2
-        false
-      rescue Errno::EHOSTUNREACH
-        sleep 2
-        false
-      rescue Errno::ENETUNREACH
-        sleep 2
-        false
+  	    return true
+        rescue SocketError
+          sleep 2
+          false
+        rescue Errno::ETIMEDOUT
+          false
+        rescue Errno::EPERM
+          false
+        rescue Errno::ECONNREFUSED
+          sleep 2
+          false
+        rescue Errno::EHOSTUNREACH
+          sleep 2
+          false
+        rescue Errno::ENETUNREACH
+          sleep 2
+          false
       end
 
       def tcp_test_ssh(fqdn, sshport)
@@ -221,6 +221,7 @@ class Chef
         details << ui.color('config', :bold, :blue)
         details << ui.color('winner is', :bold, :blue)
         [
+
           :azure_subscription_id,
           :azure_mgmt_cert,
           :azure_server_url,
@@ -252,7 +253,6 @@ class Chef
         validate!
 
         Chef::Log.info("creating...")
-
         Chef::Log.info("Using the #{locate_config_value(:azure_bootstrap_protocol)} protocol for bootstrapping")
         if not locate_config_value(:azure_hosted_service_name)
           config[:azure_hosted_service_name] = [strip_non_ascii(locate_config_value(:azure_role_name)), random_string].join
@@ -413,6 +413,10 @@ class Chef
           :service_location => locate_config_value(:azure_service_location),
           :os_disk_name => locate_config_value(:azure_os_disk_name),
           :source_image => locate_config_value(:azure_source_image),
+          :role_size => locate_config_value(:role_size),
+          :tcp_endpoints => locate_config_value(:azure_tcp_endpoints),
+          :udp_endpoints => locate_config_value(:azure_udp_endpoints),
+          :bootstrap_proto => locate_config_value(:azure_bootstrap_protocol)
         }
 
         if is_image_windows?
