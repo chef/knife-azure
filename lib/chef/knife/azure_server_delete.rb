@@ -32,7 +32,7 @@ class Chef
 
       banner "knife azure server delete SERVER [SERVER] (options)"
 
-      option :purge_os_disk,
+      option :azure_purge_os_disk,
         :long => "--purge-os-disk",
         :boolean => true,
         :default => true,
@@ -88,7 +88,9 @@ class Chef
             puts "\n"
             confirm("Do you really want to delete this server")
              
-            connection.roles.delete(name, params = { :purge_os_disk => locate_config_value(:purge_os_disk) })
+            connection.roles.delete(name, params = { 
+              :purge_os_disk => locate_config_value(:azure_purge_os_disk) 
+            })
 
             puts "\n"
             ui.warn("Deleted server #{server.name}")
