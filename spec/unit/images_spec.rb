@@ -17,8 +17,6 @@ describe "images" do
         image.label.should_not be_nil
         image.name.should_not be_nil
         image.os.should_not be_nil
-        image.eula.should_not be_nil
-        image.description.should_not be_nil
       end
     end
     it "should contain a linux image" do
