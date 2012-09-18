@@ -25,7 +25,7 @@ module AzureAPI
     def initialize(params)
       @subscription_id = params[:azure_subscription_id]
       @pem_file = File.read find_pem(params[:azure_mgmt_cert])
-      @host_name = params[:azure_host_name]
+      @server_url = params[:azure_server_url]
       @verify_ssl = params[:verify_ssl_cert]
     end
     def find_pem(name)
@@ -42,7 +42,7 @@ module AzureAPI
       pem_file
     end
     def query_azure(service_name, verb = 'get', body = '')
-      request_url = "https://#{@host_name}/#{@subscription_id}/services/#{service_name}"
+      request_url = "https://#{@server_url}/#{@subscription_id}/services/#{service_name}"
       print '.'
       uri = URI.parse(request_url)
       http = http_setup(uri)
@@ -52,7 +52,7 @@ module AzureAPI
       response
     end
     def query_for_completion()
-      request_url = "https://#{@host_name}/#{@subscription_id}/operations/#{@last_request_id}"
+      request_url = "https://#{@server_url}/#{@subscription_id}/operations/#{@last_request_id}"
       uri = URI.parse(request_url)
       http = http_setup(uri)
       request = request_setup(uri, 'get', '')
