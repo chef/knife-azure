@@ -29,7 +29,7 @@ Chef::Log.level=:debug
 
 TEST_PARAMS = {
   :azure_subscription_id => "YOUR_SUBSCRIPTION_ID_HERE",
-  :azure_mgmt_cert => "/home/mohit/.chef/managementCertificate.pem",
+  :azure_mgmt_cert => "AzureManagement.pem",
   :azure_server_url => "management-preview.core.windows-int.net",
   :service_name => "hostedservices"
 }
