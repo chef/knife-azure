@@ -17,6 +17,7 @@
         <InputEndpoint>
           <LocalPort>22</LocalPort>
           <Name>SSH</Name>
+          <Port>22</Port>
           <Protocol>TCP</Protocol>
         </InputEndpoint>
         <InputEndpoint>
@@ -40,6 +41,7 @@
         <InputEndpoint>
           <LocalPort>75</LocalPort>
           <Name>udpport_75_myVm</Name>
+          <Port>75</Port>
           <Protocol>UDP</Protocol>
         </InputEndpoint>
       </InputEndpoints>
