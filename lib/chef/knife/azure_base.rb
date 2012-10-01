@@ -24,6 +24,9 @@ class Chef
   class Knife
     module AzureBase
 
+      # PREFIX for cloud-specific options, segregation from other plugins while using the same knife.rb
+      DEFAULT_CLOUD_PREFIX = "azure_" unless const_defined?(:DEFAULT_CLOUD_PREFIX)
+
       # :nodoc:
       # Would prefer to do this in a rational way, but can't be done b/c of
       # Mixlib::CLI's design :(
@@ -69,9 +72,9 @@ class Chef
       def connection
         @connection ||= begin
                           connection = Azure::Connection.new(
-                            :azure_subscription_id => locate_config_value(:azure_subscription_id),
-                            :azure_mgmt_cert => locate_config_value(:azure_mgmt_cert),
-                            :azure_host_name => locate_config_value(:azure_host_name),
+                            :azure_subscription_id => Chef::Config[:knife][:azure_subscription_id],
+                            :azure_mgmt_cert => Chef::Config[:knife][:azure_mgmt_cert],
+                            :azure_host_name => Chef::Config[:knife][:azure_host_name],
                             :verify_ssl_cert => locate_config_value(:verify_ssl_cert)
                           )
                         end        
@@ -79,7 +82,7 @@ class Chef
 
       def locate_config_value(key)
         key = key.to_sym
-        config[key] || Chef::Config[:knife][key]
+        config[key] || Chef::Config[:knife]["#{DEFAULT_CLOUD_PREFIX}#{key}".to_sym]  || Chef::Config[:knife][key]
       end
 
       def msg_pair(label, value, color=:cyan)
