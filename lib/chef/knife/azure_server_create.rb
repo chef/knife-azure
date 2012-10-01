@@ -44,8 +44,7 @@ class Chef
 
       option :bootstrap_protocol,
         :long => "--bootstrap-protocol protocol",
-        :description => "Protocol to bootstrap windows servers. options: winrm/ssh",
-        :default => "winrm"
+        :description => "Protocol to bootstrap windows servers. options: winrm/ssh"
 
       option :chef_node_name,
         :short => "-N NAME",
@@ -417,7 +416,7 @@ class Chef
           :role_size => locate_config_value(:role_size),
           :tcp_endpoints => locate_config_value(:tcp_endpoints),
           :udp_endpoints => locate_config_value(:udp_endpoints),
-          :bootstrap_proto => locate_config_value(:bootstrap_protocol)
+          :bootstrap_proto => locate_config_value(:bootstrap_protocol) || 'winrm'
         }
 
         if is_image_windows?
