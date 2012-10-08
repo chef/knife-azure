@@ -18,12 +18,16 @@
 # limitations under the License.
 #
 
-require 'highline'
 require File.expand_path('../azure_base', __FILE__)
 
 class Chef
   class Knife
     class AzureImageList < Knife
+
+      deps do
+        require 'highline'
+        Chef::Knife.load_deps
+      end
 
       include Knife::AzureBase
 
