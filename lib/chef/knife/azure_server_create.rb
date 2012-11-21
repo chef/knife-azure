@@ -123,7 +123,6 @@ class Chef
         :description => "specifies the name for the virtual machine"
 
       option :host_name,
-        :short => "-H NAME",
         :long => "--host-name NAME",
         :description => "specifies the host name for the virtual machine"
 
@@ -222,15 +221,15 @@ class Chef
         details << ui.color('config', :bold, :blue)
         details << ui.color('winner is', :bold, :blue)
         [
-          :azure_subscription_id, 
-          :azure_mgmt_cert, 
+          :azure_subscription_id,
+          :azure_mgmt_cert,
           :azure_host_name,
-          :role_name, 
-          :host_name, 
-          :ssh_user, 
-          :ssh_password, 
-          :service_location, 
-          :source_image, 
+          :role_name,
+          :host_name,
+          :ssh_user,
+          :ssh_password,
+          :service_location,
+          :source_image,
           :role_size
         ].each do |key|
           key = key.to_sym
@@ -238,7 +237,7 @@ class Chef
           details << Chef::Config[:knife][key].to_s
           details << config[key].to_s
           details << locate_config_value(key)
-        end 
+        end
         puts ui.list(details, :columns_across, 4)
       end
       def is_platform_windows?
@@ -253,13 +252,13 @@ class Chef
         validate!
 
         Chef::Log.info("creating...")
-      
+
         Chef::Log.info("Using the #{locate_config_value(:bootstrap_protocol)} protocol for bootstrapping")
         if not locate_config_value(:hosted_service_name)
           config[:hosted_service_name] = [strip_non_ascii(locate_config_value(:role_name)), random_string].join
         end
 
-        #If Storage Account is not specified, check if the geographic location has one to re-use 
+        #If Storage Account is not specified, check if the geographic location has one to re-use
         if not locate_config_value(:storage_account)
           storage_accts = connection.storageaccounts.all
           storage = storage_accts.find { |storage_acct| storage_acct.location.to_s == locate_config_value(:service_location) }
@@ -327,7 +326,7 @@ class Chef
       end
 
       def bootstrap_common_params(bootstrap)
-        
+
         bootstrap.config[:run_list] = config[:run_list]
         bootstrap.config[:prerelease] = config[:prerelease]
         bootstrap.config[:bootstrap_version] = locate_config_value(:bootstrap_version)
@@ -338,7 +337,7 @@ class Chef
 
 
       def bootstrap_for_windows_node(server, fqdn)
-        if locate_config_value(:bootstrap_protocol) == 'winrm' 
+        if locate_config_value(:bootstrap_protocol) == 'winrm'
             if is_platform_windows?
               require 'em-winrs'
             else
@@ -353,7 +352,7 @@ class Chef
             bootstrap.config[:winrm_transport] = locate_config_value(:winrm_transport)
 
             bootstrap.config[:winrm_port] = locate_config_value(:winrm_port)
-     
+
         elsif locate_config_value(:bootstrap_protocol) == 'ssh'
             bootstrap = Chef::Knife::BootstrapWindowsSsh.new
             bootstrap.config[:ssh_user] = locate_config_value(:ssh_user)
@@ -394,26 +393,26 @@ class Chef
 
       def validate!
         super([
-              :azure_subscription_id, 
-              :azure_mgmt_cert, 
+              :azure_subscription_id,
+              :azure_mgmt_cert,
               :azure_host_name,
-              :role_name, 
-              :host_name, 
-              :service_location, 
-              :source_image, 
+              :role_name,
+              :host_name,
+              :service_location,
+              :source_image,
               :role_size
         ])
       end
 
       def create_server_def
         server_def = {
-          :hosted_service_name => locate_config_value(:hosted_service_name), 
+          :hosted_service_name => locate_config_value(:hosted_service_name),
           :storage_account => locate_config_value(:storage_account),
-          :role_name => locate_config_value(:role_name), 
-          :host_name => locate_config_value(:host_name), 
-          :service_location => locate_config_value(:service_location), 
-          :os_disk_name => locate_config_value(:os_disk_name), 
-          :source_image => locate_config_value(:source_image), 
+          :role_name => locate_config_value(:role_name),
+          :host_name => locate_config_value(:host_name),
+          :service_location => locate_config_value(:service_location),
+          :os_disk_name => locate_config_value(:os_disk_name),
+          :source_image => locate_config_value(:source_image),
           :role_size => locate_config_value(:role_size),
           :tcp_endpoints => locate_config_value(:tcp_endpoints),
           :udp_endpoints => locate_config_value(:udp_endpoints),
