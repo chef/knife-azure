@@ -268,12 +268,14 @@ class Chef
             config[:storage_account] = storage.name.to_s
           end
         end
-        if is_platform_windows?
-          require 'em-winrs'
-        else
-          require 'gssapi'
-          require 'winrm'
-          require 'em-winrm'
+        if is_image_windows?
+          if is_platform_windows?
+            require 'em-winrs'
+          else
+            require 'gssapi'
+            require 'winrm'
+            require 'em-winrm'
+          end
         end
 
         server = connection.deploys.create(create_server_def)
