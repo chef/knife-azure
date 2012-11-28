@@ -367,7 +367,7 @@ class Chef
             exit 1
         end
         bootstrap.name_args = [fqdn]
-        bootstrap.config[:chef_node_name] = config[:chef_node_name] || server.id
+        bootstrap.config[:chef_node_name] = config[:chef_node_name] || server.name
         bootstrap.config[:encrypted_data_bag_secret] = config[:encrypted_data_bag_secret]
         bootstrap.config[:encrypted_data_bag_secret_file] = config[:encrypted_data_bag_secret_file]
         bootstrap_common_params(bootstrap)
