@@ -42,28 +42,28 @@ class Azure
       deployName
     end
     def create(params)
-      unless @connection.hosts.exists(params[:hosted_service_name])
+      unless @connection.hosts.exists(params[:azure_hosted_service_name])
         @connection.hosts.create(params)
       end 
       unless @connection.storageaccounts.exists(params[:storage_account])
         @connection.storageaccounts.create(params)
       end
-      params['deploy_name'] = find(params[:hosted_service_name])
-      if params['deploy_name'] != nil
+      if params[:azure_hosted_service_name] != nil
         role = Role.new(@connection)
         roleXML = role.setup(params)
         ret_val = role.create(params, roleXML)
       else
-        params['deploy_name'] = params[:hosted_service_name]
         deploy = Deploy.new(@connection)
         deployXML = deploy.setup(params)
         ret_val = deploy.create(params, deployXML)
       end
-      if ret_val.css('Error Code').length > 0
+      unless ret_val.nil?
+        if ret_val.css('Error Code').to_s.length > 0
           Chef::Log.fatal 'Unable to create role:' + ret_val.at_css('Error Code').content + ' : ' + ret_val.at_css('Error Message').content
           exit 1
+        end
       end
-      @connection.roles.find(params[:role_name])
+      @connection.roles.find(params[:azure_role_name])
     end
     def delete(rolename)
     end
@@ -100,9 +100,9 @@ class Azure
           'xmlns'=>'http://schemas.microsoft.com/windowsazure',
           'xmlns:i'=>'http://www.w3.org/2001/XMLSchema-instance' 
         ) {
-          xml.Name params['deploy_name']
+          xml.Name params[:azure_hosted_service_name]
           xml.DeploymentSlot 'Production'
-          xml.Label Base64.encode64(params['deploy_name']).strip
+          xml.Label Base64.encode64(params[:azure_hosted_service_name]).strip
           xml.RoleList { xml.Role('i:type'=>'PersistentVMRole') }
         }
       end
@@ -110,7 +110,7 @@ class Azure
       builder.doc
     end
     def create(params, deployXML)
-      servicecall = "hostedservices/#{params[:hosted_service_name]}/deployments"
+      servicecall = "hostedservices/#{params[:azure_hosted_service_name]}/deployments"
       @connection.query_azure(servicecall, "post", deployXML.to_xml) 
     end
   end
