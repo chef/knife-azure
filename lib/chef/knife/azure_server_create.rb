@@ -221,7 +221,6 @@ class Chef
         details << ui.color('config', :bold, :blue)
         details << ui.color('winner is', :bold, :blue)
         [
-
           :azure_subscription_id,
           :azure_mgmt_cert,
           :azure_server_url,
