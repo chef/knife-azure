@@ -47,11 +47,11 @@ class Chef
             :description => "Your Azure PEM file name",
             :proc => Proc.new { |key| Chef::Config[:knife][:azure_mgmt_cert] = key }
 
-          option :azure_host_name,
-            :short => "-H HOSTNAME",
-            :long => "--azure_host_name HOSTNAME",
-            :description => "Your Azure host name",
-            :proc => Proc.new { |key| Chef::Config[:knife][:azure_host_name] = key }
+          option :azure_server_url,
+            :short => "-H AZURE_SERVER_URL",
+            :long => "--azure-server-url AZURE_SERVER_URL",
+            :description => "Your Azure server url.",
+            :proc => Proc.new { |key| Chef::Config[:knife][:azure_server_url] = key }
 
           option :verify_ssl_cert,
             :long => "--verify-ssl-cert",
@@ -60,10 +60,9 @@ class Chef
             :default => false
         end
       end
-
       def is_image_windows?
         images = connection.images
-        target_image = images.all.select { |i| i.name == locate_config_value(:source_image) }
+        target_image = images.all.select { |i| i.name == locate_config_value(:azure_source_image) }
         return target_image[0].os == 'Windows'
       end
       def connection
@@ -71,24 +70,21 @@ class Chef
                           connection = Azure::Connection.new(
                             :azure_subscription_id => locate_config_value(:azure_subscription_id),
                             :azure_mgmt_cert => locate_config_value(:azure_mgmt_cert),
-                            :azure_host_name => locate_config_value(:azure_host_name),
+                            :azure_server_url => locate_config_value(:azure_server_url),
                             :verify_ssl_cert => locate_config_value(:verify_ssl_cert)
                           )
                         end        
       end
-
       def locate_config_value(key)
         key = key.to_sym
         config[key] || Chef::Config[:knife][key]
       end
-
       def msg_pair(label, value, color=:cyan)
         if value && !value.to_s.empty?
           puts "#{ui.color(label, color)}: #{value}"
         end
       end
-
-      def validate!(keys=[:azure_subscription_id, :azure_mgmt_cert, :azure_host_name])
+      def validate!(keys=[:azure_subscription_id, :azure_mgmt_cert, :azure_server_url])
         errors = []
 
         keys.each do |k|
@@ -102,7 +98,6 @@ class Chef
           exit 1
         end
       end
-
     end
   end
 end

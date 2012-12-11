@@ -74,11 +74,11 @@ class Azure
     def create(params)
       builder = Nokogiri::XML::Builder.new do |xml|
         xml.CreateStorageServiceInput('xmlns'=>'http://schemas.microsoft.com/windowsazure') {
-          xml.ServiceName params[:storage_account]
-          xml.Label Base64.encode64(params[:storage_account])
+          xml.ServiceName params[:azure_storage_account]
+          xml.Label Base64.encode64(params[:azure_storage_account])
           xml.Description params[:storage_account_description] || 'Explicitly created storage service'
           # Location defaults to 'West US'
-          xml.Location params[:service_location] || 'West US'
+          xml.Location params[:azure_service_location] || 'West US'
         }
       end
       @connection.query_azure("storageservices", "post", builder.to_xml)

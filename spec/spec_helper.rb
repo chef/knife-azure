@@ -29,8 +29,8 @@ Chef::Log.level=:debug
 
 TEST_PARAMS = {
   :azure_subscription_id => "YOUR_SUBSCRIPTION_ID_HERE",
-  :azure_mgmt_cert => "AzureLinuxCert.pem",
-  :azure_host_name => "management-preview.core.windows-int.net",
+  :azure_mgmt_cert => "AzureManagement.pem",
+  :azure_server_url => "management-preview.core.windows-int.net",
   :service_name => "hostedservices"
 }
 

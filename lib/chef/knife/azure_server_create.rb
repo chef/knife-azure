@@ -42,27 +42,28 @@ class Chef
 
       attr_accessor :initial_sleep_delay
 
-      option :bootstrap_protocol,
+      option :azure_bootstrap_protocol,
         :long => "--bootstrap-protocol protocol",
         :description => "Protocol to bootstrap windows servers. options: winrm/ssh",
-        :default => "winrm"
+        :default => "winrm",
+        :proc => Proc.new { |protocol| Chef::Config[:knife][:azure_bootstrap_protocol] = protocol }
 
       option :chef_node_name,
         :short => "-N NAME",
         :long => "--node-name NAME",
         :description => "The Chef node name for your new node"
 
-      option :ssh_user,
+      option :azure_ssh_user,
         :short => "-x USERNAME",
         :long => "--ssh-user USERNAME",
         :description => "The ssh username"
 
-      option :ssh_password,
+      option :azure_ssh_password,
         :short => "-P PASSWORD",
         :long => "--ssh-password PASSWORD",
         :description => "The ssh password"
 
-      option :identity_file,
+      option :azure_identity_file,
         :short => "-i IDENTITY_FILE",
         :long => "--identity-file IDENTITY_FILE",
         :description => "The SSH identity file used for authentication"
@@ -89,7 +90,7 @@ class Chef
         :proc => Proc.new { |t| Chef::Config[:knife][:template_file] = t },
         :default => false
 
-      option :run_list,
+      option :azure_run_list,
         :short => "-r RUN_LIST",
         :long => "--run-list RUN_LIST",
         :description => "Comma separated list of roles/recipes to apply",
@@ -102,22 +103,22 @@ class Chef
         :boolean => true,
         :default => true
 
-      option :hosted_service_name,
+      option :azure_hosted_service_name,
         :short => "-s NAME",
         :long => "--hosted-service-name NAME",
         :description => "specifies the name for the hosted service"
 
-      option :hosted_service_description,
+      option :azure_hosted_service_description,
         :short => "-D DESCRIPTION",
-        :long => "--hosted_service_description DESCRIPTION",
+        :long => "--hosted-service-description DESCRIPTION",
         :description => "Description for the hosted service"
 
-      option :storage_account,
+      option :azure_storage_account,
         :short => "-a NAME",
         :long => "--storage-account NAME",
         :description => "specifies the name for the hosted service"
 
-      option :role_name,
+      option :azure_role_name,
         :short => "-R name",
         :long => "--role-name NAME",
         :description => "specifies the name for the virtual machine"
@@ -126,36 +127,35 @@ class Chef
         :long => "--host-name NAME",
         :description => "specifies the host name for the virtual machine"
 
-      option :service_location,
+      option :azure_service_location,
         :short => "-m LOCATION",
         :long => "--service-location LOCATION",
         :description => "specify the Geographic location for the virtual machine and services"
 
-      option :os_disk_name,
+      option :azure_os_disk_name,
         :short => "-o DISKNAME",
         :long => "--os-disk-name DISKNAME",
         :description => "unique name for specifying os disk (optional)"
 
-      option :source_image,
+      option :azure_source_image,
         :short => "-I IMAGE",
         :long => "--source-image IMAGE",
         :description => "disk image name to use to create virtual machine"
 
-      option :role_size,
+      option :azure_role_size,
         :short => "-z SIZE",
         :long => "--role-size SIZE",
         :description => "size of virtual machine (ExtraSmall, Small, Medium, Large, ExtraLarge)"
 
-      option :tcp_endpoints,
+      option :azure_tcp_endpoints,
         :short => "-t PORT_LIST",
         :long => "--tcp-endpoints PORT_LIST",
         :description => "Comma separated list of TCP local and public ports to open i.e. '80:80,433:5000'"
 
-      option :udp_endpoints,
+      option :azure_udp_endpoints,
         :short => "-u PORT_LIST",
         :long => "--udp-endpoints PORT_LIST",
         :description => "Comma separated list of UDP local and public ports to open i.e. '80:80,433:5000'"
-
 
       def strip_non_ascii(string)
         string.gsub(/[^0-9a-z ]/i, '')
@@ -166,25 +166,25 @@ class Chef
       end
 
       def tcp_test_winrm(ip_addr, port)
-	    hostname = ip_addr
+  	    hostname = ip_addr
         socket = TCPSocket.new(hostname, port)
-	    return true
-      rescue SocketError
-        sleep 2
-        false
-      rescue Errno::ETIMEDOUT
-        false
-      rescue Errno::EPERM
-        false
-      rescue Errno::ECONNREFUSED
-        sleep 2
-        false
-      rescue Errno::EHOSTUNREACH
-        sleep 2
-        false
-      rescue Errno::ENETUNREACH
-        sleep 2
-        false
+  	    return true
+        rescue SocketError
+          sleep 2
+          false
+        rescue Errno::ETIMEDOUT
+          false
+        rescue Errno::EPERM
+          false
+        rescue Errno::ECONNREFUSED
+          sleep 2
+          false
+        rescue Errno::EHOSTUNREACH
+          sleep 2
+          false
+        rescue Errno::ENETUNREACH
+          sleep 2
+          false
       end
 
       def tcp_test_ssh(fqdn, sshport)
@@ -223,13 +223,13 @@ class Chef
         [
           :azure_subscription_id,
           :azure_mgmt_cert,
-          :azure_host_name,
-          :role_name,
+          :azure_server_url,
+          :azure_role_name,
           :host_name,
-          :ssh_user,
-          :ssh_password,
-          :service_location,
-          :source_image,
+          :azure_ssh_user,
+          :azure_ssh_password,
+          :azure_service_location,
+          :azure_source_image,
           :role_size
         ].each do |key|
           key = key.to_sym
@@ -252,20 +252,19 @@ class Chef
         validate!
 
         Chef::Log.info("creating...")
-
-        Chef::Log.info("Using the #{locate_config_value(:bootstrap_protocol)} protocol for bootstrapping")
-        if not locate_config_value(:hosted_service_name)
-          config[:hosted_service_name] = [strip_non_ascii(locate_config_value(:role_name)), random_string].join
+        Chef::Log.info("Using the #{locate_config_value(:azure_bootstrap_protocol)} protocol for bootstrapping")
+        if not locate_config_value(:azure_hosted_service_name)
+          config[:azure_hosted_service_name] = [strip_non_ascii(locate_config_value(:azure_role_name)), random_string].join
         end
 
         #If Storage Account is not specified, check if the geographic location has one to re-use
-        if not locate_config_value(:storage_account)
+        if not locate_config_value(:azure_storage_account)
           storage_accts = connection.storageaccounts.all
-          storage = storage_accts.find { |storage_acct| storage_acct.location.to_s == locate_config_value(:service_location) }
+          storage = storage_accts.find { |storage_acct| storage_acct.location.to_s == locate_config_value(:azure_service_location) }
           if not storage
-            config[:storage_account] = [strip_non_ascii(locate_config_value(:role_name)), random_string].join.downcase
+            config[:azure_storage_account] = [strip_non_ascii(locate_config_value(:azure_role_name)), random_string].join.downcase
           else
-            config[:storage_account] = storage.name.to_s
+            config[:azure_storage_account] = storage.name.to_s
           end
         end
         if is_image_windows?
@@ -282,7 +281,7 @@ class Chef
 
         puts("\n")
         if is_image_windows?
-          if locate_config_value(:bootstrap_protocol) == 'ssh'
+          if locate_config_value(:azure_bootstrap_protocol) == 'ssh'
             fqdn = server.sshipaddress
             port = server.sshport
             print "\n#{ui.color("Waiting for sshd on #{fqdn}:#{port}", :magenta)}"
@@ -292,7 +291,7 @@ class Chef
               puts("done")
            }
 
-          elsif locate_config_value(:bootstrap_protocol) == 'winrm'
+          elsif locate_config_value(:azure_bootstrap_protocol) == 'winrm'
             fqdn = server.winrmipaddress
             port = server.winrmport
 
@@ -309,8 +308,8 @@ class Chef
         else
           unless server && server.sshipaddress && server.sshport
             Chef::Log.fatal("server not created")
-          exit 1
-        end
+            exit 1
+          end
 
         fqdn = server.sshipaddress
         port = server.sshport
@@ -328,8 +327,7 @@ class Chef
       end
 
       def bootstrap_common_params(bootstrap)
-
-        bootstrap.config[:run_list] = config[:run_list]
+        bootstrap.config[:run_list] = config[:azure_run_list]
         bootstrap.config[:prerelease] = config[:prerelease]
         bootstrap.config[:bootstrap_version] = locate_config_value(:bootstrap_version)
         bootstrap.config[:distro] = locate_config_value(:distro)
@@ -339,7 +337,7 @@ class Chef
 
 
       def bootstrap_for_windows_node(server, fqdn)
-        if locate_config_value(:bootstrap_protocol) == 'winrm'
+        if locate_config_value(:azure_bootstrap_protocol) == 'winrm'
             if is_platform_windows?
               require 'em-winrs'
             else
@@ -354,13 +352,12 @@ class Chef
             bootstrap.config[:winrm_transport] = locate_config_value(:winrm_transport)
 
             bootstrap.config[:winrm_port] = locate_config_value(:winrm_port)
-
-        elsif locate_config_value(:bootstrap_protocol) == 'ssh'
+        elsif locate_config_value(:azure_bootstrap_protocol) == 'ssh'
             bootstrap = Chef::Knife::BootstrapWindowsSsh.new
-            bootstrap.config[:ssh_user] = locate_config_value(:ssh_user)
-            bootstrap.config[:ssh_password] = locate_config_value(:ssh_password)
+            bootstrap.config[:ssh_user] = locate_config_value(:azure_ssh_user)
+            bootstrap.config[:ssh_password] = locate_config_value(:azure_ssh_password)
             bootstrap.config[:ssh_port] = locate_config_value(:ssh_port)
-            bootstrap.config[:identity_file] = locate_config_value(:identity_file)
+            bootstrap.config[:identity_file] = locate_config_value(:azure_identity_file)
             bootstrap.config[:no_host_key_verify] = locate_config_value(:no_host_key_verify)
         else
             ui.error("Unsupported Bootstrapping Protocol. Supported : winrm, ssh")
@@ -376,16 +373,16 @@ class Chef
       def bootstrap_for_node(server,fqdn,port)
         bootstrap = Chef::Knife::Bootstrap.new
         bootstrap.name_args = [fqdn]
-        bootstrap.config[:run_list] = config[:run_list]
-        bootstrap.config[:ssh_user] = locate_config_value(:ssh_user)
-        bootstrap.config[:ssh_password] = locate_config_value(:ssh_password)
+        bootstrap.config[:run_list] = config[:azure_run_list]
+        bootstrap.config[:ssh_user] = locate_config_value(:azure_ssh_user)
+        bootstrap.config[:ssh_password] = locate_config_value(:azure_ssh_password)
         bootstrap.config[:ssh_port] = port
-        bootstrap.config[:identity_file] = locate_config_value(:identity_file)
+        bootstrap.config[:identity_file] = locate_config_value(:azure_identity_file)
         bootstrap.config[:chef_node_name] = locate_config_value(:chef_node_name) || server.name
         bootstrap.config[:prerelease] = locate_config_value(:prerelease)
         bootstrap.config[:bootstrap_version] = locate_config_value(:bootstrap_version)
         bootstrap.config[:distro] = locate_config_value(:distro)
-        bootstrap.config[:use_sudo] = true unless locate_config_value(:ssh_user) == 'root'
+        bootstrap.config[:use_sudo] = true unless locate_config_value(:azure_ssh_user) == 'root'
         bootstrap.config[:template_file] = config[:template_file]
         bootstrap.config[:environment] = locate_config_value(:environment)
         # may be needed for vpc_mode
@@ -397,39 +394,39 @@ class Chef
         super([
               :azure_subscription_id,
               :azure_mgmt_cert,
-              :azure_host_name,
-              :role_name,
+              :azure_server_url,
+              :azure_role_name,
               :host_name,
-              :service_location,
-              :source_image,
+              :azure_service_location,
+              :azure_source_image,
               :role_size
         ])
       end
 
       def create_server_def
         server_def = {
-          :hosted_service_name => locate_config_value(:hosted_service_name),
-          :storage_account => locate_config_value(:storage_account),
-          :role_name => locate_config_value(:role_name),
+          :hosted_service_name => locate_config_value(:azure_hosted_service_name),
+          :storage_account => locate_config_value(:azure_storage_account),
+          :role_name => locate_config_value(:azure_role_name),
           :host_name => locate_config_value(:host_name),
-          :service_location => locate_config_value(:service_location),
-          :os_disk_name => locate_config_value(:os_disk_name),
-          :source_image => locate_config_value(:source_image),
+          :service_location => locate_config_value(:azure_service_location),
+          :os_disk_name => locate_config_value(:azure_os_disk_name),
+          :source_image => locate_config_value(:azure_source_image),
           :role_size => locate_config_value(:role_size),
-          :tcp_endpoints => locate_config_value(:tcp_endpoints),
-          :udp_endpoints => locate_config_value(:udp_endpoints),
-          :bootstrap_proto => locate_config_value(:bootstrap_protocol)
+          :tcp_endpoints => locate_config_value(:azure_tcp_endpoints),
+          :udp_endpoints => locate_config_value(:azure_udp_endpoints),
+          :bootstrap_proto => locate_config_value(:azure_bootstrap_protocol)
         }
 
         if is_image_windows?
           server_def[:os_type] = 'Windows'
           server_def[:admin_password] = locate_config_value(:winrm_password)
-          server_def[:bootstrap_proto] = locate_config_value(:bootstrap_protocol)
+          server_def[:bootstrap_proto] = locate_config_value(:azure_bootstrap_protocol)
         else
           server_def[:os_type] = 'Linux'
           server_def[:bootstrap_proto] = 'ssh'
-          server_def[:ssh_user] = locate_config_value(:ssh_user)
-          server_def[:ssh_password] = locate_config_value(:ssh_password)
+          server_def[:ssh_user] = locate_config_value(:azure_ssh_user)
+          server_def[:ssh_password] = locate_config_value(:azure_ssh_password)
         end
         server_def
       end

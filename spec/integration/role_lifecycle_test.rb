@@ -8,13 +8,13 @@ describe "role lifecycle" do
     @connection = Azure::Connection.new(connection_params)
     arbitrary = rand(1000) + 1
     @params = { 
-      :hosted_service_name=>'service002',
-      :role_name=>'role' + arbitrary.to_s,
+      :azure_hosted_service_name=>'service002',
+      :azure_role_name=>'role' + arbitrary.to_s,
       :host_name=>'host' + arbitrary.to_s,
-      :ssh_user=>'jetstream',
-      :ssh_password=>'jetstream1!',
+      :azure_ssh_user=>'jetstream',
+      :azure_ssh_password=>'jetstream1!',
       :media_location_prefix=>'auxpreview104',
-      :source_image=>'SUSE__OpenSUSE64121-03192012-en-us-15GB',
+      :azure_source_image=>'SUSE__OpenSUSE64121-03192012-en-us-15GB',
       :role_size=>'ExtraSmall'
     }
   end
@@ -39,9 +39,9 @@ describe "role lifecycle" do
     # create 5 new roles
     ['001', '002', '003', '004', '005'].each do |val|
       arbitrary = rand(1000) + 1
-      @params[:role_name]='role' + val + arbitrary.to_s
+      @params[:azure_role_name]='role' + val + arbitrary.to_s
       @params[:host_name]='host' + val
-      Chef::Log.info 'creating a new role named ' + @params[:role_name]
+      Chef::Log.info 'creating a new role named ' + @params[:azure_role_name]
       @connection.deploys.create(@params)
     end
     
