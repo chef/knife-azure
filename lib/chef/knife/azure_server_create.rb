@@ -361,7 +361,7 @@ class Chef
             bootstrap.config[:ssh_password] = locate_config_value(:ssh_password)
             bootstrap.config[:ssh_port] = locate_config_value(:ssh_port)
             bootstrap.config[:identity_file] = locate_config_value(:identity_file)
-            bootstrap.config[:no_host_key_verify] = locate_config_value(:no_host_key_verify)
+            bootstrap.config[:host_key_verify] = locate_config_value(:host_key_verify)
         else
             ui.error("Unsupported Bootstrapping Protocol. Supported : winrm, ssh")
             exit 1
