@@ -95,8 +95,7 @@ option :chef_node_name,
 option :ssh_user,
   :short => "-x USERNAME",
   :long => "--ssh-user USERNAME",
-  :description => "The ssh username",
-  :default => "root"
+  :description => "The ssh username"
 
 option :ssh_password,
   :short => "-P PASSWORD",
@@ -115,29 +114,33 @@ option :prerelease,
 option :bootstrap_version,
   :long => "--bootstrap-version VERSION",
   :description => "The version of Chef to install",
+  :proc => Proc.new { |v| Chef::Config[:knife][:bootstrap_version] = v }
 
 option :distro,
   :short => "-d DISTRO",
   :long => "--distro DISTRO",
   :description => "Bootstrap a distro using a template",
-  :default => "ubuntu10.04-gems"
+  :proc => Proc.new { |d| Chef::Config[:knife][:distro] = d },
+  :default => "chef-full"
 
 option :template_file,
   :long => "--template-file TEMPLATE",
   :description => "Full path to location of template to use",
+  :proc => Proc.new { |t| Chef::Config[:knife][:template_file] = t },
   :default => false
 
 option :run_list,
   :short => "-r RUN_LIST",
   :long => "--run-list RUN_LIST",
   :description => "Comma separated list of roles/recipes to apply",
+  :proc => lambda { |o| o.split(/[\s,]+/) },
   :default => []
 
-option :no_host_key_verify,
-  :long => "--no-host-key-verify",
-  :description => "Disable host key verification",
+option :host_key_verify,
+  :long => "--[no-]host-key-verify",
+  :description => "Verify host key, enabled by default.",
   :boolean => true,
-  :default => false
+  :default => true
 
 option :hosted_service_name,
   :short => "-s NAME",
@@ -149,25 +152,24 @@ option :hosted_service_description,
   :long => "--hosted_service_description DESCRIPTION",
   :description => "Description for the hosted service"
 
-option :role_name,
-  :short => "-R name",
-  :long => "-- role-name NAME",
-  :description => "specifies the name for the virtual machine"
-
-option :host_name,
-  :short => "-H NAME",
-  :long => "--host-name NAME",
-  :description => "specifies the host name for the virtual machine"
-
 option :storage_account,
   :short => "-a NAME",
   :long => "--storage-account NAME",
   :description => "specifies the name for the hosted service"
 
+option :role_name,
+  :short => "-R name",
+  :long => "--role-name NAME",
+  :description => "specifies the name for the virtual machine"
+
+option :host_name,
+  :long => "--host-name NAME",
+  :description => "specifies the host name for the virtual machine"
+
 option :service_location,
   :short => "-m LOCATION",
   :long => "--service-location LOCATION",
-  :description => "specify the Geographic location for the virtual machine and services. eg. West US, East US, North Europe East Asia etc"
+  :description => "specify the Geographic location for the virtual machine and services"
 
 option :os_disk_name,
   :short => "-o DISKNAME",
