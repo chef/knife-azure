@@ -26,7 +26,7 @@ Additionally there are functional and integration tests, that require working Az
     bundle exec rake functional
     bundle exec rake integration
 
-The Azure credentials can be setup in the TEST_PARAMS map in the spec/rspec_helper.rb file.
+The Azure credentials can be setup in the TEST\_PARAMS map in the spec/spec\_helper.rb file.
 NOTE: These tests will create services in the Azure cloud that will incur charges.
 
 Any new feature should have unit tests included with the patch with good code coverage to help protect it from future changes.
