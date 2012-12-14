@@ -5,7 +5,6 @@ We are glad you want to contribute to knife-azure project! The first step is the
 The [Chef CONTRIBUTING.md](https://github.com/opscode/chef/blob/master/CONTRIBUTING.md) contains important information regarding all the open source projects under Chef.
 You can find the answers to additional frequently asked questions [on the wiki](http://wiki.opscode.com/display/chef/How+to+Contribute).
 
-
 ## Functional and Unit Tests
 
 There are rspec unit tests in the 'spec' directory. If you don't have rspec already installed, you can use the 'bundler'
@@ -42,10 +41,12 @@ and accounting for it.
 
 Opscode regularly reviews code contributions and provides suggestions for improvement in the code itself or the implementation.
 
-We find contributions by searching the ticket tracker for _resolved_ tickets with a status of _fixed_. If we have feedback we will
+We find contributions by searching the ticket tracker for tickets with a status of _Fix Provided_. If we have feedback we will
 reopen the ticket and you should resolve it again when you've made the changes or have a response to our feedback. When we believe
-the patch is ready to be merged, we will tag the _Code Reviewed_ field with _Reviewed_.
+the patch is ready to be merged, we will update the ticket status to _Fix Reviewed_
 
-Depending on the project, these tickets are then merged within a week or two, depending on the current release cycle.
+Depending on the project, these tickets are then merged within a week or two, depending on the current release cycle. At this point the ticket status will be updated to _Fix Committed_ or _Closed_.
 
-notes are available on the [Opscode blog](http://www.opscode.com/blog).
+Please see the [Code Review](http://wiki.opscode.com/display/chef/Code+Review) page on the wiki for additional information.
+
+Release notes are usually available on the [Opscode blog](http://www.opscode.com/blog) or the [Chef](lists.opscode.com/sympa/info/chef) mailing list.
