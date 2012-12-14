@@ -1,7 +1,7 @@
 require File.expand_path(File.dirname(__FILE__) + '/../spec_helper')
 require File.expand_path(File.dirname(__FILE__) + '/query_azure_mock')
 
-describe "roles" do 
+describe "roles" do
   include AzureSpecHelper
   include QueryAzureMock
   before do
@@ -10,7 +10,7 @@ describe "roles" do
   context 'delete a role' do
     context 'when the role is not the only one in a deployment' do
       it 'should pass in correct name, verb, and body' do
-        @connection.roles.delete('vm002');
+        @connection.roles.delete('vm002', {:purge_os_disk => false});
         @deletename.should == 'hostedservices/service001/deployments/deployment001/roles/vm002'
         @deleteverb.should == 'delete'
         @deletebody.should == nil
@@ -20,7 +20,7 @@ describe "roles" do
   context 'delete a role' do
     context 'when the role is the only one in a deployment' do
       it 'should pass in correct name, verb, and body' do
-        @connection.roles.delete('vm01');
+        @connection.roles.delete('vm01', {:purge_os_disk => false});
         @deletename.should == 'hostedservices/service002/deployments/testrequest'
         @deleteverb.should == 'delete'
         @deletebody.should == nil
@@ -30,8 +30,8 @@ describe "roles" do
   context 'create a new role' do
     it 'should pass in expected body' do
       submittedXML=Nokogiri::XML readFile('create_role.xml')
-      params = { 
-        :hosted_service_name=>'service001', 
+      params = {
+        :hosted_service_name=>'service001',
         :role_name=>'vm01',
         :host_name=>'myVm',
         :ssh_user=>'jetstream',
@@ -42,7 +42,9 @@ describe "roles" do
         :role_size=>'ExtraSmall',
         :tcp_endpoints=>'44:45,55:55',
         :udp_endpoints=>'65:65,75',
-        :storage_account=>'storageaccount001'
+        :storage_account=>'storageaccount001',
+        :bootstrap_proto=>'ssh',
+        :os_type=>'Linux'
 
       }
       deploy = @connection.deploys.create(params)
@@ -58,7 +60,7 @@ describe "roles" do
   context 'create a new deployment' do
     it 'should pass in expected body' do
       submittedXML=Nokogiri::XML readFile('create_deployment.xml')
-      params = { 
+      params = {
         :hosted_service_name=>'unknown_yet',
         :role_name=>'vm01',
         :host_name=>'myVm',
@@ -68,7 +70,9 @@ describe "roles" do
         :os_disk_name=>'disk004Test',
         :source_image=>'SUSE__OpenSUSE64121-03192012-en-us-15GB',
         :role_size=>'ExtraSmall',
-        :storage_account=>'storageaccount001'
+        :storage_account=>'storageaccount001',
+        :bootstrap_proto=>'ssh',
+        :os_type=>'Linux'
       }
       deploy = @connection.deploys.create(params)
       #this is a cheesy workaround to make equivalent-xml happy

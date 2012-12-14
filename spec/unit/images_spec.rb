@@ -26,7 +26,7 @@ describe "images" do
       foundLinux = false
       items.each do |item|
         if item.os == 'Linux'
-          foundLinux = true 
+          foundLinux = true
         end
       end
       foundLinux.should == true
