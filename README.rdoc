@@ -12,7 +12,7 @@ Follow these steps to generate the certificate
 
 ==== On Linux/Mac(Homebrew)
  base64 -d cert.pfx > cert_decoded.pfx
- 
+
 ==== On Windows
 You can decode and extract the PFX file using powershell or a free windows base 64 decoder such as http://www.fourmilab.ch/webtools/base64/base64.zip,
 
@@ -24,13 +24,13 @@ You can decode and extract the PFX file using powershell or a free windows base 
  openssl pkcs12 -in cert_decoded.pfx -out managementCertificate.pem -nodes
 
 ==== On Windows
- Use powershell & run following command. If openssl.exe not already installed it can be downloaded from http://www.openssl.org/related/binaries.html (Note: openssl dependents on Microsoft Visual C++ Redistributable package (x86) which must be installed for openssl to function properly). 
+ Use powershell & run following command. If openssl.exe not already installed it can be downloaded from http://www.openssl.org/related/binaries.html (Note: openssl dependents on Microsoft Visual C++ Redistributable package (x86) which must be installed for openssl to function properly).
 
  openssl base64 -d -A -in cert_decoded.pfx -out cert_decode.der
 
  openssl pkcs12 -in cert_decoded.der -out managementCertificate.pem -nodes
 
-You might be asked to enter a password which is usually blank. 
+You might be asked to enter a password which is usually blank.
 You might be also asked to enter a passphrase. Please enter the phrase of your choice.
 
 It is possible to generate your own certificates and upload them. More Detailed Documentation about the Management Certificates is available : https://www.windowsazure.com/en-us/manage/linux/common-tasks/manage-certificates/
@@ -52,18 +52,13 @@ rake install
 
 Depending on your system’s configuration, you may need to run this command with root privileges.
 
-==Requirements:
-
-You must use the '-N NODE_NAME' flag with 'knife azure' to specify a node name to be used by Chef that is less than 91 characters.
-
-For more information, see http://tickets.opscode.com/browse/CHEF-3095
 
 ==Requirements for Bootstrapping Windows:
 knife-azure depends on knife-windows: https://github.com/opscode/knife-windows to bootstrap Windows machines via winrm(Basic, NTLM and Kerberos) or ssh.
 
 The distro/template to be used for the same is: https://github.com/opscode/knife-windows/blob/master/lib/chef/knife/bootstrap/windows-chef-client-msi.erb
 
-Windows source images should have the WinRM service enabled and the authentication should be set accordingly(Basic, NTLM and Kerberos). 
+Windows source images should have the WinRM service enabled and the authentication should be set accordingly(Basic, NTLM and Kerberos).
 
 
 ==Configuration:
