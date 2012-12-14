@@ -74,7 +74,7 @@ class Chef
                             :azure_host_name => locate_config_value(:azure_host_name),
                             :verify_ssl_cert => locate_config_value(:verify_ssl_cert)
                           )
-                        end        
+                        end
       end
 
       def locate_config_value(key)
@@ -94,7 +94,7 @@ class Chef
         keys.each do |k|
           pretty_key = k.to_s.gsub(/_/, ' ').gsub(/\w+/){ |w| (w =~ /(ssh)|(aws)/i) ? w.upcase  : w.capitalize }
           if locate_config_value(k).nil?
-            errors << "You did not provide a valid '#{pretty_key}' value."
+            errors << "You did not provide a valid '#{pretty_key}' value. Please set knife[:#{k}] in your knife.rb or pass as option"
           end
         end
 
