@@ -7,15 +7,17 @@ describe "role lifecycle" do
     connection_params = TEST_PARAMS
     @connection = Azure::Connection.new(connection_params)
     arbitrary = rand(1000) + 1
-    @params = { 
+    @params = {
       :hosted_service_name=>'service002',
       :role_name=>'role' + arbitrary.to_s,
       :host_name=>'host' + arbitrary.to_s,
       :ssh_user=>'jetstream',
       :ssh_password=>'jetstream1!',
-      :media_location_prefix=>'auxpreview104',
-      :source_image=>'SUSE__OpenSUSE64121-03192012-en-us-15GB',
-      :role_size=>'ExtraSmall'
+      :storage_account=>'auxpreview104',
+      :source_image=>'OpenLogic__OpenLogic-CentOS-62-20120531-en-us-30GB.vhd',
+      :role_size=>'ExtraSmall',
+      :bootstrap_proto=>'ssh',
+      :os_type=>'Linux'
     }
   end
   # ToFix - breaks because it does not refresh each role
@@ -26,7 +28,7 @@ describe "role lifecycle" do
     Chef::Log.info 'deleting any existing roles'
     @connection.roles.all.each do |role|
       Chef::Log.info 'deleting role' + role.name
-      @connection.roles.delete role.name
+      @connection.roles.delete(role.name, {:purge_os_disk => false})
       break
     end
 
@@ -36,15 +38,14 @@ describe "role lifecycle" do
       @connection.hosts.delete host.name
     end
 
-    # create 5 new roles
-    ['001', '002', '003', '004', '005'].each do |val|
-      arbitrary = rand(1000) + 1
-      @params[:role_name]='role' + val + arbitrary.to_s
-      @params[:host_name]='host' + val
-      Chef::Log.info 'creating a new role named ' + @params[:role_name]
-      @connection.deploys.create(@params)
-    end
-    
+    # create a new role
+    arbitrary = rand(1000) + 1
+    @params[:role_name]='role' + arbitrary.to_s
+    @params[:host_name]='host' + arbitrary.to_s
+    Chef::Log.info 'creating a new role named ' + @params[:role_name]
+    @connection.deploys.create(@params)
+
+
     # refresh the roles list
     Chef::Log.info 'refreshing roles'
     @connection.roles.all

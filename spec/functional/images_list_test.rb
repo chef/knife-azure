@@ -7,7 +7,7 @@ describe "Connection" do
     @items = @connection.images.all
   end
 
-  it "should be contain images" do 
+  it "should be contain images" do
     @items.length.should be > 1
   end
   it "each image should have all fields valid" do
@@ -16,8 +16,6 @@ describe "Connection" do
       image.label.should_not be_nil
       image.name.should_not be_nil
       image.os.should_not be_nil
-      image.eula.should_not be_nil
-      image.description.should_not be_nil
     end
   end
 
