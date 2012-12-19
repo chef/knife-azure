@@ -69,8 +69,12 @@ module AzureAPI
         http.verify_mode = OpenSSL::SSL::VERIFY_NONE
       end
       http.use_ssl = true
-      http.cert = OpenSSL::X509::Certificate.new(@pem_file)
-      http.key = OpenSSL::PKey::RSA.new(@pem_file)
+      begin
+        http.cert = OpenSSL::X509::Certificate.new(@pem_file)
+        http.key = OpenSSL::PKey::RSA.new(@pem_file)
+      rescue OpenSSL::X509::CertificateError => err
+        raise "Invalid Azure Certificate: #{err}"
+      end
       http
     end
     def request_setup(uri, verb, body)
@@ -95,7 +99,7 @@ module AzureAPI
       puts response.code
       puts "=== response.inspect ==="
       puts response.inspect
-      puts "=== all of the headers ===" 
+      puts "=== all of the headers ==="
       puts response.each_header { |h, j| puts h.inspect + ' : ' + j.inspect}
     end
   end
