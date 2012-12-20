@@ -144,7 +144,8 @@ class Chef
       option :role_size,
         :short => "-z SIZE",
         :long => "--role-size SIZE",
-        :description => "size of virtual machine (ExtraSmall, Small, Medium, Large, ExtraLarge)"
+        :description => "size of virtual machine (ExtraSmall, Small, Medium, Large, ExtraLarge)",
+        :default => 'Small'
 
       option :tcp_endpoints,
         :short => "-t PORT_LIST",
@@ -225,7 +226,7 @@ class Chef
           :azure_mgmt_cert,
           :azure_host_name,
           :role_name,
-          :host_name,
+          :host_name || :role_name,
           :ssh_user,
           :ssh_password,
           :service_location,
@@ -253,7 +254,6 @@ class Chef
 
         Chef::Log.info("creating...")
 
-        Chef::Log.info("Using the #{locate_config_value(:bootstrap_protocol)} protocol for bootstrapping")
         if not locate_config_value(:hosted_service_name)
           config[:hosted_service_name] = [strip_non_ascii(locate_config_value(:role_name)), random_string].join
         end
@@ -399,10 +399,9 @@ class Chef
               :azure_mgmt_cert,
               :azure_host_name,
               :role_name,
-              :host_name,
               :service_location,
               :source_image,
-              :role_size
+              :role_size,
         ])
       end
 
@@ -411,7 +410,7 @@ class Chef
           :hosted_service_name => locate_config_value(:hosted_service_name),
           :storage_account => locate_config_value(:storage_account),
           :role_name => locate_config_value(:role_name),
-          :host_name => locate_config_value(:host_name),
+          :host_name => locate_config_value(:host_name) || locate_config_value(:role_name),
           :service_location => locate_config_value(:service_location),
           :os_disk_name => locate_config_value(:os_disk_name),
           :source_image => locate_config_value(:source_image),
@@ -423,11 +422,18 @@ class Chef
 
         if is_image_windows?
           server_def[:os_type] = 'Windows'
+          if not locate_config_value(:winrm_password) or not locate_config_value(:bootstrap_protocol)
+            ui.error("WinRM Password and Bootstrapping Protocol are compulsory parameters")
+          end
           server_def[:admin_password] = locate_config_value(:winrm_password)
           server_def[:bootstrap_proto] = locate_config_value(:bootstrap_protocol)
         else
           server_def[:os_type] = 'Linux'
           server_def[:bootstrap_proto] = 'ssh'
+          if not locate_config_value(:ssh_user) or not locate_config_value(:ssh_password)
+            ui.error("SSH User and SSH Password are compulsory parameters")
+            exit 1
+          end
           server_def[:ssh_user] = locate_config_value(:ssh_user)
           server_def[:ssh_password] = locate_config_value(:ssh_password)
         end
