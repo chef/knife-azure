@@ -71,10 +71,10 @@ module AzureAPI
       http.use_ssl = true
       begin
         http.cert = OpenSSL::X509::Certificate.new(@pem_file)
-        http.key = OpenSSL::PKey::RSA.new(@pem_file)
       rescue OpenSSL::X509::CertificateError => err
         raise "Invalid Azure Certificate: #{err}"
       end
+        http.key = OpenSSL::PKey::RSA.new(@pem_file)
       http
     end
     def request_setup(uri, verb, body)
