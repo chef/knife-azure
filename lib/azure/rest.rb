@@ -72,7 +72,7 @@ module AzureAPI
       begin
         http.cert = OpenSSL::X509::Certificate.new(@pem_file)
       rescue OpenSSL::X509::CertificateError => err
-        raise "Invalid Azure Certificate: #{err}"
+        raise "Invalid Azure Certificate pem file. Error: #{err}"
       end
         http.key = OpenSSL::PKey::RSA.new(@pem_file)
       http
