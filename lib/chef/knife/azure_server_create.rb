@@ -157,6 +157,12 @@ class Chef
         :long => "--udp-endpoints PORT_LIST",
         :description => "Comma separated list of UDP local and public ports to open i.e. '80:80,433:5000'"
 
+      option :use_sudo_password,
+        :long => "--sudo-use-password",
+        :description => "Execute the bootstrap via sudo with password",
+        :boolean => true,
+        :default => true
+
 
       def strip_non_ascii(string)
         string.gsub(/[^0-9a-z ]/i, '')
@@ -386,6 +392,7 @@ class Chef
         bootstrap.config[:bootstrap_version] = locate_config_value(:bootstrap_version)
         bootstrap.config[:distro] = locate_config_value(:distro)
         bootstrap.config[:use_sudo] = true unless locate_config_value(:ssh_user) == 'root'
+        bootstrap.config[:use_sudo_password] = locate_config_value(:use_sudo_password)
         bootstrap.config[:template_file] = config[:template_file]
         bootstrap.config[:environment] = locate_config_value(:environment)
         # may be needed for vpc_mode
