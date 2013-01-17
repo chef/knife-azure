@@ -64,7 +64,7 @@ class Chef
       def is_image_windows?
         images = connection.images
         target_image = images.all.select { |i| i.name == locate_config_value(:source_image) }
-        return target_image[0].os == 'Windows'
+        return target_image[0].os == 'Windows' if target_image[0]
       end
       def connection
         @connection ||= begin
