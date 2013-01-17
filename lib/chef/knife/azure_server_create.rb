@@ -160,7 +160,8 @@ class Chef
       option :use_sudo_password,
         :long => "--sudo-use-password",
         :description => "Execute the bootstrap via sudo with password",
-        :boolean => true
+        :boolean => true,
+        :default => true
 
 
       def strip_non_ascii(string)
