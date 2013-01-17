@@ -3,35 +3,46 @@
 Description: This plugin supports listing, creating, and deleting Azure instances bootstrapped with chef client.
 
 ==Generating the Management Certifcate (PEM)
+
 The Management Certificate is required for secure communication with the Windows Azure Platform via the REST APIs.
-Follow these steps to generate the certificate
 
-1. Download the settings file from http://go.microsoft.com/fwlink/?LinkId=254432
-2. Extract the data from the ManagementCertificate field into a separate file named - cert.pfx
-3. Decode the certificate file :
+1. Download the .publishsettings file from http://go.microsoft.com/fwlink/?LinkId=254432
+2. Place it in the same directory with your knife.rb
+3. Include this snippit within your knife.rb
 
-==== On Linux/Mac(Homebrew)
- base64 -d cert.pfx > cert_decoded.pfx
+```ruby
+current_dir = File.dirname(__FILE__)
 
-==== On Windows
-You can decode and extract the PFX file using powershell or a free windows base 64 decoder such as http://www.fourmilab.ch/webtools/base64/base64.zip,
+require 'openssl'
+require 'base64'
+require 'uri'
 
- base64.exe -d cert.pfx -> cert_decoded.pfx
+# If there are multiple .publishsettings files
+# This will only grab the first one
+publishfile = File.expand_path(Dir.glob('*publishsettings').first)
+publishxml = open(publishfile).read
 
-4. Convert the decoded PFX file to a PEM file
+# regex search out the interesting bits from the publishsettings xml
+api_url = /(?<=Url=\")(?<url>.*)(?=\")/.match(publishxml)['url']
+subscription_id = /(?<=Id=\")(?<id>.*)(?=\")/.match(publishxml)['id']
+cert_base64 = /(?<=ManagementCertificate=\")(?<cert>.*)(?=\")/.match(publishxml)['cert']
 
-==== On Linux/Mac(Homebrew)
- openssl pkcs12 -in cert_decoded.pfx -out managementCertificate.pem -nodes
+# convert the base64 encoded pks12 cert into a der encoded .pem
+cert_pks12 = Base64.decode64(cert_base64)
+cert = OpenSSL::PKCS12.new cert_pks12
 
-==== On Windows
- Use powershell & run following command. If openssl.exe not already installed it can be downloaded from http://www.openssl.org/related/binaries.html (Note: openssl dependents on Microsoft Visual C++ Redistributable package (x86) which must be installed for openssl to function properly).
+# use the same filename, but with .pem extension
+pemfile=publishfile.sub(/publishsettings/,'pem')
+open(pemfile,'wb') do |f|
+  f.write cert.certificate.to_pem
+  f.write cert.key.to_pem
+end
 
- openssl base64 -d -A -in cert_decoded.pfx -out cert_decode.der
-
- openssl pkcs12 -in cert_decoded.der -out managementCertificate.pem -nodes
-
-You might be asked to enter a password which is usually blank.
-You might be also asked to enter a passphrase. Please enter the phrase of your choice.
+# We pulled all these settings out of the first *.publishsettings file in the current_dir
+knife[:azure_subscription_id]=subscription_id
+knife[:azure_mgmt_cert]=pemfile # defaults to .chef/cacert.pem
+knife[:azure_host_name]=URI(api_url).host
+```
 
 It is possible to generate your own certificates and upload them. More Detailed Documentation about the Management Certificates is available : https://www.windowsazure.com/en-us/manage/linux/common-tasks/manage-certificates/
 
