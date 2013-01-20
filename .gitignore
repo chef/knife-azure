@@ -13,3 +13,6 @@ Gemfile.lock
 
 pkg/
 tmp/
+
+#test data
+properties/
