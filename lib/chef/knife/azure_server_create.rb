@@ -244,10 +244,21 @@ class Chef
       def is_platform_windows?
         return RUBY_PLATFORM.scan('w32').size > 0
       end
-
+      def locate_storage
+        #If the image is user defined; re-use it
+        storage = user_image_storage_host
+        return storage if storage
+        storage_accts = connection.storageaccounts.all
+        storage = storage_accts.find { |storage_acct| storage_acct.location.to_s == locate_config_value(:service_location) }
+        if not storage
+          return [strip_non_ascii(locate_config_value(:role_name)), random_string].join.downcase
+        else
+          return storage.name.to_s
+        end
+      end
       def run
         $stdout.sync = true
-        storage = nil
+        # storage = nil
 
         Chef::Log.info("validating...")
         validate!
@@ -260,14 +271,9 @@ class Chef
 
         #If Storage Account is not specified, check if the geographic location has one to re-use
         if not locate_config_value(:storage_account)
-          storage_accts = connection.storageaccounts.all
-          storage = storage_accts.find { |storage_acct| storage_acct.location.to_s == locate_config_value(:service_location) }
-          if not storage
-            config[:storage_account] = [strip_non_ascii(locate_config_value(:role_name)), random_string].join.downcase
-          else
-            config[:storage_account] = storage.name.to_s
-          end
+          config[:storage_account] = locate_storage
         end
+
         if is_image_windows?
           if is_platform_windows?
             require 'em-winrs'
@@ -386,6 +392,7 @@ class Chef
         bootstrap.config[:bootstrap_version] = locate_config_value(:bootstrap_version)
         bootstrap.config[:distro] = locate_config_value(:distro)
         bootstrap.config[:use_sudo] = true unless locate_config_value(:ssh_user) == 'root'
+        bootstrap.config[:sudo_use_password] = true unless locate_config_value(:ssh_user) == 'root'
         bootstrap.config[:template_file] = config[:template_file]
         bootstrap.config[:environment] = locate_config_value(:environment)
         # may be needed for vpc_mode
