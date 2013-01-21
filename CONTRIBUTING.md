@@ -26,8 +26,10 @@ Additionally there are integration tests, that require working Azure credentials
     `bundle exec rake integration`
 
 ### NOTE: These tests will create services in the Azure cloud that will incur charges.
+
 Setting up the Azure Credentials:
     `mkdir -p spec/integration/properties`
+
     `cp <AZURE_SETTING_DIRECTORY>/publishSettings.xml spec/integration/properties #Copy over your azure settings xml`
 
 ### Developing Integration Tests:
