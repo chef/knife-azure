@@ -14,5 +14,5 @@ Gemfile.lock
 pkg/
 tmp/
 
-#test data
+# test data
 properties/
