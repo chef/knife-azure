@@ -191,15 +191,33 @@ FactoryGirl.define do
     azure_server_url      "#{azure_server_create_params_factory.azure_server_url} "     + valid_host_name
     node_name             "#{azure_server_create_params_factory.node_name} "            + name_of_the_node
     role_name_l           "#{azure_server_create_params_factory.role_name_l} "          + name_of_the_node
-    role_size_l           "#{azure_server_create_params_factory.role_size_l} "          + "Medium"
+    role_size_l           "#{azure_server_create_params_factory.role_size_l} "          + "Small"
     service_location      "#{azure_server_create_params_factory.service_location} "     + "'East US'"
+    # FIXME: Replace the self-created image with Azure-provided image. Pending on CHEF-2821 [http://tickets.opscode.com/browse/CHEF-2821]
     # source_image          "#{azure_server_create_params_factory.source_image} "         + "5112500ae3b842c8b9c604889f8753c3__OpenLogic-CentOS63DEC20121220"
-    #FIXME: Replace the self-created image with Azure-provided image. Pending on CHEF-2821 [http://tickets.opscode.com/browse/CHEF-2821]
     # storage_account_l      "#{azure_server_create_params_factory.storage_account_l} "   + "portalvhdspkd86pp67m296"
     source_image          "#{azure_server_create_params_factory.source_image} "         + "ubuntu_passwordless_sudo"
     host_name_l           "#{azure_server_create_params_factory.host_name_l} "          + name_of_the_node
   end
 
+  factory :azureServerCreateWithCustomImage, class: :AzureKnifeServerCreateParameters do
+    name_of_the_node =    "az#{SecureRandom.hex(4)}"
+    azure_subcription_id  "#{azure_server_create_params_factory.azure_subcription_id} " + "#{valid_subscription_id}"
+    azure_mgmt_cert       "#{azure_server_create_params_factory.azure_mgmt_cert} "      + "#{mgmt_cert_path}"
+    azure_server_url      "#{azure_server_create_params_factory.azure_server_url} "     + valid_host_name
+    node_name             "#{azure_server_create_params_factory.node_name} "            + name_of_the_node
+    role_name_l           "#{azure_server_create_params_factory.role_name_l} "          + name_of_the_node
+    role_size_l           "#{azure_server_create_params_factory.role_size_l} "          + "Medium"
+    service_location      "#{azure_server_create_params_factory.service_location} "     + "'East US'"
+    source_image          "#{azure_server_create_params_factory.source_image} "         + "ubuntu_passwordless_sudo"
+    ssh_username          "#{azure_server_create_params_factory.ssh_username} "         + "azureuser"
+    ssh_password          "#{azure_server_create_params_factory.ssh_password} "         + "azure!Pass0rd"
+    host_name_l           "#{azure_server_create_params_factory.host_name_l} "          + name_of_the_node
+  end
+
+  factory :azureServerCreateWithCustomImageDiffStorageAcct, parent: :azureServerCreateWithCustomImage do
+    storage_account_l      "#{azure_server_create_params_factory.storage_account_l} "   + "portalvhddiffaccount"
+  end
   # Base Factory for delete server
   factory :azureServerDeleteBase, class: AzureKnifeServerDeleteParameters do
     azure_subcription_id  "#{azure_server_create_params_factory.azure_subcription_id} " + "#{valid_subscription_id}"

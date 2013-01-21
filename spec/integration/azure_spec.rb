@@ -2,6 +2,7 @@
 # Author:: Chirag Jog (<chirag@clogeny.com>)
 # Copyright:: Copyright (c) 2012 Opscode, Inc.
 # require 'knife_cloud_tests'
+
 require 'factory_girl'
 require File.expand_path(File.dirname(__FILE__) + '/azure_factories')
 
@@ -215,7 +216,6 @@ def srv_del_test_purge_azure_dspec(test_context, test_case_scene, test_run_expec
   end
 end
 
-
 def srv_del_test_mult_azure_dspec(test_context, test_case_scene, test_run_expect, factory_to_be_exercised)
   context "#{test_context}" do
     let(:instances) { [] }
@@ -258,7 +258,6 @@ def srv_del_test_os_disk_azure_dspec(test_context, test_case_scene, test_run_exp
     end
   end
 end
-
 
 describe 'knife azure' do
   include RSpec::KnifeUtils
@@ -322,7 +321,6 @@ describe 'knife azure' do
   # Test Case: OP_KAP_28, CreateWindowsServerWithSSHAuth
   run_azure_cspec("windows server create", "with SSH auth", expected_params, :azureWindowsServerCreateWithSSHAuth, true)
 
-
   # Test Case: OP_KAP_17, DeleteServerWithoutOSDisk
   run_azure_dspec("server delete", "without OS disk", expected_params, :azureServerDeleteWithoutOSDisk, "delete")
 
@@ -335,13 +333,15 @@ describe 'knife azure' do
   # Test Case: OP_KAP_23, DeleteServerDontPurge
   run_azure_dspec("server delete", "with no purge option", expected_params, :azureServerDeleteDontPurge, "delete")
 
+  run_azure_cspec("server create", "with user-created image", expected_params,:azureServerCreateWithCustomImage, false)
 
   expected_params = {
     :status => "should fail",
-    :stdout => nil,
+    :stdout => "The disk's VHD must be in the same account as the VHD of the source image",
     :stderr => nil
   }
 
+  run_azure_cspec("server create", "with user-created image and in different region", expected_params, :azureServerCreateWithCustomImageDiffStorageAcct, false, false)
   # Test Case: OP_KAP_13, CreateServerWithRootSSHUser
   run_azure_cspec("server create", "without root as ssh password", expected_params, :azureServerCreateWithRootSSHUser, false)
 
@@ -370,7 +370,11 @@ describe 'knife azure' do
 
   run_azure_lspec("server list", "for invalid azure subscription ID", expected_params, :azureServerListInvalidSubscription)
 
-  expected_params[:stdout] = "The location constraint is not valid"
+  expected_params = {
+    :status => "should fail",
+    :stdout => "The location constraint is not valid",
+    :stderr => nil
+  }
   run_azure_cspec("server create", "for invalid service region", expected_params, :azureServerCreateWithInvalidServiceRegion, run_list_cmd = false, run_del_cmd = false)
 
   expected_params = {
