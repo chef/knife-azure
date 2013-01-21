@@ -2,6 +2,7 @@
 # Author:: Chirag Jog (<chirag@clogeny.com>)
 # Copyright:: Copyright (c) 2012 Opscode, Inc.
 # require 'knife_cloud_tests'
+require 'factory_girl'
 require File.expand_path(File.dirname(__FILE__) + '/azure_factories')
 
 require 'knife_cloud_tests'
@@ -369,8 +370,8 @@ describe 'knife azure' do
 
   run_azure_lspec("server list", "for invalid azure subscription ID", expected_params, :azureServerListInvalidSubscription)
 
-  expected_params[:stdout] = "Unable to create"
-  run_azure_cspec("server create", "for invalid service region", expected_params, :azureServerCreateWithInvalidServiceRegion)
+  expected_params[:stdout] = "The location constraint is not valid"
+  run_azure_cspec("server create", "for invalid service region", expected_params, :azureServerCreateWithInvalidServiceRegion, run_list_cmd = false, run_del_cmd = false)
 
   expected_params = {
     :status => "should return empty list",
