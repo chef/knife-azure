@@ -77,6 +77,16 @@ class Chef
                         end        
       end
 
+      def user_image_storage_host
+        require 'uri'
+        images = connection.images
+        target_image = images.all.select { |i| i.name == locate_config_value(:source_image) and i.category == 'User' }
+        return nil if target_image.empty?
+        host = URI(target_image.first.medialink).host
+        hostname = host.split(".").first
+        return hostname
+      end
+
       def locate_config_value(key)
         key = key.to_sym
         config[key] || Chef::Config[:knife][key]
