@@ -5,9 +5,9 @@ We are glad you want to contribute to knife-azure project! The first step is the
 The [Chef CONTRIBUTING.md](https://github.com/opscode/chef/blob/master/CONTRIBUTING.md) contains important information regarding all the open source projects under Chef.
 You can find the answers to additional frequently asked questions [on the wiki](http://wiki.opscode.com/display/chef/How+to+Contribute).
 
-## Functional and Unit Tests
+## Integration and Unit Tests
 
-There are rspec unit tests in the 'spec' directory. If you don't have rspec already installed, you can use the 'bundler'
+There are rspec unit tests in the 'spec/unit' directory. If you don't have rspec already installed, you can use the 'bundler'
 gem to help you get the necessary prerequisites by running `sudo gem install bundler` and then `bundle install` from
 the chef respository. You can run the chef client spec tests by running `rspec spec/*` or `rake spec` from the chef
 directory of the chef repository.
@@ -22,12 +22,18 @@ These tests don't modify your system, and sometimes tests fail because a command
 patch. This should be a simple fix. Other times the failure can show you that an important feature no longer works because of
 your change.
 
-Additionally there are functional and integration tests, that require working Azure credentials as they perform APIs that create services in Azure. They can be simply run using rake:
-    bundle exec rake functional
+Additionally there are integration tests, that require working Azure credentials as they perform APIs that create services in Azure. They can be simply run using rake:
     bundle exec rake integration
 
-The Azure credentials can be setup in the TEST\_PARAMS map in the spec/spec\_helper.rb file.
-NOTE: These tests will create services in the Azure cloud that will incur charges.
+### NOTE: These tests will create services in the Azure cloud that will incur charges.
+Setting up the Azure Credentials:
+    mkdir -p spec/integration/properties
+    cp <AZURE_SETTING_DIRECTORY>/publishSettings.xml spec/integration/properties #Copy over your azure settings xml
+
+### Developing Integration Tests:
+The integration tests are built using the [knife_cloud_tests](http://github.com/chirag_jog/knife_cloud_tests) framework.
+Additional information about how to setup the knife_cloud_tests can be found here [README](https://github.com/chirag-jog/knife_cloud_tests/blob/master/README.md)
+Refer the existing testcases to develop new ones.
 
 Any new feature should have unit tests included with the patch with good code coverage to help protect it from future changes.
 Similarly, patches that fix a bug or regression should have a _regression test_. Simply put, this is a test that would fail

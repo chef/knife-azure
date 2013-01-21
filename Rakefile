@@ -31,7 +31,7 @@ RSpec::Core::RakeTask.new(:functional) do |spec|
 end
 
 RSpec::Core::RakeTask.new(:integration) do |spec|
-  spec.pattern = FileList['spec/integration/**/*_test.rb']
+  spec.pattern = FileList['spec/integration/**/*_spec.rb']
 end
 
 RSpec::Core::RakeTask.new(:rcov) do |spec|
