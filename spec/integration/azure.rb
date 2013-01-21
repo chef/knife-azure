@@ -88,6 +88,7 @@ class AzureKnifeServerCreateParameters
 
 
     def user_ssh_dir
+      require 'tmpdir'
       @_user_ssh_dir ||= Dir.mktmpdir
     end
 

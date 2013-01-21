@@ -193,9 +193,11 @@ FactoryGirl.define do
     role_name_l           "#{azure_server_create_params_factory.role_name_l} "          + name_of_the_node
     role_size_l           "#{azure_server_create_params_factory.role_size_l} "          + "Medium"
     service_location      "#{azure_server_create_params_factory.service_location} "     + "'East US'"
-    source_image          "#{azure_server_create_params_factory.source_image} "         + "5112500ae3b842c8b9c604889f8753c3__OpenLogic-CentOS63DEC20121220"
+    # source_image          "#{azure_server_create_params_factory.source_image} "         + "5112500ae3b842c8b9c604889f8753c3__OpenLogic-CentOS63DEC20121220"
+    #FIXME: Replace the self-created image with Azure-provided image. Pending on CHEF-2821 [http://tickets.opscode.com/browse/CHEF-2821]
+    # storage_account_l      "#{azure_server_create_params_factory.storage_account_l} "   + "portalvhdspkd86pp67m296"
+    source_image          "#{azure_server_create_params_factory.source_image} "         + "ubuntu_passwordless_sudo"
     host_name_l           "#{azure_server_create_params_factory.host_name_l} "          + name_of_the_node
-    storage_account_l      "#{azure_server_create_params_factory.storage_account_l} "   + "portalvhdspkd86pp67m296"
   end
 
   # Base Factory for delete server
