@@ -25,7 +25,6 @@ your change.
 Additionally there are integration tests, that require working Azure credentials as they perform APIs that create services in Azure. They can be simply run using rake:
     `bundle exec rake integration`
 
-### NOTE: These tests will create services in the Azure cloud that will incur charges.
 
 Setting up the Azure Credentials:
     `mkdir -p spec/integration/properties`
@@ -38,7 +37,9 @@ Additional information about how to setup the knife_cloud_tests can be found her
 Refer the existing testcases to develop new ones.
 
 #### NOTE
-Azure images by default expect a password to be supplied for each sudo command which knife bootstrap does not support. Refer [CHEF-2821](http://tickets.opscode.com/browse/CHEF-2821). To work around this issue temporarily, a custom-image with sudo password disabled should be provided.
+1. These tests will create services in the Azure cloud that will incur charges.
+2. Azure images by default expect a password to be supplied for each sudo command which knife bootstrap does not support. Refer [CHEF-2821](http://tickets.opscode.com/browse/CHEF-2821). To work around this issue temporarily, a custom-image with sudo password disabled should be provided.
+3. Specific tests has special pre-requisites incl. precreated storage service, hosted service, roles and recipes.
 
 Any new feature should have unit tests included with the patch with good code coverage to help protect it from future changes.
 Similarly, patches that fix a bug or regression should have a _regression test_. Simply put, this is a test that would fail
