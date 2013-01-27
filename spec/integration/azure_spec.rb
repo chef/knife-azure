@@ -33,6 +33,7 @@ def run_azure_cspec(test_context, test_case_scene, test_run_expect, factory_to_b
     context "#{test_context}" do
       let(:server_create_factory){ FactoryGirl.build(factory_to_be_exercised) }
       # let(:instance_name){ strip_out_command_key("#{server_create_factory.role_name_l}") }
+      let(:timeout) { 1200 }
       let(:command) { prepare_create_srv_cmd_azure_cspec(server_create_factory) }
       after(:each){instance_name = strip_out_command_key("#{server_create_factory.node_name}")}
       context "#{test_case_scene}" do
@@ -103,25 +104,17 @@ def create_srv_azure_dspec(server_create_factory)
   shell_out_command(cmd, "creating instance...")
 end
 
-def create_srvs_azure_dspec(count, os_disk = "")
+def create_srvs_azure_dspec(count)
   for server_count in 0..count
     name_of_the_node    = "az#{SecureRandom.hex(4)}"
     node_name_local     = "#{srv_create_params_fact_azure.node_name} "        + name_of_the_node
     role_name_local     = "#{srv_create_params_fact_azure.role_name_l} "      + name_of_the_node
     host_name_l_local   = "#{srv_create_params_fact_azure.host_name_l} "      + name_of_the_node
-    if os_disk != ""
-      os_disk_name_local  = "#{srv_create_params_fact_azure.os_disk_name} "     + "#{os_disk}"
-      fact =  FactoryGirl.build(:azureServerCreateWithDefaults,
-        node_name: node_name_local,
-        role_name_l: role_name_local,
-        host_name_l:host_name_l_local,
-        os_disk_name: os_disk_name_local)
-    else
-      fact =  FactoryGirl.build(:azureServerCreateWithDefaults,
+    fact =  FactoryGirl.build(:azureServerCreateWithDefaults,
         node_name: node_name_local,
         role_name_l: role_name_local,
         host_name_l:host_name_l_local)
-    end
+
     instances.push fact
     create_srv_azure_dspec(fact)
   end
@@ -247,7 +240,7 @@ end
 def srv_del_test_os_disk_azure_dspec(test_context, test_case_scene, test_run_expect, factory_to_be_exercised)
   context "#{test_context}" do
     let(:instances) { [] }
-    before(:each) {create_srvs_azure_dspec(0, "diskname")}
+    before(:each) {create_srvs_azure_dspec(0)}
     let(:server_delete_factory){ FactoryGirl.build(factory_to_be_exercised) }
     let(:command) { prepare_del_srv_cmd_purge_azure_dspec(server_delete_factory, instances) }
     after(:each) {puts "Test case completed!"}
@@ -270,8 +263,9 @@ describe 'knife azure' do
 
   expected_params = {
                      :status => "should succeed",
-                     :stdout => nil,
-                     :stderr => nil
+                     :stdout => "Chef Run complete",
+                     :stderr => nil,
+                     # :statuscode => 0
                    }
   # Test Case: OP_KAP_1, CreateServerWithDefaults
   run_azure_cspec("server create", "with all default parameters", expected_params, :azureServerCreateWithDefaults, true)
@@ -321,13 +315,21 @@ describe 'knife azure' do
   # Test Case: OP_KAP_28, CreateWindowsServerWithSSHAuth
   run_azure_cspec("windows server create", "with SSH auth", expected_params, :azureWindowsServerCreateWithSSHAuth, true)
 
+
+  expected_params = {
+                     :status => "should succeed",
+                     :stdout => nil,
+                     :stderr => nil,
+                     # :statuscode => 0
+                   }
   # Test Case: OP_KAP_17, DeleteServerWithoutOSDisk
-  run_azure_dspec("server delete", "without OS disk", expected_params, :azureServerDeleteWithoutOSDisk, "delete")
+  #run_azure_dspec("server delete", "without OS disk", expected_params, :azureServerDeleteWithoutOSDisk, "delete")
 
   # Test Case: OP_KAP_18, DeleteServerWithOSDisk
-  run_azure_dspec("server delete", "with OS disk", expected_params, :azureServerDeleteWithOSDisk, "delete_with_os_disk")
+  # run_azure_dspec("server delete", "with OS disk", expected_params, :azureServerDeleteWithOSDisk, "delete_with_os_disk")
 
   # Test Case: OP_KAP_19, DeleteMutipleServers
+
   run_azure_dspec("server delete", "command for multiple servers", expected_params, :azureServerDeleteMultiple, "delete_multiple")
 
   # Test Case: OP_KAP_23, DeleteServerDontPurge
@@ -337,13 +339,13 @@ describe 'knife azure' do
 
   expected_params = {
     :status => "should fail",
-    :stdout => "The disk's VHD must be in the same account as the VHD of the source image",
+    :stdout => nil,
     :stderr => nil
   }
 
-  run_azure_cspec("server create", "with user-created image and in different region", expected_params, :azureServerCreateWithCustomImageDiffStorageAcct, false, false)
   # Test Case: OP_KAP_13, CreateServerWithRootSSHUser
-  run_azure_cspec("server create", "without root as ssh password", expected_params, :azureServerCreateWithRootSSHUser, false)
+
+  run_azure_cspec("server create", "with root as ssh user", expected_params, :azureServerCreateWithRootSSHUser, false)
 
   # Test Case: OP_KAP_14, CreateServerWithInvalidSSHPassword
   run_azure_cspec("server create", "with invalid ssh password", expected_params, :azureServerCreateWithInvalidSSHPassword, false, false)
@@ -356,10 +358,27 @@ describe 'knife azure' do
   # Test Case: OP_KAP_16, DeleteServerThatDoesNotExist
   run_azure_dspec("server delete", "with non existent server", expected_params, :azureServerDeleteNonExistent, "delete_non_existent")
 
+   expected_params = {
+    :status => "should fail",
+    :stdout => "The disk's VHD must be in the same account as the VHD of the source image",
+    :stderr => nil
+  }
+
+  run_azure_cspec("server create", "with user-created image and in different region", expected_params, :azureServerCreateWithCustomImageDiffStorageAcct, false, false)
+
+  expected_params = {
+    :status => "should fail",
+    :stdout => "Error expanding the run_list",
+    :stderr => nil
+  }
   run_azure_cspec("server create", "with invalid role", expected_params, :azureServerCreateWithInvalidRole, false)
 
   # Test Case: OP_KAP_26, CreateServerWithInvalidRecipe
-  # FIXME need to write a custom matcher to validate invalid recipe
+  expected_params = {
+    :status => "should fail",
+    :stdout => "Error Resolving Cookbooks for Run List",
+    :stderr => nil
+  }
   run_azure_cspec("server create", "with invalid recipe", expected_params, :azureServerCreateWithInvalidRecipe, false)
 
 # Test Case: OP_KAP_29, CreateLinuxServerWithWinRM
@@ -372,7 +391,7 @@ describe 'knife azure' do
 
   expected_params = {
     :status => "should fail",
-    :stdout => "The location constraint is not valid",
+    :stdout => nil,
     :stderr => nil
   }
   run_azure_cspec("server create", "for invalid service region", expected_params, :azureServerCreateWithInvalidServiceRegion, run_list_cmd = false, run_del_cmd = false)
