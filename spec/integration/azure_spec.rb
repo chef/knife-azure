@@ -310,7 +310,7 @@ describe 'knife azure' do
   run_azure_cspec("server create", "with role and recipe", expected_params, :azureServerCreateWithRoleAndRecipe, true)
 
   # Test Case: OP_KAP_27, CreateWindowsServerWithWinRMBasicAuth
-  run_azure_cspec("windows server create", "with wimRM Basic auth", expected_params, :azureWindowsServerCreateWithWinRMBasicAuth, true)
+  run_azure_cspec("windows server create", "with WinRM Basic auth", expected_params, :azureWindowsServerCreateWithWinRMBasicAuth, true)
 
   # Test Case: OP_KAP_28, CreateWindowsServerWithSSHAuth
   run_azure_cspec("windows server create", "with SSH auth", expected_params, :azureWindowsServerCreateWithSSHAuth, true)
@@ -382,6 +382,11 @@ describe 'knife azure' do
   run_azure_cspec("server create", "with invalid recipe", expected_params, :azureServerCreateWithInvalidRecipe, false)
 
 # Test Case: OP_KAP_29, CreateLinuxServerWithWinRM
+  expected_params = {
+    :status => "should fail",
+    :stdout => nil,
+    :stderr => nil
+  }
   run_azure_cspec("linux server create", "with WinRM", expected_params, :azureLinuxServerCreateWithWinRM, false, false)
 
 

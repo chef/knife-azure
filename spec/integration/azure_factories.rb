@@ -181,6 +181,7 @@ FactoryGirl.define do
   cert_data, valid_host_name, valid_subscription_id = model_obj_server_create.parse_settings
   mgmt_cert_path = model_obj_server_create.create_user_ssh_key_path(cert_data)
   invalid_mgmt_cert_path = model_obj_server_create.create_user_ssh_key_path(cert_data, mgmt_cert_path + ".invalid",SecureRandom.hex(4))
+  valid_template_file_path  = "knife-windows/lib/chef/knife/bootstrap/windows-chef-client-msi.erb"
 
   # Base Factory for create server
   factory :azureServerCreateBase, class: AzureKnifeServerCreateParameters do
@@ -515,17 +516,22 @@ FactoryGirl.define do
   end
 
   # Test Case: OP_KAP_27, CreateWindowsServerWithWinRMBasicAuth
-  factory :azureWindowsServerCreateWithWinRMBasicAuth, parent: :azureServerCreateBase do
+  factory :azureWindowsServerCreateWithWinRMBasicAuth, class: AzureKnifeServerCreateParameters do
     name_of_the_node =    "az#{SecureRandom.hex(4)}"
+    azure_subcription_id  "#{azure_server_create_params_factory.azure_subcription_id} " + "#{valid_subscription_id}"
+    azure_mgmt_cert       "#{azure_server_create_params_factory.azure_mgmt_cert} "      + "#{mgmt_cert_path}"
+    azure_server_url      "#{azure_server_create_params_factory.azure_server_url} "     + valid_host_name
     node_name             "#{azure_server_create_params_factory.node_name} "            + name_of_the_node
     role_name_l           "#{azure_server_create_params_factory.role_name_l} "          + name_of_the_node
+    role_size_l           "#{azure_server_create_params_factory.role_size_l} "          + "Small"
+    service_location      "#{azure_server_create_params_factory.service_location} "     + "'East US'"
     host_name_l           "#{azure_server_create_params_factory.host_name_l} "          + name_of_the_node
-    source_image          "#{azure_server_create_params_factory.source_image} "         + "opscode08base"
-    winrm_password        "#{azure_server_create_params_factory.winrm_password} "       + "winRmPassw0rd"
+    source_image          "#{azure_server_create_params_factory.source_image} "         + "Win2k8BasicSSH"
+    winrm_password        "#{azure_server_create_params_factory.winrm_password} "       + "Fr3sca21!"
     winrm_port            "#{azure_server_create_params_factory.winrm_port} "           + "5985"
     winrm_transport       "#{azure_server_create_params_factory.winrm_transport} "      + "plaintext"
-    winrm_user            "#{azure_server_create_params_factory.winrm_user} "           + "winRmUser"
     template_file         "#{azure_server_create_params_factory.template_file} "        + "#{valid_template_file_path}"
+    bootstrap_protocol    "#{azure_server_create_params_factory.bootstrap_protocol} "   + "winrm"
   end
 
   # Test Case: OP_KAP_28, CreateWindowsServerWithSSHAuth
