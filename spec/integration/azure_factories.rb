@@ -174,7 +174,6 @@ FactoryGirl.define do
     help_l                           "--help"                                      # Show help
   end
 
-
   azure_server_create_params_factory  = FactoryGirl.build(:azureServerCreateParameters)
   azure_server_delete_params_factory  = FactoryGirl.build(:azureServerDeleteParameters)
   azure_server_list_params_factory    = FactoryGirl.build(:azureServerListParameters)
@@ -211,7 +210,7 @@ FactoryGirl.define do
     service_location      "#{azure_server_create_params_factory.service_location} "     + "'East US'"
     source_image          "#{azure_server_create_params_factory.source_image} "         + "ubuntu_passwordless_sudo"
     ssh_username          "#{azure_server_create_params_factory.ssh_username} "         + "azureuser"
-    ssh_password          "#{azure_server_create_params_factory.ssh_password} "         + "azure!Pass0rd"
+    ssh_password          "#{azure_server_create_params_factory.ssh_password} "         + "Fr3sca21!"
     host_name_l           "#{azure_server_create_params_factory.host_name_l} "          + name_of_the_node
   end
 
@@ -239,9 +238,9 @@ FactoryGirl.define do
     role_name_l           "#{azure_server_create_params_factory.role_name_l} "          + name_of_the_node
     host_name_l           "#{azure_server_create_params_factory.host_name_l} "          + name_of_the_node
     ssh_username          "#{azure_server_create_params_factory.ssh_username} "         + "azureuser"
-    ssh_password          "#{azure_server_create_params_factory.ssh_password} "         + "azure!Pass0rd"
+    ssh_password          "#{azure_server_create_params_factory.ssh_password} "         + '\'Fr3sca21!\''
     # Please see https://github.com/opscode/knife-azure
-    distro                "#{azure_server_create_params_factory.distro} "               + "centos5-gems"
+#    distro                "#{azure_server_create_params_factory.distro} "               + "centos5-gems"
   end
 
   # Test Case: OP_KAP_2, CreateServerWithOnlyServiceRegion
@@ -252,9 +251,9 @@ FactoryGirl.define do
     host_name_l           "#{azure_server_create_params_factory.host_name_l} "          + name_of_the_node
     service_location      "#{azure_server_create_params_factory.service_location} "     + "'East US'"
     ssh_username          "#{azure_server_create_params_factory.ssh_username} "         + "azureuser"
-    ssh_password          "#{azure_server_create_params_factory.ssh_password} "         + "azure!Pass0rd"
+    ssh_password          "#{azure_server_create_params_factory.ssh_password} "         + "Fr3sca21!"
     # Please see https://github.com/opscode/knife-azure
-    distro                "#{azure_server_create_params_factory.distro} "               + "centos5-gems"
+#    distro                "#{azure_server_create_params_factory.distro} "               + "centos5-gems"
   end
 
   factory :azureServerCreateWithInvalidServiceRegion, parent: :azureServerCreateWithOnlyServiceRegion do
@@ -269,9 +268,9 @@ FactoryGirl.define do
     host_name_l           "#{azure_server_create_params_factory.host_name_l} "          + name_of_the_node
     role_size             "#{azure_server_create_params_factory.role_size} "            + "Medium"
     ssh_username          "#{azure_server_create_params_factory.ssh_username} "         + "azureuser"
-    ssh_password          "#{azure_server_create_params_factory.ssh_password} "         + "azure!Pass0rd"
+    ssh_password          "#{azure_server_create_params_factory.ssh_password} "         + "Fr3sca21!"
     # Please see https://github.com/opscode/knife-azure
-    distro                "#{azure_server_create_params_factory.distro} "               + "centos5-gems"
+#    distro                "#{azure_server_create_params_factory.distro} "               + "centos5-gems"
   end
 
 
@@ -283,8 +282,8 @@ FactoryGirl.define do
     host_name_l           "#{azure_server_create_params_factory.host_name_l} "          + name_of_the_node
     tcp_endpoints         "#{azure_server_create_params_factory.tcp_endpoints} "        + "80:80, 443:8433"
     ssh_username          "#{azure_server_create_params_factory.ssh_username} "         + "azureuser"
-    ssh_password          "#{azure_server_create_params_factory.ssh_password} "         + "azure!Pass0rd"
-    distro                "#{azure_server_create_params_factory.distro} "               + "centos5-gems"
+    ssh_password          "#{azure_server_create_params_factory.ssh_password} "         + "Fr3sca21!"
+#    distro                "#{azure_server_create_params_factory.distro} "               + "centos5-gems"
   end
 
   # Test Case: OP_KAP_5, CreateServerWithUDPPortList
@@ -295,8 +294,8 @@ FactoryGirl.define do
     host_name_l           "#{azure_server_create_params_factory.host_name_l} "          + name_of_the_node
     udp_endpoints         "#{azure_server_create_params_factory.udp_endpoints} "        + "161:161, 111:111"
     ssh_username          "#{azure_server_create_params_factory.ssh_username} "         + "azureuser"
-    ssh_password          "#{azure_server_create_params_factory.ssh_password} "         + "azure!Pass0rd"
-    distro                "#{azure_server_create_params_factory.distro} "               + "centos5-gems"
+    ssh_password          "#{azure_server_create_params_factory.ssh_password} "         + "Fr3sca21!"
+#    distro                "#{azure_server_create_params_factory.distro} "               + "centos5-gems"
   end
 
   # Test Case: OP_KAP_6, CreateServerWithRegionAndExistentHostedService
@@ -309,8 +308,8 @@ FactoryGirl.define do
     # FIXME here we assuming the hosted service is already available
     hosted_service_desc   "#{azure_server_create_params_factory.hosted_service_desc} "  + "existhostedsrvc"
     ssh_username          "#{azure_server_create_params_factory.ssh_username} "         + "azureuser"
-    ssh_password          "#{azure_server_create_params_factory.ssh_password} "         + "azure!Pass0rd"
-    distro                "#{azure_server_create_params_factory.distro} "               + "centos5-gems"
+    ssh_password          "#{azure_server_create_params_factory.ssh_password} "         + "Fr3sca21!"
+#    distro                "#{azure_server_create_params_factory.distro} "               + "centos5-gems"
   end
 
   # Test Case: OP_KAP_7, CreateServerWithRegionAndNonExistentHostedService
@@ -322,8 +321,8 @@ FactoryGirl.define do
     service_location      "#{azure_server_create_params_factory.service_location} "     + "'East US'"
     hosted_service_desc   "#{azure_server_create_params_factory.hosted_service_desc} "  + "nonexisthostedsrvc"
     ssh_username          "#{azure_server_create_params_factory.ssh_username} "         + "azureuser"
-    ssh_password          "#{azure_server_create_params_factory.ssh_password} "         + "azure!Pass0rd"
-    distro                "#{azure_server_create_params_factory.distro} "               + "centos5-gems"
+    ssh_password          "#{azure_server_create_params_factory.ssh_password} "         + "Fr3sca21!"
+#    distro                "#{azure_server_create_params_factory.distro} "               + "centos5-gems"
   end
 
   # Test Case: OP_KAP_8, CreateServerWithRegionAndExistentStorageService
@@ -336,8 +335,8 @@ FactoryGirl.define do
     service_location      "#{azure_server_create_params_factory.service_location} "     + "'East US'"
     storage_account       "#{azure_server_create_params_factory.storage_account} "      + " usstosrvc"
     ssh_username          "#{azure_server_create_params_factory.ssh_username} "         + "azureuser"
-    ssh_password          "#{azure_server_create_params_factory.ssh_password} "         + "azure!Pass0rd"
-    distro                "#{azure_server_create_params_factory.distro} "               + "centos5-gems"
+    ssh_password          "#{azure_server_create_params_factory.ssh_password} "         + "Fr3sca21!"
+#    distro                "#{azure_server_create_params_factory.distro} "               + "centos5-gems"
   end
 
   # Test Case: OP_KAP_9, CreateServerWithRegionAndNonExistentStorageService
@@ -349,8 +348,8 @@ FactoryGirl.define do
     service_location      "#{azure_server_create_params_factory.service_location} "     + "'East US'"
     storage_account       "#{azure_server_create_params_factory.storage_account} "      + "nonexiststosrvc"
     ssh_username          "#{azure_server_create_params_factory.ssh_username} "         + "azureuser"
-    ssh_password          "#{azure_server_create_params_factory.ssh_password} "         + "azure!Pass0rd"
-    distro                "#{azure_server_create_params_factory.distro} "               + "centos5-gems"
+    ssh_password          "#{azure_server_create_params_factory.ssh_password} "         + "Fr3sca21!"
+#    distro                "#{azure_server_create_params_factory.distro} "               + "centos5-gems"
   end
 
   # Test Case: OP_KAP_10, CreateServerWithHostedAndStorageService
@@ -364,8 +363,8 @@ FactoryGirl.define do
     storage_account       "#{azure_server_create_params_factory.storage_account} "      + "dbiopscode"
     hosted_service_desc   "#{azure_server_create_params_factory.hosted_service_desc} "  + "existhostedsrvc"
     ssh_username          "#{azure_server_create_params_factory.ssh_username} "         + "azureuser"
-    ssh_password          "#{azure_server_create_params_factory.ssh_password} "         + "azure!Pass0rd"
-    distro                "#{azure_server_create_params_factory.distro} "               + "centos5-gems"
+    ssh_password          "#{azure_server_create_params_factory.ssh_password} "         + "Fr3sca21!"
+#    distro                "#{azure_server_create_params_factory.distro} "               + "centos5-gems"
   end
 
 # Test Case: OP_KAP_11, CreateServerWithRegionWithoutSpecifyingStorageService
@@ -377,8 +376,8 @@ FactoryGirl.define do
     service_location      "#{azure_server_create_params_factory.service_location} "     + "'East US'"
     hosted_service_desc   "#{azure_server_create_params_factory.hosted_service_desc} "  + "existhostedsrvc"
     ssh_username          "#{azure_server_create_params_factory.ssh_username} "         + "azureuser"
-    ssh_password          "#{azure_server_create_params_factory.ssh_password} "         + "azure!Pass0rd"
-    distro                "#{azure_server_create_params_factory.distro} "               + "centos5-gems"
+    ssh_password          "#{azure_server_create_params_factory.ssh_password} "         + "Fr3sca21!"
+#    distro                "#{azure_server_create_params_factory.distro} "               + "centos5-gems"
   end
 
   # Test Case: OP_KAP_12, CreateServerWithRegionWithoutSpecifyingStorageService
@@ -390,8 +389,8 @@ FactoryGirl.define do
     service_location      "#{azure_server_create_params_factory.service_location} "     + "'East US'"
     hosted_service_desc   "#{azure_server_create_params_factory.hosted_service_desc} "  + "existhostedsrvc"
     ssh_username          "#{azure_server_create_params_factory.ssh_username} "         + "azureuser"
-    ssh_password          "#{azure_server_create_params_factory.ssh_password} "         + "azure!Pass0rd"
-    distro                "#{azure_server_create_params_factory.distro} "               + "centos5-gems"
+    ssh_password          "#{azure_server_create_params_factory.ssh_password} "         + "Fr3sca21!"
+#    distro                "#{azure_server_create_params_factory.distro} "               + "centos5-gems"
   end
 
   # Test Case: OP_KAP_13, CreateServerWithRootSSHUser
@@ -401,10 +400,8 @@ FactoryGirl.define do
     role_name_l           "#{azure_server_create_params_factory.role_name_l} "          + name_of_the_node
     host_name_l           "#{azure_server_create_params_factory.host_name_l} "          + name_of_the_node
     ssh_username          "#{azure_server_create_params_factory.ssh_username} "         + "root"
-    ssh_password          "#{azure_server_create_params_factory.ssh_password} "         + "azure!Pass0rd"
-    ssh_username          "#{azure_server_create_params_factory.ssh_username} "         + "azureuser"
-    ssh_password          "#{azure_server_create_params_factory.ssh_password} "         + "azure!Pass0rd"
-    distro                "#{azure_server_create_params_factory.distro} "               + "centos5-gems"
+    ssh_password          "#{azure_server_create_params_factory.ssh_password} "         + "Fr3sca21!"
+#    distro                "#{azure_server_create_params_factory.distro} "               + "centos5-gems"
   end
 
   # Test Case: OP_KAP_14, CreateServerWithInvalidSSHPassword
@@ -415,7 +412,7 @@ FactoryGirl.define do
     host_name_l           "#{azure_server_create_params_factory.host_name_l} "          + name_of_the_node
     ssh_username          "#{azure_server_create_params_factory.ssh_username} "         + "azureuser"
     ssh_password          "#{azure_server_create_params_factory.ssh_password} "         + "azureuser"
-    distro                "#{azure_server_create_params_factory.distro} "               + "centos5-gems"
+#    distro                "#{azure_server_create_params_factory.distro} "               + "centos5-gems"
   end
 
   # Test Case: OP_KAP_15, CreateServerWithSpecificOSDisk
@@ -426,8 +423,8 @@ FactoryGirl.define do
     host_name_l           "#{azure_server_create_params_factory.host_name_l} "          + name_of_the_node
     os_disk_name          "#{azure_server_create_params_factory.os_disk_name} "         + "diskname"
     ssh_username          "#{azure_server_create_params_factory.ssh_username} "         + "azureuser"
-    ssh_password          "#{azure_server_create_params_factory.ssh_password} "         + "azure!Pass0rd"
-    distro                "#{azure_server_create_params_factory.distro} "               + "centos5-gems"
+    ssh_password          "#{azure_server_create_params_factory.ssh_password} "         + "Fr3sca21!"
+#    distro                "#{azure_server_create_params_factory.distro} "               + "centos5-gems"
   end
 
   # Test Case: OP_KAP_16, DeleteServerThatDoesNotExist
@@ -485,8 +482,8 @@ FactoryGirl.define do
     # Eventually this process will also be automated.
     run_list              "#{azure_server_create_params_factory.run_list} "             + "recipe[build-essential], role[webserver]"
     ssh_username          "#{azure_server_create_params_factory.ssh_username} "         + "azureuser"
-    ssh_password          "#{azure_server_create_params_factory.ssh_password} "         + "azure!Pass0rd"
-    distro                "#{azure_server_create_params_factory.distro} "               + "centos5-gems"
+    ssh_password          "#{azure_server_create_params_factory.ssh_password} "         + "Fr3sca21!"
+#    distro                "#{azure_server_create_params_factory.distro} "               + "centos5-gems"
   end
 
   # Test Case: OP_KAP_25, CreateServerWithInvalidRole
@@ -499,8 +496,8 @@ FactoryGirl.define do
     # Eventually this process will also be automated.
     run_list              "#{azure_server_create_params_factory.run_list} "             + "recipe[build-essential], role[invalid-role]"
     ssh_username          "#{azure_server_create_params_factory.ssh_username} "         + "azureuser"
-    ssh_password          "#{azure_server_create_params_factory.ssh_password} "         + "azure!Pass0rd"
-    distro                "#{azure_server_create_params_factory.distro} "               + "centos5-gems"
+    ssh_password          "#{azure_server_create_params_factory.ssh_password} "         + "Fr3sca21!"
+#    distro                "#{azure_server_create_params_factory.distro} "               + "centos5-gems"
   end
 
   # Test Case: OP_KAP_26, CreateServerWithInvalidRecipe
@@ -513,8 +510,8 @@ FactoryGirl.define do
     # Eventually this process will also be automated.
     run_list              "#{azure_server_create_params_factory.run_list} "             + "recipe[invalid-recipe]"
     ssh_username          "#{azure_server_create_params_factory.ssh_username} "         + "azureuser"
-    ssh_password          "#{azure_server_create_params_factory.ssh_password} "         + "azure!Pass0rd"
-    distro                "#{azure_server_create_params_factory.distro} "               + "centos5-gems"
+    ssh_password          "#{azure_server_create_params_factory.ssh_password} "         + "Fr3sca21!"
+#    distro                "#{azure_server_create_params_factory.distro} "               + "centos5-gems"
   end
 
   # Test Case: OP_KAP_27, CreateWindowsServerWithWinRMBasicAuth
@@ -539,7 +536,7 @@ FactoryGirl.define do
     host_name_l           "#{azure_server_create_params_factory.host_name_l} "          + name_of_the_node
     source_image          "#{azure_server_create_params_factory.source_image} "         + "opscode08base"
     ssh_username          "#{azure_server_create_params_factory.ssh_username} "         + "azureuser"
-    ssh_password          "#{azure_server_create_params_factory.ssh_password} "         + "azure!Pass0rd"
+    ssh_password          "#{azure_server_create_params_factory.ssh_password} "         + "Fr3sca21!"
     template_file         "#{azure_server_create_params_factory.template_file} "        + "#{valid_template_file_path}"
   end
 
@@ -553,6 +550,6 @@ FactoryGirl.define do
     winrm_port            "#{azure_server_create_params_factory.winrm_port} "           + "5985"
     winrm_transport       "#{azure_server_create_params_factory.winrm_transport} "      + "plaintext"
     winrm_user            "#{azure_server_create_params_factory.winrm_user} "           + "winRmUser"
-    distro                "#{azure_server_create_params_factory.distro} "               + "centos5-gems"
+#    distro                "#{azure_server_create_params_factory.distro} "               + "centos5-gems"
   end
 end
