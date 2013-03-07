@@ -18,7 +18,6 @@ OR
 ==Management Certifcate
 The management certificate is required for secure communication with the Windows Azure Platform via the REST APIs. These can be obtained from the publishsettings file. You need to download the .publishsettings file from the link given below. You can either provide the path to the .publishsettings file OR you can generate the management certificate yourself from the .publishsettings file.
 
-<<<<<<< HEAD
 ===Management Certificate using the .publishsettings file
 Download the .publishsettings file from https://manage.windowsazure.com/publishsettings/index?client=xplat
 
@@ -32,17 +31,14 @@ Follow these steps to generate the certificate in the PEM format
 
  xmlstarlet sel -t -m "//PublishData/PublishProfile[@PublishMethod='AzureServiceManagementAPI']" -v @ManagementCertificate credentials.publishsettings
 
-3. Decode the certificate file: -- (( I got stuck here with
+3. Decode the certificate file:
 
-"36014:error:0D0680A8:asn1 encoding routines:ASN1_CHECK_TLEN:wrong tag:/SourceCache/OpenSSL098/OpenSSL098-47/src/crypto/asn1/tasn_dec.c:1315:
-36014:error:0D07803A:asn1 encoding routines:ASN1_ITEM_EX_D2I:nested asn1 error:/SourceCache/OpenSSL098/OpenSSL098-47/src/crypto/asn1/tasn_dec.c:379:Type=PKCS12"
+==== On Linux/Mac(Homebrew)
 
-so maybe Microsoft changed their cert format or the decode blew up? ))
+ base64 -D cert.pfx -i cert.pfx -o cert_decoded.pfx
 
-===== On Linux/Mac(Homebrew)
- base64 -d cert.pfx > cert_decoded.pfx
+==== On Windows
 
-===== On Windows
 You can decode and extract the PFX file using powershell or a free windows base 64 decoder such as http://www.fourmilab.ch/webtools/base64/base64.zip,
 
  base64.exe -d cert.pfx -> cert_decoded.pfx
