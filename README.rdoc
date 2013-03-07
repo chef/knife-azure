@@ -33,9 +33,13 @@ Follow these steps to generate the certificate in the PEM format
 
 3. Decode the certificate file:
 
-==== On Linux/Mac(Homebrew)
+==== On Linux (with GNU coreutils)
 
- base64 -D cert.pfx -i cert.pfx -o cert_decoded.pfx
+ base64 --decode cert.pfx > cert_decoded.pfx
+
+==== On Mac
+
+ base64 --decode -i cert.pfx -o cert_decoded.pfx
 
 ==== On Windows
 
