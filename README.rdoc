@@ -32,7 +32,12 @@ Follow these steps to generate the certificate in the PEM format
 
  xmlstarlet sel -t -m "//PublishData/PublishProfile[@PublishMethod='AzureServiceManagementAPI']" -v @ManagementCertificate credentials.publishsettings
 
-3. Decode the certificate file :
+3. Decode the certificate file: -- (( I got stuck here with
+
+"36014:error:0D0680A8:asn1 encoding routines:ASN1_CHECK_TLEN:wrong tag:/SourceCache/OpenSSL098/OpenSSL098-47/src/crypto/asn1/tasn_dec.c:1315:
+36014:error:0D07803A:asn1 encoding routines:ASN1_ITEM_EX_D2I:nested asn1 error:/SourceCache/OpenSSL098/OpenSSL098-47/src/crypto/asn1/tasn_dec.c:379:Type=PKCS12"
+
+so maybe Microsoft changed their cert format or the decode blew up? ))
 
 ===== On Linux/Mac(Homebrew)
  base64 -d cert.pfx > cert_decoded.pfx
