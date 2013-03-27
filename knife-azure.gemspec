@@ -19,10 +19,8 @@ Gem::Specification.new do |s|
   s.homepage = "http://github.com/opscode/knife-azure"
   s.require_paths = ["lib"]
   s.add_dependency(%q<chef>, [">= 0.10.0"])
-  s.add_dependency(%q<rspec>, [">= 2.8.0"])
   s.add_dependency(%q<rdoc>, ["~> 3.12"])
   s.add_dependency(%q<bundler>, [">= 0"])
-  s.add_dependency(%q<guard-rspec>, [">= 0"])
   s.add_dependency(%q<rubygems-bundler>, ["~> 1.0.3"])
   s.add_dependency(%q<equivalent-xml>, ["~> 0.2.9"])
   s.add_dependency(%q<nokogiri>,["~> 1.5.5"])

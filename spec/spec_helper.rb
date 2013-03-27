@@ -1,9 +1,6 @@
 $LOAD_PATH.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
 require 'rspec'
 require 'equivalent-xml'
-require 'chef'
-require 'chef/log'
-
 require 'azure/connection'
 require 'azure/rest'
 require 'azure/host'
