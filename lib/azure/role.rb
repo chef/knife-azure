@@ -144,6 +144,22 @@ class Azure
               xml.UserName params[:ssh_user]
               xml.UserPassword params[:ssh_password]
               xml.DisableSshPasswordAuthentication 'false'
+              #if params[:ssh_cert_fingerprint] != nil 
+                xml.SSH {
+                  xml.PublicKeys {
+                    xml.PublicKey {
+                      xml.FingerPrint params[:ssh_cert_fingerprint]
+                      xml.Path '/home/user/.ssh/authorized_keys'
+                    }
+                  }
+                  xml.KeyPairs {
+                    xml.KeyPair {
+                      xml.FingerPrint params[:ssh_cert_fingerprint]
+                      xml.Path '/home/user/.ssh/authorized_keys'
+                    }
+                  }
+                }
+              
               }
             elsif params[:os_type] == 'Windows'
               xml.ConfigurationSet('i:type' => 'WindowsProvisioningConfigurationSet') {

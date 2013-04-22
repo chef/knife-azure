@@ -162,6 +162,11 @@ class Chef
         :description => "SSH Certificate in X509 format",
         :proc => Proc.new { |key| Chef::Config[:knife][:ssh_cert] = key }
 
+      option :ssh_cert_fingerprint,
+        :long => "--ssh-cert-fingerprint FILENAME",
+        :description => "SSH Certificate fingerprint",
+        :proc => Proc.new { |key| Chef::Config[:knife][:ssh_cert] = key }
+
 
       def strip_non_ascii(string)
         string.gsub(/[^0-9a-z ]/i, '')
@@ -422,7 +427,8 @@ class Chef
           :role_size => locate_config_value(:role_size),
           :tcp_endpoints => locate_config_value(:tcp_endpoints),
           :udp_endpoints => locate_config_value(:udp_endpoints),
-          :bootstrap_proto => locate_config_value(:bootstrap_protocol)
+          :bootstrap_proto => locate_config_value(:bootstrap_protocol),
+          :ssh_cert_fingerprint => locate_config_value(:ssh_cert_fingerprint)
         }
 
         if is_image_windows?
