@@ -157,6 +157,11 @@ class Chef
         :long => "--udp-endpoints PORT_LIST",
         :description => "Comma separated list of UDP local and public ports to open i.e. '80:80,433:5000'"
 
+      option :ssh_cert,
+        :long => "--ssh-cert FILENAME",
+        :description => "SSH Certificate in X509 format",
+        :proc => Proc.new { |key| Chef::Config[:knife][:ssh_cert] = key }
+
 
       def strip_non_ascii(string)
         string.gsub(/[^0-9a-z ]/i, '')
