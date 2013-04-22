@@ -28,7 +28,7 @@ before do
       Chef::Config[:knife][key] = value
     end
 
-    stub_query_azure_mock    
+    stub_query_azure (@server_instance.connection)
 
     @server_instance.stub(:tcp_test_ssh).and_return(true)
     @server_instance.stub(:tcp_test_winrm).and_return(true)
@@ -38,7 +38,7 @@ before do
     @server_instance.stub(:print)
 end
 
-describe "compalsory parameter test:" do
+describe "compulsory parameter test:" do
 
 		it "azure_subscription_id" do		
 			Chef::Config[:knife].delete(:azure_subscription_id)			
@@ -172,8 +172,8 @@ end
 
 
 
-def stub_query_azure_mock
-	@server_instance.connection.stub(:query_azure) do |name, verb, body|
+def stub_query_azure(conn)
+	conn.stub(:query_azure) do |name, verb, body|
       Chef::Log.info 'calling web service:' + name
       if verb == 'get' || verb == nil
         retval = ''
