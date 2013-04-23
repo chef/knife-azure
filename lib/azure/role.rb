@@ -144,18 +144,20 @@ class Azure
               xml.UserName params[:ssh_user]
               xml.UserPassword params[:ssh_password]
               xml.DisableSshPasswordAuthentication 'false'
-              #if params[:ssh_cert_fingerprint] != nil 
+              #if params[:ssh_cert] != nil 
                 xml.SSH {
                   xml.PublicKeys {
                     xml.PublicKey {
-                      xml.FingerPrint params[:ssh_cert_fingerprint]
-                      xml.Path '/home/user/.ssh/authorized_keys'
+                      xml.FingerPrint generateFingerPrint params[:ssh_cert]
+                      #xml.FingerPrint '512ddff04123ea907db8c5e7442dde0161e090f9'
+                      xml.Path '/home/' + params[:ssh_user] + '/.ssh/authorized_keys'
                     }
                   }
                   xml.KeyPairs {
                     xml.KeyPair {
-                      xml.FingerPrint params[:ssh_cert_fingerprint]
-                      xml.Path '/home/user/.ssh/authorized_keys'
+                      xml.FingerPrint generateFingerPrint params[:ssh_cert]
+                      #xml.FingerPrint '512ddff04123ea907db8c5e7442dde0161e090f9'
+                      xml.Path '/home/' + params[:ssh_user] + '/.ssh/authorized_keys'
                     }
                   }
                 }
@@ -238,6 +240,16 @@ class Azure
       servicecall = "hostedservices/#{params[:hosted_service_name]}/deployments" +
       "/#{params['deploy_name']}/roles"
       @connection.query_azure(servicecall, "post", roleXML.to_xml) 
+    end
+    def generateFingerPrint ssh_cert
+      # TODO
+      puts ssh_cert
+      newcert = File.read('azureCert.pem')
+      puts newcert
+      newcert["-----BEGIN CERTIFICATE-----\n"] = ""
+      newcert["-----END CERTIFICATE-----\n"] = ""
+      sha1 = OpenSSL::Digest::SHA1.new(newcert)
+      sha1
     end
   end
 end
