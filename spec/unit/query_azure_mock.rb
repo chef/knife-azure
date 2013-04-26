@@ -1,6 +1,14 @@
-
 module QueryAzureMock
   def setup_query_azure_mock
+    create_connection
+    stub_query_azure (@connection)
+  end
+
+  def create_connection
+    @connection = Azure::Connection.new(TEST_PARAMS)
+  end
+
+  def stub_query_azure (connection)
     @getname = ''
     @getverb = ''
     @getbody = ''
@@ -15,8 +23,7 @@ module QueryAzureMock
     @deletecount = 0
 
     @receivedXML = Nokogiri::XML ''
-    @connection = Azure::Connection.new(TEST_PARAMS)
-    @connection.stub(:query_azure) do |name, verb, body|
+    connection.stub(:query_azure) do |name, verb, body|
       Chef::Log.info 'calling web service:' + name
       if verb == 'get' || verb == nil
         retval = ''
@@ -48,6 +55,9 @@ module QueryAzureMock
           retval = Nokogiri::XML readFile('post_success.xml')
           @receivedXML = body
         elsif name == 'hostedservices/service001/deployments/deployment001/roles'
+          retval = Nokogiri::XML readFile('post_success.xml')
+          @receivedXML = body
+        elsif name =~ /hostedservices\/vm01.*\/deployments/
           retval = Nokogiri::XML readFile('post_success.xml')
           @receivedXML = body
         else
