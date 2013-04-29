@@ -88,7 +88,11 @@ class Chef
             puts "\n"
             confirm("Do you really want to delete this server")
              
-            connection.hosts.delete(server.hostedservicename)
+            roles_using_same_service = connection.roles.find_roles_with_hostedservice(server.hostedservicename)
+            if roles_using_same_service.size <= 1
+              ui.warn("Deleting service #{server.hostedservicename}")
+              connection.hosts.delete(server.hostedservicename)
+            end
             connection.roles.delete(name, params = { :purge_os_disk => locate_config_value(:purge_os_disk) })
 
             puts "\n"

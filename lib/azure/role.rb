@@ -82,6 +82,18 @@ class Azure
         end
       end
     end
+    def find_roles_with_hostedservice(hostedservicename)
+      if @roles == nil
+        all
+      end
+      return_roles = Array.new
+      @roles.each do |role|
+        if(role.hostedservicename == hostedservicename)
+          return_roles << role 
+        end
+      end
+      return_roles
+    end
   end
   class Role
     include AzureUtility
