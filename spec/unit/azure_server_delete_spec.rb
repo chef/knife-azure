@@ -32,14 +32,22 @@ before do
 end
 
 it "server delete test" do
-	@server_instance.ui.should_receive(:warn).twice
+	@server_instance.ui.should_receive(:warn).exactly(3).times
 	@server_instance.connection.roles.should_receive(:delete)
 	@server_instance.ui.should_not_receive(:error)
 	@server_instance.run
 end
 
 it "hosted service clean up test" do
+	@server_instance.ui.should_receive(:warn).exactly(3).times
 	@server_instance.connection.hosts.should_receive(:delete)
+	@server_instance.run
+end
+
+it "test hosted service cleanup with shared service" do
+	@server_instance.name_args = ['role001']
+	@server_instance.ui.should_receive(:warn).twice
+	@server_instance.connection.hosts.should_not_receive(:delete)
 	@server_instance.run
 end
 
