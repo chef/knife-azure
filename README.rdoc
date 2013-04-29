@@ -30,7 +30,7 @@ Alternatively you can use a free windows base 64 decoder such as http://www.four
 ==== On Windows
  Use powershell & run following command. If openssl.exe not already installed it can be downloaded from http://www.openssl.org/related/binaries.html (Note: openssl dependents on Microsoft Visual C++ Redistributable package (x86) which must be installed for openssl to function properly).
 
- openssl base64 -d -A -in cert_decoded.pfx -out cert_decode.der
+ openssl base64 -d -A -in cert_decoded.pfx -out cert_decoded.der
 
  openssl pkcs12 -in cert_decoded.der -out managementCertificate.pem -nodes
 
