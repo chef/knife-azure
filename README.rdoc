@@ -14,7 +14,11 @@ Follow these steps to generate the certificate
  base64 -d cert.pfx > cert_decoded.pfx
 
 ==== On Windows
-You can decode and extract the PFX file using powershell or a free windows base 64 decoder such as http://www.fourmilab.ch/webtools/base64/base64.zip,
+You can decode and extract the PFX file using powershell
+
+ powershell -command "[System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String( (Get-Content cert.pfx) )) | Out-File cert_decoded.pfx"
+
+Alternatively you can use a free windows base 64 decoder such as http://www.fourmilab.ch/webtools/base64/base64.zip,
 
  base64.exe -d cert.pfx -> cert_decoded.pfx
 
