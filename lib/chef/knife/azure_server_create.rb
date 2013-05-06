@@ -157,10 +157,15 @@ class Chef
         :long => "--udp-endpoints PORT_LIST",
         :description => "Comma separated list of UDP local and public ports to open i.e. '80:80,433:5000'"
 
-      option :ssh_cert,
-        :long => "--ssh-cert FILENAME",
-        :description => "SSH Certificate in X509 format",
-        :proc => Proc.new { |key| Chef::Config[:knife][:ssh_cert] = key }
+      option :ssh_key,
+        :long => "--ssh-key FILENAME",
+        :description => "SSH key",
+        :proc => Proc.new { |key| Chef::Config[:knife][:ssh_key] = key }
+
+      option :ssh_key_passphrase,
+        :long => "--ssh-key-passphrase PASSWORD",
+        :description => "SSH key passphrase",
+        :proc => Proc.new { |pp| Chef::Config[:knife][:ssh_key_passphrase] = pp }
 
       def strip_non_ascii(string)
         string.gsub(/[^0-9a-z ]/i, '')
@@ -422,7 +427,8 @@ class Chef
           :tcp_endpoints => locate_config_value(:tcp_endpoints),
           :udp_endpoints => locate_config_value(:udp_endpoints),
           :bootstrap_proto => locate_config_value(:bootstrap_protocol),
-          :ssh_cert => locate_config_value(:ssh_cert)
+          :ssh_key => locate_config_value(:ssh_key),
+          :ssh_key_passphrase => locate_config_value(:ssh_key_passphrase)
         }
 
         if is_image_windows?
