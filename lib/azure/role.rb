@@ -143,25 +143,29 @@ class Azure
               xml.HostName params[:host_name] 
               xml.UserName params[:ssh_user]
               xml.UserPassword params[:ssh_password]
-              xml.DisableSshPasswordAuthentication 'false'
-              #if params[:ssh_cert] != nil 
+              if params[:ssh_key].nil?
+                xml.DisableSshPasswordAuthentication 'false'
+              else
+                xml.DisableSshPasswordAuthentication 'true'
+              end
+              if !params[:ssh_key].nil? 
                 xml.SSH {
                   xml.PublicKeys {
                     xml.PublicKey {
-                      xml.FingerPrint generateFingerPrint params[:ssh_cert]
-                      #xml.FingerPrint '512ddff04123ea907db8c5e7442dde0161e090f9'
+                      xml.FingerPrint generateFingerPrint (params[:ssh_key])
+                      #xml.FingerPrint 'a4a7af56c1d71fb45c8968f78e3ee90a2639260e'
                       xml.Path '/home/' + params[:ssh_user] + '/.ssh/authorized_keys'
                     }
                   }
                   xml.KeyPairs {
                     xml.KeyPair {
-                      xml.FingerPrint generateFingerPrint params[:ssh_cert]
-                      #xml.FingerPrint '512ddff04123ea907db8c5e7442dde0161e090f9'
+                      xml.FingerPrint generateFingerPrint (params[:ssh_key])
+                      #xml.FingerPrint 'a4a7af56c1d71fb45c8968f78e3ee90a2639260e'
                       xml.Path '/home/' + params[:ssh_user] + '/.ssh/authorized_keys'
                     }
                   }
                 }
-              
+              end
               }
             elsif params[:os_type] == 'Windows'
               xml.ConfigurationSet('i:type' => 'WindowsProvisioningConfigurationSet') {
@@ -241,15 +245,32 @@ class Azure
       "/#{params['deploy_name']}/roles"
       @connection.query_azure(servicecall, "post", roleXML.to_xml) 
     end
-    def generateFingerPrint ssh_cert
-      # TODO
-      puts ssh_cert
-      newcert = File.read('azureCert.pem')
-      puts newcert
-      newcert["-----BEGIN CERTIFICATE-----\n"] = ""
-      newcert["-----END CERTIFICATE-----\n"] = ""
-      sha1 = OpenSSL::Digest::SHA1.new(newcert)
+    def generateFingerPrint (params)
+      key = OpenSSL::PKey::RSA.new(File.read(params[:ssh_key]), params[:ssh_key_passphrase])
+      ca = OpenSSL::X509::Certificate.new
+      ca.version = 2 # cf. RFC 5280 - to make it a "v3" certificate
+      ca.serial = Random.rand(100)
+      ca.subject = OpenSSL::X509::Name.parse "/DC=org/DC=ruby-lang/CN=Ruby CA"
+      ca.issuer =       ca.subject # root CA's are "self-signed"
+      ca.public_key = key.public_key
+      ca.not_before = Time.now
+      ca.not_after =       ca.not_before + 2 * 365 * 24 * 60 * 60 # 2 years validity
+      ef = OpenSSL::X509::ExtensionFactory.new
+      ef.subject_certificate =       ca
+      ef.issuer_certificate =       ca
+      ca.add_extension(ef.create_extension("basicConstraints","CA:TRUE",true))
+      ca.add_extension(ef.create_extension("keyUsage","keyCertSign, cRLSign", true))
+      ca.add_extension(ef.create_extension("subjectKeyIdentifier","hash",false))
+      ca.add_extension(ef.create_extension("authorityKeyIdentifier","keyid:always",false))
+      ca.sign(key, OpenSSL::Digest::SHA256.new)
+
+      cert =       ca.to_pem
+      cert["-----BEGIN CERTIFICATE-----\n"] = ""
+      cert["-----END CERTIFICATE-----\n"] = ""
+
+      sha1 = OpenSSL::Digest::SHA1.new(Base64.encode64(cert))
       sha1
+
     end
   end
 end
