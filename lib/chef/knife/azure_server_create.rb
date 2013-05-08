@@ -270,7 +270,7 @@ class Chef
         end
         if is_image_windows?
           if is_platform_windows?
-            require 'em-winrs'
+            #require 'em-winrs'
           else
             require 'gssapi'
             require 'winrm'
@@ -341,7 +341,7 @@ class Chef
       def bootstrap_for_windows_node(server, fqdn)
         if locate_config_value(:bootstrap_protocol) == 'winrm'
             if is_platform_windows?
-              require 'em-winrs'
+              #require 'em-winrs'
             else
               require 'gssapi'
               require 'winrm'
