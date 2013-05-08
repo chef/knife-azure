@@ -74,6 +74,14 @@ class Azure
         end
         @connection.query_azure(servicecall, "delete") 
 
+        if !params[:dont_purge_hosted_service]
+          roles_using_same_service = connection.roles.find_roles_with_hostedservice(params[:hostedservicename])
+          if roles_using_same_service.size <= 1
+            servicecall = "hostedservices/" + params[:hostedservicename]
+            @connection.query_azure(servicecall, "delete")
+          end
+        end
+
         if params[:purge_os_disk]
           osdisk = roleXML.css(roleXML, 'OSVirtualHardDisk')
           disk_name = xml_content(osdisk, 'DiskName')
