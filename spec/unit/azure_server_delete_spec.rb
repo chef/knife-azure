@@ -23,30 +23,35 @@ before do
     end
 
 	stub_query_azure (@server_instance.connection)
-	@server_instance.name_args = ['vm01']
+	
 	@server_instance.stub(:confirm).and_return(:true)
 
 	@server_instance.stub(:puts)
     @server_instance.stub(:print)
     @server_instance.ui.stub(:warn)
+    @server_instance.ui.should_not_receive(:error).and_call_original
 end
 
 it "server delete test" do
-	@server_instance.ui.should_receive(:warn).exactly(3).times
-	@server_instance.connection.roles.should_receive(:delete)
-	@server_instance.ui.should_not_receive(:error)
-	@server_instance.run
-end
-
-it "hosted service clean up test" do
-	@server_instance.ui.should_receive(:warn).exactly(3).times
-	@server_instance.connection.hosts.should_receive(:delete)
+	@server_instance.name_args = ['vm01']
+	@server_instance.ui.should_receive(:warn).twice
+	@server_instance.connection.roles.should_receive(:delete).and_call_original
 	@server_instance.run
 end
 
 it "test hosted service cleanup with shared service" do
 	@server_instance.name_args = ['role001']
 	@server_instance.ui.should_receive(:warn).twice
+	@server_instance.connection.roles.should_receive(:delete).and_call_original
+	@server_instance.connection.hosts.should_not_receive(:delete)
+	@server_instance.run
+end
+
+it "dont cleanup hosted service when --dont-purge-hosted-service param set" do
+	@server_instance.name_args = ['vm01']
+	Chef::Config[:knife][:dont_purge_hosted_service] = true
+	@server_instance.ui.should_receive(:warn).twice
+	@server_instance.connection.roles.should_receive(:delete).and_call_original
 	@server_instance.connection.hosts.should_not_receive(:delete)
 	@server_instance.run
 end
