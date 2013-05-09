@@ -18,7 +18,7 @@ before do
 
 	{
    		:azure_subscription_id => 'azure_subscription_id',
-		:azure_mgmt_cert => 'AzureLinuxCert.pem',
+		:azure_mgmt_cert => 'ManagementCertificate.pem',
 		:azure_host_name => 'preview.core.windows-int.net',
 		:role_name => 'vm01',
 		:service_location => 'service_location',
@@ -168,6 +168,27 @@ describe "for bootstrap protocol ssh:" do
 	      	@bootstrap.should_receive(:run)
 			@server_instance.run
 		end
+
+		context "bootstrap"
+			before do
+				@server_params = @server_instance.create_server_def
+				@bootstrap = Chef::Knife::Bootstrap.new
+		      	Chef::Knife::Bootstrap.stub(:new).and_return(@bootstrap)
+			end
+
+			it "uses sudo password when ssh_user is not root" do
+		      	@bootstrap.should_receive(:run)
+				@server_instance.run
+				@bootstrap.config[:use_sudo_password].should == true
+			end
+
+			it "does not use sudo password when ssh_user is root" do
+		      	@bootstrap.should_receive(:run)
+		      	Chef::Config[:knife][:ssh_user] = 'root'
+				@server_instance.run
+				@bootstrap.config[:use_sudo_password].should_not == true
+			end
+
 	end
 
 end
