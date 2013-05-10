@@ -48,6 +48,9 @@ class Azure
       unless @connection.storageaccounts.exists(params[:storage_account])
         @connection.storageaccounts.create(params)
       end
+      if params[:ssh_key]
+        params[:fingerprint] = @connection.certificates.create(params)
+      end
       params['deploy_name'] = find(params[:hosted_service_name])
       if params['deploy_name'] != nil
         role = Role.new(@connection)
