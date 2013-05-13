@@ -159,12 +159,12 @@ class Chef
 
       option :ssh_key,
         :long => "--ssh-key FILENAME",
-        :description => "SSH key",
+        :description => "SSH key, optional. It is the RSA private key. Specify either ssh-password or ssh_key",
         :proc => Proc.new { |key| Chef::Config[:knife][:ssh_key] = key }
 
       option :ssh_key_passphrase,
         :long => "--ssh-key-passphrase PASSWORD",
-        :description => "SSH key passphrase",
+        :description => "SSH key passphrase. Optional, specify if passphrase for ssh-key exists",
         :proc => Proc.new { |pp| Chef::Config[:knife][:ssh_key_passphrase] = pp }
 
       def strip_non_ascii(string)
@@ -426,9 +426,7 @@ class Chef
           :role_size => locate_config_value(:role_size),
           :tcp_endpoints => locate_config_value(:tcp_endpoints),
           :udp_endpoints => locate_config_value(:udp_endpoints),
-          :bootstrap_proto => locate_config_value(:bootstrap_protocol),
-          :ssh_key => locate_config_value(:ssh_key),
-          :ssh_key_passphrase => locate_config_value(:ssh_key_passphrase)
+          :bootstrap_proto => locate_config_value(:bootstrap_protocol)          
         }
 
         if is_image_windows?
@@ -442,11 +440,15 @@ class Chef
           server_def[:os_type] = 'Linux'
           server_def[:bootstrap_proto] = 'ssh'
           if not locate_config_value(:ssh_user) or not locate_config_value(:ssh_password)
-            ui.error("SSH User and SSH Password are compulsory parameters")
-            exit 1
+            if not locate_config_value(:ssh_key) 
+              ui.error("Specify either (SSH Key) OR (SSH User and SSH Password)")
+              exit 1
+            end
           end
           server_def[:ssh_user] = locate_config_value(:ssh_user)
           server_def[:ssh_password] = locate_config_value(:ssh_password)
+          server_def[:ssh_key] = locate_config_value(:ssh_key),
+          server_def[:ssh_key_passphrase] = locate_config_value(:ssh_key_passphrase)
         end
         server_def
       end

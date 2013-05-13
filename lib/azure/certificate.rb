@@ -52,8 +52,12 @@ class Azure
       self
     end
     def create(params)
+      # If ssh-key has been specified, then generate an x 509 certificate from the
+      # given RSA private key
       @cert_data = generateCertificateData ({:ssh_key => params[:ssh_key],
                                              :ssh_key_passphrase => params[:ssh_key_passphrase]})
+      # Generate XML to call the API
+      # Add certificate to the hosted service
       builder = Nokogiri::XML::Builder.new do |xml|
         xml.CertificateFile('xmlns'=>'http://schemas.microsoft.com/windowsazure') {
           xml.Data @cert_data
@@ -61,7 +65,9 @@ class Azure
           xml.Password 'knifeazure'
         }
       end
+      # Windows Azure API call
       @connection.query_azure("hostedservices/#{params[:hosted_service_name]}/certificates", "post", builder.to_xml)
+      # Return the fingerprint to be used while adding role
       @fingerprint
     end
     def details
@@ -69,13 +75,15 @@ class Azure
     end
 
     def generateCertificateData (params)
+      # Generate OpenSSL RSA key from the mentioned ssh key path (and passphrase)
       key = OpenSSL::PKey::RSA.new(File.read(params[:ssh_key]), params[:ssh_key_passphrase])
+      # Generate X 509 certificate
       ca = OpenSSL::X509::Certificate.new
       ca.version = 2 # cf. RFC 5280 - to make it a "v3" certificate
-      ca.serial = Random.rand(100)
+      ca.serial = Random.rand(100) # 2 digit random number for better security aspect
       ca.subject = OpenSSL::X509::Name.parse "/DC=org/DC=knife-plugin/CN=Opscode CA"
       ca.issuer = ca.subject # root CA's are "self-signed"
-      ca.public_key = key.public_key
+      ca.public_key = key.public_key # Assign the ssh-key's public part to the certificate
       ca.not_before = Time.now
       ca.not_after =  ca.not_before + 2 * 365 * 24 * 60 * 60 # 2 years validity
       ef = OpenSSL::X509::ExtensionFactory.new
@@ -86,8 +94,11 @@ class Azure
       ca.add_extension(ef.create_extension("subjectKeyIdentifier","hash",false))
       ca.add_extension(ef.create_extension("authorityKeyIdentifier","keyid:always",false))
       ca.sign(key, OpenSSL::Digest::SHA256.new)
+      # Generate the SHA1 fingerprint of the der format of the X 509 certificate
       @fingerprint =  OpenSSL::Digest::SHA1.new(ca.to_der)
+      # Create the pfx format of the certificate
       pfx = OpenSSL::PKCS12.create('knifeazure', 'knife-azure-pfx',  key,  ca)
+      # Encode the pfx format - upload this certificate 
       Base64.strict_encode64(pfx.to_der)
     end
   end
