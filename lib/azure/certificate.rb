@@ -54,7 +54,7 @@ class Azure
     def create(params)
       # If ssh-key has been specified, then generate an x 509 certificate from the
       # given RSA private key
-      @cert_data = generateCertificateData ({:ssh_key => params[:ssh_key],
+      @cert_data = generateCertificateData({:ssh_key => params[:ssh_key],
                                              :ssh_key_passphrase => params[:ssh_key_passphrase]})
       # Generate XML to call the API
       # Add certificate to the hosted service

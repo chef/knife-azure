@@ -159,13 +159,11 @@ class Chef
 
       option :ssh_key,
         :long => "--ssh-key FILENAME",
-        :description => "SSH key, optional. It is the RSA private key. Specify either ssh-password or ssh_key",
-        :proc => Proc.new { |key| Chef::Config[:knife][:ssh_key] = key }
+        :description => "SSH key path, optional. It is the RSA private key. Specify either ssh-password or ssh-key"
 
       option :ssh_key_passphrase,
         :long => "--ssh-key-passphrase PASSWORD",
-        :description => "SSH key passphrase. Optional, specify if passphrase for ssh-key exists",
-        :proc => Proc.new { |pp| Chef::Config[:knife][:ssh_key_passphrase] = pp }
+        :description => "SSH key passphrase. Optional, specify if passphrase for ssh-key exists"
 
       def strip_non_ascii(string)
         string.gsub(/[^0-9a-z ]/i, '')
@@ -439,15 +437,20 @@ class Chef
         else
           server_def[:os_type] = 'Linux'
           server_def[:bootstrap_proto] = 'ssh'
-          if not locate_config_value(:ssh_user) or not locate_config_value(:ssh_password)
+          if not locate_config_value(:ssh_user)
+            ui.error("SSH User is compalsory parameter")
+            exit 1
+          end
+          if not locate_config_value(:ssh_password)
             if not locate_config_value(:ssh_key) 
-              ui.error("Specify either (SSH Key) OR (SSH User and SSH Password)")
+              ui.error("Specify either SSH Key or SSH Password")
               exit 1
             end
           end
+
           server_def[:ssh_user] = locate_config_value(:ssh_user)
           server_def[:ssh_password] = locate_config_value(:ssh_password)
-          server_def[:ssh_key] = locate_config_value(:ssh_key),
+          server_def[:ssh_key] = locate_config_value(:ssh_key)
           server_def[:ssh_key_passphrase] = locate_config_value(:ssh_key_passphrase)
         end
         server_def
