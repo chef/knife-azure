@@ -21,7 +21,6 @@
 require File.expand_path('../azure_base', __FILE__)
 
 # These two are needed for the '--purge' deletion case
-require 'pry'
 require 'chef/node'
 require 'chef/api_client'
 
