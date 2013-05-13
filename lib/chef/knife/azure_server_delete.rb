@@ -21,6 +21,7 @@
 require File.expand_path('../azure_base', __FILE__)
 
 # These two are needed for the '--purge' deletion case
+require 'pry'
 require 'chef/node'
 require 'chef/api_client'
 
@@ -32,11 +33,11 @@ class Chef
 
       banner "knife azure server delete SERVER [SERVER] (options)"
 
-      option :purge_os_disk,
-        :long => "--purge-os-disk",
+      option :preserve_os_disk,
+        :long => "--preserve-os-disk",
         :boolean => true,
-        :default => true,
-        :description => "Destroy corresponding OS Disk"
+        :default => false,
+        :description => "Preserve corresponding OS Disk"
 
       option :purge,
         :short => "-P",
@@ -87,8 +88,7 @@ class Chef
 
             puts "\n"
             confirm("Do you really want to delete this server")
-             
-            connection.roles.delete(name, params = { :purge_os_disk => locate_config_value(:purge_os_disk) })
+            connection.roles.delete(name, params = { :preserve_os_disk => locate_config_value(:preserve_os_disk) })
 
             puts "\n"
             ui.warn("Deleted server #{server.name}")
