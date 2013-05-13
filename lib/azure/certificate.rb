@@ -43,7 +43,7 @@ class Azure
   class Certificate
     #include AzureUtility
     attr_accessor :connection, :certificate_name, :hosted_service_name
-    attr_accessor :cert_data, :cert_data_pem
+    attr_accessor :cert_data, :fingerprint
     def initialize(connection)
       @connection = connection
     end
@@ -62,7 +62,7 @@ class Azure
         }
       end
       @connection.query_azure("hostedservices/#{params[:hosted_service_name]}/certificates", "post", builder.to_xml)
-      generateFingerPrint(@cert_data)
+      @fingerprint
     end
     def details
       #TODO
@@ -86,22 +86,9 @@ class Azure
       ca.add_extension(ef.create_extension("subjectKeyIdentifier","hash",false))
       ca.add_extension(ef.create_extension("authorityKeyIdentifier","keyid:always",false))
       ca.sign(key, OpenSSL::Digest::SHA256.new)
-      @cert_data_pem = ca.to_pem
+      @fingerprint =  OpenSSL::Digest::SHA1.new(ca.to_der)
       pfx = OpenSSL::PKCS12.create('knifeazure', 'knife-azure-pfx',  key,  ca)
-      File.write('1', ca.to_pem)
-      File.write('2', Base64.strict_encode64(pfx.to_der))
       Base64.strict_encode64(pfx.to_der)
-    end
-    def generateFingerPrint(data)
-      fingerprint = OpenSSL::Digest::SHA1.new(File.read('1'))
-      puts fingerprint
-      puts OpenSSL::Digest::SHA1.new(File.read('2'))
-      a =File.read('1')
-      a["-----BEGIN CERTIFICATE-----\n"]=""
-      a["-----END CERTIFICATE-----\n"]=""
-      fingerprint= OpenSSL::Digest::SHA1.new(Base64.encode64(a))
-      puts fingerprint
-      fingerprint
     end
   end
 end
