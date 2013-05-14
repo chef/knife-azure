@@ -47,9 +47,9 @@ it "test hosted service cleanup with shared service" do
 	@server_instance.run
 end
 
-it "dont cleanup hosted service when --dont-purge-hosted-service param set" do
+it "dont cleanup hosted service when --preserve-hosted-service param set" do
 	@server_instance.name_args = ['vm01']
-	Chef::Config[:knife][:dont_purge_hosted_service] = true
+	Chef::Config[:knife][:preserve_hosted_service] = true
 	@server_instance.ui.should_receive(:warn).twice
 	@server_instance.connection.roles.should_receive(:delete).and_call_original
 	@server_instance.connection.hosts.should_not_receive(:delete)

@@ -50,8 +50,8 @@ class Chef
         :long => "--node-name NAME",
         :description => "The name of the node and client to delete, if it differs from the server name.  Only has meaning when used with the '--purge' option."
 
-      option :dont_purge_hosted_service,
-        :long => "--dont-purge-hosted-service",
+      option :preserve_hosted_service,
+        :long => "--preserve-hosted-service",
         :boolean => true,
         :default => false,
         :description => "Dont destroy corresponding hosted service. If the option is not set, it deletes the service not used by any VMs."
@@ -93,7 +93,7 @@ class Chef
             puts "\n"
             confirm("Do you really want to delete this server")
             connection.roles.delete(name, params = { :preserve_os_disk => locate_config_value(:preserve_os_disk),
-                                                     :dont_purge_hosted_service => locate_config_value(:purge_hosted_service),
+                                                     :preserve_hosted_service => locate_config_value(:preserve_hosted_service),
                                                      :hostedservicename => server.hostedservicename })
 
             puts "\n"
