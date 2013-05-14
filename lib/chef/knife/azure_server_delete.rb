@@ -92,7 +92,7 @@ class Chef
 
             puts "\n"
             confirm("Do you really want to delete this server")
-            connection.roles.delete(name, params = { :preserve_os_disk => locate_config_value(:preserve_os_disk)
+            connection.roles.delete(name, params = { :preserve_os_disk => locate_config_value(:preserve_os_disk),
                                                      :dont_purge_hosted_service => locate_config_value(:purge_hosted_service),
                                                      :hostedservicename => server.hostedservicename })
 
