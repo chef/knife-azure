@@ -69,13 +69,13 @@ class Azure
           "/#{role.deployname}/roles/#{role.name}"
         end
         roleXML = nil
-        if params[:purge_os_disk]
+        unless params[:preserve_os_disk]
             roleXML = @connection.query_azure(servicecall, "get")
         end
         @connection.query_azure(servicecall, "delete") 
 
-        if !params[:dont_purge_hosted_service]
-          if !params[:hostedservicename].nil?
+        unless params[:preserve_hosted_service]
+          unless params[:hostedservicename].nil?
             roles_using_same_service = connection.roles.find_roles_with_hostedservice(params[:hostedservicename])
             if roles_using_same_service.size <= 1
               servicecall = "hostedservices/" + params[:hostedservicename]
@@ -83,8 +83,8 @@ class Azure
             end
           end
         end
-
-        if params[:purge_os_disk]
+        
+        unless params[:preserve_os_disk]
           osdisk = roleXML.css(roleXML, 'OSVirtualHardDisk')
           disk_name = xml_content(osdisk, 'DiskName')
           servicecall = "disks/#{disk_name}"
