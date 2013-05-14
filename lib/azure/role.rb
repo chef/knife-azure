@@ -69,7 +69,7 @@ class Azure
           "/#{role.deployname}/roles/#{role.name}"
         end
         roleXML = nil
-        if params[:purge_os_disk]
+        unless params[:preserve_os_disk]
             roleXML = @connection.query_azure(servicecall, "get")
         end
         @connection.query_azure(servicecall, "delete") 
@@ -83,8 +83,8 @@ class Azure
             end
           end
         end
-
-        if params[:purge_os_disk]
+        
+        unless params[:preserve_os_disk]
           osdisk = roleXML.css(roleXML, 'OSVirtualHardDisk')
           disk_name = xml_content(osdisk, 'DiskName')
           servicecall = "disks/#{disk_name}"
