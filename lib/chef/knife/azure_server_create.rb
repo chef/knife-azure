@@ -279,7 +279,7 @@ class Chef
         end
         if is_image_windows?
           if is_platform_windows?
-            require 'em-winrs'
+            #require 'em-winrs'
           else
             require 'gssapi'
             require 'winrm'
@@ -350,7 +350,7 @@ class Chef
       def bootstrap_for_windows_node(server, fqdn)
         if locate_config_value(:bootstrap_protocol) == 'winrm'
             if is_platform_windows?
-              require 'em-winrs'
+              #require 'em-winrs'
             else
               require 'gssapi'
               require 'winrm'
@@ -395,6 +395,7 @@ class Chef
         bootstrap.config[:bootstrap_version] = locate_config_value(:bootstrap_version)
         bootstrap.config[:distro] = locate_config_value(:distro)
         bootstrap.config[:use_sudo] = true unless locate_config_value(:ssh_user) == 'root'
+        bootstrap.config[:use_sudo_password] = true if bootstrap.config[:use_sudo]
         bootstrap.config[:template_file] = config[:template_file]
         bootstrap.config[:environment] = locate_config_value(:environment)
         # may be needed for vpc_mode

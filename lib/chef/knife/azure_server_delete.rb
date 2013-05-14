@@ -32,11 +32,11 @@ class Chef
 
       banner "knife azure server delete SERVER [SERVER] (options)"
 
-      option :purge_os_disk,
-        :long => "--purge-os-disk",
+      option :preserve_os_disk,
+        :long => "--preserve-os-disk",
         :boolean => true,
-        :default => true,
-        :description => "Destroy corresponding OS Disk"
+        :default => false,
+        :description => "Preserve corresponding OS Disk"
 
       option :purge,
         :short => "-P",
@@ -50,6 +50,11 @@ class Chef
         :long => "--node-name NAME",
         :description => "The name of the node and client to delete, if it differs from the server name.  Only has meaning when used with the '--purge' option."
 
+      option :preserve_hosted_service,
+        :long => "--preserve-hosted-service",
+        :boolean => true,
+        :default => false,
+        :description => "Dont destroy corresponding hosted service. If the option is not set, it deletes the service not used by any VMs."
       # Extracted from Chef::Knife.delete_object, because it has a
       # confirmation step built in... By specifying the '--purge'
       # flag (and also explicitly confirming the server destruction!)
@@ -87,8 +92,9 @@ class Chef
 
             puts "\n"
             confirm("Do you really want to delete this server")
-             
-            connection.roles.delete(name, params = { :purge_os_disk => locate_config_value(:purge_os_disk) })
+            connection.roles.delete(name, params = { :preserve_os_disk => locate_config_value(:preserve_os_disk),
+                                                     :preserve_hosted_service => locate_config_value(:preserve_hosted_service),
+                                                     :hostedservicename => server.hostedservicename })
 
             puts "\n"
             ui.warn("Deleted server #{server.name}")
