@@ -1,4 +1,3 @@
-
 module QueryAzureMock
   def setup_query_azure_mock
     create_connection

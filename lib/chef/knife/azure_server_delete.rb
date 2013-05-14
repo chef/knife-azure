@@ -50,6 +50,11 @@ class Chef
         :long => "--node-name NAME",
         :description => "The name of the node and client to delete, if it differs from the server name.  Only has meaning when used with the '--purge' option."
 
+      option :dont_purge_hosted_service,
+        :long => "--dont-purge-hosted-service",
+        :boolean => true,
+        :default => false,
+        :description => "Dont destroy corresponding hosted service. If the option is not set, it deletes the service not used by any VMs."
       # Extracted from Chef::Knife.delete_object, because it has a
       # confirmation step built in... By specifying the '--purge'
       # flag (and also explicitly confirming the server destruction!)
@@ -87,8 +92,9 @@ class Chef
 
             puts "\n"
             confirm("Do you really want to delete this server")
-             
-            connection.roles.delete(name, params = { :purge_os_disk => locate_config_value(:purge_os_disk) })
+            connection.roles.delete(name, params = { :purge_os_disk => locate_config_value(:purge_os_disk),
+                                                     :dont_purge_hosted_service => locate_config_value(:purge_hosted_service),
+                                                     :hostedservicename => server.hostedservicename })
 
             puts "\n"
             ui.warn("Deleted server #{server.name}")
