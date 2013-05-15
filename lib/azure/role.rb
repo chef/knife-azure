@@ -88,7 +88,7 @@ class Azure
 
         unless params[:preserve_hosted_service]
           unless params[:hostedservicename].nil?
-            roles_using_same_service = connection.roles.find_roles_with_hostedservice(params[:hostedservicename])
+            roles_using_same_service = find_roles_with_hostedservice(params[:hostedservicename])
             if roles_using_same_service.size <= 1
               servicecall = "hostedservices/" + params[:hostedservicename]
               @connection.query_azure(servicecall, "delete")
