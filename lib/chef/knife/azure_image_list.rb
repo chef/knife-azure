@@ -29,6 +29,12 @@ class Chef
 
       banner "knife azure image list (options)"
 
+      option :show_all_fields,
+        :long => "--full",
+        :default => false,
+        :boolean => true,
+        :description => "Show all the fields of the images"
+
       def h
         @highline ||= HighLine.new
       end
@@ -38,21 +44,18 @@ class Chef
 
         validate!
 
-        image_list = [
-          ui.color('Name', :bold),
-          ui.color('Category', :bold),
-          ui.color('Label', :bold),
-          ui.color('OS', :bold),
-        ]
+        image_labels = !locate_config_value(:show_all_fields) ? ['Name', 'OS'] : ['Name', 'Category', 'Label', 'OS'] 
+        image_list =  image_labels.map {|label| ui.color(label, :bold)}          
         items = connection.images.all
+
+        image_items = image_labels.map {|item| item.downcase }
         items.each do |image|
-          image_list << image.name.to_s
-          image_list << image.category.to_s
-          image_list << image.label.to_s
-          image_list << image.os.to_s
+         image_items.each {|item| image_list << image.send(item).to_s }
         end
+
         puts "\n"
-        puts h.list(image_list, :columns_across, 4)
+        puts h.list(image_list, :columns_across, !locate_config_value(:show_all_fields) ? 2 : 4) 
+
       end
     end
   end
