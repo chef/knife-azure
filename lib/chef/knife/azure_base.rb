@@ -103,7 +103,7 @@ class Chef
             end
           end
           if(config[:azure_mgmt_cert] != nil)
-            config[:azure_mgmt_cert] = File.read find_pem(config[:azure_mgmt_cert])
+            config[:azure_mgmt_cert] = File.read find_file(config[:azure_mgmt_cert])
           end
           if errors.each{|e| ui.error(e)}.any?
             exit 1
@@ -118,7 +118,7 @@ class Chef
         require 'base64'
         require 'openssl'
         require 'uri'
-        doc = Nokogiri::XML(File.open(filename))
+        doc = Nokogiri::XML(File.open(find_file(filename)))
         profile = doc.at_css("PublishProfile")
         management_cert = OpenSSL::PKCS12.new(Base64.decode64(profile.attribute("ManagementCertificate").value))
         config[:azure_mgmt_cert] = management_cert.certificate.to_pem + management_cert.key.to_pem
@@ -128,18 +128,19 @@ class Chef
         end
       end
 
-      def find_pem(name)
+      def find_file(name)
         config_dir = Chef::Knife.chef_config_dir
         if File.exist? name
-          pem_file = name
+          file = name
         elsif config_dir && File.exist?(File.join(config_dir, name))
-          pem_file = File.join(config_dir, name)
+          file = File.join(config_dir, name)
         elsif File.exist?(File.join(ENV['HOME'], '.chef', name))
-          pem_file = File.join(ENV['HOME'], '.chef', name)
+          file = File.join(ENV['HOME'], '.chef', name)
         else
-          raise 'Unable to find certificate pem file - ' + name
+          ui.error('Unable to find file - ' + name)
+          exit 1
         end
-        pem_file
+        file
       end
 
     end
