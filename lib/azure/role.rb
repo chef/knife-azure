@@ -33,7 +33,19 @@ class Azure
       end
       @roles
     end
-    def find(name)
+
+    def find_in_hosted_service(name, hostedservicename)
+      find_roles_with_hostedservice(hostedservicename).each do | role |
+        if (role.name == name)
+          return role
+        end
+      end
+    end
+
+    def find(name, params= nil)
+      if params && params[:azure_hosted_service_name]
+        return find_in_hosted_service(name, params[:azure_hosted_service_name])
+      end
       if @roles == nil
         all
       end
