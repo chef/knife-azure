@@ -60,7 +60,7 @@ class Chef
           server_list << server.deployname.to_s
           server_list << server.name.to_s
           server_list << server.hostname.to_s
-          server_list << server.sshipaddress.to_s
+          server_list << server.publicipaddress.to_s
           server_list << server.sshport.to_s
           server_list << server.winrmport.to_s
         end

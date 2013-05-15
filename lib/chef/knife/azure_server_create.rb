@@ -279,11 +279,11 @@ class Chef
         end
 
         server = connection.deploys.create(create_server_def)
+        fqdn = server.publicipaddress
 
         puts("\n")
         if is_image_windows?
           if locate_config_value(:bootstrap_protocol) == 'ssh'
-            fqdn = server.sshipaddress
             port = server.sshport
             print "\n#{ui.color("Waiting for sshd on #{fqdn}:#{port}", :magenta)}"
 
@@ -293,7 +293,6 @@ class Chef
            }
 
           elsif locate_config_value(:bootstrap_protocol) == 'winrm'
-            fqdn = server.winrmipaddress
             port = server.winrmport
 
             print "\n#{ui.color("Waiting for winrm on #{fqdn}:#{port}", :magenta)}"
@@ -307,12 +306,11 @@ class Chef
           sleep 15
           bootstrap_for_windows_node(server,fqdn).run
         else
-          unless server && server.sshipaddress && server.sshport
+          unless server && server.publicipaddress && server.sshport
             Chef::Log.fatal("server not created")
           exit 1
         end
 
-        fqdn = server.sshipaddress
         port = server.sshport
 
         print "\n#{ui.color("Waiting for sshd on #{fqdn}:#{port}", :magenta)}"

@@ -27,6 +27,6 @@ describe "roles" do
     role.size.should_not be_nil
     role.ipaddress.should_not be_nil
     role.sshport.should_not be_nil
-    role.sshipaddress.should_not be_nil
+    role.publicipaddress.should_not be_nil
   end
 end

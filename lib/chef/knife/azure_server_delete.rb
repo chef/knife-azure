@@ -87,8 +87,7 @@ class Chef
             msg_pair('Deployment', server.deployname)
             msg_pair('Role', server.name)
             msg_pair('Size', server.size)
-            msg_pair('SSH Ip Address', server.sshipaddress)
-            msg_pair('SSH Port', server.sshport)
+            msg_pair('Public Ip Address', server.publicipaddress)
 
             puts "\n"
             confirm("Do you really want to delete this server")
