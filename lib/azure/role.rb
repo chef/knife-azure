@@ -154,7 +154,7 @@ class Azure
           'xmlns'=>'http://schemas.microsoft.com/windowsazure',
           'xmlns:i'=>'http://www.w3.org/2001/XMLSchema-instance'
         ) {
-          xml.RoleName {xml.text params[:role_name]}
+          xml.RoleName {xml.text params[:host_name]}
           xml.OsVersion('i:nil' => 'true')
           xml.RoleType 'PersistentVMRole'
           xml.ConfigurationSets {
@@ -230,12 +230,12 @@ class Azure
             }
           }
           }
-          xml.Label Base64.encode64(params[:role_name]).strip
+          xml.Label Base64.encode64(params[:host_name]).strip
           xml.OSVirtualHardDisk {
             xml.MediaLink 'http://' + params[:storage_account] + '.blob.core.windows.net/vhds/' + (params[:os_disk_name] || Time.now.strftime('disk_%Y_%m_%d_%H_%M')) + '.vhd'
             xml.SourceImageName params[:source_image]
           }
-          xml.RoleSize params[:role_size]
+          xml.RoleSize params[:size]
         }
       end 
       builder.doc

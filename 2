@@ -1,0 +1,57 @@
+       <?xml version="1.0"?>
+       <PersistentVMRole xmlns="http://schemas.microsoft.com/windowsazure" xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+         <RoleName>vm01</RoleName>
+         <OsVersion i:nil="true"/>
+         <RoleType>PersistentVMRole</RoleType>
+         <ConfigurationSets>
+           <ConfigurationSet i:type="LinuxProvisioningConfigurationSet">
+             <ConfigurationSetType>LinuxProvisioningConfiguration</ConfigurationSetType>
+             <HostName>vm01</HostName>
+             <UserName>jetstream</UserName>
+             <UserPassword>jetstream1!</UserPassword>
+             <DisableSshPasswordAuthentication>false</DisableSshPasswordAuthentication>
+           </ConfigurationSet>
+           <ConfigurationSet i:type="NetworkConfigurationSet">
+             <ConfigurationSetType>NetworkConfiguration</ConfigurationSetType>
+             <InputEndpoints>
+               <InputEndpoint>
+                 <LocalPort>22</LocalPort>
+                 <Name>SSH</Name>
+                 <Port>22</Port>
+                 <Protocol>TCP</Protocol>
+               </InputEndpoint>
+               <InputEndpoint>
+                 <LocalPort>44</LocalPort>
+                 <Name>tcpport_44_vm01</Name>
+                 <Port>45</Port>
+                 <Protocol>TCP</Protocol>
+               </InputEndpoint>
+               <InputEndpoint>
+                 <LocalPort>55</LocalPort>
+                 <Name>tcpport_55_vm01</Name>
+                 <Port>55</Port>
+                 <Protocol>TCP</Protocol>
+               </InputEndpoint>
+               <InputEndpoint>
+                 <LocalPort>65</LocalPort>
+                 <Name>udpport_65_vm01</Name>
+                 <Port>65</Port>
+                 <Protocol>UDP</Protocol>
+               </InputEndpoint>
+               <InputEndpoint>
+                 <LocalPort>75</LocalPort>
+                 <Name>udpport_75_vm01</Name>
+                 <Port>75</Port>
+                 <Protocol>UDP</Protocol>
+               </InputEndpoint>
+             </InputEndpoints>
+           </ConfigurationSet>
+         </ConfigurationSets>
+         <Label>dm0wMQ==</Label>
+         <OSVirtualHardDisk>
+           <MediaLink>http://storageaccount001.blob.core.windows.net/vhds/disk004Test.vhd</MediaLink>
+           <SourceImageName>SUSE__OpenSUSE64121-03192012-en-us-15GB</SourceImageName>
+         </OSVirtualHardDisk>
+         <RoleSize>ExtraSmall</RoleSize>
+       </PersistentVMRole>
+

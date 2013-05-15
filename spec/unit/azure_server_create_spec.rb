@@ -20,10 +20,10 @@ before do
    		:azure_subscription_id => 'azure_subscription_id',
 		:azure_mgmt_cert => 'AzureLinuxCert.pem',
 		:azure_host_name => 'preview.core.windows-int.net',
-		:role_name => 'vm01',
-		:service_location => 'service_location',
+		:dns_name => 'vm01',
+		:service_location => 'West Europe',
 		:source_image => 'SUSE__SUSE-Linux-Enterprise-Server-11SP2-20120521-en-us-30GB.vhd',
-		:role_size => 'role_size',
+		:size => 'Small',
 		:hosted_service_name => 'service001',
 		:storage_account => 'ka001testeurope'
     }.each do |key, value|
@@ -57,11 +57,6 @@ describe "compulsory parameter test:" do
 			@server_instance.ui.should_receive(:error)
 			expect {@server_instance.run}.to raise_error
 		end
-		it "role_name" do		
-			Chef::Config[:knife].delete(:role_name)			
-			@server_instance.ui.should_receive(:error)
-			expect {@server_instance.run}.to raise_error
-		end
 		it "service_location" do		
 			Chef::Config[:knife].delete(:service_location)			
 			@server_instance.ui.should_receive(:error)
@@ -72,8 +67,8 @@ describe "compulsory parameter test:" do
 			@server_instance.ui.should_receive(:error)
 			expect {@server_instance.run}.to raise_error
 		end
-		it "role_size" do		
-			Chef::Config[:knife].delete(:role_size)			
+		it "size" do		
+			Chef::Config[:knife].delete(:size)			
 			@server_instance.ui.should_receive(:error)
 			expect {@server_instance.run}.to raise_error
 		end
@@ -102,14 +97,14 @@ describe "for bootstrap protocol winrm:" do
 		   	@bootstrap.should_receive(:run)
 		end
 
-		it "sets param <hosted_service_name> from role_name" do
+		it "sets param <hosted_service_name> from dns_name" do
 			Chef::Config[:knife].delete(:hosted_service_name)
 			@server_instance.should_receive(:is_image_windows?).at_least(:twice).and_return(true)
 			@server_instance.run
 			@server_instance.config[:hosted_service_name].should match(/\Avm01/)
 		end
 
-		it "sets param <storage_account> from role_name" do
+		it "sets param <storage_account> from host_name" do
 			Chef::Config[:knife].delete(:storage_account)
 			@server_instance.should_receive(:is_image_windows?).at_least(:twice).and_return(true)
 			@server_instance.run

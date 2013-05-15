@@ -12,10 +12,10 @@ before do
    		:azure_subscription_id => 'azure_subscription_id',
 		:azure_mgmt_cert => 'AzureLinuxCert.pem',
 		:azure_host_name => 'preview.core.windows-int.net',
-		:role_name => 'vm01',
-		:service_location => 'service_location',
+		:name => 'vm01',
+		:service_location => 'West Europe',
 		:source_image => 'source_image',
-		:role_size => 'role_size',
+		:size => 'Small',
 		:hosted_service_name => 'service001',
 		:storage_account => 'ka001testeurope'
     }.each do |key, value|

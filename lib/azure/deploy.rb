@@ -63,7 +63,7 @@ class Azure
           Chef::Log.fatal 'Unable to create role:' + ret_val.at_css('Error Code').content + ' : ' + ret_val.at_css('Error Message').content
           exit 1
       end
-      @connection.roles.find(params[:role_name])
+      @connection.roles.find(params[:host_name])
     end
     def delete(rolename)
     end

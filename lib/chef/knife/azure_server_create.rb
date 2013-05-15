@@ -105,46 +105,41 @@ class Chef
       option :hosted_service_name,
         :short => "-s NAME",
         :long => "--hosted-service-name NAME",
-        :description => "specifies the name for the hosted service"
-
-      option :hosted_service_description,
-        :short => "-D DESCRIPTION",
-        :long => "--hosted_service_description DESCRIPTION",
-        :description => "Description for the hosted service"
+        :description => "Optional. A name for the cloud service that is unique within Windows Azure. If the specified service does not exist, new one is created. If this param is not specified, then a new one is created with name derived from the DNS name. This name is the DNS prefix name and can be used to access the service. For example: http://ServiceName.cloudapp.net// "
 
       option :storage_account,
         :short => "-a NAME",
         :long => "--storage-account NAME",
-        :description => "specifies the name for the hosted service"
-
-      option :role_name,
-        :short => "-R name",
-        :long => "--role-name NAME",
-        :description => "specifies the name for the virtual machine"
+        :description => "Required for advanced server-create option. A name for the storage account that is unique within Windows Azure. Storage account names must be between 3 and 24 characters in length and use numbers and lower-case letters only. This name is the DNS prefix name and can be used to access blobs, queues, and tables in the storage account. For example: http://ServiceName.blob.core.windows.net/mycontainer/"
 
       option :host_name,
         :long => "--host-name NAME",
-        :description => "specifies the host name for the virtual machine"
+        :description => "Required for advanced server-create option. Specifies the name for the virtual machine. The name must be unique within the deployment."
 
       option :service_location,
         :short => "-m LOCATION",
         :long => "--service-location LOCATION",
-        :description => "specify the Geographic location for the virtual machine and services"
+        :description => "Required. Specifies the geographic location - the name of the data center location that is valid for your subscription. Eg: West US, East US, East Asia, Southeast Asia, North Europe, West Europe"
+
+      option :dns_name,
+        :short => "-d DNS_NAME",
+        :long => "--dns-name DNS_NAME",
+        :description => "Required. The DNS prefix name that can be used to access the cloud service. If you want to add new VM to an existing service/deployment, specify an exiting dns-name. Else new deployment is created. For example, if the DNS of cloud service is MyService you could access the cloud service by calling: http://MyService.cloudapp.net"
 
       option :os_disk_name,
         :short => "-o DISKNAME",
         :long => "--os-disk-name DISKNAME",
-        :description => "unique name for specifying os disk (optional)"
+        :description => "Optional. Optional. Specifies the friendly name of the disk containing the guest OS image in the image repository."
 
       option :source_image,
         :short => "-I IMAGE",
         :long => "--source-image IMAGE",
-        :description => "disk image name to use to create virtual machine"
+        :description => "Required. Specifies the name of the disk image to use to create the virtual machine. Do a \"knife azure image list\" to see a list of available images."
 
-      option :role_size,
+      option :size,
         :short => "-z SIZE",
-        :long => "--role-size SIZE",
-        :description => "size of virtual machine (ExtraSmall, Small, Medium, Large, ExtraLarge)",
+        :long => "--size SIZE",
+        :description => "Optional. Size of virtual machine (ExtraSmall, Small, Medium, Large, ExtraLarge)",
         :default => 'Small'
 
       option :tcp_endpoints,
@@ -156,7 +151,6 @@ class Chef
         :short => "-u PORT_LIST",
         :long => "--udp-endpoints PORT_LIST",
         :description => "Comma separated list of UDP local and public ports to open i.e. '80:80,433:5000'"
-
 
       def strip_non_ascii(string)
         string.gsub(/[^0-9a-z ]/i, '')
@@ -225,13 +219,12 @@ class Chef
           :azure_subscription_id,
           :azure_mgmt_cert,
           :azure_host_name,
-          :role_name,
-          :host_name || :role_name,
+          :host_name,
           :ssh_user,
           :ssh_password,
           :service_location,
           :source_image,
-          :role_size
+          :size
         ].each do |key|
           key = key.to_sym
           details << key.to_s
@@ -255,15 +248,19 @@ class Chef
         Chef::Log.info("creating...")
 
         if not locate_config_value(:hosted_service_name)
-          config[:hosted_service_name] = [strip_non_ascii(locate_config_value(:role_name)), random_string].join
+          config[:hosted_service_name] = locate_config_value(:dns_name)
         end
 
+        if not locate_config_value(:host_name)
+          config[:host_name] = locate_config_value(:dns_name)
+        end
+        
         #If Storage Account is not specified, check if the geographic location has one to re-use
         if not locate_config_value(:storage_account)
           storage_accts = connection.storageaccounts.all
           storage = storage_accts.find { |storage_acct| storage_acct.location.to_s == locate_config_value(:service_location) }
           if not storage
-            config[:storage_account] = [strip_non_ascii(locate_config_value(:role_name)), random_string].join.downcase
+            config[:storage_account] = [strip_non_ascii(locate_config_value(:host_name)), random_string].join.downcase
           else
             config[:storage_account] = storage.name.to_s
           end
@@ -399,10 +396,10 @@ class Chef
               :azure_subscription_id,
               :azure_mgmt_cert,
               :azure_host_name,
-              :role_name,
+              :dns_name,
               :service_location,
               :source_image,
-              :role_size,
+              :size,
         ])
       end
 
@@ -410,12 +407,12 @@ class Chef
         server_def = {
           :hosted_service_name => locate_config_value(:hosted_service_name),
           :storage_account => locate_config_value(:storage_account),
-          :role_name => locate_config_value(:role_name),
-          :host_name => locate_config_value(:host_name) || locate_config_value(:role_name),
+          :dns_name => locate_config_value(:dns_name),
+          :host_name => locate_config_value(:host_name),
           :service_location => locate_config_value(:service_location),
           :os_disk_name => locate_config_value(:os_disk_name),
           :source_image => locate_config_value(:source_image),
-          :role_size => locate_config_value(:role_size),
+          :size => locate_config_value(:size),
           :tcp_endpoints => locate_config_value(:tcp_endpoints),
           :udp_endpoints => locate_config_value(:udp_endpoints),
           :bootstrap_proto => locate_config_value(:bootstrap_protocol)
@@ -443,3 +440,4 @@ class Chef
     end
   end
 end
+ 
