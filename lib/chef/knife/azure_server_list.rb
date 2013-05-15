@@ -33,18 +33,13 @@ class Chef
 
         validate!
 
-        server_list = [
-          ui.color('Status', :bold),
-          ui.color('Service', :bold),
-          ui.color('Deployment', :bold),
-          ui.color('Role', :bold),
-          ui.color('Host', :bold),
-          ui.color('IP Address', :bold),
-          ui.color('SSH Port', :bold),
-          ui.color('WinRM Port', :bold)
-        ]
+        server_labels = ['DNS Name', 'VM Name', 'Status', 'IP Address', 'SSH Port', 'WinRM Port' ]
+        server_list =  server_labels.map {|label| ui.color(label, :bold)}
         items = connection.roles.all
+        
         items.each do |server|
+          server_list << server.hostedservicename.to_s+".cloudapp.net"  # Info about the DNS name at http://msdn.microsoft.com/en-us/library/ee460806.aspx
+          server_list << server.name.to_s
           server_list << begin
                            state = server.status.to_s.downcase
                            case state
@@ -55,17 +50,13 @@ class Chef
                            else
                              ui.color('ready', :green)
                            end
-          end
-          server_list << server.hostedservicename.to_s
-          server_list << server.deployname.to_s
-          server_list << server.name.to_s
-          server_list << server.hostname.to_s
+          end  
           server_list << server.sshipaddress.to_s
           server_list << server.sshport.to_s
           server_list << server.winrmport.to_s
         end
         puts ''
-        puts ui.list(server_list, :columns_across, 8)
+        puts ui.list(server_list, :columns_across, 6)
       end
     end
   end
