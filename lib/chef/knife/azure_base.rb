@@ -95,15 +95,15 @@ class Chef
 
       def validate!(keys=[:azure_subscription_id, :azure_mgmt_cert, :azure_host_name])
         errors = []
-        if(config[:azure_publish_settings_file] == nil)
+        if(locate_config_value(:azure_publish_settings_file) == nil)
           keys.each do |k|
             pretty_key = k.to_s.gsub(/_/, ' ').gsub(/\w+/){ |w| (w =~ /(ssh)|(aws)/i) ? w.upcase  : w.capitalize }
             if locate_config_value(k).nil?
               errors << "You did not provide a valid '#{pretty_key}' value. Please set knife[:#{k}] in your knife.rb or pass as an option."
             end
           end
-          if(config[:azure_mgmt_cert] != nil)
-            config[:azure_mgmt_cert] = File.read find_file(config[:azure_mgmt_cert])
+          if(locate_config_value(:azure_mgmt_cert) != nil)
+            config[:azure_mgmt_cert] = File.read find_file(locate_config_value(:azure_mgmt_cert))
           end
           if errors.each{|e| ui.error(e)}.any?
             exit 1
