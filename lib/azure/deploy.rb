@@ -48,7 +48,7 @@ class Azure
       unless @connection.storageaccounts.exists(params[:storage_account])
         @connection.storageaccounts.create(params)
       end
-      if params[:ssh_key]
+      if params[:identity_file]
         params[:fingerprint] = @connection.certificates.create(params)
       end
       params['deploy_name'] = find(params[:hosted_service_name])

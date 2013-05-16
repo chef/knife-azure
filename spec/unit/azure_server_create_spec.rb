@@ -170,11 +170,11 @@ describe "for bootstrap protocol ssh:" do
 		end
 		it "check if ssh-key set correctly" do
 			Chef::Config[:knife][:ssh_password] = ''
-			Chef::Config[:knife][:ssh_key] = 'ssh_key'
+			Chef::Config[:knife][:identity_file] = 'ssh_key'
 			@server_instance.should_receive(:is_image_windows?).and_return(false)		
 			@server_params = @server_instance.create_server_def
 			@server_params[:os_type].should == 'Linux'
-			@server_params[:ssh_key].should == 'ssh_key'
+			@server_params[:identity_file].should == 'ssh_key'
 			@server_params[:ssh_user].should == 'ssh_user'
 			@server_params[:bootstrap_proto].should == 'ssh'
 			@server_params[:hosted_service_name].should == 'service001'

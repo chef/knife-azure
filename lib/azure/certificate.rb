@@ -54,8 +54,8 @@ class Azure
     def create(params)
       # If ssh-key has been specified, then generate an x 509 certificate from the
       # given RSA private key
-      @cert_data = generateCertificateData({:ssh_key => params[:ssh_key],
-                                             :ssh_key_passphrase => params[:ssh_key_passphrase]})
+      @cert_data = generateCertificateData({:ssh_key => params[:identity_file],
+                                             :ssh_key_passphrase => params[:identity_file_passphrase]})
       # Generate XML to call the API
       # Add certificate to the hosted service
       builder = Nokogiri::XML::Builder.new do |xml|
