@@ -40,6 +40,7 @@ class Azure
           return role
         end
       end
+      return nil
     end
 
     def find(name, params= nil)
@@ -56,8 +57,7 @@ class Azure
       end
       nil   
     end
-    def alone_on_host(name)
-      found_role = find(name)
+    def alone_on_host(found_role)
       @roles.each do |role|
         if (role.name != found_role.name && 
             role.deployname == found_role.deployname && 
@@ -73,7 +73,7 @@ class Azure
     def delete(name, params)
       role = find(name)
       if role != nil
-        if alone_on_host(name)
+        if alone_on_host(role)
           servicecall = "hostedservices/#{role.hostedservicename}/deployments" +
           "/#{role.deployname}"
         else
@@ -85,6 +85,8 @@ class Azure
             roleXML = @connection.query_azure(servicecall, "get")
         end
         @connection.query_azure(servicecall, "delete") 
+        # delete role from local cache as well.
+        @roles.delete(role)
 
         unless params[:preserve_hosted_service]
           unless params[:hostedservicename].nil?
