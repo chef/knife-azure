@@ -422,7 +422,7 @@ class Chef
               :size,
         ])
         if locate_config_value(:connect_to_existing_dns) && locate_config_value(:host_name).nil?
-          ui.error("Specify the VM name using --host-name option, since you are having --connect-to-existing-dns")
+          ui.error("Specify the VM name using --host-name option, since you are connecting to existing dns")
           exit 1
         end
       end
