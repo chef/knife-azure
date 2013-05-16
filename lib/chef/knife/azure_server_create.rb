@@ -40,7 +40,7 @@ class Chef
 
       banner "knife azure server create (options)"
 
-      attr_accessor :initial_sleep_delay, :port
+      attr_accessor :initial_sleep_delay
 
       option :bootstrap_protocol,
         :long => "--bootstrap-protocol protocol",
@@ -221,31 +221,6 @@ class Chef
         tcp_socket && tcp_socket.close
       end
 
-      def parameter_test
-        details = Array.new
-        details << ui.color('name', :bold, :blue)
-        details << ui.color('Chef::Config', :bold, :blue)
-        details << ui.color('config', :bold, :blue)
-        details << ui.color('winner is', :bold, :blue)
-        [
-          :azure_subscription_id,
-          :azure_mgmt_cert,
-          :azure_host_name,
-          :host_name,
-          :ssh_user,
-          :ssh_password,
-          :service_location,
-          :source_image,
-          :size
-        ].each do |key|
-          key = key.to_sym
-          details << key.to_s
-          details << Chef::Config[:knife][key].to_s
-          details << config[key].to_s
-          details << locate_config_value(key)
-        end
-        puts ui.list(details, :columns_across, 4)
-      end
       def is_platform_windows?
         return RUBY_PLATFORM.scan('w32').size > 0
       end
@@ -262,7 +237,7 @@ class Chef
         if not locate_config_value(:host_name)
           config[:host_name] = locate_config_value(:dns_name)
         end
-        
+
         #If Storage Account is not specified, check if the geographic location has one to re-use
         if not locate_config_value(:storage_account)
           storage_accts = connection.storageaccounts.all
@@ -273,14 +248,11 @@ class Chef
             config[:storage_account] = storage.name.to_s
           end
         end
+
         if is_image_windows?
-          if is_platform_windows?
-            #require 'em-winrs'
-          else
             require 'gssapi'
             require 'winrm'
             require 'em-winrm'
-          end
         end
 
         server = connection.deploys.create(create_server_def)
@@ -429,6 +401,25 @@ class Chef
           :bootstrap_proto => locate_config_value(:bootstrap_protocol),
           :connect_to_existing_dns => locate_config_value(:connect_to_existing_dns)
         }
+        if locate_config_value(:bootstrap) == 'ssh'
+          if locate_config_value(:connect_to_existing_dns)
+            if port.nil? || port == 22
+             port = Random.rand(64000)
+            end
+          else
+            port = '22'
+          end
+        else
+          port = locate_config_value(:winrm_port)
+          if locate_config_value(:connect_to_existing_dns)
+            if port.nil? || port == 5985
+              port = Random.rand(64000)
+            end
+          else
+            port = '5985'
+          end
+        end
+        server_def[:port] = port
 
         if is_image_windows?
           server_def[:os_type] = 'Windows'
@@ -436,15 +427,7 @@ class Chef
             ui.error("WinRM Password and Bootstrapping Protocol are compulsory parameters")
           end
           server_def[:admin_password] = locate_config_value(:winrm_password)
-          server_def[:bootstrap_proto] = locate_config_value(:bootstrap_protocol)
-          @port = locate_config_value(:winrm_port)
-          if locate_config_value(:connect_to_existing_dns)
-            if @port.nil? || @port == 5985
-              @port = Random.rand(64000)
-            end
-          else
-            @port = '5985'
-          end
+          server_def[:bootstrap_proto] = locate_config_value(:bootstrap_protocol)          
         else
           server_def[:os_type] = 'Linux'
           server_def[:bootstrap_proto] = 'ssh'
@@ -454,16 +437,8 @@ class Chef
           end
           server_def[:ssh_user] = locate_config_value(:ssh_user)
           server_def[:ssh_password] = locate_config_value(:ssh_password)
-          @port = locate_config_value(:ssh_port)
-          if locate_config_value(:connect_to_existing_dns)
-            if @port.nil? || @port == 22
-             @port = Random.rand(64000)
-            end
-          else
-            @port = '22'
-          end
+          port = locate_config_value(:ssh_port)          
         end
-        server_def[:port] = @port
         server_def
       end
     end
