@@ -192,7 +192,7 @@ class Azure
                 xml.InputEndpoint {
                   xml.LocalPort '5985'
                   xml.Name 'WinRM'
-                  xml.Port port[:port]
+                  xml.Port params[:port]
                   xml.Protocol 'TCP'
                 }
               end
