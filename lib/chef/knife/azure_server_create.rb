@@ -452,7 +452,7 @@ class Chef
           server_def[:bootstrap_proto] = locate_config_value(:bootstrap_protocol)
           @port = locate_config_value(:winrm_port)
           if locate_config_value(:connect_to_existing_dns)
-            if @port.nil || @port == 5985
+            if @port.nil? || @port == 5985
               @port = Random.rand(64000)
             end
           else
@@ -469,7 +469,7 @@ class Chef
           server_def[:ssh_password] = locate_config_value(:ssh_password)
           @port = locate_config_value(:ssh_port)
           if locate_config_value(:connect_to_existing_dns)
-            if @port.nil || @port == 22
+            if @port.nil? || @port == 22
              @port = Random.rand(64000)
             end
           else
