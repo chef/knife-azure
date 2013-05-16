@@ -102,14 +102,6 @@ class Chef
         :boolean => true,
         :default => true
 
-      option :hosted_service_name,
-        :short => "-s NAME",
-        :long => "--hosted-service-name NAME",
-        :description => "Optional. A name for the cloud service that is unique within Windows Azure. 
-                                      If the specified service does not exist, new one is created. If this param is not specified, 
-                                      then a new one is created with name derived from the DNS name. This name is the DNS prefix name 
-                                      and can be used to access the service. For example: http://ServiceName.cloudapp.net// "
-
       option :storage_account,
         :short => "-a NAME",
         :long => "--storage-account NAME",
@@ -133,7 +125,7 @@ class Chef
       option :dns_name,
         :short => "-d DNS_NAME",
         :long => "--dns-name DNS_NAME",
-        :description => "Required. The DNS prefix name that can be used to access the cloud service. 
+        :description => "Required. The DNS prefix name that can be used to access the cloud service which is unique within Windows Azure. 
                                       If you want to add new VM to an existing service/deployment, specify an exiting dns-name, along with --connect-to-existing-dns option.
                                       Otherwise a new deployment is created. For example, if the DNS of cloud service is MyService you could access the cloud service 
                                       by calling: http://MyService.cloudapp.net"
@@ -266,10 +258,6 @@ class Chef
         validate!
 
         Chef::Log.info("creating...")
-
-        if not locate_config_value(:hosted_service_name)
-          config[:hosted_service_name] = locate_config_value(:dns_name)
-        end
 
         if not locate_config_value(:host_name)
           config[:host_name] = locate_config_value(:dns_name)
@@ -429,7 +417,6 @@ class Chef
 
       def create_server_def
         server_def = {
-          :hosted_service_name => locate_config_value(:hosted_service_name),
           :storage_account => locate_config_value(:storage_account),
           :dns_name => locate_config_value(:dns_name),
           :host_name => locate_config_value(:host_name),

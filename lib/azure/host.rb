@@ -75,9 +75,9 @@ class Azure
     def create(params)
       builder = Nokogiri::XML::Builder.new do |xml|
         xml.CreateHostedService('xmlns'=>'http://schemas.microsoft.com/windowsazure') {
-          xml.ServiceName params[:hosted_service_name]
-          xml.Label Base64.encode64(params[:hosted_service_name])
-          xml.Description params[:hosted_service_description] || 'Explicitly created hosted service'
+          xml.ServiceName params[:dns_name]
+          xml.Label Base64.encode64(params[:dns_name])
+          xml.Description 'Explicitly created hosted service'
           xml.Location params[:service_location] || 'West US'
         }
       end

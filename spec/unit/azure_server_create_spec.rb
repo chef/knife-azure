@@ -20,11 +20,10 @@ before do
    		:azure_subscription_id => 'azure_subscription_id',
 		:azure_mgmt_cert => 'AzureLinuxCert.pem',
 		:azure_host_name => 'preview.core.windows-int.net',
-		:dns_name => 'vm01',
 		:service_location => 'West Europe',
 		:source_image => 'SUSE__SUSE-Linux-Enterprise-Server-11SP2-20120521-en-us-30GB.vhd',
 		:size => 'Small',
-		:hosted_service_name => 'service001',
+		:dns_name => 'service001',
 		:storage_account => 'ka001testeurope'
     }.each do |key, value|
       Chef::Config[:knife][key] = value
@@ -87,7 +86,7 @@ describe "for bootstrap protocol winrm:" do
 		@server_params[:os_type].should == 'Windows'
 		@server_params[:admin_password].should == 'winrm_password'
 		@server_params[:bootstrap_proto].should == 'winrm'
-		@server_params[:hosted_service_name].should == 'service001'
+		@server_params[:dns_name].should == 'service001'
 	end
 
 	context "bootstrap node" do
@@ -95,13 +94,6 @@ describe "for bootstrap protocol winrm:" do
 			@bootstrap = Chef::Knife::BootstrapWindowsWinrm.new
 		   	Chef::Knife::BootstrapWindowsWinrm.stub(:new).and_return(@bootstrap)
 		   	@bootstrap.should_receive(:run)
-		end
-
-		it "sets param <hosted_service_name> from dns_name" do
-			Chef::Config[:knife].delete(:hosted_service_name)
-			@server_instance.should_receive(:is_image_windows?).at_least(:twice).and_return(true)
-			@server_instance.run
-			@server_instance.config[:hosted_service_name].should match(/\Avm01/)
 		end
 
 		it "sets param <storage_account> from host_name" do
@@ -153,7 +145,7 @@ describe "for bootstrap protocol ssh:" do
 			@server_params[:ssh_password].should == 'ssh_password'
 			@server_params[:ssh_user].should == 'ssh_user'
 			@server_params[:bootstrap_proto].should == 'ssh'
-			@server_params[:hosted_service_name].should == 'service001'
+			@server_params[:dns_name].should == 'service001'
 		end
 
 		it "successful bootstrap" do

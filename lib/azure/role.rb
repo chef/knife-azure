@@ -241,7 +241,7 @@ class Azure
       builder.doc
     end
     def create(params, roleXML)
-      servicecall = "hostedservices/#{params[:hosted_service_name]}/deployments" +
+      servicecall = "hostedservices/#{params[:dns_name]}/deployments" +
       "/#{params['deploy_name']}/roles"
       @connection.query_azure(servicecall, "post", roleXML.to_xml) 
     end

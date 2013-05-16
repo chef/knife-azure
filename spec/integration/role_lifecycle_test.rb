@@ -8,7 +8,7 @@ describe "role lifecycle" do
     @connection = Azure::Connection.new(connection_params)
     arbitrary = rand(1000) + 1
     @params = {
-      :hosted_service_name=>'service002',
+      :dns_name=>'service002',
       :host_name=>'host' + arbitrary.to_s,
       :ssh_user=>'jetstream',
       :ssh_password=>'jetstream1!',

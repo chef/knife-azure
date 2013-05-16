@@ -142,11 +142,6 @@ Options used with the Create subcommand:
         :boolean => true,
         :default => true
 
-      option :hosted_service_name,
-        :short => "-s NAME",
-        :long => "--hosted-service-name NAME",
-        :description => "Optional. A name for the cloud service that is unique within Windows Azure. If the specified service does not exist, new one is created. If this param is not specified, then a new one is created with name derived from the DNS name. This name is the DNS prefix name and can be used to access the service. For example: http://ServiceName.cloudapp.net// "
-
       option :storage_account,
         :short => "-a NAME",
         :long => "--storage-account NAME",
