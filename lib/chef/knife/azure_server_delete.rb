@@ -55,6 +55,11 @@ class Chef
         :boolean => true,
         :default => false,
         :description => "Dont destroy corresponding hosted service. If the option is not set, it deletes the service not used by any VMs."
+
+      option :azure_hosted_service_name,
+        :long => "--azure-dns-name NAME",
+        :description => "specifies the DNS name (also known as hosted service name)"
+
       # Extracted from Chef::Knife.delete_object, because it has a
       # confirmation step built in... By specifying the '--purge'
       # flag (and also explicitly confirming the server destruction!)
@@ -77,7 +82,7 @@ class Chef
         @name_args.each do |name|
 
           begin
-            server = connection.roles.find(name)
+            server = connection.roles.find(name, params = { :azure_hosted_service_name => locate_config_value(:azure_hosted_service_name) })
             if not server
               ui.warn("Server #{name} does not exist")
               return
