@@ -185,14 +185,14 @@ class Azure
                 xml.InputEndpoint {
                 xml.LocalPort '22' 
                 xml.Name 'SSH'
-                xml.Port '22'
+                xml.Port params[:port]
                 xml.Protocol 'TCP'
               }
               elsif params[:bootstrap_proto].downcase == 'winrm' and params[:os_type] == 'Windows'
                 xml.InputEndpoint {
                   xml.LocalPort '5985'
                   xml.Name 'WinRM'
-                  xml.Port '5985'
+                  xml.Port port[:port]
                   xml.Protocol 'TCP'
                 }
               end

@@ -40,7 +40,7 @@ class Chef
 
       banner "knife azure server create (options)"
 
-      attr_accessor :initial_sleep_delay
+      attr_accessor :initial_sleep_delay, :port
 
       option :bootstrap_protocol,
         :long => "--bootstrap-protocol protocol",
@@ -105,26 +105,38 @@ class Chef
       option :hosted_service_name,
         :short => "-s NAME",
         :long => "--hosted-service-name NAME",
-        :description => "Optional. A name for the cloud service that is unique within Windows Azure. If the specified service does not exist, new one is created. If this param is not specified, then a new one is created with name derived from the DNS name. This name is the DNS prefix name and can be used to access the service. For example: http://ServiceName.cloudapp.net// "
+        :description => "Optional. A name for the cloud service that is unique within Windows Azure. 
+                                      If the specified service does not exist, new one is created. If this param is not specified, 
+                                      then a new one is created with name derived from the DNS name. This name is the DNS prefix name 
+                                      and can be used to access the service. For example: http://ServiceName.cloudapp.net// "
 
       option :storage_account,
         :short => "-a NAME",
         :long => "--storage-account NAME",
-        :description => "Required for advanced server-create option. A name for the storage account that is unique within Windows Azure. Storage account names must be between 3 and 24 characters in length and use numbers and lower-case letters only. This name is the DNS prefix name and can be used to access blobs, queues, and tables in the storage account. For example: http://ServiceName.blob.core.windows.net/mycontainer/"
+        :description => "Required for advanced server-create option. 
+                                      A name for the storage account that is unique within Windows Azure. Storage account names must be 
+                                      between 3 and 24 characters in length and use numbers and lower-case letters only. 
+                                      This name is the DNS prefix name and can be used to access blobs, queues, and tables in the storage account. 
+                                      For example: http://ServiceName.blob.core.windows.net/mycontainer/"
 
       option :host_name,
         :long => "--host-name NAME",
-        :description => "Required for advanced server-create option. Specifies the name for the virtual machine. The name must be unique within the deployment."
+        :description => "Required for advanced server-create option. 
+                                      Specifies the name for the virtual machine. The name must be unique within the deployment."
 
       option :service_location,
         :short => "-m LOCATION",
         :long => "--service-location LOCATION",
-        :description => "Required. Specifies the geographic location - the name of the data center location that is valid for your subscription. Eg: West US, East US, East Asia, Southeast Asia, North Europe, West Europe"
+        :description => "Required. Specifies the geographic location - the name of the data center location that is valid for your subscription. 
+                                      Eg: West US, East US, East Asia, Southeast Asia, North Europe, West Europe"
 
       option :dns_name,
         :short => "-d DNS_NAME",
         :long => "--dns-name DNS_NAME",
-        :description => "Required. The DNS prefix name that can be used to access the cloud service. If you want to add new VM to an existing service/deployment, specify an exiting dns-name. Else new deployment is created. For example, if the DNS of cloud service is MyService you could access the cloud service by calling: http://MyService.cloudapp.net"
+        :description => "Required. The DNS prefix name that can be used to access the cloud service. 
+                                      If you want to add new VM to an existing service/deployment, specify an exiting dns-name, along with --connect-to-existing-dns option.
+                                      Otherwise a new deployment is created. For example, if the DNS of cloud service is MyService you could access the cloud service 
+                                      by calling: http://MyService.cloudapp.net"
 
       option :os_disk_name,
         :short => "-o DISKNAME",
@@ -151,6 +163,14 @@ class Chef
         :short => "-u PORT_LIST",
         :long => "--udp-endpoints PORT_LIST",
         :description => "Comma separated list of UDP local and public ports to open i.e. '80:80,433:5000'"
+
+      option :connect_to_existing_dns,
+        :short => "-c",
+        :long => "--connect-to-existing-dns",
+        :boolean => true,
+        :default => false,
+        :description => "Set this flag to add the new VM to an existing deployment/service. Must give the name of the existing
+                                        DNS correctly in the --dns-name option"
 
       def strip_non_ascii(string)
         string.gsub(/[^0-9a-z ]/i, '')
@@ -356,7 +376,7 @@ class Chef
             bootstrap = Chef::Knife::BootstrapWindowsSsh.new
             bootstrap.config[:ssh_user] = locate_config_value(:ssh_user)
             bootstrap.config[:ssh_password] = locate_config_value(:ssh_password)
-            bootstrap.config[:ssh_port] = locate_config_value(:ssh_port)
+            bootstrap.config[:ssh_port] = port
             bootstrap.config[:identity_file] = locate_config_value(:identity_file)
             bootstrap.config[:host_key_verify] = locate_config_value(:host_key_verify)
         else
@@ -401,6 +421,10 @@ class Chef
               :source_image,
               :size,
         ])
+        if locate_config_value(:connect_to_existing_dns) && locate_config_value(:host_name).nil?
+          ui.error("Specify the VM name using --host-name option, since you are having --connect-to-existing-dns")
+          exit 1
+        end
       end
 
       def create_server_def
@@ -415,7 +439,8 @@ class Chef
           :size => locate_config_value(:size),
           :tcp_endpoints => locate_config_value(:tcp_endpoints),
           :udp_endpoints => locate_config_value(:udp_endpoints),
-          :bootstrap_proto => locate_config_value(:bootstrap_protocol)
+          :bootstrap_proto => locate_config_value(:bootstrap_protocol),
+          :connect_to_existing_dns => locate_config_value(:connect_to_existing_dns)
         }
 
         if is_image_windows?
@@ -425,6 +450,14 @@ class Chef
           end
           server_def[:admin_password] = locate_config_value(:winrm_password)
           server_def[:bootstrap_proto] = locate_config_value(:bootstrap_protocol)
+          @port = locate_config_value(:winrm_port)
+          if locate_config_value(:connect_to_existing_dns)
+            if @port.nil || @port == 5985
+              @port = Random.rand(64000)
+            end
+          else
+            @port = '5985'
+          end
         else
           server_def[:os_type] = 'Linux'
           server_def[:bootstrap_proto] = 'ssh'
@@ -434,7 +467,16 @@ class Chef
           end
           server_def[:ssh_user] = locate_config_value(:ssh_user)
           server_def[:ssh_password] = locate_config_value(:ssh_password)
+          @port = locate_config_value(:ssh_port)
+          if locate_config_value(:connect_to_existing_dns)
+            if @port.nil || @port == 22
+             @port = Random.rand(64000)
+            end
+          else
+            @port = '22'
+          end
         end
+        server_def[:port] = @port
         server_def
       end
     end

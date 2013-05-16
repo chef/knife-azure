@@ -42,9 +42,11 @@ class Azure
       deployName
     end
     def create(params)
-      unless @connection.hosts.exists(params[:hosted_service_name])
-        @connection.hosts.create(params)
-      end 
+      unless params[:connect_to_existing_dns]
+        unless @connection.hosts.exists(params[:hosted_service_name])
+          @connection.hosts.create(params)
+        end
+      end
       unless @connection.storageaccounts.exists(params[:storage_account])
         @connection.storageaccounts.create(params)
       end
