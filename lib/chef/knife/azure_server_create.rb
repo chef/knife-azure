@@ -406,14 +406,14 @@ class Chef
         if !is_image_windows? or locate_config_value(:bootstrap_protocol) == 'ssh'
           port = locate_config_value(:ssh_port)
           if locate_config_value(:connect_to_existing_dns) and (port.nil? or port == 22)
-             port = Random.rand(64000)
+             port = Random.rand(64000) + 1000
           else
             port = '22'
           end
         else
           port = locate_config_value(:winrm_port)
           if locate_config_value(:connect_to_existing_dns) and (port.nil? or port == 5985)
-              port = Random.rand(64000)
+              port = Random.rand(64000) + 1000
           else
             port = '5985'
           end          
