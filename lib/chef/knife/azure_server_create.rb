@@ -434,7 +434,7 @@ class Chef
           server_def[:os_type] = 'Linux'
           server_def[:bootstrap_proto] = 'ssh'
           if not locate_config_value(:ssh_user)
-            ui.error("SSH User is compalsory parameter")
+            ui.error("SSH User is compulsory parameter")
             exit 1
           end
           unless locate_config_value(:ssh_password) or locate_config_value(:identity_file) 
