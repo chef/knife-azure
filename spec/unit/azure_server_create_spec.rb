@@ -78,6 +78,50 @@ describe "compulsory parameter test:" do
 			expect {@server_instance.run}.to raise_error
 		end
 
+		context "Tests for publish settings file" do
+			before do
+				Chef::Config[:knife][:azure_host_name] = nil
+				Chef::Config[:knife][:azure_subscription_id] = nil
+			end 
+			it "- regular flow without publish settings file" do
+				Chef::Config[:knife][:azure_host_name] = "preview.core.windows-int.net"
+				Chef::Config[:knife][:azure_subscription_id] = "azure_subscription_id"
+				@server_instance.validate!
+				Chef::Config[:knife][:azure_host_name].should == "preview.core.windows-int.net"
+				Chef::Config[:knife][:azure_subscription_id].should == "azure_subscription_id"
+			end
+
+			it "- validate extract parameters" do
+				Chef::Config[:knife][:azure_publish_settings_file] = "azureValid.publishsettings"
+				@server_instance.validate!
+				Chef::Config[:knife][:azure_host_name].should == 'management.core.windows.net'
+				Chef::Config[:knife][:azure_subscription_id].should == 'id1'
+			end
+
+			it "- validate parse method" do
+				@server_instance.parse_publish_settings_file("azureValid.publishsettings")
+				Chef::Config[:knife][:azure_host_name].should == 'management.core.windows.net'
+				Chef::Config[:knife][:azure_subscription_id].should == 'id1'
+			end
+
+			it "- with publish settings file and subscrition id" do
+				Chef::Config[:knife][:azure_subscription_id] = "azure_subscription_id"
+				Chef::Config[:knife][:azure_publish_settings_file] = "azureValid.publishsettings"
+				@server_instance.validate!
+				Chef::Config[:knife][:azure_host_name].should == 'management.core.windows.net'
+				Chef::Config[:knife][:azure_subscription_id].should == 'azure_subscription_id'
+			end
+
+			it "- with invalid publish settings" do
+				Chef::Config[:knife][:azure_publish_settings_file] = "azureInvalid.publishsettings"
+				expect {@server_instance.validate!}.to raise_error
+			end
+
+			it "- publish settings file does not exists" do
+				Chef::Config[:knife][:azure_publish_settings_file] = "azureNotAvailable.publishsettings"
+				expect {@server_instance.validate!}.to raise_error
+			end
+		end
 end
 
 describe "for bootstrap protocol winrm:" do

@@ -103,7 +103,7 @@ class Chef
             end
           end
           if(locate_config_value(:azure_mgmt_cert) != nil)
-            config[:azure_mgmt_cert] = File.read find_file(locate_config_value(:azure_mgmt_cert))
+            Chef::Config[:knife][:azure_mgmt_cert] = File.read find_file(locate_config_value(:azure_mgmt_cert))
           end
           if errors.each{|e| ui.error(e)}.any?
             exit 1
@@ -118,13 +118,18 @@ class Chef
         require 'base64'
         require 'openssl'
         require 'uri'
-        doc = Nokogiri::XML(File.open(find_file(filename)))
-        profile = doc.at_css("PublishProfile")
-        management_cert = OpenSSL::PKCS12.new(Base64.decode64(profile.attribute("ManagementCertificate").value))
-        config[:azure_mgmt_cert] = management_cert.certificate.to_pem + management_cert.key.to_pem
-        config[:azure_host_name] = URI(profile.attribute("Url").value).host
-        if(locate_config_value(:azure_subscription_id) == nil)
-          config[:azure_subscription_id] =  doc.at_css("Subscription").attribute("Id").value          
+        begin
+          doc = Nokogiri::XML(File.open(find_file(filename)))
+          profile = doc.at_css("PublishProfile")
+          management_cert = OpenSSL::PKCS12.new(Base64.decode64(profile.attribute("ManagementCertificate").value))
+          Chef::Config[:knife][:azure_mgmt_cert] = management_cert.certificate.to_pem + management_cert.key.to_pem
+          Chef::Config[:knife][:azure_host_name] = URI(profile.attribute("Url").value).host
+          if(locate_config_value(:azure_subscription_id) == nil)
+            Chef::Config[:knife][:azure_subscription_id] = doc.at_css("Subscription").attribute("Id").value
+          end
+        rescue
+          ui.error("Incorrect publish settings file-" + filename)
+          exit 1
         end
       end
 
