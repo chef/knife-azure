@@ -31,11 +31,16 @@ class Chef
         require 'readline'
         require 'chef/json_compat'
         require 'chef/knife/bootstrap'
-        require 'chef/knife/bootstrap_windows_winrm'
         require 'chef/knife/bootstrap_windows_ssh'
         require 'chef/knife/core/windows_bootstrap_context'
-        require 'chef/knife/winrm'
         Chef::Knife::Bootstrap.load_deps
+      end
+
+      def load_winrm_deps
+        require 'winrm'
+        require 'em-winrm'
+        require 'chef/knife/winrm'
+        require 'chef/knife/bootstrap_windows_winrm'
       end
 
       banner "knife azure server create (options)"
@@ -329,8 +334,7 @@ class Chef
       def bootstrap_for_windows_node(server, fqdn)
         if locate_config_value(:bootstrap_protocol) == 'winrm'
 
-            require 'winrm'
-            require 'em-winrm'
+            load_winrm_deps
             if not Chef::Platform.windows?
               require 'gssapi'
             end
