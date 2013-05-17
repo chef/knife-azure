@@ -19,12 +19,11 @@ before do
 	{
    		:azure_subscription_id => 'azure_subscription_id',
 		:azure_mgmt_cert => 'AzureLinuxCert.pem',
-		:azure_host_name => 'preview.core.windows-int.net',
-		:role_name => 'vm01',
-		:service_location => 'service_location',
+		:azure_api_host_name => 'preview.core.windows-int.net',
+		:service_location => 'West Europe',
 		:source_image => 'SUSE__SUSE-Linux-Enterprise-Server-11SP2-20120521-en-us-30GB.vhd',
-		:role_size => 'role_size',
-		:hosted_service_name => 'service001',
+		:vm_size => 'Small',
+		:dns_name => 'service001',
 		:storage_account => 'ka001testeurope'
     }.each do |key, value|
       Chef::Config[:knife][key] = value
@@ -52,13 +51,8 @@ describe "compulsory parameter test:" do
 			@server_instance.ui.should_receive(:error)
 			expect {@server_instance.run}.to raise_error
 		end
-		it "azure_host_name" do		
-			Chef::Config[:knife].delete(:azure_host_name)			
-			@server_instance.ui.should_receive(:error)
-			expect {@server_instance.run}.to raise_error
-		end
-		it "role_name" do		
-			Chef::Config[:knife].delete(:role_name)			
+		it "azure_api_host_name" do		
+			Chef::Config[:knife].delete(:azure_api_host_name)			
 			@server_instance.ui.should_receive(:error)
 			expect {@server_instance.run}.to raise_error
 		end
@@ -72,8 +66,8 @@ describe "compulsory parameter test:" do
 			@server_instance.ui.should_receive(:error)
 			expect {@server_instance.run}.to raise_error
 		end
-		it "role_size" do		
-			Chef::Config[:knife].delete(:role_size)			
+		it "vm_size" do		
+			Chef::Config[:knife].delete(:vm_size)			
 			@server_instance.ui.should_receive(:error)
 			expect {@server_instance.run}.to raise_error
 		end
@@ -87,12 +81,12 @@ describe "for bootstrap protocol winrm:" do
 	end
 
 	it "check if all params are set correctly" do
-		@server_instance.should_receive(:is_image_windows?).and_return(true)
+		@server_instance.should_receive(:is_image_windows?).twice.and_return(true)
 		@server_params = @server_instance.create_server_def
 		@server_params[:os_type].should == 'Windows'
 		@server_params[:admin_password].should == 'winrm_password'
 		@server_params[:bootstrap_proto].should == 'winrm'
-		@server_params[:hosted_service_name].should == 'service001'
+		@server_params[:dns_name].should == 'service001'
 	end
 
 	context "bootstrap node" do
@@ -102,14 +96,7 @@ describe "for bootstrap protocol winrm:" do
 		   	@bootstrap.should_receive(:run)
 		end
 
-		it "sets param <hosted_service_name> from role_name" do
-			Chef::Config[:knife].delete(:hosted_service_name)
-			@server_instance.should_receive(:is_image_windows?).at_least(:twice).and_return(true)
-			@server_instance.run
-			@server_instance.config[:hosted_service_name].should match(/\Avm01/)
-		end
-
-		it "sets param <storage_account> from role_name" do
+		it "sets param <storage_account> from azure_vm_name" do
 			Chef::Config[:knife].delete(:storage_account)
 			@server_instance.should_receive(:is_image_windows?).at_least(:twice).and_return(true)
 			@server_instance.run
@@ -125,7 +112,7 @@ describe "for bootstrap protocol winrm:" do
 		end
 
 		it "successful bootstrap of windows instance" do		
-			@server_instance.should_receive(:is_image_windows?).exactly(3).times.and_return(true)
+			@server_instance.should_receive(:is_image_windows?).exactly(4).times.and_return(true)
 			@server_instance.run
 		end
 	end
@@ -138,7 +125,7 @@ describe "for bootstrap protocol ssh:" do
 
 	context "windows instance:" do
 		it "successful bootstrap" do
-			@server_instance.should_receive(:is_image_windows?).exactly(3).times.and_return(true)
+			@server_instance.should_receive(:is_image_windows?).exactly(4).times.and_return(true)
 			@bootstrap = Chef::Knife::BootstrapWindowsSsh.new
 		   	Chef::Knife::BootstrapWindowsSsh.stub(:new).and_return(@bootstrap)
 		   	@bootstrap.should_receive(:run)		
@@ -152,17 +139,17 @@ describe "for bootstrap protocol ssh:" do
 			Chef::Config[:knife][:ssh_user] = 'ssh_user'
 		end
 		it "check if all params are set correctly" do
-			@server_instance.should_receive(:is_image_windows?).and_return(false)		
+			@server_instance.should_receive(:is_image_windows?).twice.and_return(false)		
 			@server_params = @server_instance.create_server_def
 			@server_params[:os_type].should == 'Linux'
 			@server_params[:ssh_password].should == 'ssh_password'
 			@server_params[:ssh_user].should == 'ssh_user'
 			@server_params[:bootstrap_proto].should == 'ssh'
-			@server_params[:hosted_service_name].should == 'service001'
+			@server_params[:dns_name].should == 'service001'
 		end
 
 		it "successful bootstrap" do
-			@server_instance.should_receive(:is_image_windows?).exactly(3).times.and_return(false)
+			@server_instance.should_receive(:is_image_windows?).exactly(4).times.and_return(false)
 			@bootstrap = Chef::Knife::Bootstrap.new
 	      	Chef::Knife::Bootstrap.stub(:new).and_return(@bootstrap)
 	      	@bootstrap.should_receive(:run)

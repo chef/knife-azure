@@ -23,7 +23,7 @@ describe "storageaccounts" do
   context 'create a new storage account' do
     it 'using explicity parameters it should pass in expected body' do
       params = {
-        :hosted_service_name => 'service003',
+        :dns_name => 'service003',
         :storage_account => 'ka001testeurope',
         :storage_location => 'North Europe'
       }
