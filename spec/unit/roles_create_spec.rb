@@ -32,7 +32,7 @@ describe "roles" do
       submittedXML=Nokogiri::XML readFile('create_role.xml')
       params = {
         :dns_name=>'service001',
-        :host_name=>'vm01',
+        :azure_vm_name=>'vm01',
         :ssh_user=>'jetstream',
         :ssh_password=>'jetstream1!',
         :media_location_prefix=>'auxpreview104',
@@ -61,7 +61,7 @@ describe "roles" do
       submittedXML=Nokogiri::XML readFile('create_deployment.xml')
       params = {
         :dns_name=>'unknown_yet',
-        :host_name=>'vm01',
+        :azure_vm_name=>'vm01',
         :ssh_user=>'jetstream',
         :ssh_password=>'jetstream1!',
         :media_location_prefix=>'auxpreview104',

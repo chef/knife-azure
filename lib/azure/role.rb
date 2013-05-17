@@ -154,7 +154,7 @@ class Azure
           'xmlns'=>'http://schemas.microsoft.com/windowsazure',
           'xmlns:i'=>'http://www.w3.org/2001/XMLSchema-instance'
         ) {
-          xml.RoleName {xml.text params[:host_name]}
+          xml.RoleName {xml.text params[:azure_vm_name]}
           xml.OsVersion('i:nil' => 'true')
           xml.RoleType 'PersistentVMRole'
           xml.ConfigurationSets {
@@ -162,7 +162,7 @@ class Azure
               
               xml.ConfigurationSet('i:type' => 'LinuxProvisioningConfigurationSet') {
               xml.ConfigurationSetType 'LinuxProvisioningConfiguration'
-              xml.HostName params[:host_name] 
+              xml.HostName params[:azure_vm_name] 
               xml.UserName params[:ssh_user]
               xml.UserPassword params[:ssh_password]
               xml.DisableSshPasswordAuthentication 'false'
@@ -170,7 +170,7 @@ class Azure
             elsif params[:os_type] == 'Windows'
               xml.ConfigurationSet('i:type' => 'WindowsProvisioningConfigurationSet') {
               xml.ConfigurationSetType 'WindowsProvisioningConfiguration'
-              xml.ComputerName params[:host_name] 
+              xml.ComputerName params[:azure_vm_name] 
               xml.AdminPassword params[:admin_password]
               xml.ResetPasswordOnFirstLogon 'false'
               xml.EnableAutomaticUpdates 'false'
@@ -202,7 +202,7 @@ class Azure
                 ports = endpoint.split(':')
                 xml.InputEndpoint {
                   xml.LocalPort ports[0]
-                  xml.Name 'tcpport_' + ports[0] + '_' + params[:host_name]
+                  xml.Name 'tcpport_' + ports[0] + '_' + params[:azure_vm_name]
                   if ports.length > 1
                     xml.Port ports[1]
                   else
@@ -217,7 +217,7 @@ class Azure
                 ports = endpoint.split(':')
                 xml.InputEndpoint {
                   xml.LocalPort ports[0]
-                  xml.Name 'udpport_' + ports[0] + '_' + params[:host_name]
+                  xml.Name 'udpport_' + ports[0] + '_' + params[:azure_vm_name]
                   if ports.length > 1
                     xml.Port ports[1]
                   else
@@ -230,7 +230,7 @@ class Azure
             }
           }
           }
-          xml.Label Base64.encode64(params[:host_name]).strip
+          xml.Label Base64.encode64(params[:azure_vm_name]).strip
           xml.OSVirtualHardDisk {
             xml.MediaLink 'http://' + params[:storage_account] + '.blob.core.windows.net/vhds/' + (params[:os_disk_name] || Time.now.strftime('disk_%Y_%m_%d_%H_%M')) + '.vhd'
             xml.SourceImageName params[:source_image]

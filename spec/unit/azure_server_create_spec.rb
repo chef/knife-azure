@@ -96,7 +96,7 @@ describe "for bootstrap protocol winrm:" do
 		   	@bootstrap.should_receive(:run)
 		end
 
-		it "sets param <storage_account> from host_name" do
+		it "sets param <storage_account> from azure_vm_name" do
 			Chef::Config[:knife].delete(:storage_account)
 			@server_instance.should_receive(:is_image_windows?).at_least(:twice).and_return(true)
 			@server_instance.run

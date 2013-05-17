@@ -9,7 +9,7 @@ describe "role lifecycle" do
     arbitrary = rand(1000) + 1
     @params = {
       :dns_name=>'service002',
-      :host_name=>'host' + arbitrary.to_s,
+      :azure_vm_name=>'host' + arbitrary.to_s,
       :ssh_user=>'jetstream',
       :ssh_password=>'jetstream1!',
       :storage_account=>'auxpreview104',
@@ -39,8 +39,8 @@ describe "role lifecycle" do
 
     # create a new role
     arbitrary = rand(1000) + 1
-    @params[:host_name]='host' + arbitrary.to_s
-    Chef::Log.info 'creating a new role named ' + @params[:host_name]
+    @params[:azure_vm_name]='host' + arbitrary.to_s
+    Chef::Log.info 'creating a new role named ' + @params[:azure_vm_name]
     @connection.deploys.create(@params)
 
 

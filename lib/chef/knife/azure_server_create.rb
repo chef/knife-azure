@@ -111,8 +111,8 @@ class Chef
                                       This name is the DNS prefix name and can be used to access blobs, queues, and tables in the storage account. 
                                       For example: http://ServiceName.blob.core.windows.net/mycontainer/"
 
-      option :host_name,
-        :long => "--host-name NAME",
+      option :azure_vm_name,
+        :long => "--azure-vm-name NAME",
         :description => "Required for advanced server-create option. 
                                       Specifies the name for the virtual machine. The name must be unique within the deployment."
 
@@ -234,8 +234,8 @@ class Chef
 
         Chef::Log.info("creating...")
 
-        if not locate_config_value(:host_name)
-          config[:host_name] = locate_config_value(:dns_name)
+        if not locate_config_value(:azure_vm_name)
+          config[:azure_vm_name] = locate_config_value(:dns_name)
         end
 
         #If Storage Account is not specified, check if the geographic location has one to re-use
@@ -243,7 +243,7 @@ class Chef
           storage_accts = connection.storageaccounts.all
           storage = storage_accts.find { |storage_acct| storage_acct.location.to_s == locate_config_value(:service_location) }
           if not storage
-            config[:storage_account] = [strip_non_ascii(locate_config_value(:host_name)), random_string].join.downcase
+            config[:storage_account] = [strip_non_ascii(locate_config_value(:azure_vm_name)), random_string].join.downcase
           else
             config[:storage_account] = storage.name.to_s
           end
@@ -381,8 +381,8 @@ class Chef
               :source_image,
               :size,
         ])
-        if locate_config_value(:connect_to_existing_dns) && locate_config_value(:host_name).nil?
-          ui.error("Specify the VM name using --host-name option, since you are connecting to existing dns")
+        if locate_config_value(:connect_to_existing_dns) && locate_config_value(:azure_vm_name).nil?
+          ui.error("Specify the VM name using --azure-vm-name option, since you are connecting to existing dns")
           exit 1
         end
       end
@@ -391,7 +391,7 @@ class Chef
         server_def = {
           :storage_account => locate_config_value(:storage_account),
           :dns_name => locate_config_value(:dns_name),
-          :host_name => locate_config_value(:host_name),
+          :azure_vm_name => locate_config_value(:azure_vm_name),
           :service_location => locate_config_value(:service_location),
           :os_disk_name => locate_config_value(:os_disk_name),
           :source_image => locate_config_value(:source_image),
