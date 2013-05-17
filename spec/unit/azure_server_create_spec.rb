@@ -81,7 +81,7 @@ describe "for bootstrap protocol winrm:" do
 	end
 
 	it "check if all params are set correctly" do
-		@server_instance.should_receive(:is_image_windows?).and_return(true)
+		@server_instance.should_receive(:is_image_windows?).twice.and_return(true)
 		@server_params = @server_instance.create_server_def
 		@server_params[:os_type].should == 'Windows'
 		@server_params[:admin_password].should == 'winrm_password'
@@ -112,7 +112,7 @@ describe "for bootstrap protocol winrm:" do
 		end
 
 		it "successful bootstrap of windows instance" do		
-			@server_instance.should_receive(:is_image_windows?).exactly(3).times.and_return(true)
+			@server_instance.should_receive(:is_image_windows?).exactly(4).times.and_return(true)
 			@server_instance.run
 		end
 	end
@@ -125,7 +125,7 @@ describe "for bootstrap protocol ssh:" do
 
 	context "windows instance:" do
 		it "successful bootstrap" do
-			@server_instance.should_receive(:is_image_windows?).exactly(3).times.and_return(true)
+			@server_instance.should_receive(:is_image_windows?).exactly(4).times.and_return(true)
 			@bootstrap = Chef::Knife::BootstrapWindowsSsh.new
 		   	Chef::Knife::BootstrapWindowsSsh.stub(:new).and_return(@bootstrap)
 		   	@bootstrap.should_receive(:run)		
@@ -139,7 +139,7 @@ describe "for bootstrap protocol ssh:" do
 			Chef::Config[:knife][:ssh_user] = 'ssh_user'
 		end
 		it "check if all params are set correctly" do
-			@server_instance.should_receive(:is_image_windows?).and_return(false)		
+			@server_instance.should_receive(:is_image_windows?).twice.and_return(false)		
 			@server_params = @server_instance.create_server_def
 			@server_params[:os_type].should == 'Linux'
 			@server_params[:ssh_password].should == 'ssh_password'
@@ -149,7 +149,7 @@ describe "for bootstrap protocol ssh:" do
 		end
 
 		it "successful bootstrap" do
-			@server_instance.should_receive(:is_image_windows?).exactly(3).times.and_return(false)
+			@server_instance.should_receive(:is_image_windows?).exactly(4).times.and_return(false)
 			@bootstrap = Chef::Knife::Bootstrap.new
 	      	Chef::Knife::Bootstrap.stub(:new).and_return(@bootstrap)
 	      	@bootstrap.should_receive(:run)

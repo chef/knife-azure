@@ -132,8 +132,8 @@ class Chef
 
       option :os_disk_name,
         :short => "-o DISKNAME",
-        :long => "--os-disk-name DISKNAME",
-        :description => "Optional. Optional. Specifies the friendly name of the disk containing the guest OS image in the image repository."
+        :long => "--azure-os-disk-name DISKNAME",
+        :description => "Optional. Specifies the friendly name of the disk containing the guest OS image in the image repository."
 
       option :source_image,
         :short => "-I IMAGE",
@@ -142,7 +142,7 @@ class Chef
 
       option :vm_size,
         :short => "-z SIZE",
-        :long => "--vm-size SIZE",
+        :long => "--azure-vm-size SIZE",
         :description => "Optional. Size of virtual machine (ExtraSmall, Small, Medium, Large, ExtraLarge)",
         :default => 'Small'
 
