@@ -375,7 +375,7 @@ class Chef
         super([
               :azure_subscription_id,
               :azure_mgmt_cert,
-              :azure_host_name,
+              :azure_api_host_name,
               :dns_name,
               :service_location,
               :source_image,

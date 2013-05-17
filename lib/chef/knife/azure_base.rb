@@ -47,11 +47,11 @@ class Chef
             :description => "Your Azure PEM file name",
             :proc => Proc.new { |key| Chef::Config[:knife][:azure_mgmt_cert] = key }
 
-          option :azure_host_name,
+          option :azure_api_host_name,
             :short => "-H HOSTNAME",
-            :long => "--azure_host_name HOSTNAME",
+            :long => "--azure-api-host-name HOSTNAME",
             :description => "Your Azure host name",
-            :proc => Proc.new { |key| Chef::Config[:knife][:azure_host_name] = key }
+            :proc => Proc.new { |key| Chef::Config[:knife][:azure_api_host_name] = key }
 
           option :verify_ssl_cert,
             :long => "--verify-ssl-cert",
@@ -71,7 +71,7 @@ class Chef
                           connection = Azure::Connection.new(
                             :azure_subscription_id => locate_config_value(:azure_subscription_id),
                             :azure_mgmt_cert => locate_config_value(:azure_mgmt_cert),
-                            :azure_host_name => locate_config_value(:azure_host_name),
+                            :azure_api_host_name => locate_config_value(:azure_api_host_name),
                             :verify_ssl_cert => locate_config_value(:verify_ssl_cert)
                           )
                         end
@@ -88,7 +88,7 @@ class Chef
         end
       end
 
-      def validate!(keys=[:azure_subscription_id, :azure_mgmt_cert, :azure_host_name])
+      def validate!(keys=[:azure_subscription_id, :azure_mgmt_cert, :azure_api_host_name])
         errors = []
 
         keys.each do |k|

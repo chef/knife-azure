@@ -19,7 +19,7 @@ before do
 	{
    		:azure_subscription_id => 'azure_subscription_id',
 		:azure_mgmt_cert => 'AzureLinuxCert.pem',
-		:azure_host_name => 'preview.core.windows-int.net',
+		:azure_api_host_name => 'preview.core.windows-int.net',
 		:service_location => 'West Europe',
 		:source_image => 'SUSE__SUSE-Linux-Enterprise-Server-11SP2-20120521-en-us-30GB.vhd',
 		:size => 'Small',
@@ -51,8 +51,8 @@ describe "compulsory parameter test:" do
 			@server_instance.ui.should_receive(:error)
 			expect {@server_instance.run}.to raise_error
 		end
-		it "azure_host_name" do		
-			Chef::Config[:knife].delete(:azure_host_name)			
+		it "azure_api_host_name" do		
+			Chef::Config[:knife].delete(:azure_api_host_name)			
 			@server_instance.ui.should_receive(:error)
 			expect {@server_instance.run}.to raise_error
 		end

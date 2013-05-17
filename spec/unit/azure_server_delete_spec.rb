@@ -11,7 +11,7 @@ before do
 	{
    		:azure_subscription_id => 'azure_subscription_id',
 		:azure_mgmt_cert => 'AzureLinuxCert.pem',
-		:azure_host_name => 'preview.core.windows-int.net',
+		:azure_api_host_name => 'preview.core.windows-int.net',
 		:name => 'vm01',
 		:service_location => 'West Europe',
 		:source_image => 'source_image',
