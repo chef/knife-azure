@@ -401,23 +401,22 @@ class Chef
           :bootstrap_proto => locate_config_value(:bootstrap_protocol),
           :connect_to_existing_dns => locate_config_value(:connect_to_existing_dns)
         }
-        if locate_config_value(:bootstrap) == 'ssh'
-          if locate_config_value(:connect_to_existing_dns)
-            if port.nil? || port == 22
+        # If user is connecting a new VM to an existing dns, then
+        # the VM needs to have a unique public port. Logic below takes care of this.
+        if !is_image_windows? or locate_config_value(:bootstrap_protocol) == 'ssh'
+          port = locate_config_value(:ssh_port)
+          if locate_config_value(:connect_to_existing_dns) and (port.nil? or port == 22)
              port = Random.rand(64000)
-            end
           else
             port = '22'
           end
         else
           port = locate_config_value(:winrm_port)
-          if locate_config_value(:connect_to_existing_dns)
-            if port.nil? || port == 5985
+          if locate_config_value(:connect_to_existing_dns) and (port.nil? or port == 5985)
               port = Random.rand(64000)
-            end
           else
             port = '5985'
-          end
+          end          
         end
         server_def[:port] = port
 
@@ -437,7 +436,6 @@ class Chef
           end
           server_def[:ssh_user] = locate_config_value(:ssh_user)
           server_def[:ssh_password] = locate_config_value(:ssh_password)
-          port = locate_config_value(:ssh_port)          
         end
         server_def
       end
