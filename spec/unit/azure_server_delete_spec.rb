@@ -15,7 +15,7 @@ before do
 		:name => 'vm01',
 		:service_location => 'West Europe',
 		:source_image => 'source_image',
-		:size => 'Small',
+		:vm_size => 'Small',
 		:dns_name => 'service001',
 		:storage_account => 'ka001testeurope'
     }.each do |key, value|

@@ -22,7 +22,7 @@ before do
 		:azure_api_host_name => 'preview.core.windows-int.net',
 		:service_location => 'West Europe',
 		:source_image => 'SUSE__SUSE-Linux-Enterprise-Server-11SP2-20120521-en-us-30GB.vhd',
-		:size => 'Small',
+		:vm_size => 'Small',
 		:dns_name => 'service001',
 		:storage_account => 'ka001testeurope'
     }.each do |key, value|
@@ -66,8 +66,8 @@ describe "compulsory parameter test:" do
 			@server_instance.ui.should_receive(:error)
 			expect {@server_instance.run}.to raise_error
 		end
-		it "size" do		
-			Chef::Config[:knife].delete(:size)			
+		it "vm_size" do		
+			Chef::Config[:knife].delete(:vm_size)			
 			@server_instance.ui.should_receive(:error)
 			expect {@server_instance.run}.to raise_error
 		end

@@ -140,9 +140,9 @@ class Chef
         :long => "--source-image IMAGE",
         :description => "Required. Specifies the name of the disk image to use to create the virtual machine. Do a \"knife azure image list\" to see a list of available images."
 
-      option :size,
+      option :vm_size,
         :short => "-z SIZE",
-        :long => "--size SIZE",
+        :long => "--vm-size SIZE",
         :description => "Optional. Size of virtual machine (ExtraSmall, Small, Medium, Large, ExtraLarge)",
         :default => 'Small'
 
@@ -379,7 +379,7 @@ class Chef
               :dns_name,
               :service_location,
               :source_image,
-              :size,
+              :vm_size,
         ])
         if locate_config_value(:connect_to_existing_dns) && locate_config_value(:azure_vm_name).nil?
           ui.error("Specify the VM name using --azure-vm-name option, since you are connecting to existing dns")
@@ -395,7 +395,7 @@ class Chef
           :service_location => locate_config_value(:service_location),
           :os_disk_name => locate_config_value(:os_disk_name),
           :source_image => locate_config_value(:source_image),
-          :size => locate_config_value(:size),
+          :vm_size => locate_config_value(:vm_size),
           :tcp_endpoints => locate_config_value(:tcp_endpoints),
           :udp_endpoints => locate_config_value(:udp_endpoints),
           :bootstrap_proto => locate_config_value(:bootstrap_protocol),

@@ -235,7 +235,7 @@ class Azure
             xml.MediaLink 'http://' + params[:storage_account] + '.blob.core.windows.net/vhds/' + (params[:os_disk_name] || Time.now.strftime('disk_%Y_%m_%d_%H_%M')) + '.vhd'
             xml.SourceImageName params[:source_image]
           }
-          xml.RoleSize params[:size]
+          xml.RoleSize params[:vm_size]
         }
       end 
       builder.doc

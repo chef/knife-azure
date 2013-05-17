@@ -38,7 +38,7 @@ describe "roles" do
         :media_location_prefix=>'auxpreview104',
         :os_disk_name=>'disk004Test',
         :source_image=>'SUSE__OpenSUSE64121-03192012-en-us-15GB',
-        :size=>'ExtraSmall',
+        :vm_size=>'ExtraSmall',
         :tcp_endpoints=>'44:45,55:55',
         :udp_endpoints=>'65:65,75',
         :storage_account=>'storageaccount001',
@@ -67,7 +67,7 @@ describe "roles" do
         :media_location_prefix=>'auxpreview104',
         :os_disk_name=>'disk004Test',
         :source_image=>'SUSE__OpenSUSE64121-03192012-en-us-15GB',
-        :size=>'ExtraSmall',
+        :vm_size=>'ExtraSmall',
         :storage_account=>'storageaccount001',
         :bootstrap_proto=>'ssh',
         :os_type=>'Linux'

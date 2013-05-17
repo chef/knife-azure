@@ -14,7 +14,7 @@ describe "role lifecycle" do
       :ssh_password=>'jetstream1!',
       :storage_account=>'auxpreview104',
       :source_image=>'OpenLogic__OpenLogic-CentOS-62-20120531-en-us-30GB.vhd',
-      :size=>'ExtraSmall',
+      :vm_size=>'ExtraSmall',
       :bootstrap_proto=>'ssh',
       :os_type=>'Linux'
     }
