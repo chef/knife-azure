@@ -75,9 +75,9 @@ option :azure_mgmt_cert,
   :long => "--azure-mgmt-cert FILENAME",
   :description => "Your Azure Management Certificate File",
 
-option :azure_host_name,
+option :azure_api_host_name,
   :short => "-H HOSTNAME",
-  :long => "--azure_host_name HOSTNAME",
+  :long => "--azure-api-host-name HOSTNAME",
   :description => "Your Azure host name",
 
 option :verify_ssl_cert,
@@ -102,10 +102,10 @@ Options used with the Create subcommand:
         :long => "--ssh-password PASSWORD",
         :description => "The ssh password"
 
-      option :identity_file,
-        :short => "-i IDENTITY_FILE",
-        :long => "--identity-file IDENTITY_FILE",
-        :description => "The SSH identity file used for authentication"
+      option :ssh_port,
+        :long => "--ssh-port PORT",
+        :description => "The ssh port. Default is 22.",
+        :default => '22'
 
       option :prerelease,
         :long => "--prerelease",
@@ -144,36 +144,45 @@ Options used with the Create subcommand:
 
       option :storage_account,
         :short => "-a NAME",
-        :long => "--storage-account NAME",
-        :description => "Required for advanced server-create option. A name for the storage account that is unique within Windows Azure. Storage account names must be between 3 and 24 characters in length and use numbers and lower-case letters only. This name is the DNS prefix name and can be used to access blobs, queues, and tables in the storage account. For example: http://ServiceName.blob.core.windows.net/mycontainer/"
+        :long => "--azure-storage-account NAME",
+        :description => "Required for advanced server-create option. 
+                                      A name for the storage account that is unique within Windows Azure. Storage account names must be 
+                                      between 3 and 24 characters in length and use numbers and lower-case letters only. 
+                                      This name is the DNS prefix name and can be used to access blobs, queues, and tables in the storage account. 
+                                      For example: http://ServiceName.blob.core.windows.net/mycontainer/"
 
-      option :host_name,
-        :long => "--host-name NAME",
-        :description => "Required for advanced server-create option. Specifies the name for the virtual machine. The name must be unique within the deployment."
+      option :azure_vm_name,
+        :long => "--azure-vm-name NAME",
+        :description => "Required for advanced server-create option. 
+                                      Specifies the name for the virtual machine. The name must be unique within the deployment."
 
       option :service_location,
         :short => "-m LOCATION",
-        :long => "--service-location LOCATION",
-        :description => "Required. Specifies the geographic location - the name of the data center location that is valid for your subscription. Eg: West US, East US, East Asia, Southeast Asia, North Europe, West Europe"
+        :long => "--azure-service-location LOCATION",
+        :description => "Required. Specifies the geographic location - the name of the data center location that is valid for your subscription. 
+                                      Eg: West US, East US, East Asia, Southeast Asia, North Europe, West Europe"
 
-      option :dns_name,
+      option :azure_dns_name,
         :short => "-d DNS_NAME",
-        :long => "--dns-name DNS_NAME",
-        :description => "Required. The DNS prefix name that can be used to access the cloud service. For example, if the DNS of cloud service is MyService you could access the cloud service by calling: http://MyService.cloudapp.net"
+        :long => "--azure-dns-name DNS_NAME",
+        :description => "Required. The DNS prefix name that can be used to access the cloud service which is unique within Windows Azure. 
+                                      If you want to add new VM to an existing service/deployment, specify an exiting dns-name, along with --connect-to-existing-dns option.
+                                      Otherwise a new deployment is created. For example, if the DNS of cloud service is MyService you could access the cloud service 
+                                      by calling: http://DNS_NAME.cloudapp.net"
 
       option :os_disk_name,
         :short => "-o DISKNAME",
-        :long => "--os-disk-name DISKNAME",
-        :description => "Optional. Optional. Specifies the friendly name of the disk containing the guest OS image in the image repository."
+        :long => "--azure-os-disk-name DISKNAME",
+        :description => "Optional. Specifies the friendly name of the disk containing the guest OS image in the image repository."
 
       option :source_image,
         :short => "-I IMAGE",
-        :long => "--source-image IMAGE",
+        :long => "--azure-source-image IMAGE",
         :description => "Required. Specifies the name of the disk image to use to create the virtual machine. Do a \"knife azure image list\" to see a list of available images."
 
-      option :size,
+      option :vm_size,
         :short => "-z SIZE",
-        :long => "--size SIZE",
+        :long => "--azure-vm-size SIZE",
         :description => "Optional. Size of virtual machine (ExtraSmall, Small, Medium, Large, ExtraLarge)",
         :default => 'Small'
 
@@ -186,6 +195,14 @@ Options used with the Create subcommand:
         :short => "-u PORT_LIST",
         :long => "--udp-endpoints PORT_LIST",
         :description => "Comma separated list of UDP local and public ports to open i.e. '80:80,433:5000'"
+
+      option :connect_to_existing_dns,
+        :short => "-c",
+        :long => "--connect-to-existing-dns",
+        :boolean => true,
+        :default => false,
+        :description => "Set this flag to add the new VM to an existing deployment/service. Must give the name of the existing
+                                        DNS correctly in the --dns-name option"
 
 ====Options for Bootstrapping Windows nodes
 
@@ -242,21 +259,21 @@ knife[:azure_subscription_id] = "155a9851-88a8-49b4-98e4-58055f08f412"
 
 knife[:azure_mgmt_cert] = "ManagementCertificate.pem"
 
-knife[:azure_host_name] = "management-preview.core.windows-int.net"
+knife[:azure_api_host_name] = "management-preview.core.windows-int.net"
 
-knife[:service_location] = 'West US'
+knife[:azure_service_location] = 'West US'
 
-knife[:dns_name]='service001'
+knife[:azure_dns_name]='service001'
 
-knife[:host_name]='host105'
+knife[:azure_vm_name]='host105'
 
 knife[:ssh_user]='jetstream'
 
 knife[:ssh_password]='jetstream1!'
 
-knife[:storage_account]='auxpreview104'
+knife[:azure_storage_account]='auxpreview104'
 
-knife[:os_disk_name]='disk107'
+knife[:azure_os_disk_name]='disk107'
 
 knife[:distro]='centos5-gems'
 
@@ -268,17 +285,17 @@ knife[:udp_endpoints]='77,88,99'
 
 #  note that the ize must be Medium or larger
 
-knife[:source_image]='OpenLogic__OpenLogic-CentOS-62-20120509-en-us-30GB.vhd'
+knife[:azure_source_image]='OpenLogic__OpenLogic-CentOS-62-20120509-en-us-30GB.vhd'
 
-knife[:size]='Medium'
+knife[:azure_vm_size]='Medium'
 
 # Alternatively, at the present time you could use a SUSE image
 
 #  note that you can use Small or ExtraSmall for the size
 
-knife[:source_image]='SUSE__OpenSUSE64121-03192012-en-us-15GB.vhd'
+knife[:azure_source_image]='SUSE__OpenSUSE64121-03192012-en-us-15GB.vhd'
 
-knife[:size]='Small'
+knife[:azure_vm_size]='Small'
 
 
 ==== Sample knife.rb for bootstrapping Windows Node with Basic Authentication
@@ -293,13 +310,24 @@ knife[:winrm_port] = '5985'
 
 knife[:distro] = 'windows-chef-client-msi'
 
-knife[:source_image]='w2k12Basic.vhd'
+knife[:azure_source_image]='w2k12Basic.vhd'
 
 ==Subcommands
 This plugin provides the following Knife subcommands. Specific command options can be found by invoking the subcommand with a --help flag
 
 ===knife azure server create
 Provisions a new server in Azure and then perform a Chef bootstrap (using the SSH protocol). The goal of the bootstrap is to get Chef installed on the target system so it can run Chef Client with a Chef Server. The main assumption is a baseline OS installation exists (provided by the provisioning). It is primarily intended for Chef Client systems that talk to a Chef server. By default the server is bootstrapped using the ubuntu10.04-gems template. This can be overridden using the -d or --template-file command options. (*** Note that at the current time only CentOS is supported for bootstrapping and required the :distro to be set to centos5-gems. ***)
+
+You can create a server with minimal configuration. On the Azure Management Portal, this corresponds to a "Quick Create - VM". Sample command for quick create:
+knife azure server create 
+  --azure-dns-name "dns123"  
+  --azure-service-location "Southeast Asia"  
+  --azure-source-image "b39f27a8b8c64d52b05eac6a62ebad85__Ubuntu-12_04_2-LTS-amd64-server-20130415-en-us-30GB" 
+  --ssh-user "jetstream" 
+  --ssh-password "jetstream123!"
+  --azure-api-host-name = "management.core.windows.net"
+  --azure-subscription-id = "XXXXXXXXXX"
+  --azure-mgmt-cert = "cert.pem"
 
 ===knife azure server delete [host_name_to_delete]
 Deletes an existing server(role) in the currently configured Azure account. PLEASE NOTE - By default, this does not delete the associated node and client objects from the Chef server. To do so, add the --purge flag.
@@ -315,7 +343,7 @@ Outputs a list of all linux images that are available to use for provisioning. Y
 Output additional information about the provisioned Virtual Machine
 
 == Understanding Azure
-Azure implements the following hierarchy - subscription=>hosted service=>deployment=>role (and the guest operating system has a hostname as well, which uses the role as its container)
+Azure implements the following hierarchy - subscription=>hosted service(dns)=>deployment=>role/VM (and the guest operating system has a hostname as well, which uses the role as its container)
 
 These are generally a one to many relationship from top to bottom, however there are two anamolies relating to the deployment
 1) a hosted service can have more than one deployment, but that seems to be an artifact of the PAAS origins of Azure. PAAS allows there to be one staging and one production deployment per hosted service. It is my understanding (and how the code works) that there should be only one deployment per hosted service. Some initial internal code I examined used the technique of looking at the "production" deployment slot to iterate for existing roles. If a create request occurs and a deployment does not exist, it is created and given the same name as the hosted service and the deployment slot is marked as "production".

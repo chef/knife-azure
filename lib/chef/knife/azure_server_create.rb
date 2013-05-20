@@ -62,6 +62,11 @@ class Chef
         :long => "--ssh-password PASSWORD",
         :description => "The ssh password"
 
+      option :ssh_port,
+        :long => "--ssh-port PORT",
+        :description => "The ssh port. Default is 22.",
+        :default => '22'
+
       option :identity_file,
         :short => "-i IDENTITY_FILE",
         :long => "--identity-file IDENTITY_FILE",
@@ -128,7 +133,7 @@ class Chef
         :description => "Required. The DNS prefix name that can be used to access the cloud service which is unique within Windows Azure. 
                                       If you want to add new VM to an existing service/deployment, specify an exiting dns-name, along with --connect-to-existing-dns option.
                                       Otherwise a new deployment is created. For example, if the DNS of cloud service is MyService you could access the cloud service 
-                                      by calling: http://MyService.cloudapp.net"
+                                      by calling: http://DNS_NAME.cloudapp.net"
 
       option :os_disk_name,
         :short => "-o DISKNAME",
