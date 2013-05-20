@@ -282,7 +282,7 @@ class Chef
 
           end
           sleep 15
-          bootstrap_for_windows_node(server,fqdn).run
+          bootstrap_for_windows_node(server,fqdn, port).run
         else
           unless server && server.sshipaddress && server.sshport
             Chef::Log.fatal("server not created")
@@ -315,7 +315,7 @@ class Chef
       end
 
 
-      def bootstrap_for_windows_node(server, fqdn)
+      def bootstrap_for_windows_node(server, fqdn, port)
         if locate_config_value(:bootstrap_protocol) == 'winrm'
             if is_platform_windows?
               #require 'em-winrs'
@@ -330,7 +330,7 @@ class Chef
             bootstrap.config[:winrm_password] = locate_config_value(:winrm_password)
             bootstrap.config[:winrm_transport] = locate_config_value(:winrm_transport)
 
-            bootstrap.config[:winrm_port] = locate_config_value(:winrm_port)
+            bootstrap.config[:winrm_port] = port
 
         elsif locate_config_value(:bootstrap_protocol) == 'ssh'
             bootstrap = Chef::Knife::BootstrapWindowsSsh.new

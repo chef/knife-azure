@@ -24,6 +24,7 @@ before do
 		:source_image => 'SUSE__SUSE-Linux-Enterprise-Server-11SP2-20120521-en-us-30GB.vhd',
 		:vm_size => 'Small',
 		:azure_dns_name => 'service001',
+		:azure_vm_name => 'vm01',
 		:storage_account => 'ka001testeurope'
     }.each do |key, value|
       Chef::Config[:knife][key] = value
