@@ -82,7 +82,13 @@ describe "compulsory parameter test:" do
 			before do
 				Chef::Config[:knife][:azure_host_name] = nil
 				Chef::Config[:knife][:azure_subscription_id] = nil
-			end 
+			end
+			def validate_cert()
+				Chef::Config[:knife][:azure_mgmt_cert].should include("-----BEGIN CERTIFICATE-----")
+				Chef::Config[:knife][:azure_mgmt_cert].should include("-----END CERTIFICATE-----")
+				Chef::Config[:knife][:azure_mgmt_cert].should include("-----BEGIN RSA PRIVATE KEY-----")
+				Chef::Config[:knife][:azure_mgmt_cert].should include("-----END RSA PRIVATE KEY-----")
+			end
 			it "- should continue to regular flow if publish settings file not provided" do
 				Chef::Config[:knife][:azure_host_name] = "preview.core.windows-int.net"
 				Chef::Config[:knife][:azure_subscription_id] = "azure_subscription_id"
@@ -96,12 +102,14 @@ describe "compulsory parameter test:" do
 				@server_instance.validate!
 				Chef::Config[:knife][:azure_host_name].should == 'management.core.windows.net'
 				Chef::Config[:knife][:azure_subscription_id].should == 'id1'
+				validate_cert()
 			end
 
 			it "- should validate parse method" do
 				@server_instance.parse_publish_settings_file("azureValid.publishsettings")
 				Chef::Config[:knife][:azure_host_name].should == 'management.core.windows.net'
 				Chef::Config[:knife][:azure_subscription_id].should == 'id1'
+				validate_cert()
 			end
 
 			it "- should validate settings file and subscrition id" do
@@ -110,6 +118,7 @@ describe "compulsory parameter test:" do
 				@server_instance.validate!
 				Chef::Config[:knife][:azure_host_name].should == 'management.core.windows.net'
 				Chef::Config[:knife][:azure_subscription_id].should == 'azure_subscription_id'
+				validate_cert()
 			end
 
 			it "- should raise error if invalid publish settings provided" do
