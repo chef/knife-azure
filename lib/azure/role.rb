@@ -232,10 +232,10 @@ class Azure
           }
           xml.Label Base64.encode64(params[:azure_vm_name]).strip
           xml.OSVirtualHardDisk {
-            xml.MediaLink 'http://' + params[:storage_account] + '.blob.core.windows.net/vhds/' + (params[:os_disk_name] || Time.now.strftime('disk_%Y_%m_%d_%H_%M')) + '.vhd'
-            xml.SourceImageName params[:source_image]
+            xml.MediaLink 'http://' + params[:azure_storage_account] + '.blob.core.windows.net/vhds/' + (params[:azure_os_disk_name] || Time.now.strftime('disk_%Y_%m_%d_%H_%M')) + '.vhd'
+            xml.SourceImageName params[:azure_source_image]
           }
-          xml.RoleSize params[:vm_size]
+          xml.RoleSize params[:azure_vm_size]
         }
       end 
       builder.doc

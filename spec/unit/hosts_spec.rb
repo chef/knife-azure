@@ -29,7 +29,7 @@ describe "hosts" do
 
   context 'create a new host' do
     it 'using explicit parameters it should pass in expected body' do
-      params = {:azure_dns_name=>'service003', 'hosted_service_location'=>'Windows Azure Preview'}
+      params = {:azure_dns_name=>'service003', 'hosted_azure_service_location'=>'Windows Azure Preview'}
       host = @connection.hosts.create(params)
       @postname.should == 'hostedservices'
       @postverb.should == 'post'

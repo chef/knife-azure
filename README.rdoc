@@ -142,7 +142,7 @@ Options used with the Create subcommand:
         :boolean => true,
         :default => true
 
-      option :storage_account,
+      option :azure_storage_account,
         :short => "-a NAME",
         :long => "--azure-storage-account NAME",
         :description => "Required for advanced server-create option. 
@@ -156,7 +156,7 @@ Options used with the Create subcommand:
         :description => "Required for advanced server-create option. 
                                       Specifies the name for the virtual machine. The name must be unique within the deployment."
 
-      option :service_location,
+      option :azure_service_location,
         :short => "-m LOCATION",
         :long => "--azure-service-location LOCATION",
         :description => "Required. Specifies the geographic location - the name of the data center location that is valid for your subscription. 
@@ -170,17 +170,17 @@ Options used with the Create subcommand:
                                       Otherwise a new deployment is created. For example, if the DNS of cloud service is MyService you could access the cloud service 
                                       by calling: http://DNS_NAME.cloudapp.net"
 
-      option :os_disk_name,
+      option :azure_os_disk_name,
         :short => "-o DISKNAME",
         :long => "--azure-os-disk-name DISKNAME",
         :description => "Optional. Specifies the friendly name of the disk containing the guest OS image in the image repository."
 
-      option :source_image,
+      option :azure_source_image,
         :short => "-I IMAGE",
         :long => "--azure-source-image IMAGE",
         :description => "Required. Specifies the name of the disk image to use to create the virtual machine. Do a \"knife azure image list\" to see a list of available images."
 
-      option :vm_size,
+      option :azure_vm_size,
         :short => "-z SIZE",
         :long => "--azure-vm-size SIZE",
         :description => "Optional. Size of virtual machine (ExtraSmall, Small, Medium, Large, ExtraLarge)",
@@ -196,7 +196,7 @@ Options used with the Create subcommand:
         :long => "--udp-endpoints PORT_LIST",
         :description => "Comma separated list of UDP local and public ports to open i.e. '80:80,433:5000'"
 
-      option :connect_to_existing_dns,
+      option :azure_connect_to_existing_dns,
         :short => "-c",
         :long => "--connect-to-existing-dns",
         :boolean => true,
@@ -336,7 +336,7 @@ Deletes an existing server(role) in the currently configured Azure account. PLEA
 Outputs a list of all servers in the currently configured Azure account. PLEASE NOTE - this shows all instances associated with the account, some of which may not be currently managed by the Chef server.
 
 ===knife azure image list
-Outputs a list of all linux images that are available to use for provisioning. You should choose one of these to use for the :source_image parameter to the server create command.
+Outputs a list of all linux images that are available to use for provisioning. You should choose one of these to use for the :azure_source_image parameter to the server create command.
 
 
 ===knife azure server describe

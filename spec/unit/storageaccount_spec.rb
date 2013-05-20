@@ -24,7 +24,7 @@ describe "storageaccounts" do
     it 'using explicity parameters it should pass in expected body' do
       params = {
         :azure_dns_name => 'service003',
-        :storage_account => 'ka001testeurope',
+        :azure_storage_account => 'ka001testeurope',
         :storage_location => 'North Europe'
       }
       storageaccount = @connection.storageaccounts.create(params)

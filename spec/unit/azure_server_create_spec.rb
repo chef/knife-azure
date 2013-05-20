@@ -20,12 +20,12 @@ before do
    		:azure_subscription_id => 'azure_subscription_id',
 		:azure_mgmt_cert => 'AzureLinuxCert.pem',
 		:azure_api_host_name => 'preview.core.windows-int.net',
-		:service_location => 'West Europe',
-		:source_image => 'SUSE__SUSE-Linux-Enterprise-Server-11SP2-20120521-en-us-30GB.vhd',
-		:vm_size => 'Small',
+		:azure_service_location => 'West Europe',
+		:azure_source_image => 'SUSE__SUSE-Linux-Enterprise-Server-11SP2-20120521-en-us-30GB.vhd',
+		:azure_vm_size => 'Small',
 		:azure_dns_name => 'service001',
 		:azure_vm_name => 'vm01',
-		:storage_account => 'ka001testeurope'
+		:azure_storage_account => 'ka001testeurope'
     }.each do |key, value|
       Chef::Config[:knife][key] = value
     end
@@ -57,18 +57,18 @@ describe "compulsory parameter test:" do
 			@server_instance.ui.should_receive(:error)
 			expect {@server_instance.run}.to raise_error
 		end
-		it "service_location" do		
-			Chef::Config[:knife].delete(:service_location)			
+		it "azure_service_location" do		
+			Chef::Config[:knife].delete(:azure_service_location)			
 			@server_instance.ui.should_receive(:error)
 			expect {@server_instance.run}.to raise_error
 		end
-		it "source_image" do		
-			Chef::Config[:knife].delete(:source_image)			
+		it "azure_source_image" do		
+			Chef::Config[:knife].delete(:azure_source_image)			
 			@server_instance.ui.should_receive(:error)
 			expect {@server_instance.run}.to raise_error
 		end
-		it "vm_size" do		
-			Chef::Config[:knife].delete(:vm_size)			
+		it "azure_vm_size" do		
+			Chef::Config[:knife].delete(:azure_vm_size)			
 			@server_instance.ui.should_receive(:error)
 			expect {@server_instance.run}.to raise_error
 		end
@@ -98,19 +98,19 @@ describe "for bootstrap protocol winrm:" do
 		   	@bootstrap.should_receive(:run)
 		end
 
-		it "sets param <storage_account> from azure_vm_name" do
-			Chef::Config[:knife].delete(:storage_account)
+		it "sets param <azure_storage_account> from azure_vm_name" do
+			Chef::Config[:knife].delete(:azure_storage_account)
 			@server_instance.should_receive(:is_image_windows?).at_least(:twice).and_return(true)
 			@server_instance.run
-			@server_instance.config[:storage_account].should match(/\Avm01/)
+			@server_instance.config[:azure_storage_account].should match(/\Avm01/)
 		end
 
-		it "sets param <storage_account> from storage name" do
-			Chef::Config[:knife].delete(:storage_account)
+		it "sets param <azure_storage_account> from storage name" do
+			Chef::Config[:knife].delete(:azure_storage_account)
 			@server_instance.should_receive(:is_image_windows?).at_least(:twice).and_return(true)
-			Chef::Config[:knife][:service_location] = 'service-location'
+			Chef::Config[:knife][:azure_service_location] = 'service-location'
 			@server_instance.run
-			@server_instance.config[:storage_account].should match(/storage-service-name/)
+			@server_instance.config[:azure_storage_account].should match(/storage-service-name/)
 		end
 
 		it "successful bootstrap of windows instance" do		

@@ -12,9 +12,9 @@ describe "role lifecycle" do
       :azure_vm_name=>'host' + arbitrary.to_s,
       :ssh_user=>'jetstream',
       :ssh_password=>'jetstream1!',
-      :storage_account=>'auxpreview104',
-      :source_image=>'OpenLogic__OpenLogic-CentOS-62-20120531-en-us-30GB.vhd',
-      :vm_size=>'ExtraSmall',
+      :azure_storage_account=>'auxpreview104',
+      :azure_source_image=>'OpenLogic__OpenLogic-CentOS-62-20120531-en-us-30GB.vhd',
+      :azure_vm_size=>'ExtraSmall',
       :bootstrap_proto=>'ssh',
       :os_type=>'Linux'
     }

@@ -107,7 +107,7 @@ class Chef
         :boolean => true,
         :default => true
 
-      option :storage_account,
+      option :azure_storage_account,
         :short => "-a NAME",
         :long => "--azure-storage-account NAME",
         :description => "Required for advanced server-create option. 
@@ -121,7 +121,7 @@ class Chef
         :description => "Required for advanced server-create option. 
                                       Specifies the name for the virtual machine. The name must be unique within the deployment."
 
-      option :service_location,
+      option :azure_service_location,
         :short => "-m LOCATION",
         :long => "--azure-service-location LOCATION",
         :description => "Required. Specifies the geographic location - the name of the data center location that is valid for your subscription. 
@@ -135,17 +135,17 @@ class Chef
                                       Otherwise a new deployment is created. For example, if the DNS of cloud service is MyService you could access the cloud service 
                                       by calling: http://DNS_NAME.cloudapp.net"
 
-      option :os_disk_name,
+      option :azure_os_disk_name,
         :short => "-o DISKNAME",
         :long => "--azure-os-disk-name DISKNAME",
         :description => "Optional. Specifies the friendly name of the disk containing the guest OS image in the image repository."
 
-      option :source_image,
+      option :azure_source_image,
         :short => "-I IMAGE",
         :long => "--azure-source-image IMAGE",
         :description => "Required. Specifies the name of the disk image to use to create the virtual machine. Do a \"knife azure image list\" to see a list of available images."
 
-      option :vm_size,
+      option :azure_vm_size,
         :short => "-z SIZE",
         :long => "--azure-vm-size SIZE",
         :description => "Optional. Size of virtual machine (ExtraSmall, Small, Medium, Large, ExtraLarge)",
@@ -161,7 +161,7 @@ class Chef
         :long => "--udp-endpoints PORT_LIST",
         :description => "Comma separated list of UDP local and public ports to open i.e. '80:80,433:5000'"
 
-      option :connect_to_existing_dns,
+      option :azure_connect_to_existing_dns,
         :short => "-c",
         :long => "--connect-to-existing-dns",
         :boolean => true,
@@ -244,13 +244,13 @@ class Chef
         end
 
         #If Storage Account is not specified, check if the geographic location has one to re-use
-        if not locate_config_value(:storage_account)
+        if not locate_config_value(:azure_storage_account)
           storage_accts = connection.storageaccounts.all
-          storage = storage_accts.find { |storage_acct| storage_acct.location.to_s == locate_config_value(:service_location) }
+          storage = storage_accts.find { |storage_acct| storage_acct.location.to_s == locate_config_value(:azure_service_location) }
           if not storage
-            config[:storage_account] = [strip_non_ascii(locate_config_value(:azure_vm_name)), random_string].join.downcase
+            config[:azure_storage_account] = [strip_non_ascii(locate_config_value(:azure_vm_name)), random_string].join.downcase
           else
-            config[:storage_account] = storage.name.to_s
+            config[:azure_storage_account] = storage.name.to_s
           end
         end
 
@@ -382,11 +382,11 @@ class Chef
               :azure_mgmt_cert,
               :azure_api_host_name,
               :azure_dns_name,
-              :service_location,
-              :source_image,
-              :vm_size,
+              :azure_service_location,
+              :azure_source_image,
+              :azure_vm_size,
         ])
-        if locate_config_value(:connect_to_existing_dns) && locate_config_value(:azure_vm_name).nil?
+        if locate_config_value(:azure_connect_to_existing_dns) && locate_config_value(:azure_vm_name).nil?
           ui.error("Specify the VM name using --azure-vm-name option, since you are connecting to existing dns")
           exit 1
         end
@@ -394,30 +394,30 @@ class Chef
 
       def create_server_def
         server_def = {
-          :storage_account => locate_config_value(:storage_account),
+          :azure_storage_account => locate_config_value(:azure_storage_account),
           :azure_dns_name => locate_config_value(:azure_dns_name),
           :azure_vm_name => locate_config_value(:azure_vm_name),
-          :service_location => locate_config_value(:service_location),
-          :os_disk_name => locate_config_value(:os_disk_name),
-          :source_image => locate_config_value(:source_image),
-          :vm_size => locate_config_value(:vm_size),
+          :azure_service_location => locate_config_value(:azure_service_location),
+          :azure_os_disk_name => locate_config_value(:azure_os_disk_name),
+          :azure_source_image => locate_config_value(:azure_source_image),
+          :azure_vm_size => locate_config_value(:azure_vm_size),
           :tcp_endpoints => locate_config_value(:tcp_endpoints),
           :udp_endpoints => locate_config_value(:udp_endpoints),
           :bootstrap_proto => locate_config_value(:bootstrap_protocol),
-          :connect_to_existing_dns => locate_config_value(:connect_to_existing_dns)
+          :azure_connect_to_existing_dns => locate_config_value(:azure_connect_to_existing_dns)
         }
         # If user is connecting a new VM to an existing dns, then
         # the VM needs to have a unique public port. Logic below takes care of this.
         if !is_image_windows? or locate_config_value(:bootstrap_protocol) == 'ssh'
           port = locate_config_value(:ssh_port)
-          if locate_config_value(:connect_to_existing_dns) and (port.nil? or port == 22)
+          if locate_config_value(:azure_connect_to_existing_dns) and (port.nil? or port == 22)
              port = Random.rand(64000) + 1000
           else
             port = '22'
           end
         else
           port = locate_config_value(:winrm_port)
-          if locate_config_value(:connect_to_existing_dns) and (port.nil? or port == 5985)
+          if locate_config_value(:azure_connect_to_existing_dns) and (port.nil? or port == 5985)
               port = Random.rand(64000) + 1000
           else
             port = '5985'

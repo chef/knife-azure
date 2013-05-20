@@ -13,11 +13,11 @@ before do
 		:azure_mgmt_cert => 'AzureLinuxCert.pem',
 		:azure_api_host_name => 'preview.core.windows-int.net',
 		:name => 'vm01',
-		:service_location => 'West Europe',
-		:source_image => 'source_image',
-		:vm_size => 'Small',
+		:azure_service_location => 'West Europe',
+		:azure_source_image => 'azure_source_image',
+		:azure_vm_size => 'Small',
 		:azure_dns_name => 'service001',
-		:storage_account => 'ka001testeurope'
+		:azure_storage_account => 'ka001testeurope'
     }.each do |key, value|
       Chef::Config[:knife][key] = value
     end
