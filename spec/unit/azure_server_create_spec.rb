@@ -87,6 +87,7 @@ describe "for bootstrap protocol winrm:" do
 		@server_params[:admin_password].should == 'winrm_password'
 		@server_params[:bootstrap_proto].should == 'winrm'
 		@server_params[:azure_dns_name].should == 'service001'
+		@server_params[:port].should == '5985'
 	end
 
 	context "bootstrap node" do
@@ -146,6 +147,7 @@ describe "for bootstrap protocol ssh:" do
 			@server_params[:ssh_user].should == 'ssh_user'
 			@server_params[:bootstrap_proto].should == 'ssh'
 			@server_params[:azure_dns_name].should == 'service001'
+			@server_params[:port].should == '22'
 		end
 
 		it "successful bootstrap" do

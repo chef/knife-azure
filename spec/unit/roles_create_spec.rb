@@ -43,7 +43,8 @@ describe "roles" do
         :udp_endpoints=>'65:65,75',
         :storage_account=>'storageaccount001',
         :bootstrap_proto=>'ssh',
-        :os_type=>'Linux'
+        :os_type=>'Linux',
+        :port=>'22'
 
       }
       deploy = @connection.deploys.create(params)
@@ -70,7 +71,8 @@ describe "roles" do
         :vm_size=>'ExtraSmall',
         :storage_account=>'storageaccount001',
         :bootstrap_proto=>'ssh',
-        :os_type=>'Linux'
+        :os_type=>'Linux',
+        :port=>'22'
       }
       deploy = @connection.deploys.create(params)
       #this is a cheesy workaround to make equivalent-xml happy

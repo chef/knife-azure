@@ -29,14 +29,14 @@ describe "hosts" do
 
   context 'create a new host' do
     it 'using explicit parameters it should pass in expected body' do
-      params = {:hosted_service_name=>'service003', 'hosted_service_description'=>'Explicitly created hosted service', 'hosted_service_location'=>'Windows Azure Preview'}
+      params = {:azure_dns_name=>'service003', 'hosted_service_location'=>'Windows Azure Preview'}
       host = @connection.hosts.create(params)
       @postname.should == 'hostedservices'
       @postverb.should == 'post'
       Nokogiri::XML(@postbody).should be_equivalent_to(Nokogiri::XML readFile('create_host.xml'))
     end
     it 'using default parameters it should pass in expected body' do
-      params = {:hosted_service_name=>'service003'}
+      params = {:azure_dns_name=>'service003'}
       host = @connection.hosts.create(params)
       @postname.should == 'hostedservices'
       @postverb.should == 'post'
