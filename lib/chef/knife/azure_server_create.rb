@@ -104,7 +104,7 @@ class Chef
 
       option :storage_account,
         :short => "-a NAME",
-        :long => "--storage-account NAME",
+        :long => "--azure-storage-account NAME",
         :description => "Required for advanced server-create option. 
                                       A name for the storage account that is unique within Windows Azure. Storage account names must be 
                                       between 3 and 24 characters in length and use numbers and lower-case letters only. 
@@ -118,13 +118,13 @@ class Chef
 
       option :service_location,
         :short => "-m LOCATION",
-        :long => "--service-location LOCATION",
+        :long => "--azure-service-location LOCATION",
         :description => "Required. Specifies the geographic location - the name of the data center location that is valid for your subscription. 
                                       Eg: West US, East US, East Asia, Southeast Asia, North Europe, West Europe"
 
-      option :dns_name,
+      option :azure_dns_name,
         :short => "-d DNS_NAME",
-        :long => "--dns-name DNS_NAME",
+        :long => "--azure-dns-name DNS_NAME",
         :description => "Required. The DNS prefix name that can be used to access the cloud service which is unique within Windows Azure. 
                                       If you want to add new VM to an existing service/deployment, specify an exiting dns-name, along with --connect-to-existing-dns option.
                                       Otherwise a new deployment is created. For example, if the DNS of cloud service is MyService you could access the cloud service 
@@ -137,7 +137,7 @@ class Chef
 
       option :source_image,
         :short => "-I IMAGE",
-        :long => "--source-image IMAGE",
+        :long => "--azure-source-image IMAGE",
         :description => "Required. Specifies the name of the disk image to use to create the virtual machine. Do a \"knife azure image list\" to see a list of available images."
 
       option :vm_size,
@@ -235,7 +235,7 @@ class Chef
         Chef::Log.info("creating...")
 
         if not locate_config_value(:azure_vm_name)
-          config[:azure_vm_name] = locate_config_value(:dns_name)
+          config[:azure_vm_name] = locate_config_value(:azure_dns_name)
         end
 
         #If Storage Account is not specified, check if the geographic location has one to re-use
@@ -376,7 +376,7 @@ class Chef
               :azure_subscription_id,
               :azure_mgmt_cert,
               :azure_api_host_name,
-              :dns_name,
+              :azure_dns_name,
               :service_location,
               :source_image,
               :vm_size,
@@ -390,7 +390,7 @@ class Chef
       def create_server_def
         server_def = {
           :storage_account => locate_config_value(:storage_account),
-          :dns_name => locate_config_value(:dns_name),
+          :azure_dns_name => locate_config_value(:azure_dns_name),
           :azure_vm_name => locate_config_value(:azure_vm_name),
           :service_location => locate_config_value(:service_location),
           :os_disk_name => locate_config_value(:os_disk_name),

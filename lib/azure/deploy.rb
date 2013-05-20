@@ -43,20 +43,20 @@ class Azure
     end
     def create(params)
       unless params[:connect_to_existing_dns]
-        unless @connection.hosts.exists(params[:dns_name])
+        unless @connection.hosts.exists(params[:azure_dns_name])
           @connection.hosts.create(params)
         end
       end
       unless @connection.storageaccounts.exists(params[:storage_account])
         @connection.storageaccounts.create(params)
       end
-      params['deploy_name'] = find(params[:dns_name])
+      params['deploy_name'] = find(params[:azure_dns_name])
       if params['deploy_name'] != nil
         role = Role.new(@connection)
         roleXML = role.setup(params)
         ret_val = role.create(params, roleXML)
       else
-        params['deploy_name'] = params[:dns_name]
+        params['deploy_name'] = params[:azure_dns_name]
         deploy = Deploy.new(@connection)
         deployXML = deploy.setup(params)
         ret_val = deploy.create(params, deployXML)
@@ -112,7 +112,7 @@ class Azure
       builder.doc
     end
     def create(params, deployXML)
-      servicecall = "hostedservices/#{params[:dns_name]}/deployments"
+      servicecall = "hostedservices/#{params[:azure_dns_name]}/deployments"
       @connection.query_azure(servicecall, "post", deployXML.to_xml) 
     end
   end

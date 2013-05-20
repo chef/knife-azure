@@ -16,7 +16,7 @@ before do
 		:service_location => 'West Europe',
 		:source_image => 'source_image',
 		:vm_size => 'Small',
-		:dns_name => 'service001',
+		:azure_dns_name => 'service001',
 		:storage_account => 'ka001testeurope'
     }.each do |key, value|
       Chef::Config[:knife][key] = value

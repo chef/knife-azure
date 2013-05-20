@@ -31,7 +31,7 @@ describe "roles" do
     it 'should pass in expected body' do
       submittedXML=Nokogiri::XML readFile('create_role.xml')
       params = {
-        :dns_name=>'service001',
+        :azure_dns_name=>'service001',
         :azure_vm_name=>'vm01',
         :ssh_user=>'jetstream',
         :ssh_password=>'jetstream1!',
@@ -60,7 +60,7 @@ describe "roles" do
     it 'should pass in expected body' do
       submittedXML=Nokogiri::XML readFile('create_deployment.xml')
       params = {
-        :dns_name=>'unknown_yet',
+        :azure_dns_name=>'unknown_yet',
         :azure_vm_name=>'vm01',
         :ssh_user=>'jetstream',
         :ssh_password=>'jetstream1!',

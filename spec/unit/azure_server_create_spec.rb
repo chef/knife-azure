@@ -23,7 +23,7 @@ before do
 		:service_location => 'West Europe',
 		:source_image => 'SUSE__SUSE-Linux-Enterprise-Server-11SP2-20120521-en-us-30GB.vhd',
 		:vm_size => 'Small',
-		:dns_name => 'service001',
+		:azure_dns_name => 'service001',
 		:storage_account => 'ka001testeurope'
     }.each do |key, value|
       Chef::Config[:knife][key] = value
@@ -86,7 +86,7 @@ describe "for bootstrap protocol winrm:" do
 		@server_params[:os_type].should == 'Windows'
 		@server_params[:admin_password].should == 'winrm_password'
 		@server_params[:bootstrap_proto].should == 'winrm'
-		@server_params[:dns_name].should == 'service001'
+		@server_params[:azure_dns_name].should == 'service001'
 	end
 
 	context "bootstrap node" do
@@ -145,7 +145,7 @@ describe "for bootstrap protocol ssh:" do
 			@server_params[:ssh_password].should == 'ssh_password'
 			@server_params[:ssh_user].should == 'ssh_user'
 			@server_params[:bootstrap_proto].should == 'ssh'
-			@server_params[:dns_name].should == 'service001'
+			@server_params[:azure_dns_name].should == 'service001'
 		end
 
 		it "successful bootstrap" do
