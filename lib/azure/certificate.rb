@@ -62,7 +62,7 @@ class Azure
       # Generate X 509 certificate
       ca = OpenSSL::X509::Certificate.new
       ca.version = @certificate_version
-      ca.serial = Random.rand(100) # 2 digit random number for better security aspect
+      ca.serial = Random.rand(65534) + 1 # 2 digit byte range random number for better security aspect
       ca.subject = OpenSSL::X509::Name.parse "/DC=org/DC=knife-plugin/CN=Opscode CA"
       ca.issuer = ca.subject # root CA's are "self-signed"
       ca.public_key = key.public_key # Assign the ssh-key's public part to the certificate
