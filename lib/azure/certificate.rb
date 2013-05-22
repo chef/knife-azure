@@ -21,35 +21,19 @@ class Azure
     def initialize(connection)
       @connection=connection
     end
-    def all
-      #TODO
-      nil
-    end
-    def exists(name)
-      #TODO
-      nil
-    end
     def create(params)
       certificate = Certificate.new(@connection)
       certificate.create(params)
-    end
-    def delete(name)
-      #TODO
     end
   end
 end
 
 class Azure
   class Certificate
-    #include AzureUtility
     attr_accessor :connection, :certificate_name, :hosted_service_name
     attr_accessor :cert_data, :fingerprint
     def initialize(connection)
       @connection = connection
-    end
-    def parse(serviceXML)
-      #TODO
-      self
     end
     def create(params)
       # If ssh-key has been specified, then generate an x 509 certificate from the
@@ -69,9 +53,6 @@ class Azure
       @connection.query_azure("hostedservices/#{params[:hosted_service_name]}/certificates", "post", builder.to_xml)
       # Return the fingerprint to be used while adding role
       @fingerprint
-    end
-    def details
-      #TODO
     end
 
     def generateCertificateData (params)
