@@ -30,15 +30,16 @@ end
 
 class Azure
   class Certificate
-    attr_accessor :connection, :certificate_name, :hosted_service_name
-    attr_accessor :cert_data, :fingerprint
+    attr_accessor :connection
+    attr_accessor :cert_data, :fingerprint, :certificate_version
     def initialize(connection)
       @connection = connection
+      @certificate_version = 2 # cf. RFC 5280 - to make it a "v3" certificate
     end
     def create(params)
-      # If ssh-key has been specified, then generate an x 509 certificate from the
-      # given RSA private key
-      @cert_data = generateCertificateData({:ssh_key => params[:identity_file],
+      # If RSA private key has been specified, then generate an x 509 certificate from the
+      # public part of the key
+      @cert_data = generate_public_key_certificate_data({:ssh_key => params[:identity_file],
                                              :ssh_key_passphrase => params[:identity_file_passphrase]})
       # Generate XML to call the API
       # Add certificate to the hosted service
@@ -55,12 +56,12 @@ class Azure
       @fingerprint
     end
 
-    def generateCertificateData (params)
+    def generate_public_key_certificate_data (params)
       # Generate OpenSSL RSA key from the mentioned ssh key path (and passphrase)
       key = OpenSSL::PKey::RSA.new(File.read(params[:ssh_key]), params[:ssh_key_passphrase])
       # Generate X 509 certificate
       ca = OpenSSL::X509::Certificate.new
-      ca.version = 2 # cf. RFC 5280 - to make it a "v3" certificate
+      ca.version = @certificate_version
       ca.serial = Random.rand(100) # 2 digit random number for better security aspect
       ca.subject = OpenSSL::X509::Name.parse "/DC=org/DC=knife-plugin/CN=Opscode CA"
       ca.issuer = ca.subject # root CA's are "self-signed"

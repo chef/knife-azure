@@ -188,7 +188,7 @@ describe "for bootstrap protocol ssh:" do
 				@bootstrap = Chef::Knife::Bootstrap.new
 		      	Chef::Knife::Bootstrap.stub(:new).and_return(@bootstrap)
 		      	@bootstrap.should_receive(:run)
-		      	@server_instance.connection.certificates.stub(:generateCertificateData).and_return("cert_data")
+		      	@server_instance.connection.certificates.stub(:generate_public_key_certificate_data).and_return("cert_data")
 		      	@server_instance.connection.certificates.should_receive(:create)
 				@server_instance.run
 			end
