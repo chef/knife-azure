@@ -131,7 +131,8 @@ class Chef
         :short => "-d DNS_NAME",
         :long => "--azure-dns-name DNS_NAME",
         :description => "Required. The DNS prefix name that can be used to access the cloud service which is unique within Windows Azure. 
-                                      If you want to add new VM to an existing service/deployment, specify an exiting dns-name, along with --connect-to-existing-dns option.
+                                      If you want to add new VM to an existing service/deployment, specify an exiting dns-name, 
+                                      along with --connect-to-existing-dns option.
                                       Otherwise a new deployment is created. For example, if the DNS of cloud service is MyService you could access the cloud service 
                                       by calling: http://DNS_NAME.cloudapp.net"
 
@@ -143,7 +144,8 @@ class Chef
       option :azure_source_image,
         :short => "-I IMAGE",
         :long => "--azure-source-image IMAGE",
-        :description => "Required. Specifies the name of the disk image to use to create the virtual machine. Do a \"knife azure image list\" to see a list of available images."
+        :description => "Required. Specifies the name of the disk image to use to create the virtual machine.
+                                      Do a \"knife azure image list\" to see a list of available images."
 
       option :azure_vm_size,
         :short => "-z SIZE",
