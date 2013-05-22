@@ -64,7 +64,12 @@ class Chef
       def is_image_windows?
         images = connection.images
         target_image = images.all.select { |i| i.name == locate_config_value(:azure_source_image) }
-        return target_image[0].os == 'Windows'
+        unless target_image[0].nil?
+          return target_image[0].os == 'Windows'
+        else
+          ui.error("Invalid image. Use the command \"knife azure server image list\" to verify the image name")
+          exit 1
+        end
       end
       def connection
         @connection ||= begin
