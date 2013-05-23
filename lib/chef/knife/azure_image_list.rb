@@ -54,7 +54,7 @@ class Chef
         end
 
         puts "\n"
-        puts h.list(image_list, :columns_across, !locate_config_value(:show_all_fields) ? 2 : 4) 
+        puts h.list(image_list, :uneven_columns_across, !locate_config_value(:show_all_fields) ? 2 : 4) 
 
       end
     end
