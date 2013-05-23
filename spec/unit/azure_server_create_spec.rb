@@ -22,10 +22,10 @@ before do
 		:azure_api_host_name => 'preview.core.windows-int.net',
 		:azure_service_location => 'West Europe',
 		:azure_source_image => 'SUSE__SUSE-Linux-Enterprise-Server-11SP2-20120521-en-us-30GB.vhd',
-		:azure_vm_size => 'Small',
 		:azure_dns_name => 'service001',
 		:azure_vm_name => 'vm01',
-		:azure_storage_account => 'ka001testeurope'
+		:azure_storage_account => 'ka001testeurope',
+		:azure_vm_size => 'Small'
     }.each do |key, value|
       Chef::Config[:knife][key] = value
     end
@@ -72,6 +72,11 @@ describe "compulsory parameter test:" do
 			@server_instance.ui.should_receive(:error)
 			expect {@server_instance.run}.to raise_error
 		end
+		it "azure_dns_name" do		
+			Chef::Config[:knife].delete(:azure_dns_name)			
+			@server_instance.ui.should_receive(:error)
+			expect {@server_instance.run}.to raise_error
+		end
 
 end
 
@@ -81,13 +86,14 @@ describe "for bootstrap protocol winrm:" do
 		Chef::Config[:knife][:winrm_password] = 'winrm_password'
 	end
 
-	it "check if all params are set correctly" do
+	it "check if all server params are set correctly" do
 		@server_instance.should_receive(:is_image_windows?).twice.and_return(true)
 		@server_params = @server_instance.create_server_def
 		@server_params[:os_type].should == 'Windows'
 		@server_params[:admin_password].should == 'winrm_password'
 		@server_params[:bootstrap_proto].should == 'winrm'
 		@server_params[:azure_dns_name].should == 'service001'
+		@server_params[:azure_vm_name].should == 'vm01'
 		@server_params[:port].should == '5985'
 	end
 
@@ -140,7 +146,7 @@ describe "for bootstrap protocol ssh:" do
 			Chef::Config[:knife][:ssh_password] = 'ssh_password'
 			Chef::Config[:knife][:ssh_user] = 'ssh_user'
 		end
-		it "check if all params are set correctly" do
+		it "check if all server params are set correctly" do
 			@server_instance.should_receive(:is_image_windows?).twice.and_return(false)		
 			@server_params = @server_instance.create_server_def
 			@server_params[:os_type].should == 'Linux'
@@ -148,6 +154,7 @@ describe "for bootstrap protocol ssh:" do
 			@server_params[:ssh_user].should == 'ssh_user'
 			@server_params[:bootstrap_proto].should == 'ssh'
 			@server_params[:azure_dns_name].should == 'service001'
+			@server_params[:azure_vm_name].should == 'vm01'
 			@server_params[:port].should == '22'
 		end
 
