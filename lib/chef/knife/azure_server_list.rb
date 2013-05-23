@@ -56,7 +56,7 @@ class Chef
           server_list << server.winrmport.to_s
         end
         puts ''
-        puts ui.list(server_list, :columns_across, 6)
+        puts ui.list(server_list, :uneven_columns_across, 6)
       end
     end
   end
