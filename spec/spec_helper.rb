@@ -15,6 +15,10 @@ require 'chef/knife/azure_server_create'
 require 'chef/knife/azure_server_describe'
 require 'chef/knife/azure_image_list'
 
+require 'fileutils'
+#Create an empty mock certificate file
+FileUtils.touch('AzureLinuxCert.pem')
+
 def tmpFile filename
   tmpdir = 'tmp'
   Dir::mkdir tmpdir unless FileTest::directory?(tmpdir)

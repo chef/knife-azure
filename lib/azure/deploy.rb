@@ -50,7 +50,11 @@ class Azure
       unless @connection.storageaccounts.exists(params[:azure_storage_account])
         @connection.storageaccounts.create(params)
       end
+      if params[:identity_file]
+        params[:fingerprint] = @connection.certificates.create(params)
+      end
       params['deploy_name'] = find(params[:azure_dns_name])
+
       if params['deploy_name'] != nil
         role = Role.new(@connection)
         roleXML = role.setup(params)
