@@ -33,7 +33,20 @@ class Azure
       end
       @roles
     end
-    def find(name)
+
+    def find_in_hosted_service(name, hostedservicename)
+      find_roles_with_hostedservice(hostedservicename).each do | role |
+        if (role.name == name)
+          return role
+        end
+      end
+      return nil
+    end
+
+    def find(name, params= nil)
+      if params && params[:azure_hosted_service_name]
+        return find_in_hosted_service(name, params[:azure_hosted_service_name])
+      end
       if @roles == nil
         all
       end
@@ -44,8 +57,7 @@ class Azure
       end
       nil   
     end
-    def alone_on_host(name)
-      found_role = find(name)
+    def alone_on_host(found_role)
       @roles.each do |role|
         if (role.name != found_role.name && 
             role.deployname == found_role.deployname && 
@@ -61,7 +73,7 @@ class Azure
     def delete(name, params)
       role = find(name)
       if role != nil
-        if alone_on_host(name)
+        if alone_on_host(role)
           servicecall = "hostedservices/#{role.hostedservicename}/deployments" +
           "/#{role.deployname}"
         else
@@ -69,12 +81,24 @@ class Azure
           "/#{role.deployname}/roles/#{role.name}"
         end
         roleXML = nil
-        if params[:purge_os_disk]
+        unless params[:preserve_os_disk]
             roleXML = @connection.query_azure(servicecall, "get")
         end
         @connection.query_azure(servicecall, "delete") 
+        # delete role from local cache as well.
+        @roles.delete(role)
 
-        if params[:purge_os_disk]
+        unless params[:preserve_hosted_service]
+          unless params[:hostedservicename].nil?
+            roles_using_same_service = find_roles_with_hostedservice(params[:hostedservicename])
+            if roles_using_same_service.size <= 1
+              servicecall = "hostedservices/" + params[:hostedservicename]
+              @connection.query_azure(servicecall, "delete")
+            end
+          end
+        end
+        
+        unless params[:preserve_os_disk]
           osdisk = roleXML.css(roleXML, 'OSVirtualHardDisk')
           disk_name = xml_content(osdisk, 'DiskName')
           servicecall = "disks/#{disk_name}"
@@ -82,12 +106,24 @@ class Azure
         end
       end
     end
+    def find_roles_with_hostedservice(hostedservicename)
+      if @roles == nil
+        all
+      end
+      return_roles = Array.new
+      @roles.each do |role|
+        if(role.hostedservicename == hostedservicename)
+          return_roles << role 
+        end
+      end
+      return_roles
+    end
   end
   class Role
     include AzureUtility
-    attr_accessor :connection, :name, :status, :size, :ipaddress
-    attr_accessor :sshport, :sshipaddress, :hostedservicename, :deployname
-    attr_accessor :winrmport, :winrmipaddress
+    attr_accessor :connection, :name, :status, :size, :ipaddress, :publicipaddress
+    attr_accessor :sshport, :hostedservicename, :deployname
+    attr_accessor :winrmport
     attr_accessor :hostname, :tcpports, :udpports
 
     def initialize(connection)
@@ -105,13 +141,12 @@ class Azure
       @udpports = Array.new
       
       endpoints = roleXML.css('InstanceEndpoint')
+      @publicipaddress = xml_content(endpoints[0], 'Vip') if !endpoints.empty?
       endpoints.each do |endpoint|
         if xml_content(endpoint, 'Name').downcase == 'ssh'
           @sshport = xml_content(endpoint, 'PublicPort')
-          @sshipaddress = xml_content(endpoint, 'Vip')
         elsif xml_content(endpoint, 'Name').downcase == 'winrm'
           @winrmport = xml_content(endpoint, 'PublicPort')
-          @winrmipaddress = xml_content(endpoint, 'Vip')
         else
           hash = Hash.new
           hash['Name'] = xml_content(endpoint, 'Name')
@@ -141,9 +176,21 @@ class Azure
               xml.ConfigurationSet('i:type' => 'LinuxProvisioningConfigurationSet') {
               xml.ConfigurationSetType 'LinuxProvisioningConfiguration'
               xml.HostName params[:host_name] 
-              xml.UserName params[:ssh_user]
-              xml.UserPassword params[:ssh_password]
-              xml.DisableSshPasswordAuthentication 'false'
+              xml.UserName params[:ssh_user]              
+              unless params[:identity_file].nil? 
+                xml.DisableSshPasswordAuthentication 'true'
+                xml.SSH {
+                   xml.PublicKeys {
+                     xml.PublicKey {
+                       xml.Fingerprint params[:fingerprint]
+                       xml.Path '/home/' + params[:ssh_user] + '/.ssh/authorized_keys'
+                     }
+                   }
+                }
+              else
+                xml.UserPassword params[:ssh_password]
+                xml.DisableSshPasswordAuthentication 'false'
+              end
               }
             elsif params[:os_type] == 'Windows'
               xml.ConfigurationSet('i:type' => 'WindowsProvisioningConfigurationSet') {

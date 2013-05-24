@@ -32,11 +32,11 @@ class Chef
 
       banner "knife azure server delete SERVER [SERVER] (options)"
 
-      option :purge_os_disk,
-        :long => "--purge-os-disk",
+      option :preserve_os_disk,
+        :long => "--preserve-os-disk",
         :boolean => true,
-        :default => true,
-        :description => "Destroy corresponding OS Disk"
+        :default => false,
+        :description => "Preserve corresponding OS Disk"
 
       option :purge,
         :short => "-P",
@@ -49,6 +49,16 @@ class Chef
         :short => "-N NAME",
         :long => "--node-name NAME",
         :description => "The name of the node and client to delete, if it differs from the server name.  Only has meaning when used with the '--purge' option."
+
+      option :preserve_hosted_service,
+        :long => "--preserve-hosted-service",
+        :boolean => true,
+        :default => false,
+        :description => "Dont destroy corresponding hosted service. If the option is not set, it deletes the service not used by any VMs."
+
+      option :azure_hosted_service_name,
+        :long => "--azure-dns-name NAME",
+        :description => "specifies the DNS name (also known as hosted service name)"
 
       # Extracted from Chef::Knife.delete_object, because it has a
       # confirmation step built in... By specifying the '--purge'
@@ -72,7 +82,7 @@ class Chef
         @name_args.each do |name|
 
           begin
-            server = connection.roles.find(name)
+            server = connection.roles.find(name, params = { :azure_hosted_service_name => locate_config_value(:azure_hosted_service_name) })
             if not server
               ui.warn("Server #{name} does not exist")
               return
@@ -82,13 +92,13 @@ class Chef
             msg_pair('Deployment', server.deployname)
             msg_pair('Role', server.name)
             msg_pair('Size', server.size)
-            msg_pair('SSH Ip Address', server.sshipaddress)
-            msg_pair('SSH Port', server.sshport)
+            msg_pair('Public Ip Address', server.publicipaddress)
 
             puts "\n"
             confirm("Do you really want to delete this server")
-             
-            connection.roles.delete(name, params = { :purge_os_disk => locate_config_value(:purge_os_disk) })
+            connection.roles.delete(name, params = { :preserve_os_disk => locate_config_value(:preserve_os_disk),
+                                                     :preserve_hosted_service => locate_config_value(:preserve_hosted_service),
+                                                     :hostedservicename => server.hostedservicename })
 
             puts "\n"
             ui.warn("Deleted server #{server.name}")

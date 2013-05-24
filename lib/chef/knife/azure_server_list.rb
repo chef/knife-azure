@@ -36,7 +36,7 @@ class Chef
         server_labels = ['DNS Name', 'VM Name', 'Status', 'IP Address', 'SSH Port', 'WinRM Port' ]
         server_list =  server_labels.map {|label| ui.color(label, :bold)}
         items = connection.roles.all
-        
+
         items.each do |server|
           server_list << server.hostedservicename.to_s+".cloudapp.net"  # Info about the DNS name at http://msdn.microsoft.com/en-us/library/ee460806.aspx
           server_list << server.name.to_s
@@ -50,8 +50,8 @@ class Chef
                            else
                              ui.color('ready', :green)
                            end
-          end  
-          server_list << server.sshipaddress.to_s
+                         end
+          server_list << server.publicipaddress.to_s
           server_list << server.sshport.to_s
           server_list << server.winrmport.to_s
         end
