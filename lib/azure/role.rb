@@ -121,9 +121,9 @@ class Azure
   end
   class Role
     include AzureUtility
-    attr_accessor :connection, :name, :status, :size, :ipaddress
-    attr_accessor :sshport, :sshipaddress, :hostedservicename, :deployname
-    attr_accessor :winrmport, :winrmipaddress
+    attr_accessor :connection, :name, :status, :size, :ipaddress, :publicipaddress
+    attr_accessor :sshport, :hostedservicename, :deployname
+    attr_accessor :winrmport
     attr_accessor :hostname, :tcpports, :udpports
 
     def initialize(connection)
@@ -141,13 +141,12 @@ class Azure
       @udpports = Array.new
       
       endpoints = roleXML.css('InstanceEndpoint')
+      @publicipaddress = xml_content(endpoints[0], 'Vip') if !endpoints.empty?
       endpoints.each do |endpoint|
         if xml_content(endpoint, 'Name').downcase == 'ssh'
           @sshport = xml_content(endpoint, 'PublicPort')
-          @sshipaddress = xml_content(endpoint, 'Vip')
         elsif xml_content(endpoint, 'Name').downcase == 'winrm'
           @winrmport = xml_content(endpoint, 'PublicPort')
-          @winrmipaddress = xml_content(endpoint, 'Vip')
         else
           hash = Hash.new
           hash['Name'] = xml_content(endpoint, 'Name')
