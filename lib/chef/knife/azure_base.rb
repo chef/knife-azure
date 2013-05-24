@@ -95,21 +95,20 @@ class Chef
 
       def validate!(keys=[:azure_subscription_id, :azure_mgmt_cert, :azure_host_name])
         errors = []
-        if(locate_config_value(:azure_publish_settings_file) == nil)
-          keys.each do |k|
-            pretty_key = k.to_s.gsub(/_/, ' ').gsub(/\w+/){ |w| (w =~ /(ssh)|(aws)/i) ? w.upcase  : w.capitalize }
-            if locate_config_value(k).nil?
-              errors << "You did not provide a valid '#{pretty_key}' value. Please set knife[:#{k}] in your knife.rb or pass as an option."
-            end
-          end
-          if(locate_config_value(:azure_mgmt_cert) != nil)
-            Chef::Config[:knife][:azure_mgmt_cert] = File.read find_file(locate_config_value(:azure_mgmt_cert))
-          end
-          if errors.each{|e| ui.error(e)}.any?
-            exit 1
-          end
-        else
+        if(locate_config_value(:azure_mgmt_cert) != nil)
+          config[:azure_mgmt_cert] = File.read find_file(locate_config_value(:azure_mgmt_cert))
+        end
+        if(locate_config_value(:azure_publish_settings_file) != nil)
           parse_publish_settings_file(locate_config_value(:azure_publish_settings_file))
+        end
+        keys.each do |k|
+          pretty_key = k.to_s.gsub(/_/, ' ').gsub(/\w+/){ |w| (w =~ /(ssh)|(aws)/i) ? w.upcase  : w.capitalize }
+          if locate_config_value(k).nil?
+            errors << "You did not provide a valid '#{pretty_key}' value. Please set knife[:#{k}] in your knife.rb or pass as an option."
+          end
+        end
+        if errors.each{|e| ui.error(e)}.any?
+          exit 1
         end
       end
 
@@ -124,11 +123,9 @@ class Chef
           management_cert = OpenSSL::PKCS12.new(Base64.decode64(profile.attribute("ManagementCertificate").value))
           Chef::Config[:knife][:azure_mgmt_cert] = management_cert.certificate.to_pem + management_cert.key.to_pem
           Chef::Config[:knife][:azure_host_name] = URI(profile.attribute("Url").value).host
-          if(locate_config_value(:azure_subscription_id) == nil)
-            Chef::Config[:knife][:azure_subscription_id] = doc.at_css("Subscription").attribute("Id").value
-          end
+          Chef::Config[:knife][:azure_subscription_id] = doc.at_css("Subscription").attribute("Id").value
         rescue
-          ui.error("Incorrect publish settings file-" + filename)
+          ui.error("Incorrect publish settings file - " + filename)
           exit 1
         end
       end
