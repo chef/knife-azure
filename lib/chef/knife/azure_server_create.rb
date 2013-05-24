@@ -67,11 +67,6 @@ class Chef
         :long => "--ssh-password PASSWORD",
         :description => "The ssh password"
 
-      option :identity_file,
-        :short => "-i IDENTITY_FILE",
-        :long => "--identity-file IDENTITY_FILE",
-        :description => "The SSH identity file used for authentication"
-
       option :prerelease,
         :long => "--prerelease",
         :description => "Install the pre-release chef gems"
@@ -162,6 +157,13 @@ class Chef
         :long => "--udp-endpoints PORT_LIST",
         :description => "Comma separated list of UDP local and public ports to open i.e. '80:80,433:5000'"
 
+      option :identity_file,
+        :long => "--identity-file FILENAME",
+        :description => "SSH key path, optional. It is the RSA private key. Specify either ssh-password or identity-file"
+
+      option :identity_file_passphrase,
+        :long => "--identity-file-passphrase PASSWORD",
+        :description => "SSH key passphrase. Optional, specify if passphrase for identity-file exists"
 
       def strip_non_ascii(string)
         string.gsub(/[^0-9a-z ]/i, '')
@@ -408,7 +410,7 @@ class Chef
           :role_size => locate_config_value(:role_size),
           :tcp_endpoints => locate_config_value(:tcp_endpoints),
           :udp_endpoints => locate_config_value(:udp_endpoints),
-          :bootstrap_proto => locate_config_value(:bootstrap_protocol)
+          :bootstrap_proto => locate_config_value(:bootstrap_protocol)          
         }
 
         if is_image_windows?
@@ -421,12 +423,19 @@ class Chef
         else
           server_def[:os_type] = 'Linux'
           server_def[:bootstrap_proto] = 'ssh'
-          if not locate_config_value(:ssh_user) or not locate_config_value(:ssh_password)
-            ui.error("SSH User and SSH Password are compulsory parameters")
+          if not locate_config_value(:ssh_user)
+            ui.error("SSH User is compulsory parameter")
             exit 1
           end
+          unless locate_config_value(:ssh_password) or locate_config_value(:identity_file) 
+              ui.error("Specify either SSH Key or SSH Password")
+              exit 1
+          end
+          
           server_def[:ssh_user] = locate_config_value(:ssh_user)
           server_def[:ssh_password] = locate_config_value(:ssh_password)
+          server_def[:identity_file] = locate_config_value(:identity_file)
+          server_def[:identity_file_passphrase] = locate_config_value(:identity_file_passphrase)
         end
         server_def
       end
