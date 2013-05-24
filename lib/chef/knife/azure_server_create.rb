@@ -31,11 +31,16 @@ class Chef
         require 'readline'
         require 'chef/json_compat'
         require 'chef/knife/bootstrap'
-        require 'chef/knife/bootstrap_windows_winrm'
         require 'chef/knife/bootstrap_windows_ssh'
         require 'chef/knife/core/windows_bootstrap_context'
-        require 'chef/knife/winrm'
         Chef::Knife::Bootstrap.load_deps
+      end
+
+      def load_winrm_deps
+        require 'winrm'
+        require 'em-winrm'
+        require 'chef/knife/winrm'
+        require 'chef/knife/bootstrap_windows_winrm'
       end
 
       banner "knife azure server create (options)"
@@ -61,11 +66,6 @@ class Chef
         :short => "-P PASSWORD",
         :long => "--ssh-password PASSWORD",
         :description => "The ssh password"
-
-      option :identity_file,
-        :short => "-i IDENTITY_FILE",
-        :long => "--identity-file IDENTITY_FILE",
-        :description => "The SSH identity file used for authentication"
 
       option :prerelease,
         :long => "--prerelease",
@@ -157,6 +157,13 @@ class Chef
         :long => "--udp-endpoints PORT_LIST",
         :description => "Comma separated list of UDP local and public ports to open i.e. '80:80,433:5000'"
 
+      option :identity_file,
+        :long => "--identity-file FILENAME",
+        :description => "SSH key path, optional. It is the RSA private key. Specify either ssh-password or identity-file"
+
+      option :identity_file_passphrase,
+        :long => "--identity-file-passphrase PASSWORD",
+        :description => "SSH key passphrase. Optional, specify if passphrase for identity-file exists"
 
       def strip_non_ascii(string)
         string.gsub(/[^0-9a-z ]/i, '')
@@ -241,9 +248,6 @@ class Chef
         end
         puts ui.list(details, :columns_across, 4)
       end
-      def is_platform_windows?
-        return RUBY_PLATFORM.scan('w32').size > 0
-      end
 
       def run
         $stdout.sync = true
@@ -268,22 +272,13 @@ class Chef
             config[:storage_account] = storage.name.to_s
           end
         end
-        if is_image_windows?
-          if is_platform_windows?
-            require 'em-winrs'
-          else
-            require 'gssapi'
-            require 'winrm'
-            require 'em-winrm'
-          end
-        end
 
         server = connection.deploys.create(create_server_def)
+        fqdn = server.publicipaddress
 
         puts("\n")
         if is_image_windows?
           if locate_config_value(:bootstrap_protocol) == 'ssh'
-            fqdn = server.sshipaddress
             port = server.sshport
             print "\n#{ui.color("Waiting for sshd on #{fqdn}:#{port}", :magenta)}"
 
@@ -293,7 +288,6 @@ class Chef
            }
 
           elsif locate_config_value(:bootstrap_protocol) == 'winrm'
-            fqdn = server.winrmipaddress
             port = server.winrmport
 
             print "\n#{ui.color("Waiting for winrm on #{fqdn}:#{port}", :magenta)}"
@@ -307,12 +301,11 @@ class Chef
           sleep 15
           bootstrap_for_windows_node(server,fqdn).run
         else
-          unless server && server.sshipaddress && server.sshport
+          unless server && server.publicipaddress && server.sshport
             Chef::Log.fatal("server not created")
           exit 1
         end
 
-        fqdn = server.sshipaddress
         port = server.sshport
 
         print "\n#{ui.color("Waiting for sshd on #{fqdn}:#{port}", :magenta)}"
@@ -340,13 +333,12 @@ class Chef
 
       def bootstrap_for_windows_node(server, fqdn)
         if locate_config_value(:bootstrap_protocol) == 'winrm'
-            if is_platform_windows?
-              require 'em-winrs'
-            else
+
+            load_winrm_deps
+            if not Chef::Platform.windows?
               require 'gssapi'
-              require 'winrm'
-              require 'em-winrm'
             end
+
             bootstrap = Chef::Knife::BootstrapWindowsWinrm.new
 
             bootstrap.config[:winrm_user] = locate_config_value(:winrm_user) || 'Administrator'
@@ -386,6 +378,7 @@ class Chef
         bootstrap.config[:bootstrap_version] = locate_config_value(:bootstrap_version)
         bootstrap.config[:distro] = locate_config_value(:distro)
         bootstrap.config[:use_sudo] = true unless locate_config_value(:ssh_user) == 'root'
+        bootstrap.config[:use_sudo_password] = true if bootstrap.config[:use_sudo]
         bootstrap.config[:template_file] = config[:template_file]
         bootstrap.config[:environment] = locate_config_value(:environment)
         # may be needed for vpc_mode
@@ -417,7 +410,7 @@ class Chef
           :role_size => locate_config_value(:role_size),
           :tcp_endpoints => locate_config_value(:tcp_endpoints),
           :udp_endpoints => locate_config_value(:udp_endpoints),
-          :bootstrap_proto => locate_config_value(:bootstrap_protocol)
+          :bootstrap_proto => locate_config_value(:bootstrap_protocol)          
         }
 
         if is_image_windows?
@@ -430,12 +423,19 @@ class Chef
         else
           server_def[:os_type] = 'Linux'
           server_def[:bootstrap_proto] = 'ssh'
-          if not locate_config_value(:ssh_user) or not locate_config_value(:ssh_password)
-            ui.error("SSH User and SSH Password are compulsory parameters")
+          if not locate_config_value(:ssh_user)
+            ui.error("SSH User is compulsory parameter")
             exit 1
           end
+          unless locate_config_value(:ssh_password) or locate_config_value(:identity_file) 
+              ui.error("Specify either SSH Key or SSH Password")
+              exit 1
+          end
+          
           server_def[:ssh_user] = locate_config_value(:ssh_user)
           server_def[:ssh_password] = locate_config_value(:ssh_password)
+          server_def[:identity_file] = locate_config_value(:identity_file)
+          server_def[:identity_file_passphrase] = locate_config_value(:identity_file_passphrase)
         end
         server_def
       end

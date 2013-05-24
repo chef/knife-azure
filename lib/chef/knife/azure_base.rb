@@ -49,7 +49,7 @@ class Chef
 
           option :azure_host_name,
             :short => "-H HOSTNAME",
-            :long => "--azure_host_name HOSTNAME",
+            :long => "--azure-host-name HOSTNAME",
             :description => "Your Azure host name",
             :proc => Proc.new { |key| Chef::Config[:knife][:azure_host_name] = key }
 
