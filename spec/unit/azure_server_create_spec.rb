@@ -169,6 +169,31 @@ describe "for bootstrap protocol ssh:" do
 			@server_instance.run
 		end
 
+		context "ssh key" do
+			before do
+				Chef::Config[:knife][:ssh_password] = ''
+				Chef::Config[:knife][:identity_file] = 'ssh_key'
+			end
+			it "check if ssh-key set correctly" do				
+				@server_instance.should_receive(:is_image_windows?).and_return(false)		
+				@server_params = @server_instance.create_server_def
+				@server_params[:os_type].should == 'Linux'
+				@server_params[:identity_file].should == 'ssh_key'
+				@server_params[:ssh_user].should == 'ssh_user'
+				@server_params[:bootstrap_proto].should == 'ssh'
+				@server_params[:hosted_service_name].should == 'service001'
+			end
+			it "successful bootstrap with ssh key" do
+				@server_instance.should_receive(:is_image_windows?).exactly(3).times.and_return(false)
+				@bootstrap = Chef::Knife::Bootstrap.new
+		      	Chef::Knife::Bootstrap.stub(:new).and_return(@bootstrap)
+		      	@bootstrap.should_receive(:run)
+		      	@server_instance.connection.certificates.stub(:generate_public_key_certificate_data).and_return("cert_data")
+		      	@server_instance.connection.certificates.should_receive(:create)
+				@server_instance.run
+			end
+		end
+
 		context "bootstrap"
 			before do
 				@server_params = @server_instance.create_server_def

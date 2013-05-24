@@ -176,9 +176,21 @@ class Azure
               xml.ConfigurationSet('i:type' => 'LinuxProvisioningConfigurationSet') {
               xml.ConfigurationSetType 'LinuxProvisioningConfiguration'
               xml.HostName params[:host_name] 
-              xml.UserName params[:ssh_user]
-              xml.UserPassword params[:ssh_password]
-              xml.DisableSshPasswordAuthentication 'false'
+              xml.UserName params[:ssh_user]              
+              unless params[:identity_file].nil? 
+                xml.DisableSshPasswordAuthentication 'true'
+                xml.SSH {
+                   xml.PublicKeys {
+                     xml.PublicKey {
+                       xml.Fingerprint params[:fingerprint]
+                       xml.Path '/home/' + params[:ssh_user] + '/.ssh/authorized_keys'
+                     }
+                   }
+                }
+              else
+                xml.UserPassword params[:ssh_password]
+                xml.DisableSshPasswordAuthentication 'false'
+              end
               }
             elsif params[:os_type] == 'Windows'
               xml.ConfigurationSet('i:type' => 'WindowsProvisioningConfigurationSet') {
