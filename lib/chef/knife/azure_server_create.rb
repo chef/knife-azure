@@ -31,11 +31,16 @@ class Chef
         require 'readline'
         require 'chef/json_compat'
         require 'chef/knife/bootstrap'
-        require 'chef/knife/bootstrap_windows_winrm'
         require 'chef/knife/bootstrap_windows_ssh'
         require 'chef/knife/core/windows_bootstrap_context'
-        require 'chef/knife/winrm'
         Chef::Knife::Bootstrap.load_deps
+      end
+
+      def load_winrm_deps
+        require 'winrm'
+        require 'em-winrm'
+        require 'chef/knife/winrm'
+        require 'chef/knife/bootstrap_windows_winrm'
       end
 
       banner "knife azure server create (options)"
@@ -241,9 +246,6 @@ class Chef
         end
         puts ui.list(details, :columns_across, 4)
       end
-      def is_platform_windows?
-        return RUBY_PLATFORM.scan('w32').size > 0
-      end
 
       def run
         $stdout.sync = true
@@ -266,15 +268,6 @@ class Chef
             config[:storage_account] = [strip_non_ascii(locate_config_value(:role_name)), random_string].join.downcase
           else
             config[:storage_account] = storage.name.to_s
-          end
-        end
-        if is_image_windows?
-          if is_platform_windows?
-            #require 'em-winrs'
-          else
-            require 'gssapi'
-            require 'winrm'
-            require 'em-winrm'
           end
         end
 
@@ -340,13 +333,12 @@ class Chef
 
       def bootstrap_for_windows_node(server, fqdn)
         if locate_config_value(:bootstrap_protocol) == 'winrm'
-            if is_platform_windows?
-              #require 'em-winrs'
-            else
+
+            load_winrm_deps
+            if not Chef::Platform.windows?
               require 'gssapi'
-              require 'winrm'
-              require 'em-winrm'
             end
+
             bootstrap = Chef::Knife::BootstrapWindowsWinrm.new
 
             bootstrap.config[:winrm_user] = locate_config_value(:winrm_user) || 'Administrator'
