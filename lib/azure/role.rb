@@ -33,7 +33,20 @@ class Azure
       end
       @roles
     end
-    def find(name)
+
+    def find_in_hosted_service(name, hostedservicename)
+      find_roles_with_hostedservice(hostedservicename).each do | role |
+        if (role.name == name)
+          return role
+        end
+      end
+      return nil
+    end
+
+    def find(name, params= nil)
+      if params && params[:azure_hosted_service_name]
+        return find_in_hosted_service(name, params[:azure_hosted_service_name])
+      end
       if @roles == nil
         all
       end
@@ -44,8 +57,7 @@ class Azure
       end
       nil   
     end
-    def alone_on_host(name)
-      found_role = find(name)
+    def alone_on_host(found_role)
       @roles.each do |role|
         if (role.name != found_role.name && 
             role.deployname == found_role.deployname && 
@@ -61,7 +73,7 @@ class Azure
     def delete(name, params)
       role = find(name)
       if role != nil
-        if alone_on_host(name)
+        if alone_on_host(role)
           servicecall = "hostedservices/#{role.hostedservicename}/deployments" +
           "/#{role.deployname}"
         else
@@ -73,10 +85,12 @@ class Azure
             roleXML = @connection.query_azure(servicecall, "get")
         end
         @connection.query_azure(servicecall, "delete") 
+        # delete role from local cache as well.
+        @roles.delete(role)
 
         unless params[:preserve_hosted_service]
           unless params[:hostedservicename].nil?
-            roles_using_same_service = connection.roles.find_roles_with_hostedservice(params[:hostedservicename])
+            roles_using_same_service = find_roles_with_hostedservice(params[:hostedservicename])
             if roles_using_same_service.size <= 1
               servicecall = "hostedservices/" + params[:hostedservicename]
               @connection.query_azure(servicecall, "delete")
