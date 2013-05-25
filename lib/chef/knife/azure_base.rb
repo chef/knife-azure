@@ -58,6 +58,11 @@ class Chef
             :description => "Verify SSL Certificates for communication over HTTPS",
             :boolean => true,
             :default => false
+
+          option :azure_publish_settings_file,
+            :long => "--azure-publish-settings-file FILENAME",
+            :description => "Your Azure Publish Settings File",
+            :proc => Proc.new { |key| Chef::Config[:knife][:azure_publish_settings_file] = key }
         end
       end
 
@@ -90,17 +95,54 @@ class Chef
 
       def validate!(keys=[:azure_subscription_id, :azure_mgmt_cert, :azure_host_name])
         errors = []
-
+        if(locate_config_value(:azure_mgmt_cert) != nil)
+          config[:azure_mgmt_cert] = File.read find_file(locate_config_value(:azure_mgmt_cert))
+        end
+        if(locate_config_value(:azure_publish_settings_file) != nil)
+          parse_publish_settings_file(locate_config_value(:azure_publish_settings_file))
+        end
         keys.each do |k|
           pretty_key = k.to_s.gsub(/_/, ' ').gsub(/\w+/){ |w| (w =~ /(ssh)|(aws)/i) ? w.upcase  : w.capitalize }
           if locate_config_value(k).nil?
             errors << "You did not provide a valid '#{pretty_key}' value. Please set knife[:#{k}] in your knife.rb or pass as an option."
           end
         end
-
         if errors.each{|e| ui.error(e)}.any?
           exit 1
         end
+      end
+
+      def parse_publish_settings_file(filename)
+        require 'nokogiri'
+        require 'base64'
+        require 'openssl'
+        require 'uri'
+        begin
+          doc = Nokogiri::XML(File.open(find_file(filename)))
+          profile = doc.at_css("PublishProfile")
+          management_cert = OpenSSL::PKCS12.new(Base64.decode64(profile.attribute("ManagementCertificate").value))
+          Chef::Config[:knife][:azure_mgmt_cert] = management_cert.certificate.to_pem + management_cert.key.to_pem
+          Chef::Config[:knife][:azure_host_name] = URI(profile.attribute("Url").value).host
+          Chef::Config[:knife][:azure_subscription_id] = doc.at_css("Subscription").attribute("Id").value
+        rescue
+          ui.error("Incorrect publish settings file - " + filename)
+          exit 1
+        end
+      end
+
+      def find_file(name)
+        config_dir = Chef::Knife.chef_config_dir
+        if File.exist? name
+          file = name
+        elsif config_dir && File.exist?(File.join(config_dir, name))
+          file = File.join(config_dir, name)
+        elsif File.exist?(File.join(ENV['HOME'], '.chef', name))
+          file = File.join(ENV['HOME'], '.chef', name)
+        else
+          ui.error('Unable to find file - ' + name)
+          exit 1
+        end
+        file
       end
 
     end
