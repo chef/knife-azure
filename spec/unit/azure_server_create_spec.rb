@@ -38,10 +38,10 @@ before do
     @server_instance.stub(:sleep).and_return(0)
     @server_instance.stub(:puts)
     @server_instance.stub(:print)
+    @server_instance.stub(:parse_publish_settings_file)
 end
 
 describe "compulsory parameter test:" do
-
 		it "azure_subscription_id" do		
 			Chef::Config[:knife].delete(:azure_subscription_id)			
 			@server_instance.ui.should_receive(:error) 
@@ -76,61 +76,7 @@ describe "compulsory parameter test:" do
 			Chef::Config[:knife].delete(:role_size)			
 			@server_instance.ui.should_receive(:error)
 			expect {@server_instance.run}.to raise_error
-		end
-
-		context "Tests for publish settings file" do
-			before do
-				Chef::Config[:knife][:azure_host_name] = nil
-				Chef::Config[:knife][:azure_subscription_id] = nil
-			end
-			def validate_cert()
-				Chef::Config[:knife][:azure_mgmt_cert].should include("-----BEGIN CERTIFICATE-----")
-				Chef::Config[:knife][:azure_mgmt_cert].should include("-----END CERTIFICATE-----")
-				Chef::Config[:knife][:azure_mgmt_cert].should include("-----BEGIN RSA PRIVATE KEY-----")
-				Chef::Config[:knife][:azure_mgmt_cert].should include("-----END RSA PRIVATE KEY-----")
-			end
-			it "- should continue to regular flow if publish settings file not provided" do
-				Chef::Config[:knife][:azure_host_name] = "preview.core.windows-int.net"
-				Chef::Config[:knife][:azure_subscription_id] = "azure_subscription_id"
-				@server_instance.validate!
-				Chef::Config[:knife][:azure_host_name].should == "preview.core.windows-int.net"
-				Chef::Config[:knife][:azure_subscription_id].should == "azure_subscription_id"
-			end
-
-			it "- should validate extract parameters" do
-				Chef::Config[:knife][:azure_publish_settings_file] = "azureValid.publishsettings"
-				@server_instance.validate!
-				Chef::Config[:knife][:azure_host_name].should == 'management.core.windows.net'
-				Chef::Config[:knife][:azure_subscription_id].should == 'id1'
-				validate_cert()
-			end
-
-			it "- should validate parse method" do
-				@server_instance.parse_publish_settings_file("azureValid.publishsettings")
-				Chef::Config[:knife][:azure_host_name].should == 'management.core.windows.net'
-				Chef::Config[:knife][:azure_subscription_id].should == 'id1'
-				validate_cert()
-			end
-
-			it "- should validate settings file and subscrition id" do
-				Chef::Config[:knife][:azure_subscription_id] = "azure_subscription_id"
-				Chef::Config[:knife][:azure_publish_settings_file] = "azureValid.publishsettings"
-				@server_instance.validate!
-				Chef::Config[:knife][:azure_host_name].should == 'management.core.windows.net'
-				Chef::Config[:knife][:azure_subscription_id].should == 'azure_subscription_id'
-				validate_cert()
-			end
-
-			it "- should raise error if invalid publish settings provided" do
-				Chef::Config[:knife][:azure_publish_settings_file] = "azureInvalid.publishsettings"
-				expect {@server_instance.validate!}.to raise_error
-			end
-
-			it "- should raise error if publish settings file does not exists" do
-				Chef::Config[:knife][:azure_publish_settings_file] = "azureNotAvailable.publishsettings"
-				expect {@server_instance.validate!}.to raise_error
-			end
-		end
+		end		
 end
 
 describe "for bootstrap protocol winrm:" do
