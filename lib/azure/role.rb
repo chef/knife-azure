@@ -166,7 +166,7 @@ class Azure
           'xmlns'=>'http://schemas.microsoft.com/windowsazure',
           'xmlns:i'=>'http://www.w3.org/2001/XMLSchema-instance'
         ) {
-          xml.RoleName {xml.text params[:role_name]}
+          xml.RoleName {xml.text params[:azure_vm_name]}
           xml.OsVersion('i:nil' => 'true')
           xml.RoleType 'PersistentVMRole'
           xml.ConfigurationSets {
@@ -174,7 +174,7 @@ class Azure
 
               xml.ConfigurationSet('i:type' => 'LinuxProvisioningConfigurationSet') {
               xml.ConfigurationSetType 'LinuxProvisioningConfiguration'
-              xml.HostName params[:host_name]
+              xml.HostName params[:azure_vm_name] 
               xml.UserName params[:ssh_user]
               unless params[:identity_file].nil?
                 xml.DisableSshPasswordAuthentication 'true'
@@ -194,7 +194,7 @@ class Azure
             elsif params[:os_type] == 'Windows'
               xml.ConfigurationSet('i:type' => 'WindowsProvisioningConfigurationSet') {
               xml.ConfigurationSetType 'WindowsProvisioningConfiguration'
-              xml.ComputerName params[:host_name]
+              xml.ComputerName params[:azure_vm_name] 
               xml.AdminPassword params[:admin_password]
               xml.ResetPasswordOnFirstLogon 'false'
               xml.EnableAutomaticUpdates 'false'
@@ -209,14 +209,14 @@ class Azure
                 xml.InputEndpoint {
                 xml.LocalPort '22'
                 xml.Name 'SSH'
-                xml.Port '22'
+                xml.Port params[:port]
                 xml.Protocol 'TCP'
               }
               elsif params[:bootstrap_proto].downcase == 'winrm' and params[:os_type] == 'Windows'
                 xml.InputEndpoint {
                   xml.LocalPort '5985'
                   xml.Name 'WinRM'
-                  xml.Port '5985'
+                  xml.Port params[:port]
                   xml.Protocol 'TCP'
                 }
               end
@@ -226,7 +226,7 @@ class Azure
                 ports = endpoint.split(':')
                 xml.InputEndpoint {
                   xml.LocalPort ports[0]
-                  xml.Name 'tcpport_' + ports[0] + '_' + params[:host_name]
+                  xml.Name 'tcpport_' + ports[0] + '_' + params[:azure_vm_name]
                   if ports.length > 1
                     xml.Port ports[1]
                   else
@@ -241,7 +241,7 @@ class Azure
                 ports = endpoint.split(':')
                 xml.InputEndpoint {
                   xml.LocalPort ports[0]
-                  xml.Name 'udpport_' + ports[0] + '_' + params[:host_name]
+                  xml.Name 'udpport_' + ports[0] + '_' + params[:azure_vm_name]
                   if ports.length > 1
                     xml.Port ports[1]
                   else
@@ -254,18 +254,18 @@ class Azure
             }
           }
           }
-          xml.Label Base64.encode64(params[:role_name]).strip
+          xml.Label Base64.encode64(params[:azure_vm_name]).strip
           xml.OSVirtualHardDisk {
-            xml.MediaLink 'http://' + params[:storage_account] + '.blob.core.windows.net/vhds/' + (params[:os_disk_name] || Time.now.strftime('disk_%Y_%m_%d_%H_%M')) + '.vhd'
-            xml.SourceImageName params[:source_image]
+            xml.MediaLink 'http://' + params[:azure_storage_account] + '.blob.core.windows.net/vhds/' + (params[:azure_os_disk_name] || Time.now.strftime('disk_%Y_%m_%d_%H_%M')) + '.vhd'
+            xml.SourceImageName params[:azure_source_image]
           }
-          xml.RoleSize params[:role_size]
+          xml.RoleSize params[:azure_vm_size]
         }
       end
       builder.doc
     end
     def create(params, roleXML)
-      servicecall = "hostedservices/#{params[:hosted_service_name]}/deployments" +
+      servicecall = "hostedservices/#{params[:azure_dns_name]}/deployments" +
       "/#{params['deploy_name']}/roles"
       @connection.query_azure(servicecall, "post", roleXML.to_xml)
     end

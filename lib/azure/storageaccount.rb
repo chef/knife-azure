@@ -22,14 +22,14 @@ class Azure
       @connection=connection
     end
     def all
-      storage_accounts = Array.new
+      azure_storage_accounts = Array.new
       responseXML = @connection.query_azure('storageservices')
       servicesXML = responseXML.css('StorageServices StorageService')
       servicesXML.each do |serviceXML|
-        storage_account = StorageAccount.new(@connection)
-        storage_accounts << storage_account.parse(serviceXML)
+        azure_storage_account = StorageAccount.new(@connection)
+        azure_storage_accounts << azure_storage_account.parse(serviceXML)
       end
-      storage_accounts
+      azure_storage_accounts
     end
     def exists(name)
       storageExists = false
@@ -74,11 +74,11 @@ class Azure
     def create(params)
       builder = Nokogiri::XML::Builder.new do |xml|
         xml.CreateStorageServiceInput('xmlns'=>'http://schemas.microsoft.com/windowsazure') {
-          xml.ServiceName params[:storage_account]
-          xml.Label Base64.encode64(params[:storage_account])
-          xml.Description params[:storage_account_description] || 'Explicitly created storage service'
+          xml.ServiceName params[:azure_storage_account]
+          xml.Label Base64.encode64(params[:azure_storage_account])
+          xml.Description params[:azure_storage_account_description] || 'Explicitly created storage service'
           # Location defaults to 'West US'
-          xml.Location params[:service_location] || 'West US'
+          xml.Location params[:azure_service_location] || 'West US'
         }
       end
       @connection.query_azure("storageservices", "post", builder.to_xml)
