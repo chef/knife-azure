@@ -25,7 +25,7 @@ module AzureAPI
     def initialize(params)
       @subscription_id = params[:azure_subscription_id]
       @pem_file = params[:azure_mgmt_cert]
-      @host_name = params[:azure_host_name]
+      @host_name = params[:azure_api_host_name]
       @verify_ssl = params[:verify_ssl_cert]
     end
     def query_azure(service_name, verb = 'get', body = '')

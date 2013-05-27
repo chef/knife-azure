@@ -31,11 +31,16 @@ class Chef
         require 'readline'
         require 'chef/json_compat'
         require 'chef/knife/bootstrap'
-        require 'chef/knife/bootstrap_windows_winrm'
         require 'chef/knife/bootstrap_windows_ssh'
         require 'chef/knife/core/windows_bootstrap_context'
-        require 'chef/knife/winrm'
         Chef::Knife::Bootstrap.load_deps
+      end
+
+      def load_winrm_deps
+        require 'winrm'
+        require 'em-winrm'
+        require 'chef/knife/winrm'
+        require 'chef/knife/bootstrap_windows_winrm'
       end
 
       banner "knife azure server create (options)"
@@ -62,10 +67,10 @@ class Chef
         :long => "--ssh-password PASSWORD",
         :description => "The ssh password"
 
-      option :identity_file,
-        :short => "-i IDENTITY_FILE",
-        :long => "--identity-file IDENTITY_FILE",
-        :description => "The SSH identity file used for authentication"
+      option :ssh_port,
+        :long => "--ssh-port PORT",
+        :description => "The ssh port. Default is 22.",
+        :default => '22'
 
       option :prerelease,
         :long => "--prerelease",
@@ -102,49 +107,50 @@ class Chef
         :boolean => true,
         :default => true
 
-      option :hosted_service_name,
-        :short => "-s NAME",
-        :long => "--hosted-service-name NAME",
-        :description => "specifies the name for the hosted service"
-
-      option :hosted_service_description,
-        :short => "-D DESCRIPTION",
-        :long => "--hosted_service_description DESCRIPTION",
-        :description => "Description for the hosted service"
-
-      option :storage_account,
+      option :azure_storage_account,
         :short => "-a NAME",
-        :long => "--storage-account NAME",
-        :description => "specifies the name for the hosted service"
+        :long => "--azure-storage-account NAME",
+        :description => "Required for advanced server-create option. 
+                                      A name for the storage account that is unique within Windows Azure. Storage account names must be 
+                                      between 3 and 24 characters in length and use numbers and lower-case letters only. 
+                                      This name is the DNS prefix name and can be used to access blobs, queues, and tables in the storage account. 
+                                      For example: http://ServiceName.blob.core.windows.net/mycontainer/"
 
-      option :role_name,
-        :short => "-R name",
-        :long => "--role-name NAME",
-        :description => "specifies the name for the virtual machine"
+      option :azure_vm_name,
+        :long => "--azure-vm-name NAME",
+        :description => "Required for advanced server-create option. 
+                                      Specifies the name for the virtual machine. The name must be unique within the deployment."
 
-      option :host_name,
-        :long => "--host-name NAME",
-        :description => "specifies the host name for the virtual machine"
-
-      option :service_location,
+      option :azure_service_location,
         :short => "-m LOCATION",
-        :long => "--service-location LOCATION",
-        :description => "specify the Geographic location for the virtual machine and services"
+        :long => "--azure-service-location LOCATION",
+        :description => "Required. Specifies the geographic location - the name of the data center location that is valid for your subscription. 
+                                      Eg: West US, East US, East Asia, Southeast Asia, North Europe, West Europe"
 
-      option :os_disk_name,
+      option :azure_dns_name,
+        :short => "-d DNS_NAME",
+        :long => "--azure-dns-name DNS_NAME",
+        :description => "Required. The DNS prefix name that can be used to access the cloud service which is unique within Windows Azure. 
+                                      If you want to add new VM to an existing service/deployment, specify an exiting dns-name, 
+                                      along with --connect-to-existing-dns option.
+                                      Otherwise a new deployment is created. For example, if the DNS of cloud service is MyService you could access the cloud service 
+                                      by calling: http://DNS_NAME.cloudapp.net"
+
+      option :azure_os_disk_name,
         :short => "-o DISKNAME",
-        :long => "--os-disk-name DISKNAME",
-        :description => "unique name for specifying os disk (optional)"
+        :long => "--azure-os-disk-name DISKNAME",
+        :description => "Optional. Specifies the friendly name of the disk containing the guest OS image in the image repository."
 
-      option :source_image,
+      option :azure_source_image,
         :short => "-I IMAGE",
-        :long => "--source-image IMAGE",
-        :description => "disk image name to use to create virtual machine"
+        :long => "--azure-source-image IMAGE",
+        :description => "Required. Specifies the name of the disk image to use to create the virtual machine.
+                                      Do a \"knife azure image list\" to see a list of available images."
 
-      option :role_size,
+      option :azure_vm_size,
         :short => "-z SIZE",
-        :long => "--role-size SIZE",
-        :description => "size of virtual machine (ExtraSmall, Small, Medium, Large, ExtraLarge)",
+        :long => "--azure-vm-size SIZE",
+        :description => "Optional. Size of virtual machine (ExtraSmall, Small, Medium, Large, ExtraLarge)",
         :default => 'Small'
 
       option :tcp_endpoints,
@@ -157,6 +163,20 @@ class Chef
         :long => "--udp-endpoints PORT_LIST",
         :description => "Comma separated list of UDP local and public ports to open i.e. '80:80,433:5000'"
 
+      option :azure_connect_to_existing_dns,
+        :short => "-c",
+        :long => "--connect-to-existing-dns",
+        :boolean => true,
+        :default => false,
+        :description => "Set this flag to add the new VM to an existing deployment/service. Must give the name of the existing
+                                        DNS correctly in the --dns-name option"
+      option :identity_file,
+        :long => "--identity-file FILENAME",
+        :description => "SSH identity file for authentication, optional. It is the RSA private key path. Specify either ssh-password or identity-file"
+
+      option :identity_file_passphrase,
+        :long => "--identity-file-passphrase PASSWORD",
+        :description => "SSH key passphrase. Optional, specify if passphrase for identity-file exists"
 
       def strip_non_ascii(string)
         string.gsub(/[^0-9a-z ]/i, '')
@@ -215,36 +235,6 @@ class Chef
         tcp_socket && tcp_socket.close
       end
 
-      def parameter_test
-        details = Array.new
-        details << ui.color('name', :bold, :blue)
-        details << ui.color('Chef::Config', :bold, :blue)
-        details << ui.color('config', :bold, :blue)
-        details << ui.color('winner is', :bold, :blue)
-        [
-          :azure_subscription_id,
-          :azure_mgmt_cert,
-          :azure_host_name,
-          :role_name,
-          :host_name || :role_name,
-          :ssh_user,
-          :ssh_password,
-          :service_location,
-          :source_image,
-          :role_size
-        ].each do |key|
-          key = key.to_sym
-          details << key.to_s
-          details << Chef::Config[:knife][key].to_s
-          details << config[key].to_s
-          details << locate_config_value(key)
-        end
-        puts ui.list(details, :columns_across, 4)
-      end
-      def is_platform_windows?
-        return RUBY_PLATFORM.scan('w32').size > 0
-      end
-
       def run
         $stdout.sync = true
         storage = nil
@@ -254,36 +244,27 @@ class Chef
 
         Chef::Log.info("creating...")
 
-        if not locate_config_value(:hosted_service_name)
-          config[:hosted_service_name] = [strip_non_ascii(locate_config_value(:role_name)), random_string].join
+        if not locate_config_value(:azure_vm_name)
+          config[:azure_vm_name] = locate_config_value(:azure_dns_name)
         end
 
         #If Storage Account is not specified, check if the geographic location has one to re-use
-        if not locate_config_value(:storage_account)
+        if not locate_config_value(:azure_storage_account)
           storage_accts = connection.storageaccounts.all
-          storage = storage_accts.find { |storage_acct| storage_acct.location.to_s == locate_config_value(:service_location) }
+          storage = storage_accts.find { |storage_acct| storage_acct.location.to_s == locate_config_value(:azure_service_location) }
           if not storage
-            config[:storage_account] = [strip_non_ascii(locate_config_value(:role_name)), random_string].join.downcase
+            config[:azure_storage_account] = [strip_non_ascii(locate_config_value(:azure_vm_name)), random_string].join.downcase
           else
-            config[:storage_account] = storage.name.to_s
-          end
-        end
-        if is_image_windows?
-          if is_platform_windows?
-            #require 'em-winrs'
-          else
-            require 'gssapi'
-            require 'winrm'
-            require 'em-winrm'
+            config[:azure_storage_account] = storage.name.to_s
           end
         end
 
         server = connection.deploys.create(create_server_def)
+        fqdn = server.publicipaddress
 
         puts("\n")
         if is_image_windows?
           if locate_config_value(:bootstrap_protocol) == 'ssh'
-            fqdn = server.sshipaddress
             port = server.sshport
             print "\n#{ui.color("Waiting for sshd on #{fqdn}:#{port}", :magenta)}"
 
@@ -293,7 +274,6 @@ class Chef
            }
 
           elsif locate_config_value(:bootstrap_protocol) == 'winrm'
-            fqdn = server.winrmipaddress
             port = server.winrmport
 
             print "\n#{ui.color("Waiting for winrm on #{fqdn}:#{port}", :magenta)}"
@@ -305,14 +285,13 @@ class Chef
 
           end
           sleep 15
-          bootstrap_for_windows_node(server,fqdn).run
+          bootstrap_for_windows_node(server,fqdn, port).run
         else
-          unless server && server.sshipaddress && server.sshport
+          unless server && server.publicipaddress && server.sshport
             Chef::Log.fatal("server not created")
           exit 1
         end
 
-        fqdn = server.sshipaddress
         port = server.sshport
 
         print "\n#{ui.color("Waiting for sshd on #{fqdn}:#{port}", :magenta)}"
@@ -338,28 +317,27 @@ class Chef
       end
 
 
-      def bootstrap_for_windows_node(server, fqdn)
+      def bootstrap_for_windows_node(server, fqdn, port)
         if locate_config_value(:bootstrap_protocol) == 'winrm'
-            if is_platform_windows?
-              #require 'em-winrs'
-            else
+
+            load_winrm_deps
+            if not Chef::Platform.windows?
               require 'gssapi'
-              require 'winrm'
-              require 'em-winrm'
             end
+
             bootstrap = Chef::Knife::BootstrapWindowsWinrm.new
 
             bootstrap.config[:winrm_user] = locate_config_value(:winrm_user) || 'Administrator'
             bootstrap.config[:winrm_password] = locate_config_value(:winrm_password)
             bootstrap.config[:winrm_transport] = locate_config_value(:winrm_transport)
 
-            bootstrap.config[:winrm_port] = locate_config_value(:winrm_port)
+            bootstrap.config[:winrm_port] = port
 
         elsif locate_config_value(:bootstrap_protocol) == 'ssh'
             bootstrap = Chef::Knife::BootstrapWindowsSsh.new
             bootstrap.config[:ssh_user] = locate_config_value(:ssh_user)
             bootstrap.config[:ssh_password] = locate_config_value(:ssh_password)
-            bootstrap.config[:ssh_port] = locate_config_value(:ssh_port)
+            bootstrap.config[:ssh_port] = port
             bootstrap.config[:identity_file] = locate_config_value(:identity_file)
             bootstrap.config[:host_key_verify] = locate_config_value(:host_key_verify)
         else
@@ -398,28 +376,50 @@ class Chef
         super([
               :azure_subscription_id,
               :azure_mgmt_cert,
-              :azure_host_name,
-              :role_name,
-              :service_location,
-              :source_image,
-              :role_size,
+              :azure_api_host_name,
+              :azure_dns_name,
+              :azure_service_location,
+              :azure_source_image,
+              :azure_vm_size,
         ])
+        if locate_config_value(:azure_connect_to_existing_dns) && locate_config_value(:azure_vm_name).nil?
+          ui.error("Specify the VM name using --azure-vm-name option, since you are connecting to existing dns")
+          exit 1
+        end
       end
 
       def create_server_def
         server_def = {
-          :hosted_service_name => locate_config_value(:hosted_service_name),
-          :storage_account => locate_config_value(:storage_account),
-          :role_name => locate_config_value(:role_name),
-          :host_name => locate_config_value(:host_name) || locate_config_value(:role_name),
-          :service_location => locate_config_value(:service_location),
-          :os_disk_name => locate_config_value(:os_disk_name),
-          :source_image => locate_config_value(:source_image),
-          :role_size => locate_config_value(:role_size),
+          :azure_storage_account => locate_config_value(:azure_storage_account),
+          :azure_dns_name => locate_config_value(:azure_dns_name),
+          :azure_vm_name => locate_config_value(:azure_vm_name),
+          :azure_service_location => locate_config_value(:azure_service_location),
+          :azure_os_disk_name => locate_config_value(:azure_os_disk_name),
+          :azure_source_image => locate_config_value(:azure_source_image),
+          :azure_vm_size => locate_config_value(:azure_vm_size),
           :tcp_endpoints => locate_config_value(:tcp_endpoints),
           :udp_endpoints => locate_config_value(:udp_endpoints),
-          :bootstrap_proto => locate_config_value(:bootstrap_protocol)
+          :bootstrap_proto => locate_config_value(:bootstrap_protocol),
+          :azure_connect_to_existing_dns => locate_config_value(:azure_connect_to_existing_dns)
         }
+        # If user is connecting a new VM to an existing dns, then
+        # the VM needs to have a unique public port. Logic below takes care of this.
+        if !is_image_windows? or locate_config_value(:bootstrap_protocol) == 'ssh'
+          port = locate_config_value(:ssh_port)
+          if locate_config_value(:azure_connect_to_existing_dns) and (port.nil? or port == 22)
+             port = Random.rand(64000) + 1000
+          else
+            port = '22'
+          end
+        else
+          port = locate_config_value(:winrm_port)
+          if locate_config_value(:azure_connect_to_existing_dns) and (port.nil? or port == 5985)
+              port = Random.rand(64000) + 1000
+          else
+            port = '5985'
+          end          
+        end
+        server_def[:port] = port
 
         if is_image_windows?
           server_def[:os_type] = 'Windows'
@@ -427,19 +427,27 @@ class Chef
             ui.error("WinRM Password and Bootstrapping Protocol are compulsory parameters")
           end
           server_def[:admin_password] = locate_config_value(:winrm_password)
-          server_def[:bootstrap_proto] = locate_config_value(:bootstrap_protocol)
+          server_def[:bootstrap_proto] = locate_config_value(:bootstrap_protocol)          
         else
           server_def[:os_type] = 'Linux'
           server_def[:bootstrap_proto] = 'ssh'
-          if not locate_config_value(:ssh_user) or not locate_config_value(:ssh_password)
-            ui.error("SSH User and SSH Password are compulsory parameters")
+          if not locate_config_value(:ssh_user)
+            ui.error("SSH User is compulsory parameter")
             exit 1
           end
+          unless locate_config_value(:ssh_password) or locate_config_value(:identity_file) 
+              ui.error("Specify either SSH Key or SSH Password")
+              exit 1
+          end
+          
           server_def[:ssh_user] = locate_config_value(:ssh_user)
           server_def[:ssh_password] = locate_config_value(:ssh_password)
+          server_def[:identity_file] = locate_config_value(:identity_file)
+          server_def[:identity_file_passphrase] = locate_config_value(:identity_file_passphrase)
         end
         server_def
       end
     end
   end
 end
+ 

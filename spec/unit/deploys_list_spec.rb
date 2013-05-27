@@ -27,7 +27,7 @@ include AzureSpecHelper
         role.size.should_not be_nil
         role.ipaddress.should_not be_nil
         role.sshport.should_not be_nil
-        role.sshipaddress.should_not be_nil
+        role.publicipaddress.should_not be_nil
       end
     end
   end
@@ -41,7 +41,7 @@ include AzureSpecHelper
         puts 'size: ' + role.size
         puts 'ip address: ' + role.ipaddress
         puts 'ssh port: ' + role.sshport
-        puts 'ssh ip address: ' + role.sshipaddress
+        puts 'ssh ip address: ' + role.publicipaddress
         role.tcpports.each do |port|
           puts ' tcp: ' + port['Name'] + ' ' + port['Vip'] + ' ' +
             port['PublicPort'] + ' ' + port['LocalPort']

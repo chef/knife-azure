@@ -8,14 +8,13 @@ describe "role lifecycle" do
     @connection = Azure::Connection.new(connection_params)
     arbitrary = rand(1000) + 1
     @params = {
-      :hosted_service_name=>'service002',
-      :role_name=>'role' + arbitrary.to_s,
-      :host_name=>'host' + arbitrary.to_s,
+      :azure_dns_name=>'service002',
+      :azure_vm_name=>'host' + arbitrary.to_s,
       :ssh_user=>'jetstream',
       :ssh_password=>'jetstream1!',
-      :storage_account=>'auxpreview104',
-      :source_image=>'OpenLogic__OpenLogic-CentOS-62-20120531-en-us-30GB.vhd',
-      :role_size=>'ExtraSmall',
+      :azure_storage_account=>'auxpreview104',
+      :azure_source_image=>'OpenLogic__OpenLogic-CentOS-62-20120531-en-us-30GB.vhd',
+      :azure_vm_size=>'ExtraSmall',
       :bootstrap_proto=>'ssh',
       :os_type=>'Linux'
     }
@@ -40,9 +39,8 @@ describe "role lifecycle" do
 
     # create a new role
     arbitrary = rand(1000) + 1
-    @params[:role_name]='role' + arbitrary.to_s
-    @params[:host_name]='host' + arbitrary.to_s
-    Chef::Log.info 'creating a new role named ' + @params[:role_name]
+    @params[:azure_vm_name]='host' + arbitrary.to_s
+    Chef::Log.info 'creating a new role named ' + @params[:azure_vm_name]
     @connection.deploys.create(@params)
 
 
@@ -56,6 +54,4 @@ describe "role lifecycle" do
       Chef::Log.info role.name
     end
   end
-  #specify {@connection.roles.exists(@params[:role_name]).should == true}
-  #specify {@connection.roles.exists(@params[:role_name] + 'notexist').should == false}
 end

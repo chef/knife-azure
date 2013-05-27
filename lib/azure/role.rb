@@ -33,22 +33,34 @@ class Azure
       end
       @roles
     end
-    def find(name)
+
+    def find_in_hosted_service(name, hostedservicename)
+      find_roles_with_hostedservice(hostedservicename).each do | role |
+        if (role.name == name)
+          return role
+        end
+      end
+      return nil
+    end
+
+    def find(name, params= nil)
+      if params && params[:azure_hosted_service_name]
+        return find_in_hosted_service(name, params[:azure_hosted_service_name])
+      end
       if @roles == nil
         all
       end
       @roles.each do |role|
         if(role.name == name)
-          return role 
+          return role
         end
       end
-      nil   
+      nil
     end
-    def alone_on_host(name)
-      found_role = find(name)
+    def alone_on_host(found_role)
       @roles.each do |role|
-        if (role.name != found_role.name && 
-            role.deployname == found_role.deployname && 
+        if (role.name != found_role.name &&
+            role.deployname == found_role.deployname &&
             role.hostedservicename == found_role.hostedservicename)
           return false;
         end
@@ -61,7 +73,7 @@ class Azure
     def delete(name, params)
       role = find(name)
       if role != nil
-        if alone_on_host(name)
+        if alone_on_host(role)
           servicecall = "hostedservices/#{role.hostedservicename}/deployments" +
           "/#{role.deployname}"
         else
@@ -69,23 +81,24 @@ class Azure
           "/#{role.deployname}/roles/#{role.name}"
         end
         roleXML = nil
-        if params[:purge_os_disk]
+        unless params[:preserve_os_disk]
             roleXML = @connection.query_azure(servicecall, "get")
         end
-        @connection.query_azure(servicecall, "delete") 
+        @connection.query_azure(servicecall, "delete")
+        # delete role from local cache as well.
+        @roles.delete(role)
 
-        if !params[:dont_purge_hosted_service]
-          if !params[:hostedservicename].nil?
-            roles_using_same_service = connection.roles.find_roles_with_hostedservice(params[:hostedservicename])
+        unless params[:preserve_hosted_service]
+          unless params[:hostedservicename].nil?
+            roles_using_same_service = find_roles_with_hostedservice(params[:hostedservicename])
             if roles_using_same_service.size <= 1
               servicecall = "hostedservices/" + params[:hostedservicename]
               @connection.query_azure(servicecall, "delete")
             end
           end
         end
-
-        if params[:purge_os_disk]
-          osdisk = roleXML.css(roleXML, 'OSVirtualHardDisk')
+        unless params[:preserve_os_disk]
+            osdisk = roleXML.css(roleXML, 'OSVirtualHardDisk')
           disk_name = xml_content(osdisk, 'DiskName')
           servicecall = "disks/#{disk_name}"
           @connection.query_azure(servicecall, "delete")
@@ -99,7 +112,7 @@ class Azure
       return_roles = Array.new
       @roles.each do |role|
         if(role.hostedservicename == hostedservicename)
-          return_roles << role 
+          return_roles << role
         end
       end
       return_roles
@@ -107,9 +120,9 @@ class Azure
   end
   class Role
     include AzureUtility
-    attr_accessor :connection, :name, :status, :size, :ipaddress
-    attr_accessor :sshport, :sshipaddress, :hostedservicename, :deployname
-    attr_accessor :winrmport, :winrmipaddress
+    attr_accessor :connection, :name, :status, :size, :ipaddress, :publicipaddress
+    attr_accessor :sshport, :hostedservicename, :deployname
+    attr_accessor :winrmport
     attr_accessor :hostname, :tcpports, :udpports
 
     def initialize(connection)
@@ -125,15 +138,14 @@ class Azure
       @deployname = deployname
       @tcpports = Array.new
       @udpports = Array.new
-      
+
       endpoints = roleXML.css('InstanceEndpoint')
+      @publicipaddress = xml_content(endpoints[0], 'Vip') if !endpoints.empty?
       endpoints.each do |endpoint|
         if xml_content(endpoint, 'Name').downcase == 'ssh'
           @sshport = xml_content(endpoint, 'PublicPort')
-          @sshipaddress = xml_content(endpoint, 'Vip')
         elsif xml_content(endpoint, 'Name').downcase == 'winrm'
           @winrmport = xml_content(endpoint, 'PublicPort')
-          @winrmipaddress = xml_content(endpoint, 'Vip')
         else
           hash = Hash.new
           hash['Name'] = xml_content(endpoint, 'Name')
@@ -154,23 +166,35 @@ class Azure
           'xmlns'=>'http://schemas.microsoft.com/windowsazure',
           'xmlns:i'=>'http://www.w3.org/2001/XMLSchema-instance'
         ) {
-          xml.RoleName {xml.text params[:role_name]}
+          xml.RoleName {xml.text params[:azure_vm_name]}
           xml.OsVersion('i:nil' => 'true')
           xml.RoleType 'PersistentVMRole'
           xml.ConfigurationSets {
             if params[:os_type] == 'Linux'
-              
+
               xml.ConfigurationSet('i:type' => 'LinuxProvisioningConfigurationSet') {
               xml.ConfigurationSetType 'LinuxProvisioningConfiguration'
-              xml.HostName params[:host_name] 
+              xml.HostName params[:azure_vm_name] 
               xml.UserName params[:ssh_user]
-              xml.UserPassword params[:ssh_password]
-              xml.DisableSshPasswordAuthentication 'false'
+              unless params[:identity_file].nil?
+                xml.DisableSshPasswordAuthentication 'true'
+                xml.SSH {
+                   xml.PublicKeys {
+                     xml.PublicKey {
+                       xml.Fingerprint params[:fingerprint]
+                       xml.Path '/home/' + params[:ssh_user] + '/.ssh/authorized_keys'
+                     }
+                   }
+                }
+              else
+                xml.UserPassword params[:ssh_password]
+                xml.DisableSshPasswordAuthentication 'false'
+              end
               }
             elsif params[:os_type] == 'Windows'
               xml.ConfigurationSet('i:type' => 'WindowsProvisioningConfigurationSet') {
               xml.ConfigurationSetType 'WindowsProvisioningConfiguration'
-              xml.ComputerName params[:host_name] 
+              xml.ComputerName params[:azure_vm_name] 
               xml.AdminPassword params[:admin_password]
               xml.ResetPasswordOnFirstLogon 'false'
               xml.EnableAutomaticUpdates 'false'
@@ -183,31 +207,31 @@ class Azure
             xml.InputEndpoints {
               if params[:bootstrap_proto].downcase == 'ssh'
                 xml.InputEndpoint {
-                xml.LocalPort '22' 
+                xml.LocalPort '22'
                 xml.Name 'SSH'
-                xml.Port '22'
+                xml.Port params[:port]
                 xml.Protocol 'TCP'
               }
               elsif params[:bootstrap_proto].downcase == 'winrm' and params[:os_type] == 'Windows'
                 xml.InputEndpoint {
                   xml.LocalPort '5985'
                   xml.Name 'WinRM'
-                  xml.Port '5985'
+                  xml.Port params[:port]
                   xml.Protocol 'TCP'
                 }
               end
- 
+
             if params[:tcp_endpoints]
               params[:tcp_endpoints].split(',').each do |endpoint|
                 ports = endpoint.split(':')
                 xml.InputEndpoint {
                   xml.LocalPort ports[0]
-                  xml.Name 'tcpport_' + ports[0] + '_' + params[:host_name]
+                  xml.Name 'tcpport_' + ports[0] + '_' + params[:azure_vm_name]
                   if ports.length > 1
                     xml.Port ports[1]
                   else
                     xml.Port ports[0]
-                  end 
+                  end
                   xml.Protocol 'TCP'
                 }
               end
@@ -217,12 +241,12 @@ class Azure
                 ports = endpoint.split(':')
                 xml.InputEndpoint {
                   xml.LocalPort ports[0]
-                  xml.Name 'udpport_' + ports[0] + '_' + params[:host_name]
+                  xml.Name 'udpport_' + ports[0] + '_' + params[:azure_vm_name]
                   if ports.length > 1
                     xml.Port ports[1]
                   else
                     xml.Port ports[0]
-                  end 
+                  end
                   xml.Protocol 'UDP'
                 }
               end
@@ -230,20 +254,20 @@ class Azure
             }
           }
           }
-          xml.Label Base64.encode64(params[:role_name]).strip
+          xml.Label Base64.encode64(params[:azure_vm_name]).strip
           xml.OSVirtualHardDisk {
-            xml.MediaLink 'http://' + params[:storage_account] + '.blob.core.windows.net/vhds/' + (params[:os_disk_name] || Time.now.strftime('disk_%Y_%m_%d_%H_%M')) + '.vhd'
-            xml.SourceImageName params[:source_image]
+            xml.MediaLink 'http://' + params[:azure_storage_account] + '.blob.core.windows.net/vhds/' + (params[:azure_os_disk_name] || Time.now.strftime('disk_%Y_%m_%d_%H_%M')) + '.vhd'
+            xml.SourceImageName params[:azure_source_image]
           }
-          xml.RoleSize params[:role_size]
+          xml.RoleSize params[:azure_vm_size]
         }
-      end 
+      end
       builder.doc
     end
     def create(params, roleXML)
-      servicecall = "hostedservices/#{params[:hosted_service_name]}/deployments" +
+      servicecall = "hostedservices/#{params[:azure_dns_name]}/deployments" +
       "/#{params['deploy_name']}/roles"
-      @connection.query_azure(servicecall, "post", roleXML.to_xml) 
+      @connection.query_azure(servicecall, "post", roleXML.to_xml)
     end
   end
 end

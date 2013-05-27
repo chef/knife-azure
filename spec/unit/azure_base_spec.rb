@@ -15,7 +15,7 @@ describe Chef::Knife::AzureBase do
   	end
 	before do
 		@dummy = Chef::Knife::DummyClass.new
-		Chef::Config[:knife][:azure_host_name] = 'preview.core.windows-int.net'
+		Chef::Config[:knife][:azure_api_host_name] = 'preview.core.windows-int.net'
 		Chef::Config[:knife][:azure_subscription_id] = 'azure_subscription_id'
 		Chef::Config[:knife][:azure_mgmt_cert] = 'AzureLinuxCert.pem'
 		@dummy.ui.stub(:error)
@@ -23,7 +23,7 @@ describe Chef::Knife::AzureBase do
 	describe "azure base tests - " do
 		context "Tests for publish settings file" do
 			before do
-				Chef::Config[:knife][:azure_host_name] = nil
+				Chef::Config[:knife][:azure_api_host_name] = nil
 				Chef::Config[:knife][:azure_subscription_id] = nil
 			end
 			def validate_cert()
@@ -33,24 +33,24 @@ describe Chef::Knife::AzureBase do
 				Chef::Config[:knife][:azure_mgmt_cert].should include("-----END RSA PRIVATE KEY-----")
 			end
 			it "- should continue to regular flow if publish settings file not provided" do
-				Chef::Config[:knife][:azure_host_name] = "preview.core.windows-int.net"
+				Chef::Config[:knife][:azure_api_host_name] = "preview.core.windows-int.net"
 				Chef::Config[:knife][:azure_subscription_id] = "azure_subscription_id"
 				@dummy.validate!
-				Chef::Config[:knife][:azure_host_name].should == "preview.core.windows-int.net"
+				Chef::Config[:knife][:azure_api_host_name].should == "preview.core.windows-int.net"
 				Chef::Config[:knife][:azure_subscription_id].should == "azure_subscription_id"
 			end
 
 			it "- should validate extract parameters" do
 				Chef::Config[:knife][:azure_publish_settings_file] = "azureValid.publishsettings"
 				@dummy.validate!
-				Chef::Config[:knife][:azure_host_name].should == 'management.core.windows.net'
+				Chef::Config[:knife][:azure_api_host_name].should == 'management.core.windows.net'
 				Chef::Config[:knife][:azure_subscription_id].should == 'id1'
 				validate_cert()
 			end
 
 			it "- should validate parse method" do
 				@dummy.parse_publish_settings_file("azureValid.publishsettings")
-				Chef::Config[:knife][:azure_host_name].should == 'management.core.windows.net'
+				Chef::Config[:knife][:azure_api_host_name].should == 'management.core.windows.net'
 				Chef::Config[:knife][:azure_subscription_id].should == 'id1'
 				validate_cert()
 			end
@@ -59,7 +59,7 @@ describe Chef::Knife::AzureBase do
 				@dummy.config[:azure_subscription_id] = "azure_subscription_id"
 				Chef::Config[:knife][:azure_publish_settings_file] = "azureValid.publishsettings"
 				@dummy.validate!
-				Chef::Config[:knife][:azure_host_name].should == 'management.core.windows.net'
+				Chef::Config[:knife][:azure_api_host_name].should == 'management.core.windows.net'
 				@dummy.config[:azure_subscription_id].should == 'azure_subscription_id'
 				Chef::Config[:knife][:azure_subscription_id].should == 'id1'
 				validate_cert()

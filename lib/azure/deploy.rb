@@ -42,19 +42,25 @@ class Azure
       deployName
     end
     def create(params)
-      unless @connection.hosts.exists(params[:hosted_service_name])
-        @connection.hosts.create(params)
-      end 
-      unless @connection.storageaccounts.exists(params[:storage_account])
+      unless params[:azure_connect_to_existing_dns]
+        unless @connection.hosts.exists(params[:azure_dns_name])
+          @connection.hosts.create(params)
+        end
+      end
+      unless @connection.storageaccounts.exists(params[:azure_storage_account])
         @connection.storageaccounts.create(params)
       end
-      params['deploy_name'] = find(params[:hosted_service_name])
+      if params[:identity_file]
+        params[:fingerprint] = @connection.certificates.create(params)
+      end
+      params['deploy_name'] = find(params[:azure_dns_name])
+
       if params['deploy_name'] != nil
         role = Role.new(@connection)
         roleXML = role.setup(params)
         ret_val = role.create(params, roleXML)
       else
-        params['deploy_name'] = params[:hosted_service_name]
+        params['deploy_name'] = params[:azure_dns_name]
         deploy = Deploy.new(@connection)
         deployXML = deploy.setup(params)
         ret_val = deploy.create(params, deployXML)
@@ -63,7 +69,7 @@ class Azure
           Chef::Log.fatal 'Unable to create role:' + ret_val.at_css('Error Code').content + ' : ' + ret_val.at_css('Error Message').content
           exit 1
       end
-      @connection.roles.find(params[:role_name])
+      @connection.roles.find(params[:azure_vm_name])
     end
     def delete(rolename)
     end
@@ -110,7 +116,7 @@ class Azure
       builder.doc
     end
     def create(params, deployXML)
-      servicecall = "hostedservices/#{params[:hosted_service_name]}/deployments"
+      servicecall = "hostedservices/#{params[:azure_dns_name]}/deployments"
       @connection.query_azure(servicecall, "post", deployXML.to_xml) 
     end
   end

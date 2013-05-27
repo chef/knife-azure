@@ -15,6 +15,10 @@ require 'chef/knife/azure_server_create'
 require 'chef/knife/azure_server_describe'
 require 'chef/knife/azure_image_list'
 
+require 'fileutils'
+#Create an empty mock certificate file
+FileUtils.touch('AzureLinuxCert.pem')
+
 def tmpFile filename
   tmpdir = 'tmp'
   Dir::mkdir tmpdir unless FileTest::directory?(tmpdir)
@@ -27,7 +31,7 @@ Chef::Log.level=:debug
 TEST_PARAMS = {
   :azure_subscription_id => "YOUR_SUBSCRIPTION_ID_HERE",
   :azure_mgmt_cert => "AzureLinuxCert.pem",
-  :azure_host_name => "management-preview.core.windows-int.net",
+  :azure_api_host_name => "management-preview.core.windows-int.net",
   :service_name => "hostedservices"
 }
 

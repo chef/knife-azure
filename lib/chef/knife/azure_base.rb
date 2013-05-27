@@ -47,11 +47,11 @@ class Chef
             :description => "Your Azure PEM file name",
             :proc => Proc.new { |key| Chef::Config[:knife][:azure_mgmt_cert] = key }
 
-          option :azure_host_name,
+          option :azure_api_host_name,
             :short => "-H HOSTNAME",
-            :long => "--azure_host_name HOSTNAME",
+            :long => "--azure-api-host-name HOSTNAME",
             :description => "Your Azure host name",
-            :proc => Proc.new { |key| Chef::Config[:knife][:azure_host_name] = key }
+            :proc => Proc.new { |key| Chef::Config[:knife][:azure_api_host_name] = key }
 
           option :verify_ssl_cert,
             :long => "--verify-ssl-cert",
@@ -68,15 +68,20 @@ class Chef
 
       def is_image_windows?
         images = connection.images
-        target_image = images.all.select { |i| i.name == locate_config_value(:source_image) }
-        return target_image[0].os == 'Windows'
+        target_image = images.all.select { |i| i.name == locate_config_value(:azure_source_image) }
+        unless target_image[0].nil?
+          return target_image[0].os == 'Windows'
+        else
+          ui.error("Invalid image. Use the command \"knife azure server image list\" to verify the image name")
+          exit 1
+        end
       end
       def connection
         @connection ||= begin
                           connection = Azure::Connection.new(
                             :azure_subscription_id => locate_config_value(:azure_subscription_id),
                             :azure_mgmt_cert => locate_config_value(:azure_mgmt_cert),
-                            :azure_host_name => locate_config_value(:azure_host_name),
+                            :azure_api_host_name => locate_config_value(:azure_api_host_name),
                             :verify_ssl_cert => locate_config_value(:verify_ssl_cert)
                           )
                         end
@@ -93,7 +98,7 @@ class Chef
         end
       end
 
-      def validate!(keys=[:azure_subscription_id, :azure_mgmt_cert, :azure_host_name])
+      def validate!(keys=[:azure_subscription_id, :azure_mgmt_cert, :azure_api_host_name])
         errors = []
         if(locate_config_value(:azure_mgmt_cert) != nil)
           config[:azure_mgmt_cert] = File.read find_file(locate_config_value(:azure_mgmt_cert))
@@ -122,7 +127,7 @@ class Chef
           profile = doc.at_css("PublishProfile")
           management_cert = OpenSSL::PKCS12.new(Base64.decode64(profile.attribute("ManagementCertificate").value))
           Chef::Config[:knife][:azure_mgmt_cert] = management_cert.certificate.to_pem + management_cert.key.to_pem
-          Chef::Config[:knife][:azure_host_name] = URI(profile.attribute("Url").value).host
+          Chef::Config[:knife][:azure_api_host_name] = URI(profile.attribute("Url").value).host
           Chef::Config[:knife][:azure_subscription_id] = doc.at_css("Subscription").attribute("Id").value
         rescue
           ui.error("Incorrect publish settings file - " + filename)
