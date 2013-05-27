@@ -71,34 +71,36 @@ Use --help option to read more about each operation. Eg:
 
 Options common and necessary for all subcommands:
       option :azure_subscription_id => "Your Azure subscription ID"
-      option :azure_mgmt_cert => "It is the certificate in PEM format that you generated in the first section of this  read-me doc. Specify the name/path of the certificate in this param"
+      option :azure_mgmt_cert => "It is the certificate in PEM format that you generated in the first section
+      of this  read-me doc. Specify the name/path of the certificate in this param"
       option :azure_api_host_name => "Your Azure host name"
 
 Options used with the Create subcommand:
-  Azure specific options:
-       option :azure_storage_account => "Required for advanced server-create option.
-                                        A name for the storage account that is unique within Windows Azure.
+Azure specific options-
+       option :azure_storage_account => "A name for the storage account that is unique within Windows Azure.
                                         Storage account names must be between 3 and 24 characters in length and
-                    use numbers and lower-case letters only. This name is the DNS prefix name and
-                    can be used to access blobs, queues, and tables in the storage account."
-      option :azure_vm_name => "Required for advanced server-create option.
-                                Specifies the name for the virtual machine. The name must be unique within the deployment."
+                                        use numbers and lower-case letters only. This name is the DNS prefix name and
+                                        can be used to access blobs, queues, and tables in the storage account."
+      option :azure_vm_name => "Specifies the name for the virtual machine. The name must be unique within the deployment."
       option :azure_service_location => "Required. Specifies the geographic location - the name of data
                                          center location that is valid for your subscription.
-                     Eg: West US, East US, East Asia, Southeast Asia, North Europe, West Europe"
+                                         Eg: West US, East US, East Asia, Southeast Asia, North Europe, West Europe"
       option :azure_dns_name => "Required. The DNS prefix name that can be used to access the cloud service
-                 which is unique within Windows Azure. If you want to add new VM to an existing service/deployment,
-                 specify an exiting dns-name, along with --connect-to-existing-dns option. Otherwise a new
-                 deployment is created."
+                                 which is unique within Windows Azure. If you want to add new VM to an
+                                 existing service/deployment, specify an exiting dns-name,
+                                 along with --connect-to-existing-dns option. Otherwise a new
+                                 deployment is created."
       option :azure_os_disk_name => "Optional. Specifies the friendly name of the disk containing
-                   the guest OS image in the image repository."
-      option :azure_source_image => "Required. Specifies the name of the disk image to use to create the virtual machine.
-                   Do a \"knife azure image list\" to see a list of available images."
+                                     the guest OS image in the image repository."
+      option :azure_source_image => "Required. Specifies the name of the disk image to use to create
+                                     the virtual machine. Do a \"knife azure image list\" to see a
+                                     list of available images."
       option :azure_vm_size => "Optional. Size of virtual machine (ExtraSmall, Small, Medium, Large, ExtraLarge)"
-      option :azure_connect_to_existing_dns => "Set this flag to add the new VM to an existing deployment/service.
-                        Must give the name of the existing DNS correctly in the --dns-name option"
+      option :azure_connect_to_existing_dns => "Set this flag to add the new VM to an existing
+                                                deployment/service. Must give the name of the existing
+                                                DNS correctly in the --dns-name option"
 
-  Other options:
+Other options-
       option :chef_node_name => "The Chef node name for your new node"
       option :ssh_user => "The ssh username"
       option :ssh_password => "The ssh password"
@@ -111,11 +113,12 @@ Options used with the Create subcommand:
       option :host_key_verify => "Verify host key, enabled by default."
       option :tcp_endpoints => "Comma separated list of TCP local and public ports to open i.e. '80:80,433:5000'"
       option :udp_endpoints => "Comma separated list of UDP local and public ports to open i.e. '80:80,433:5000'"
+      option :verify_ssl_cert => "Verify SSL Certificates for communication over HTTPS",
 
-  The quick create option requires just following options as shown in the example below (for an ubuntu instance):
+The quick create option requires just following options as shown in the example below (for an ubuntu instance)-
       knife azure server create --azure-subscription-id 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx' --azure-mgmt-cert '/path/to/your/mgmtCert.pem' --azure-api-host-name 'management.core.windows.net' --azure-dns-name 'myservice' --azure-service-location 'West US' --azure-source-image 'source-image-name' --ssh-user 'jetstream' --ssh-password 'jetstream@123'
 
-  You can add more options to specify different parameters, eg --azure-storage-location, --azure-vm-name, etc.
+You can add more options to specify different parameters, eg --azure-storage-location, --azure-vm-name, etc.
 
 ====Options for Bootstrapping Windows nodes
 
