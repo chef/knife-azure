@@ -97,11 +97,11 @@ This subcommand provisions a new server in Azure and then performs a Chef bootst
                                         be unique within the deployment.
       :azure_os_disk_name               Optional. Specifies the friendly name of the disk containing
                                         the guest OS image in the image repository.
-      :azure_vm_size                    Default is Small. Size of virtual machine
+      :azure_vm_size                    Size of virtual machine. Default is Small.
                                         (ExtraSmall, Small, Medium, Large, ExtraLarge)
       :azure_connect_to_existing_dns    Set this flag to add the new VM to an existing
                                         deployment/service. Must give the name of the existing
-                                        DNS correctly in the --dns-name option
+                                        DNS correctly in the --azure-dns-name option
 
 ===Azure VM Quick Create
 You can create a server with minimal configuration. On the Azure Management Portal, this corresponds to a "Quick Create - VM". Sample command for quick create (for an ubuntu instance):
@@ -117,13 +117,14 @@ As mentioned, you can set these options from knife.rb. A typical knife.rb will l
   knife[:azure_publish_settings_file] = '/path/to/your/cert.publishsettingsfile'
   knife[:azure_dns_name] = 'myservice'
   knife[:azure_service_location] = 'West US'
+  knife[:azure_source_image] = 'source-image-name'
   knife[:ssh_user] = 'jetstream'
   knife[:ssh_password] = 'jetstream@123'
 
 ===Azure VM Advanced Create
 You can set various other options in the advanced create.
-  Eg: If you want to set the Azure VM Name different from that of the Azure DNS Name, set the option --azure_vm_name.
-  Eg: If you want to specify a Storage Account Name, set the option --azure_storage_account
+  Eg: If you want to set the Azure VM Name different from that of the Azure DNS Name, set the option :azure_vm_name.
+  Eg: If you want to specify a Storage Account Name, set the option :azure_storage_account
 
 To connect to an existing DNS/service, you can use a command as below:
       knife azure server create
@@ -154,14 +155,14 @@ As mentioned, you can set these options from knife.rb. A typical knife.rb will l
 
 ===Options for Bootstrapping a Windows Node in Azure
 
-      option :bootstrap_protocol => "Default is winrm for a windows image"
-      option :winrm_password => "The WinRM password"
-      option :winrm_port => "The WinRM port, by default this is 5985"
-      option :winrm_transport => "The WinRM transport type.  valid choices are [ssl, plaintext]"
-      option :kerberos_keytab_file => "The Kerberos keytab file used for authentication"
-      option :kerberos_realm => "The Kerberos realm used for authentication"
-      option :kerberos_service => "The Kerberos service used for authentication"
-      option :ca_trust_file => "The Certificate Authority (CA) trust file used for SSL transport"
+    :bootstrap_protocol           Default is winrm for a windows image
+    :winrm_password               The WinRM password
+    :winrm_port                   The WinRM port, by default this is 5985
+    :winrm_transport              The WinRM transport type.  valid choices are [ssl, plaintext]
+    :kerberos_keytab_file         The Kerberos keytab file used for authentication
+    :kerberos_realm               The Kerberos realm used for authentication
+    :kerberos_service             The Kerberos service used for authentication
+    :ca_trust_file                The Certificate Authority (CA) trust file used for SSL transport
 
 ===Azure Windows Node Create
 The quick create option requires just following options for a windows instance:
@@ -174,7 +175,7 @@ The quick create option requires just following options for a windows instance:
                 --winrm-password 'jetstream@123'
                 --template-file 'windows-chef-client-msi.erb'
 
-Sample knife.rb for bootstrapping Windows Node with Basic Authentication
+Sample knife.rb for bootstrapping Windows Node with basic authentication
 
   knife[:bootstrap_protocol] = 'winrm'
   knife[:winrm_password] = 'mgcvTuvV2Rh'
@@ -187,11 +188,12 @@ Sample knife.rb for bootstrapping Windows Node with Basic Authentication
 The plugin also provides the following Knife subcommands. Specific command options can be found by invoking the subcommand with a --help flag
 
 ===Azure Server Delete subcommand
-Deletes an existing server(role) in the currently configured Azure account. PLEASE NOTE - By default, this does not delete the associated node and client objects from the Chef server. To do so, add the --purge flag. Also by default, the DNS / hosted service is deleted if you are deleting the last VM from that service. By default, the OS disk is also deleted. If you want to retain them add the --preserve flag.
+Deletes an existing server(role) in the currently configured Azure account. By default, this does not delete the associated node and client objects from the Chef server. To do so, add the --purge flag. Also by default, the DNS / hosted service is deleted if you are deleting the last VM from that service. By default, the OS disk is also deleted. If you want to retain them add the --preserve flag as shown below. To delete the storage account, add the --purge-azure-storage-account flag as by default the storage account is not deleted.
       knife azure server delete "myvm01"
       knife azure server delete "myvm01" --purge  #purge chef node
       knife azure server delete "myvm01" --preserve-os-disk
-      knife azure server delete "myvm01" --preserve-hosted-service
+      knife azure server delete "myvm01" --preserve-azure-dns-name
+      knife azure server delete "myvm01" --purge-azure-storage-account
 Since the VM name can be same across deployments, you can specify the deployment name also to delete the VM. Sample command to delete a VM from a specific deployment:
       knife azure server delete "myvm01" --azure-dns-name "myservice"
       knife azure server delete "myvm01" "myvm02" --azure-dns-name "myservice"
