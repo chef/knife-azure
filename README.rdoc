@@ -163,6 +163,7 @@ The quick create option requires just following options for a windows instance:
                 --azure-source-image 'windows-image-name'
                 --winrm-user 'jetstream'
                 --winrm-password 'jetstream@123'
+                --template-file 'windows-chef-client-msi.erb'
 
 ====Here are some lines with example values in a knife.rb file:
 knife[:azure_subscription_id] = "155a9851-88a8-49b4-98e4-58055f08f412"
