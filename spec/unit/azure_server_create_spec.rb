@@ -46,7 +46,8 @@ def test_params(testxml, chef_config, role_name, host_name)
 	xml_content(testxml, 'UserPassword').should == chef_config[:ssh_password]
 	xml_content(testxml, 'SourceImageName').should == chef_config[:azure_source_image]
 	xml_content(testxml, 'RoleSize').should == chef_config[:azure_vm_size]
-
+	xml_content(testxml, 'HostName').should == host_name
+	xml_content(testxml, 'RoleName').should == role_name
 end
 
 describe "parameter test:" do
