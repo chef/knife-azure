@@ -86,7 +86,7 @@ This subcommand provisions a new server in Azure and then performs a Chef bootst
                                         center location that is valid for your subscription.
                                         Eg: West US, East US, East Asia, Southeast Asia, North Europe, West Europe
       :azure_source_image               Required. Specifies the name of the disk image to use to create
-                                        the virtual machine. Do a \"knife azure image list\" to see a
+                                        the virtual machine. Do a "knife azure image list" to see a
                                         list of available images.
       :azure_storage_account            A name for the storage account that is unique within Windows Azure.
                                         Storage account names must be between 3 and 24 characters in
