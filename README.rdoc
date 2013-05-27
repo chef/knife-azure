@@ -63,21 +63,20 @@ Windows source images should have the WinRM service enabled and the authenticati
 
 ==Configuration:
 Most configuration options can be specified either in your knife.rb file or as command line parameters.
-Use --help option to read more about each operation. Eg:
+Use --help option to read more about each command. Eg:
       knife azure server create --help
-      knife azure server delete --help
-      knife azure server list --help
-      knife azure image list --help
 
 Options common and necessary for all subcommands:
       option :azure_subscription_id => "Your Azure subscription ID"
       option :azure_mgmt_cert => "It is the certificate in PEM format that you generated in the first section
-      of this  read-me doc. Specify the name/path of the certificate in this param"
+                            of this read-me doc. Specify the name/path of the certificate in this param"
       option :azure_api_host_name => "Your Azure host name"
 
-Options used with the Create subcommand:
-Azure specific options-
-       option :azure_storage_account => "A name for the storage account that is unique within Windows Azure.
+==Azure Server Create subcommand
+Provisions a new server in Azure and then perform a Chef bootstrap (using the SSH protocol). The goal of the bootstrap is to get Chef installed on the target system so it can run Chef Client with a Chef Server.
+
+Options used with the Create subcommand - Azure specific options:
+      option :azure_storage_account => "A name for the storage account that is unique within Windows Azure.
                                         Storage account names must be between 3 and 24 characters in length and
                                         use numbers and lower-case letters only. This name is the DNS prefix name and
                                         can be used to access blobs, queues, and tables in the storage account."
@@ -100,7 +99,7 @@ Azure specific options-
                                                 deployment/service. Must give the name of the existing
                                                 DNS correctly in the --dns-name option"
 
-Other options-
+Other options used in server create:
       option :chef_node_name => "The Chef node name for your new node"
       option :ssh_user => "The ssh username"
       option :ssh_password => "The ssh password"
@@ -113,62 +112,57 @@ Other options-
       option :host_key_verify => "Verify host key, enabled by default."
       option :tcp_endpoints => "Comma separated list of TCP local and public ports to open i.e. '80:80,433:5000'"
       option :udp_endpoints => "Comma separated list of UDP local and public ports to open i.e. '80:80,433:5000'"
-      option :verify_ssl_cert => "Verify SSL Certificates for communication over HTTPS",
+      option :verify_ssl_cert => "Verify SSL Certificates for communication over HTTPS"
+      option :identity_file => "SSH identity file for authentication, optional. It is the RSA private key path.
+                                Specify either ssh-password or identity-file"
 
-The quick create option requires just following options as shown in the example below (for an ubuntu instance)-
-      knife azure server create --azure-subscription-id 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx' --azure-mgmt-cert '/path/to/your/mgmtCert.pem' --azure-api-host-name 'management.core.windows.net' --azure-dns-name 'myservice' --azure-service-location 'West US' --azure-source-image 'source-image-name' --ssh-user 'jetstream' --ssh-password 'jetstream@123'
 
-You can add more options to specify different parameters, eg --azure-storage-location, --azure-vm-name, etc.
+You can create a server with minimal configuration. On the Azure Management Portal, this corresponds to a "Quick Create - VM". Sample command for quick create (for an ubuntu instance):
+      knife azure server create
+          --azure-subscription-id 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx'
+          --azure-mgmt-cert '/path/to/your/mgmtCert.pem'
+          --azure-api-host-name 'management.core.windows.net'
+          --azure-dns-name 'myservice'
+          --azure-service-location 'West US'
+          --azure-source-image 'source-image-name'
+          --ssh-user 'jetstream'
+          --ssh-password 'jetstream@123'
+
+To connect to an existing DNS/service, you can use a command as below, for any OS instance:
+      knife azure server create
+                --azure-subscription-id 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx'
+                --azure-mgmt-cert '/path/to/your/mgmtCert.pem'
+                --azure-api-host-name 'management.core.windows.net'
+                --connect-to-existing-dns
+                --azure-dns-name 'myservice'
+                --azure-vm-name 'myvm02'
+                --azure-service-location 'West US'
+                --azure-source-image 'source-image-name'
+                --ssh-user 'jetstream'
+                --ssh-password 'jetstream@123'
+
 
 ====Options for Bootstrapping Windows nodes
 
-option :bootstrap_protocol,
-  :long => "--bootstrap-protocol protocol",
-  :description => "Protocol to bootstrap windows servers. options: winrm/ssh",
-  :default => "winrm"
+      option :bootstrap_protocol => "Default is winrm for a windows image"
+      option :winrm_password => "The WinRM password"
+      option :winrm_port => "The WinRM port, by default this is 5985"
+      option :winrm_transport => "The WinRM transport type.  valid choices are [ssl, plaintext]"
+      option :kerberos_keytab_file => "The Kerberos keytab file used for authentication"
+      option :kerberos_realm => "The Kerberos realm used for authentication"
+      option :kerberos_service => "The Kerberos service used for authentication"
+      option :ca_trust_file => "The Certificate Authority (CA) trust file used for SSL transport"
 
-option :winrm_password
-  :short => "-P PASSWORD",
-  :long => "--winrm-password PASSWORD",
-  :description => "The WinRM password",
-
-option :winrm_port,
-  :short => "-p PORT",
-  :long => "--winrm-port PORT",
-  :description => "The WinRM port, by default this is 5985",
-  :default => "5985",
-
-option :identity_file,
-  :short => "-i IDENTITY_FILE",
-  :long => "--identity-file IDENTITY_FILE",
-  :description => "The SSH identity file used for authentication"
-
-option :winrm_transport,
-  :short => "-t TRANSPORT",
-  :long => "--winrm-transport TRANSPORT",
-  :description => "The WinRM transport type.  valid choices are [ssl, plaintext]",
-  :default => 'plaintext',
-
-option :kerberos_keytab_file,
-  :short => "-i KEYTAB_FILE",
-  :long => "--keytab-file KEYTAB_FILE",
-  :description => "The Kerberos keytab file used for authentication",
-
-option :kerberos_realm,
-  :short => "-R KERBEROS_REALM",
-  :long => "--kerberos-realm KERBEROS_REALM",
-  :description => "The Kerberos realm used for authentication",
-
-option :kerberos_service,
-  :short => "-S KERBEROS_SERVICE",
-  :long => "--kerberos-service KERBEROS_SERVICE",
-  :description => "The Kerberos service used for authentication",
-
-option :ca_trust_file,
-  :short => "-f CA_TRUST_FILE",
-  :long => "--ca-trust-file CA_TRUST_FILE",
-  :description => "The Certificate Authority (CA) trust file used for SSL transport",
-
+The quick create option reqquires just following options as shown in the example for a windows instance:
+      knife azure server create
+                --azure-subscription-id 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx'
+                --azure-mgmt-cert '/path/to/your/mgmtCert.pem'
+                --azure-api-host-name 'management.core.windows.net'
+                --azure-dns-name 'myservice'
+                --azure-service-location 'West US'
+                --azure-source-image 'windows-image-name'
+                --winrm-user 'jetstream'
+                --winrm-password 'jetstream@123'
 
 ====Here are some lines with example values in a knife.rb file:
 knife[:azure_subscription_id] = "155a9851-88a8-49b4-98e4-58055f08f412"
@@ -185,34 +179,15 @@ knife[:azure_vm_name]='host105'
 
 knife[:ssh_user]='jetstream'
 
-knife[:ssh_password]='jetstream1!'
+knife[:ssh_password]='jetstream@123'
 
 knife[:azure_storage_account]='auxpreview104'
 
 knife[:azure_os_disk_name]='disk107'
 
-knife[:distro]='centos5-gems'
-
 knife[:tcp_endpoints]='66'
 
 knife[:udp_endpoints]='77,88,99'
-
-# To use the CentOS image, the following lines are necessary
-
-#  note that the ize must be Medium or larger
-
-knife[:azure_source_image]='OpenLogic__OpenLogic-CentOS-62-20120509-en-us-30GB.vhd'
-
-knife[:azure_vm_size]='Medium'
-
-# Alternatively, at the present time you could use a SUSE image
-
-#  note that you can use Small or ExtraSmall for the size
-
-knife[:azure_source_image]='SUSE__OpenSUSE64121-03192012-en-us-15GB.vhd'
-
-knife[:azure_vm_size]='Small'
-
 
 ==== Sample knife.rb for bootstrapping Windows Node with Basic Authentication
 
@@ -228,35 +203,25 @@ knife[:distro] = 'windows-chef-client-msi'
 
 knife[:azure_source_image]='w2k12Basic.vhd'
 
-==Subcommands
+==Other Subcommands
 This plugin provides the following Knife subcommands. Specific command options can be found by invoking the subcommand with a --help flag
 
-===knife azure server create
-Provisions a new server in Azure and then perform a Chef bootstrap (using the SSH protocol). The goal of the bootstrap is to get Chef installed on the target system so it can run Chef Client with a Chef Server. The main assumption is a baseline OS installation exists (provided by the provisioning). It is primarily intended for Chef Client systems that talk to a Chef server. By default the server is bootstrapped using the ubuntu10.04-gems template. This can be overridden using the -d or --template-file command options. (*** Note that at the current time only CentOS is supported for bootstrapping and required the :distro to be set to centos5-gems. ***)
-
-You can create a server with minimal configuration. On the Azure Management Portal, this corresponds to a "Quick Create - VM". Sample command for quick create:
-knife azure server create
-  --azure-dns-name "dns123"
-  --azure-service-location "Southeast Asia"
-  --azure-source-image "b39f27a8b8c64d52b05eac6a62ebad85__Ubuntu-12_04_2-LTS-amd64-server-20130415-en-us-30GB"
-  --ssh-user "jetstream"
-  --ssh-password "jetstream123!"
-  --azure-api-host-name = "management.core.windows.net"
-  --azure-subscription-id = "XXXXXXXXXX"
-  --azure-mgmt-cert = "cert.pem"
-
-===knife azure server delete [host_name_to_delete]
-Deletes an existing server(role) in the currently configured Azure account. PLEASE NOTE - By default, this does not delete the associated node and client objects from the Chef server. To do so, add the --purge flag.
+===knife azure server delete [name_of_vm_to_delete]
+Deletes an existing server(role) in the currently configured Azure account. PLEASE NOTE - By default, this does not delete the associated node and client objects from the Chef server. To do so, add the --purge flag. Also by default, the DNS / hosted service is deleted if you are deleting the last VM from that service. By default, the OS disk is also deleted. If you want to retain then, add the --preserve flag.
+      knife azure server delete "myvm01"
+      knife azure server delete "myvm01" --purge  #purge chef node
+      knife azure server delete "myvm01" --preserve-os-disk
+      knife azure server delete "myvm01" --preserve-hosted-service
+Since the VM name can be same across deployments, you can specify the deployment name also to delete the VM. Sample command to delete a VM from a specific deployment:
+      knife azure server delete "myvm01" --azure-dns-name "myservice"
+      knife azure server delete "myvm01" "myvm02" --azure-dns-name "myservice"
 
 ===knife azure server list
 Outputs a list of all servers in the currently configured Azure account. PLEASE NOTE - this shows all instances associated with the account, some of which may not be currently managed by the Chef server.
 
 ===knife azure image list
-Outputs a list of all linux images that are available to use for provisioning. You should choose one of these to use for the :azure_source_image parameter to the server create command.
+Outputs a list of all linux images that are available to use for provisioning. You should choose one of these to use for the :azure_source_image parameter to the server create command. You can use the filter option to see a detailed image list.
 
-
-===knife azure server describe
-Output additional information about the provisioned Virtual Machine
 
 == Understanding Azure
 Azure implements the following hierarchy - subscription=>hosted service(dns)=>deployment=>role/VM (and the guest operating system has a hostname as well, which uses the role as its container)
