@@ -63,7 +63,7 @@ Windows source images should have the WinRM service enabled and the authenticati
 
 ==Configuration:
 Most configuration options can be specified either in your knife.rb file or as command line parameters.
-Use --help option to read more about each command. Eg:
+Use --help option to read more about each subcommand. Eg:
       knife azure server create --help
 
 Options common and necessary for all subcommands:
@@ -73,7 +73,7 @@ Options common and necessary for all subcommands:
       option :azure_api_host_name => "Your Azure host name"
 
 ==Azure Server Create subcommand
-Provisions a new server in Azure and then perform a Chef bootstrap (using the SSH protocol). The goal of the bootstrap is to get Chef installed on the target system so it can run Chef Client with a Chef Server.
+This subcommand provisions a new server in Azure and then performs a Chef bootstrap. The goal of the bootstrap is to get Chef installed on the target system so it can run Chef Client with a Chef Server.
 
 Options used with the Create subcommand - Azure specific options:
       option :azure_storage_account => "A name for the storage account that is unique within Windows Azure.
@@ -153,7 +153,7 @@ To connect to an existing DNS/service, you can use a command as below, for any O
       option :kerberos_service => "The Kerberos service used for authentication"
       option :ca_trust_file => "The Certificate Authority (CA) trust file used for SSL transport"
 
-The quick create option reqquires just following options as shown in the example for a windows instance:
+The quick create option requires just following options as shown in the example for a windows instance:
       knife azure server create
                 --azure-subscription-id 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx'
                 --azure-mgmt-cert '/path/to/your/mgmtCert.pem'
@@ -204,10 +204,10 @@ knife[:distro] = 'windows-chef-client-msi'
 knife[:azure_source_image]='w2k12Basic.vhd'
 
 ==Other Subcommands
-This plugin provides the following Knife subcommands. Specific command options can be found by invoking the subcommand with a --help flag
+The plugin also provides the following Knife subcommands. Specific command options can be found by invoking the subcommand with a --help flag
 
-===knife azure server delete [name_of_vm_to_delete]
-Deletes an existing server(role) in the currently configured Azure account. PLEASE NOTE - By default, this does not delete the associated node and client objects from the Chef server. To do so, add the --purge flag. Also by default, the DNS / hosted service is deleted if you are deleting the last VM from that service. By default, the OS disk is also deleted. If you want to retain then, add the --preserve flag.
+===Azure Server Delete subcommand
+Deletes an existing server(role) in the currently configured Azure account. PLEASE NOTE - By default, this does not delete the associated node and client objects from the Chef server. To do so, add the --purge flag. Also by default, the DNS / hosted service is deleted if you are deleting the last VM from that service. By default, the OS disk is also deleted. If you want to retain them add the --preserve flag.
       knife azure server delete "myvm01"
       knife azure server delete "myvm01" --purge  #purge chef node
       knife azure server delete "myvm01" --preserve-os-disk
@@ -216,11 +216,13 @@ Since the VM name can be same across deployments, you can specify the deployment
       knife azure server delete "myvm01" --azure-dns-name "myservice"
       knife azure server delete "myvm01" "myvm02" --azure-dns-name "myservice"
 
-===knife azure server list
+===Azure Server List subcommand
 Outputs a list of all servers in the currently configured Azure account. PLEASE NOTE - this shows all instances associated with the account, some of which may not be currently managed by the Chef server.
+      knife azure server list
 
-===knife azure image list
+===Azure Image List subcommand
 Outputs a list of all linux images that are available to use for provisioning. You should choose one of these to use for the :azure_source_image parameter to the server create command. You can use the filter option to see a detailed image list.
+      knife azure image list
 
 
 == Understanding Azure
