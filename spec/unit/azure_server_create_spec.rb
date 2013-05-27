@@ -12,6 +12,7 @@ require 'chef/knife/bootstrap_windows_ssh'
 describe Chef::Knife::AzureServerCreate do
 include AzureSpecHelper
 include QueryAzureMock
+include AzureUtility
 
 before do
 	@server_instance = Chef::Knife::AzureServerCreate.new
@@ -97,7 +98,15 @@ describe "parameter test:" do
 			@server_instance.should_receive(:is_image_windows?).at_least(:twice).and_return(false)
 			@server_instance.run
 			@server_instance.config[:azure_vm_name].should == "vm01"
-			#puts @receivedXML
+			puts @receivedXML
+			testxml = Nokogiri::XML(@receivedXML)
+			xml_content(testxml, 'RoleName').should == Chef::Config[:knife][:azure_dns_name]
+			xml_content(testxml, 'MediaLink').should_not == nil
+			xml_content(testxml, 'HostName').should == Chef::Config[:knife][:azure_dns_name]
+			xml_content(testxml, 'UserName').should == Chef::Config[:knife][:ssh_user]
+			xml_content(testxml, 'UserPassword').should == Chef::Config[:knife][:ssh_password]
+			xml_content(testxml, 'SourceImageName').should == Chef::Config[:knife][:azure_source_image]
+			xml_content(testxml, 'RoleSize').should == 'Small'
 		end
 
 		it "advanced create" do
