@@ -31,20 +31,20 @@ describe "roles" do
     it 'should pass in expected body' do
       submittedXML=Nokogiri::XML readFile('create_role.xml')
       params = {
-        :hosted_service_name=>'service001',
-        :role_name=>'vm01',
-        :host_name=>'myVm',
+        :azure_dns_name=>'service001',
+        :azure_vm_name=>'vm01',
         :ssh_user=>'jetstream',
         :ssh_password=>'jetstream1!',
         :media_location_prefix=>'auxpreview104',
-        :os_disk_name=>'disk004Test',
-        :source_image=>'SUSE__OpenSUSE64121-03192012-en-us-15GB',
-        :role_size=>'ExtraSmall',
+        :azure_os_disk_name=>'disk004Test',
+        :azure_source_image=>'SUSE__OpenSUSE64121-03192012-en-us-15GB',
+        :azure_vm_size=>'ExtraSmall',
         :tcp_endpoints=>'44:45,55:55',
         :udp_endpoints=>'65:65,75',
-        :storage_account=>'storageaccount001',
+        :azure_storage_account=>'storageaccount001',
         :bootstrap_proto=>'ssh',
-        :os_type=>'Linux'
+        :os_type=>'Linux',
+        :port=>'22'
 
       }
       deploy = @connection.deploys.create(params)
@@ -61,18 +61,18 @@ describe "roles" do
     it 'should pass in expected body' do
       submittedXML=Nokogiri::XML readFile('create_deployment.xml')
       params = {
-        :hosted_service_name=>'unknown_yet',
-        :role_name=>'vm01',
-        :host_name=>'myVm',
+        :azure_dns_name=>'unknown_yet',
+        :azure_vm_name=>'vm01',
         :ssh_user=>'jetstream',
         :ssh_password=>'jetstream1!',
         :media_location_prefix=>'auxpreview104',
-        :os_disk_name=>'disk004Test',
-        :source_image=>'SUSE__OpenSUSE64121-03192012-en-us-15GB',
-        :role_size=>'ExtraSmall',
-        :storage_account=>'storageaccount001',
+        :azure_os_disk_name=>'disk004Test',
+        :azure_source_image=>'SUSE__OpenSUSE64121-03192012-en-us-15GB',
+        :azure_vm_size=>'ExtraSmall',
+        :azure_storage_account=>'storageaccount001',
         :bootstrap_proto=>'ssh',
-        :os_type=>'Linux'
+        :os_type=>'Linux',
+        :port=>'22'
       }
       deploy = @connection.deploys.create(params)
       #this is a cheesy workaround to make equivalent-xml happy
