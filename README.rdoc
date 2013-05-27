@@ -66,25 +66,8 @@ Most configuration options can be specified either in your knife.rb file or as c
 
 Options common and necessary for all subcommands:
 option :azure_subscription_id,
-  :short => "-S ID",
-  :long => "--azure-subscription-id ID",
-  :description => "Your Azure subscription ID",
-
 option :azure_mgmt_cert,
-  :short => "-p FILENAME",
-  :long => "--azure-mgmt-cert FILENAME",
-  :description => "Your Azure Management Certificate File",
-
 option :azure_api_host_name,
-  :short => "-H HOSTNAME",
-  :long => "--azure-api-host-name HOSTNAME",
-  :description => "Your Azure host name",
-
-option :verify_ssl_cert,
-  :long => "--verify-ssl-cert",
-  :description => "Verify SSL Certificates for communication over HTTPS",
-  :boolean => true,
-  :default => false
 
 Options used with the Create subcommand:
       option :chef_node_name,
@@ -145,29 +128,29 @@ Options used with the Create subcommand:
       option :azure_storage_account,
         :short => "-a NAME",
         :long => "--azure-storage-account NAME",
-        :description => "Required for advanced server-create option. 
-                                      A name for the storage account that is unique within Windows Azure. Storage account names must be 
-                                      between 3 and 24 characters in length and use numbers and lower-case letters only. 
-                                      This name is the DNS prefix name and can be used to access blobs, queues, and tables in the storage account. 
+        :description => "Required for advanced server-create option.
+                                      A name for the storage account that is unique within Windows Azure. Storage account names must be
+                                      between 3 and 24 characters in length and use numbers and lower-case letters only.
+                                      This name is the DNS prefix name and can be used to access blobs, queues, and tables in the storage account.
                                       For example: http://ServiceName.blob.core.windows.net/mycontainer/"
 
       option :azure_vm_name,
         :long => "--azure-vm-name NAME",
-        :description => "Required for advanced server-create option. 
+        :description => "Required for advanced server-create option.
                                       Specifies the name for the virtual machine. The name must be unique within the deployment."
 
       option :azure_service_location,
         :short => "-m LOCATION",
         :long => "--azure-service-location LOCATION",
-        :description => "Required. Specifies the geographic location - the name of the data center location that is valid for your subscription. 
+        :description => "Required. Specifies the geographic location - the name of the data center location that is valid for your subscription.
                                       Eg: West US, East US, East Asia, Southeast Asia, North Europe, West Europe"
 
       option :azure_dns_name,
         :short => "-d DNS_NAME",
         :long => "--azure-dns-name DNS_NAME",
-        :description => "Required. The DNS prefix name that can be used to access the cloud service which is unique within Windows Azure. 
+        :description => "Required. The DNS prefix name that can be used to access the cloud service which is unique within Windows Azure.
                                       If you want to add new VM to an existing service/deployment, specify an exiting dns-name, along with --connect-to-existing-dns option.
-                                      Otherwise a new deployment is created. For example, if the DNS of cloud service is MyService you could access the cloud service 
+                                      Otherwise a new deployment is created. For example, if the DNS of cloud service is MyService you could access the cloud service
                                       by calling: http://DNS_NAME.cloudapp.net"
 
       option :azure_os_disk_name,
@@ -319,11 +302,11 @@ This plugin provides the following Knife subcommands. Specific command options c
 Provisions a new server in Azure and then perform a Chef bootstrap (using the SSH protocol). The goal of the bootstrap is to get Chef installed on the target system so it can run Chef Client with a Chef Server. The main assumption is a baseline OS installation exists (provided by the provisioning). It is primarily intended for Chef Client systems that talk to a Chef server. By default the server is bootstrapped using the ubuntu10.04-gems template. This can be overridden using the -d or --template-file command options. (*** Note that at the current time only CentOS is supported for bootstrapping and required the :distro to be set to centos5-gems. ***)
 
 You can create a server with minimal configuration. On the Azure Management Portal, this corresponds to a "Quick Create - VM". Sample command for quick create:
-knife azure server create 
-  --azure-dns-name "dns123"  
-  --azure-service-location "Southeast Asia"  
-  --azure-source-image "b39f27a8b8c64d52b05eac6a62ebad85__Ubuntu-12_04_2-LTS-amd64-server-20130415-en-us-30GB" 
-  --ssh-user "jetstream" 
+knife azure server create
+  --azure-dns-name "dns123"
+  --azure-service-location "Southeast Asia"
+  --azure-source-image "b39f27a8b8c64d52b05eac6a62ebad85__Ubuntu-12_04_2-LTS-amd64-server-20130415-en-us-30GB"
+  --ssh-user "jetstream"
   --ssh-password "jetstream123!"
   --azure-api-host-name = "management.core.windows.net"
   --azure-subscription-id = "XXXXXXXXXX"
