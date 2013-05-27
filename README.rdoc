@@ -128,7 +128,7 @@ You can create a server with minimal configuration. On the Azure Management Port
                 --ssh-user 'jetstream'
                 --ssh-password 'jetstream@123'
 
-To connect to an existing DNS/service, you can use a command as below, for any OS instance:
+To connect to an existing DNS/service, you can use a command as below:
       knife azure server create
                 --azure-subscription-id 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx'
                 --azure-mgmt-cert '/path/to/your/mgmtCert.pem'
@@ -153,7 +153,7 @@ To connect to an existing DNS/service, you can use a command as below, for any O
       option :kerberos_service => "The Kerberos service used for authentication"
       option :ca_trust_file => "The Certificate Authority (CA) trust file used for SSL transport"
 
-The quick create option requires just following options as shown in the example for a windows instance:
+The quick create option requires just following options for a windows instance:
       knife azure server create
                 --azure-subscription-id 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx'
                 --azure-mgmt-cert '/path/to/your/mgmtCert.pem'
@@ -228,6 +228,6 @@ Outputs a list of all linux images that are available to use for provisioning. Y
 == Understanding Azure
 Azure implements the following hierarchy - subscription=>hosted service(dns)=>deployment=>role/VM (and the guest operating system has a hostname as well, which uses the role as its container)
 
-These are generally a one to many relationship from top to bottom, however there are two anamolies relating to the deployment
+These are generally a one to many relationship from top to bottom, however there are two anomalies relating to the deployment
 1) a hosted service can have more than one deployment, but that seems to be an artifact of the PAAS origins of Azure. PAAS allows there to be one staging and one production deployment per hosted service. It is my understanding (and how the code works) that there should be only one deployment per hosted service. Some initial internal code I examined used the technique of looking at the "production" deployment slot to iterate for existing roles. If a create request occurs and a deployment does not exist, it is created and given the same name as the hosted service and the deployment slot is marked as "production".
 2) Azure enforces that a deployment must include the initial role when it is created. It also will not allow you to delete a role if it is the last remaining role in a deployment; in that case you are required to delete the deployment.
