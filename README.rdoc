@@ -9,17 +9,18 @@ Use --help option to read more about each subcommand. Eg:
       knife azure server create --help
 
 Options common and necessary for all subcommands:
-      option :azure_publish_settings_file => "Path to your .publishsettings file"
+      option :azure_publish_settings_file       Path to your .publishsettings file
 OR
-      option :azure_subscription_id => "Your Azure subscription ID"
-      option :azure_mgmt_cert => "Management certificate in PEM format"
-      option :azure_api_host_name => "Your Azure API host name"
+      option :azure_subscription_id             Your Azure subscription ID
+      option :azure_mgmt_cert                   Management certificate in PEM format
+      option :azure_api_host_name               Your Azure API host name
 
 ==Management Certifcate
 The management certificate is required for secure communication with the Windows Azure Platform via the REST APIs. These can be obtained from the publishsettings file. You need to download the .publishsettings file from the link given below. You can either provide the path to the .publishsettings file OR you can generate the management certificate yourself from the .publishsettings file.
 
 ===Management Certificate using the .publishsettings file
 Download the .publishsettings file from http://go.microsoft.com/fwlink/?LinkId=254432
+
 Set the option :azure_publish_settings_file by specifying the path to the downloaded .publishsettings file. The plugin provides this easy option and will save you the complexity of the second approach listed next.
 
 ===Management Certificate in the PEM format
@@ -68,8 +69,8 @@ knife-azure depends on knife-windows: https://github.com/opscode/knife-windows t
 
 The distro/template to be used for the same is: https://github.com/opscode/knife-windows/blob/master/lib/chef/knife/bootstrap/windows-chef-client-msi.erb
 
-Windows source images should have the WinRM service enabled and the authentication should be set accordingly(Basic, NTLM and Kerberos). Firewall rules should be added accordingly to the source images. Refer to the link below to configure this:
-  https://github.com/opscode/knife-windows#nodes
+Windows source images should have the WinRM service enabled and the authentication should be set accordingly(Basic, NTLM and Kerberos). Firewall rules should be added accordingly to the source images. Refer to the link to configure this:
+https://github.com/opscode/knife-windows#nodes
 
 
 ==Azure Server Create subcommand
