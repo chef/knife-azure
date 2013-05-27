@@ -2,28 +2,47 @@
 
 Description: This plugin supports listing, creating, and deleting Azure instances bootstrapped with chef client.
 
-==Generating the Management Certifcate (PEM)
-The Management Certificate is required for secure communication with the Windows Azure Platform via the REST APIs.
-Follow these steps to generate the certificate
+==Configuration:
+Most configuration options can be specified either in your knife.rb file or as command line parameters. The CLI parameters override the knife.rb parameters.
+
+Use --help option to read more about each subcommand. Eg:
+      knife azure server create --help
+
+Options common and necessary for all subcommands:
+      option :azure_publish_settings_file => "Path to your .publishsettings file"
+OR
+      option :azure_subscription_id => "Your Azure subscription ID"
+      option :azure_mgmt_cert => "Management certificate in PEM format"
+      option :azure_api_host_name => "Your Azure API host name"
+
+==Management Certifcate
+The management certificate is required for secure communication with the Windows Azure Platform via the REST APIs. These can be obtained from the publishsettings file. You need to download the .publishsettings file from the link given below. You can either provide the path to the .publishsettings file OR you can generate the management certificate yourself from the .publishsettings file.
+
+===Management Certificate using the .publishsettings file
+Download the .publishsettings file from http://go.microsoft.com/fwlink/?LinkId=254432
+Set the option :azure_publish_settings_file by specifying the path to the downloaded .publishsettings file. The plugin provides this easy option and will save you the complexity of the second approach listed next.
+
+===Management Certificate in the PEM format
+Follow these steps to generate the certificate in the PEM format
 
 1. Download the settings file from http://go.microsoft.com/fwlink/?LinkId=254432
 2. Extract the data from the ManagementCertificate field into a separate file named - cert.pfx
 3. Decode the certificate file :
 
-==== On Linux/Mac(Homebrew)
+===== On Linux/Mac(Homebrew)
  base64 -d cert.pfx > cert_decoded.pfx
 
-==== On Windows
+===== On Windows
 You can decode and extract the PFX file using powershell or a free windows base 64 decoder such as http://www.fourmilab.ch/webtools/base64/base64.zip,
 
  base64.exe -d cert.pfx -> cert_decoded.pfx
 
 4. Convert the decoded PFX file to a PEM file
 
-==== On Linux/Mac(Homebrew)
+===== On Linux/Mac(Homebrew)
  openssl pkcs12 -in cert_decoded.pfx -out managementCertificate.pem -nodes
 
-==== On Windows
+===== On Windows
  Use powershell & run following command. If openssl.exe not already installed it can be downloaded from http://www.openssl.org/related/binaries.html (Note: openssl dependents on Microsoft Visual C++ Redistributable package (x86) which must be installed for openssl to function properly).
 
  openssl base64 -d -A -in cert_decoded.pfx -out cert_decode.der
@@ -38,19 +57,10 @@ It is possible to generate your own certificates and upload them. More Detailed 
 ==Installation:
 The plugin relies on SSL for communication and hence requires the SSL certifcate is setup. The Environment variable SSL_CERT_FILE should point to the full path of the SSL Certificate file.(optional)
 
-Be sure you are running the latest version Chef. Versions earlier than 0.10.0 don’t support plugins:
+Be sure you are running the latest version Chef. Versions earlier than 0.10.0 don’t support plugins.
 
-gem install chef
-
-This plugin is distributed as a Ruby Gem. To install it, with missing dependencies run:
-
-bundle install
-
-If you make any changes to the knife plugin code and want to re-install the plugin:
-
-rake install
-
-Depending on your system’s configuration, you may need to run this command with root privileges.
+Run the following command to install knife-azure plugin:
+  gem install knife-azure
 
 
 ==Requirements for Bootstrapping Windows:
@@ -58,75 +68,61 @@ knife-azure depends on knife-windows: https://github.com/opscode/knife-windows t
 
 The distro/template to be used for the same is: https://github.com/opscode/knife-windows/blob/master/lib/chef/knife/bootstrap/windows-chef-client-msi.erb
 
-Windows source images should have the WinRM service enabled and the authentication should be set accordingly(Basic, NTLM and Kerberos).
+Windows source images should have the WinRM service enabled and the authentication should be set accordingly(Basic, NTLM and Kerberos). Firewall rules should be added accordingly to the source images. Refer to the link below to configure this:
+  https://github.com/opscode/knife-windows#nodes
 
-
-==Configuration:
-Most configuration options can be specified either in your knife.rb file or as command line parameters.
-Use --help option to read more about each subcommand. Eg:
-      knife azure server create --help
-
-Options common and necessary for all subcommands:
-      option :azure_subscription_id => "Your Azure subscription ID"
-      option :azure_mgmt_cert => "It is the certificate in PEM format that you generated in the first section
-                            of this read-me doc. Specify the name/path of the certificate in this param"
-      option :azure_api_host_name => "Your Azure host name"
 
 ==Azure Server Create subcommand
 This subcommand provisions a new server in Azure and then performs a Chef bootstrap. The goal of the bootstrap is to get Chef installed on the target system so it can run Chef Client with a Chef Server.
 
-Options used with the Create subcommand - Azure specific options:
-      option :azure_storage_account => "A name for the storage account that is unique within Windows Azure.
-                                        Storage account names must be between 3 and 24 characters in length and
-                                        use numbers and lower-case letters only. This name is the DNS prefix name and
-                                        can be used to access blobs, queues, and tables in the storage account."
-      option :azure_vm_name => "Specifies the name for the virtual machine. The name must be unique within the deployment."
-      option :azure_service_location => "Required. Specifies the geographic location - the name of data
-                                         center location that is valid for your subscription.
-                                         Eg: West US, East US, East Asia, Southeast Asia, North Europe, West Europe"
-      option :azure_dns_name => "Required. The DNS prefix name that can be used to access the cloud service
-                                 which is unique within Windows Azure. If you want to add new VM to an
-                                 existing service/deployment, specify an exiting dns-name,
-                                 along with --connect-to-existing-dns option. Otherwise a new
-                                 deployment is created."
-      option :azure_os_disk_name => "Optional. Specifies the friendly name of the disk containing
-                                     the guest OS image in the image repository."
-      option :azure_source_image => "Required. Specifies the name of the disk image to use to create
-                                     the virtual machine. Do a \"knife azure image list\" to see a
-                                     list of available images."
-      option :azure_vm_size => "Optional. Size of virtual machine (ExtraSmall, Small, Medium, Large, ExtraLarge)"
-      option :azure_connect_to_existing_dns => "Set this flag to add the new VM to an existing
-                                                deployment/service. Must give the name of the existing
-                                                DNS correctly in the --dns-name option"
+===Azure specific options
+      :azure_dns_name                   Required. The DNS prefix name that can be used to access the cloud
+                                        service which is unique within Windows Azure. If you want to add
+                                        new VM to an existing service/deployment, specify an exiting
+                                        dns-name, along with --connect-to-existing-dns option. Otherwise
+                                        a new deployment is created.
+      :azure_service_location           Required. Specifies the geographic location - the name of data
+                                        center location that is valid for your subscription.
+                                        Eg: West US, East US, East Asia, Southeast Asia, North Europe, West Europe
+      :azure_source_image               Required. Specifies the name of the disk image to use to create
+                                        the virtual machine. Do a \"knife azure image list\" to see a
+                                        list of available images.
+      :azure_storage_account            A name for the storage account that is unique within Windows Azure.
+                                        Storage account names must be between 3 and 24 characters in
+                                        length and use numbers and lower-case letters only. This name is
+                                        the DNS prefix name and can be used to access blobs, queues, and
+                                        tables in the storage account.
+      :azure_vm_name                    Specifies the name for the virtual machine. The name must
+                                        be unique within the deployment.
+      :azure_os_disk_name               Optional. Specifies the friendly name of the disk containing
+                                        the guest OS image in the image repository.
+      :azure_vm_size                    Default is Small. Size of virtual machine
+                                        (ExtraSmall, Small, Medium, Large, ExtraLarge)
+      :azure_connect_to_existing_dns    Set this flag to add the new VM to an existing
+                                        deployment/service. Must give the name of the existing
+                                        DNS correctly in the --dns-name option
 
-Other options used in server create:
-      option :chef_node_name => "The Chef node name for your new node"
-      option :ssh_user => "The ssh username"
-      option :ssh_password => "The ssh password"
-      option :ssh_port => "The ssh port. Default is 22."
-      option :prerelease => "Install the pre-release chef gems"
-      option :bootstrap_version => "The version of Chef to install"
-      option :distro => "Bootstrap a distro using a template"
-      option :template_file => "Full path to location of template to use"
-      option :run_list => "Comma separated list of roles/recipes to apply"
-      option :host_key_verify => "Verify host key, enabled by default."
-      option :tcp_endpoints => "Comma separated list of TCP local and public ports to open i.e. '80:80,433:5000'"
-      option :udp_endpoints => "Comma separated list of UDP local and public ports to open i.e. '80:80,433:5000'"
-      option :verify_ssl_cert => "Verify SSL Certificates for communication over HTTPS"
-      option :identity_file => "SSH identity file for authentication, optional. It is the RSA private key path.
-                                Specify either ssh-password or identity-file"
-
-
+===Azure VM Quick Create
 You can create a server with minimal configuration. On the Azure Management Portal, this corresponds to a "Quick Create - VM". Sample command for quick create (for an ubuntu instance):
       knife azure server create
-                --azure-subscription-id 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx'
-                --azure-mgmt-cert '/path/to/your/mgmtCert.pem'
-                --azure-api-host-name 'management.core.windows.net'
+                --azure-publish-settings-file '/path/to/your/cert.publishsettingsfile'
                 --azure-dns-name 'myservice'
                 --azure-service-location 'West US'
                 --azure-source-image 'source-image-name'
                 --ssh-user 'jetstream'
                 --ssh-password 'jetstream@123'
+
+As mentioned, you can set these options from knife.rb. A typical knife.rb will look as below:
+  knife[:azure_publish_settings_file] = '/path/to/your/cert.publishsettingsfile'
+  knife[:azure_dns_name] = 'myservice'
+  knife[:azure_service_location] = 'West US'
+  knife[:ssh_user] = 'jetstream'
+  knife[:ssh_password] = 'jetstream@123'
+
+===Azure VM Advanced Create
+You can set various other options in the advanced create.
+  Eg: If you want to set the Azure VM Name different from that of the Azure DNS Name, set the option --azure_vm_name.
+  Eg: If you want to specify a Storage Account Name, set the option --azure_storage_account
 
 To connect to an existing DNS/service, you can use a command as below:
       knife azure server create
@@ -141,8 +137,21 @@ To connect to an existing DNS/service, you can use a command as below:
                 --ssh-user 'jetstream'
                 --ssh-password 'jetstream@123'
 
+As mentioned, you can set these options from knife.rb. A typical knife.rb will look as below:
+  knife[:azure_subscription_id] = 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx'
+  knife[:azure_mgmt_cert] = '/path/to/your/mgmtCert.pem'
+  knife[:azure_api_host_name] = 'management.core.windows.net'
+  knife[:azure_service_location] = 'West US'
+  knife[:azure_dns_name]='myservice'
+  knife[:azure_vm_name]='myvm02'
+  knife[:ssh_user]='jetstream'
+  knife[:identity_file]='/path/to/RSA/private/key'
+  knife[:azure_storage_account]='auxpreview104'
+  knife[:azure_os_disk_name]='disk107'
+  knife[:tcp_endpoints]='66'
+  knife[:udp_endpoints]='77,88,99'
 
-====Options for Bootstrapping Windows nodes
+===Options for Bootstrapping a Windows Node in Azure
 
       option :bootstrap_protocol => "Default is winrm for a windows image"
       option :winrm_password => "The WinRM password"
@@ -153,11 +162,10 @@ To connect to an existing DNS/service, you can use a command as below:
       option :kerberos_service => "The Kerberos service used for authentication"
       option :ca_trust_file => "The Certificate Authority (CA) trust file used for SSL transport"
 
+===Azure Windows Node Create
 The quick create option requires just following options for a windows instance:
       knife azure server create
-                --azure-subscription-id 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx'
-                --azure-mgmt-cert '/path/to/your/mgmtCert.pem'
-                --azure-api-host-name 'management.core.windows.net'
+                --azure-publish-settings-file '/path/to/your/cert.publishsettingsfile'
                 --azure-dns-name 'myservice'
                 --azure-service-location 'West US'
                 --azure-source-image 'windows-image-name'
@@ -165,44 +173,14 @@ The quick create option requires just following options for a windows instance:
                 --winrm-password 'jetstream@123'
                 --template-file 'windows-chef-client-msi.erb'
 
-====Here are some lines with example values in a knife.rb file:
-knife[:azure_subscription_id] = "155a9851-88a8-49b4-98e4-58055f08f412"
+Sample knife.rb for bootstrapping Windows Node with Basic Authentication
 
-knife[:azure_mgmt_cert] = "ManagementCertificate.pem"
-
-knife[:azure_api_host_name] = "management-preview.core.windows-int.net"
-
-knife[:azure_service_location] = 'West US'
-
-knife[:azure_dns_name]='service001'
-
-knife[:azure_vm_name]='host105'
-
-knife[:ssh_user]='jetstream'
-
-knife[:ssh_password]='jetstream@123'
-
-knife[:azure_storage_account]='auxpreview104'
-
-knife[:azure_os_disk_name]='disk107'
-
-knife[:tcp_endpoints]='66'
-
-knife[:udp_endpoints]='77,88,99'
-
-==== Sample knife.rb for bootstrapping Windows Node with Basic Authentication
-
-knife[:bootstrap_protocol] = 'winrm'
-
-knife[:winrm_password] = 'mgcvTuvV2Rh'
-
-knife[:winrm_transport] = 'plaintext'
-
-knife[:winrm_port] = '5985'
-
-knife[:distro] = 'windows-chef-client-msi'
-
-knife[:azure_source_image]='w2k12Basic.vhd'
+  knife[:bootstrap_protocol] = 'winrm'
+  knife[:winrm_password] = 'mgcvTuvV2Rh'
+  knife[:winrm_transport] = 'plaintext'
+  knife[:winrm_port] = '5985'
+  knife[:distro] = 'windows-chef-client-msi'
+  knife[:azure_source_image]='w2k12Basic.vhd'
 
 ==Other Subcommands
 The plugin also provides the following Knife subcommands. Specific command options can be found by invoking the subcommand with a --help flag
