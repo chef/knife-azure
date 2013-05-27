@@ -41,6 +41,14 @@ before do
     @server_instance.stub(:print)
 end
 
+def test_params(testxml, chef_config, role_name, host_name)
+	xml_content(testxml, 'UserName').should == chef_config[:ssh_user]
+	xml_content(testxml, 'UserPassword').should == chef_config[:ssh_password]
+	xml_content(testxml, 'SourceImageName').should == chef_config[:azure_source_image]
+	xml_content(testxml, 'RoleSize').should == chef_config[:azure_vm_size]
+
+end
+
 describe "parameter test:" do
 
 	context "compulsory parameters" do
@@ -55,28 +63,28 @@ describe "parameter test:" do
 			@server_instance.ui.should_receive(:error)
 			expect {@server_instance.run}.to raise_error
 		end
-		it "azure_api_host_name" do		
-			Chef::Config[:knife].delete(:azure_api_host_name)			
+		it "azure_api_host_name" do
+			Chef::Config[:knife].delete(:azure_api_host_name)
 			@server_instance.ui.should_receive(:error)
 			expect {@server_instance.run}.to raise_error
 		end
-		it "azure_service_location" do		
-			Chef::Config[:knife].delete(:azure_service_location)			
+		it "azure_service_location" do
+			Chef::Config[:knife].delete(:azure_service_location)
 			@server_instance.ui.should_receive(:error)
 			expect {@server_instance.run}.to raise_error
 		end
-		it "azure_source_image" do		
-			Chef::Config[:knife].delete(:azure_source_image)			
+		it "azure_source_image" do
+			Chef::Config[:knife].delete(:azure_source_image)
 			@server_instance.ui.should_receive(:error)
 			expect {@server_instance.run}.to raise_error
 		end
-		it "azure_vm_size" do		
-			Chef::Config[:knife].delete(:azure_vm_size)			
+		it "azure_vm_size" do
+			Chef::Config[:knife].delete(:azure_vm_size)
 			@server_instance.ui.should_receive(:error)
 			expect {@server_instance.run}.to raise_error
 		end
-		it "azure_dns_name" do		
-			Chef::Config[:knife].delete(:azure_dns_name)			
+		it "azure_dns_name" do
+			Chef::Config[:knife].delete(:azure_dns_name)
 			@server_instance.ui.should_receive(:error)
 			expect {@server_instance.run}.to raise_error
 		end
@@ -94,19 +102,15 @@ describe "parameter test:" do
 	      	Chef::Knife::Bootstrap.stub(:new).and_return(@bootstrap)
 	      	@bootstrap.should_receive(:run)
 		end
+
 		it "quick create" do
 			@server_instance.should_receive(:is_image_windows?).at_least(:twice).and_return(false)
 			@server_instance.run
 			@server_instance.config[:azure_vm_name].should == "vm01"
-			puts @receivedXML
 			testxml = Nokogiri::XML(@receivedXML)
-			xml_content(testxml, 'RoleName').should == Chef::Config[:knife][:azure_dns_name]
 			xml_content(testxml, 'MediaLink').should_not == nil
-			xml_content(testxml, 'HostName').should == Chef::Config[:knife][:azure_dns_name]
-			xml_content(testxml, 'UserName').should == Chef::Config[:knife][:ssh_user]
-			xml_content(testxml, 'UserPassword').should == Chef::Config[:knife][:ssh_password]
-			xml_content(testxml, 'SourceImageName').should == Chef::Config[:knife][:azure_source_image]
-			xml_content(testxml, 'RoleSize').should == 'Small'
+			test_params(testxml, Chef::Config[:knife], Chef::Config[:knife][:azure_dns_name],
+										Chef::Config[:knife][:azure_dns_name])
 		end
 
 		it "advanced create" do
@@ -115,10 +119,11 @@ describe "parameter test:" do
 			Chef::Config[:knife][:azure_vm_name] = 'vm01'
 			Chef::Config[:knife][:azure_storage_account] = 'ka001testeurope'
 			Chef::Config[:knife][:azure_os_disk_name] = 'os-disk'
-	      	#check if API calls are correct
-			@server_instance.connection.should_receive(:query_azure).with("storageservices", "post", "<?xml version=\"1.0\"?>\n<CreateStorageServiceInput xmlns=\"http://schemas.microsoft.com/windowsazure\">\n  <ServiceName>#{Chef::Config[:knife][:azure_storage_account]}</ServiceName>\n  <Label>a2EwMDF0ZXN0ZXVyb3Bl\n</Label>\n  <Description>Explicitly created storage service</Description>\n  <Location>#{Chef::Config[:knife][:azure_service_location]}</Location>\n</CreateStorageServiceInput>\n")
-			@server_instance.connection.should_receive(:query_azure).with("hostedservices/#{Chef::Config[:knife][:azure_dns_name]}/deployments/deployment001/roles", "post", "<?xml version=\"1.0\"?>\n<PersistentVMRole xmlns=\"http://schemas.microsoft.com/windowsazure\" xmlns:i=\"http://www.w3.org/2001/XMLSchema-instance\">\n  <RoleName>#{Chef::Config[:knife][:azure_vm_name]}</RoleName>\n  <OsVersion i:nil=\"true\"/>\n  <RoleType>PersistentVMRole</RoleType>\n  <ConfigurationSets>\n    <ConfigurationSet i:type=\"LinuxProvisioningConfigurationSet\">\n      <ConfigurationSetType>LinuxProvisioningConfiguration</ConfigurationSetType>\n      <HostName>#{Chef::Config[:knife][:azure_vm_name]}</HostName>\n      <UserName>#{Chef::Config[:knife][:ssh_user]}</UserName>\n      <UserPassword>#{Chef::Config[:knife][:ssh_password]}</UserPassword>\n      <DisableSshPasswordAuthentication>false</DisableSshPasswordAuthentication>\n    </ConfigurationSet>\n    <ConfigurationSet i:type=\"NetworkConfigurationSet\">\n      <ConfigurationSetType>NetworkConfiguration</ConfigurationSetType>\n      <InputEndpoints>\n        <InputEndpoint>\n          <LocalPort>22</LocalPort>\n          <Name>SSH</Name>\n          <Port>22</Port>\n          <Protocol>TCP</Protocol>\n        </InputEndpoint>\n      </InputEndpoints>\n    </ConfigurationSet>\n  </ConfigurationSets>\n  <Label>dm0wMQ==</Label>\n  <OSVirtualHardDisk>\n    <MediaLink>http://#{Chef::Config[:knife][:azure_storage_account]}.blob.core.windows.net/vhds/#{Chef::Config[:knife][:azure_os_disk_name]}.vhd</MediaLink>\n    <SourceImageName>SUSE__SUSE-Linux-Enterprise-Server-11SP2-20120521-en-us-30GB.vhd</SourceImageName>\n  </OSVirtualHardDisk>\n  <RoleSize>Small</RoleSize>\n</PersistentVMRole>\n")
 			@server_instance.run
+			testxml = Nokogiri::XML(@receivedXML)
+			xml_content(testxml, 'MediaLink').should == 'http://ka001testeurope.blob.core.windows.net/vhds/os-disk.vhd'
+			test_params(testxml, Chef::Config[:knife], Chef::Config[:knife][:azure_vm_name],
+										Chef::Config[:knife][:azure_vm_name])
 		end
 	end
 end
@@ -162,7 +167,7 @@ describe "for bootstrap protocol winrm:" do
 			@server_instance.config[:azure_storage_account].should match(/storage-service-name/)
 		end
 
-		it "successful bootstrap of windows instance" do		
+		it "successful bootstrap of windows instance" do
 			@server_instance.should_receive(:is_image_windows?).exactly(3).times.and_return(true)
 			@server_instance.run
 		end
@@ -190,7 +195,7 @@ describe "for bootstrap protocol ssh:" do
 			Chef::Config[:knife][:ssh_user] = 'ssh_user'
 		end
 		it "check if all server params are set correctly" do
-			@server_instance.should_receive(:is_image_windows?).twice.and_return(false)		
+			@server_instance.should_receive(:is_image_windows?).twice.and_return(false)
 			@server_params = @server_instance.create_server_def
 			@server_params[:os_type].should == 'Linux'
 			@server_params[:ssh_password].should == 'ssh_password'
