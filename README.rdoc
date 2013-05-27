@@ -119,14 +119,14 @@ Other options used in server create:
 
 You can create a server with minimal configuration. On the Azure Management Portal, this corresponds to a "Quick Create - VM". Sample command for quick create (for an ubuntu instance):
       knife azure server create
-          --azure-subscription-id 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx'
-          --azure-mgmt-cert '/path/to/your/mgmtCert.pem'
-          --azure-api-host-name 'management.core.windows.net'
-          --azure-dns-name 'myservice'
-          --azure-service-location 'West US'
-          --azure-source-image 'source-image-name'
-          --ssh-user 'jetstream'
-          --ssh-password 'jetstream@123'
+                --azure-subscription-id 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx'
+                --azure-mgmt-cert '/path/to/your/mgmtCert.pem'
+                --azure-api-host-name 'management.core.windows.net'
+                --azure-dns-name 'myservice'
+                --azure-service-location 'West US'
+                --azure-source-image 'source-image-name'
+                --ssh-user 'jetstream'
+                --ssh-password 'jetstream@123'
 
 To connect to an existing DNS/service, you can use a command as below, for any OS instance:
       knife azure server create
