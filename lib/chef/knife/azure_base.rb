@@ -72,7 +72,7 @@ class Chef
         unless target_image[0].nil?
           return target_image[0].os == 'Windows'
         else
-          ui.error("Invalid image. Use the command \"knife azure server image list\" to verify the image name")
+          ui.error("Invalid image. Use the command \"knife azure image list\" to verify the image name")
           exit 1
         end
       end
