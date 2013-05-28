@@ -30,6 +30,7 @@ before do
     @server_instance.stub(:print)
     @server_instance.ui.stub(:warn)
     @server_instance.ui.should_not_receive(:error).and_call_original
+    @server_instance.stub(:parse_publish_settings_file)
 end
 
 	it "server delete test" do

@@ -24,22 +24,9 @@ module AzureAPI
   class Rest
     def initialize(params)
       @subscription_id = params[:azure_subscription_id]
-      @pem_file = File.read find_pem(params[:azure_mgmt_cert])
+      @pem_file = params[:azure_mgmt_cert]
       @host_name = params[:azure_api_host_name]
       @verify_ssl = params[:verify_ssl_cert]
-    end
-    def find_pem(name)
-      config_dir = Chef::Knife.chef_config_dir
-      if File.exist? name
-        pem_file = name
-      elsif config_dir && File.exist?(File.join(config_dir, name))
-        pem_file = File.join(config_dir, name)
-      elsif File.exist?(File.join(ENV['HOME'], '.chef', name))
-        pem_file = File.join(ENV['HOME'], '.chef', name)
-      else
-        raise 'Unable to find certificate pem file - ' + name
-      end
-      pem_file
     end
     def query_azure(service_name, verb = 'get', body = '')
       request_url = "https://#{@host_name}/#{@subscription_id}/services/#{service_name}"
