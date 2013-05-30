@@ -44,8 +44,8 @@ class Azure
     end
 
     def find(name, params= nil)
-      if params && params[:azure_hosted_service_name]
-        return find_in_hosted_service(name, params[:azure_hosted_service_name])
+      if params && params[:azure_dns_name]
+        return find_in_hosted_service(name, params[:azure_dns_name])
       end
       if @roles == nil
         all
@@ -88,7 +88,7 @@ class Azure
         # delete role from local cache as well.
         @roles.delete(role)
 
-        unless params[:preserve_hosted_service]
+        unless params[:preserve_azure_dns_name]
           unless params[:hostedservicename].nil?
             roles_using_same_service = find_roles_with_hostedservice(params[:hostedservicename])
             if roles_using_same_service.size <= 1
@@ -174,7 +174,7 @@ class Azure
 
               xml.ConfigurationSet('i:type' => 'LinuxProvisioningConfigurationSet') {
               xml.ConfigurationSetType 'LinuxProvisioningConfiguration'
-              xml.HostName params[:azure_vm_name] 
+              xml.HostName params[:azure_vm_name]
               xml.UserName params[:ssh_user]
               unless params[:identity_file].nil?
                 xml.DisableSshPasswordAuthentication 'true'
@@ -194,7 +194,7 @@ class Azure
             elsif params[:os_type] == 'Windows'
               xml.ConfigurationSet('i:type' => 'WindowsProvisioningConfigurationSet') {
               xml.ConfigurationSetType 'WindowsProvisioningConfiguration'
-              xml.ComputerName params[:azure_vm_name] 
+              xml.ComputerName params[:azure_vm_name]
               xml.AdminPassword params[:admin_password]
               xml.ResetPasswordOnFirstLogon 'false'
               xml.EnableAutomaticUpdates 'false'
