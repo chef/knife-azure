@@ -80,10 +80,13 @@ class Azure
           servicecall = "hostedservices/#{role.hostedservicename}/deployments" +
           "/#{role.deployname}/roles/#{role.name}"
         end
+
         roleXML = nil
+
         unless params[:preserve_os_disk]
             roleXML = @connection.query_azure(servicecall, "get")
         end
+
         @connection.query_azure(servicecall, "delete")
         # delete role from local cache as well.
         @roles.delete(role)
@@ -97,11 +100,22 @@ class Azure
             end
           end
         end
+
         unless params[:preserve_os_disk]
-            osdisk = roleXML.css(roleXML, 'OSVirtualHardDisk')
+          osdisk = roleXML.css(roleXML, 'OSVirtualHardDisk')
           disk_name = xml_content(osdisk, 'DiskName')
           servicecall = "disks/#{disk_name}"
+
+          storage_account = @connection.query_azure(servicecall, "get")
+          storage_account_name = xml_content(storage_account, "MediaLink")
+          storage_account_name = storage_account_name.gsub("http://", "").gsub(/.blob(.*)$/, "")
+
+          until @connection.query_azure(servicecall, "get").search("AttachedTo").text == ""
+            sleep 25
+            puts "."
+          end
           @connection.query_azure(servicecall, "delete")
+          @connection.query_azure("storageservices/#{storage_account_name}", "delete")
         end
       end
     end
