@@ -94,8 +94,8 @@ class Chef
             msg_pair('Role', server.name)
             msg_pair('Size', server.size)
             msg_pair('Public Ip Address', server.publicipaddress)
-
             puts "\n"
+
             begin
               confirm("Do you really want to delete this server")
             rescue Exception
