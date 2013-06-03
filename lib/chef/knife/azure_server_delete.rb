@@ -56,6 +56,12 @@ class Chef
         :default => false,
         :description => "Preserve corresponding cloud service (DNS). If the option is not set, it deletes the service not used by any VMs."
 
+      option :delete_azure_storage_account,
+        :long => "--delete-azure-storage-account",
+        :boolean => true,
+        :default => false,
+        :description => "Delete corresponding storage account. If the option is set, it deletes the storage account not used by any VMs."
+
       option :azure_dns_name,
         :long => "--azure-dns-name NAME",
         :description => "specifies the DNS name (also known as hosted service name)"
@@ -75,10 +81,19 @@ class Chef
         end
       end
 
+      def validate_disk_and_storage
+         if locate_config_value(:preserve_os_disk) && locate_config_value(:delete_azure_storage_account)
+            ui.warn("Cannot delete storage account while keeping OS Disk. Please set any one option.")
+            exit!
+          else
+            true
+          end
+      end
+
       def run
 
         validate!
-
+        validate_disk_and_storage
         @name_args.each do |name|
 
           begin
@@ -104,7 +119,8 @@ class Chef
             end
             connection.roles.delete(name, params = { :preserve_os_disk => locate_config_value(:preserve_os_disk),
                                                      :preserve_azure_dns_name => locate_config_value(:preserve_azure_dns_name),
-                                                     :hostedservicename => server.hostedservicename })
+                                                     :hostedservicename => server.hostedservicename,
+                                                     :delete_azure_storage_account => locate_config_value(:delete_azure_storage_account) })
 
             puts "\n"
             ui.warn("Deleted server #{server.name}")

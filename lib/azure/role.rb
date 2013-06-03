@@ -70,6 +70,7 @@ class Azure
     def exists(name)
       find(name) != nil
     end
+
     def delete(name, params)
       role = find(name)
       if role != nil
@@ -105,18 +106,31 @@ class Azure
           osdisk = roleXML.css(roleXML, 'OSVirtualHardDisk')
           disk_name = xml_content(osdisk, 'DiskName')
           servicecall = "disks/#{disk_name}"
-
           storage_account = @connection.query_azure(servicecall, "get")
-          storage_account_name = xml_content(storage_account, "MediaLink")
-          storage_account_name = storage_account_name.gsub("http://", "").gsub(/.blob(.*)$/, "")
 
           until @connection.query_azure(servicecall, "get").search("AttachedTo").text == ""
             sleep 25
             puts "."
           end
+
           @connection.query_azure(servicecall, "delete")
-          @connection.query_azure("storageservices/#{storage_account_name}", "delete")
+
+          if params[:delete_azure_storage_account]
+            storage_account_name = xml_content(storage_account, "MediaLink")
+            storage_account_name = storage_account_name.gsub("http://", "").gsub(/.blob(.*)$/, "")
+
+            begin
+              @connection.query_azure("storageservices/#{storage_account_name}", "delete")
+            rescue Exception => ex
+              ui.warn("#{ex.message}")
+              ui.warn("#{ex.backtrace.join("\n")}")
+            end
+
+          end
+
         end
+
+
       end
     end
     def find_roles_with_hostedservice(hostedservicename)
