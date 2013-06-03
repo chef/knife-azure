@@ -51,7 +51,7 @@ class Azure
         }
       end
       # Windows Azure API call
-      @connection.query_azure("hostedservices/#{params[:hosted_service_name]}/certificates", "post", builder.to_xml)
+      @connection.query_azure("hostedservices/#{params[:azure_dns_name]}/certificates", "post", builder.to_xml)
       # Return the fingerprint to be used while adding role
       @fingerprint
     end
@@ -80,7 +80,7 @@ class Azure
       @fingerprint =  OpenSSL::Digest::SHA1.new(ca.to_der)
       # Create the pfx format of the certificate
       pfx = OpenSSL::PKCS12.create('knifeazure', 'knife-azure-pfx',  key,  ca)
-      # Encode the pfx format - upload this certificate 
+      # Encode the pfx format - upload this certificate
       Base64.strict_encode64(pfx.to_der)
     end
   end
