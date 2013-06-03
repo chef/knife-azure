@@ -88,4 +88,28 @@ end
 
 		@server_instance.run
 	end
+
+	it "should preserve OS Disk when --preserve-os-disk is set." do
+		test_hostname = 'role002'
+		test_diskname = 'disk1'
+		@server_instance.name_args = [test_hostname]
+		Chef::Config[:knife][:preserve_os_disk] = true
+		@server_instance.connection.roles.should_receive(:delete).exactly(:once).and_call_original
+		@server_instance.connection.should_receive(:query_azure).with("hostedservices/#{Chef::Config[:knife][:azure_dns_name]}/deployments/deployment001/roles/#{test_hostname}", "delete").exactly(:once)
+		@server_instance.connection.should_not_receive(:query_azure).with("disks/#{test_diskname}", "delete")
+		@server_instance.run
+	end
+
+	it "should delete OS Disk when --preserve-os-disk is not set." do
+		test_hostname = 'role001'
+		test_diskname = 'deployment001-role002-0-201241722728'
+		@server_instance.name_args = [test_hostname]
+		@server_instance.connection.roles.should_receive(:delete).exactly(1).and_call_original
+		@server_instance.connection.should_receive(:query_azure).with("disks/#{test_diskname}", "delete")
+		@server_instance.run
+	end
+
+	after(:each) do
+		Chef::Config[:knife][:preserve_os_disk] = false if Chef::Config[:knife][:preserve_os_disk] #cleanup config for each run
+	end
 end
