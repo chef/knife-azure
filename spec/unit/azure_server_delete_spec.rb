@@ -108,7 +108,41 @@ end
 		@server_instance.run
 	end
 
+
+	describe "Storage Account" do
+		before(:each) do
+			test_hostname = 'role001'
+			@test_storage_account = 'auxpreview104imagestore'
+			@server_instance.name_args = [test_hostname]
+		end
+
+		it "should be deleted when --delete-azure-storage-account is set." do
+			Chef::Config[:knife][:delete_azure_storage_account] = true
+			@server_instance.connection.should_receive(:query_azure).with("storageservices/#{@test_storage_account}", "delete")
+			@server_instance.run
+		end
+
+		it "should not be deleted  when --delete-azure-storage-account is not set." do
+			@server_instance.connection.should_not_receive(:query_azure).with("storageservices/#{@test_storage_account}", "delete")
+			@server_instance.run
+		end
+  end
+
+	it "should give a warning and exit when both --preserve-os-disk and --delete-azure-storage-account are set." do
+		test_hostname = 'role001'
+		Chef::Config[:knife][:preserve_os_disk] = true
+		Chef::Config[:knife][:delete_azure_storage_account] = true
+		@server_instance.name_args = [test_hostname]
+		test_storage_account = 'auxpreview104imagestore'
+		test_diskname = 'deployment001-role002-0-201241722728'
+		@server_instance.connection.should_not_receive(:query_azure).with("disks/#{test_diskname}", "delete")
+		@server_instance.connection.should_not_receive(:query_azure).with("storageservices/#{test_storage_account}", "delete")
+		@server_instance.ui.should_receive(:warn).with("Cannot delete storage account while keeping OS Disk. Please set any one option.")
+		lambda { @server_instance.validate_disk_and_storage }.should raise_error(SystemExit)
+	end
+
 	after(:each) do
 		Chef::Config[:knife][:preserve_os_disk] = false if Chef::Config[:knife][:preserve_os_disk] #cleanup config for each run
+		Chef::Config[:knife][:delete_azure_storage_account] = false if Chef::Config[:knife][:delete_azure_storage_account]
 	end
 end

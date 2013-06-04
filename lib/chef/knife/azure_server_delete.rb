@@ -84,7 +84,7 @@ class Chef
       def validate_disk_and_storage
          if locate_config_value(:preserve_os_disk) && locate_config_value(:delete_azure_storage_account)
             ui.warn("Cannot delete storage account while keeping OS Disk. Please set any one option.")
-            exit!
+            exit
           else
             true
           end
