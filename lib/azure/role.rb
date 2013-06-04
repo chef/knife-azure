@@ -108,9 +108,11 @@ class Azure
           servicecall = "disks/#{disk_name}"
           storage_account = @connection.query_azure(servicecall, "get")
 
+          counter = 0
           until @connection.query_azure(servicecall, "get").search("AttachedTo").text == ""
-            sleep 25
-            puts "."
+            exit! if counter == 12
+            sleep 25 and puts "."
+            counter += 1
           end
 
           @connection.query_azure(servicecall, "delete")
