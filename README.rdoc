@@ -19,14 +19,14 @@ OR
 The management certificate is required for secure communication with the Windows Azure Platform via the REST APIs. These can be obtained from the publishsettings file. You need to download the .publishsettings file from the link given below. You can either provide the path to the .publishsettings file OR you can generate the management certificate yourself from the .publishsettings file.
 
 ===Management Certificate using the .publishsettings file
-Download the .publishsettings file from http://go.microsoft.com/fwlink/?LinkId=254432
+Download the .publishsettings file from https://manage.windowsazure.com/publishsettings/index?client=xplat
 
 Set the option :azure_publish_settings_file by specifying the path to the downloaded .publishsettings file. The plugin provides this easy option and will save you the complexity of the second approach listed next.
 
 ===Management Certificate in the PEM format
 Follow these steps to generate the certificate in the PEM format
 
-1. Download the settings file from http://go.microsoft.com/fwlink/?LinkId=254432
+1. Download the settings file from https://manage.windowsazure.com/publishsettings/index?client=xplat
 2. Extract the data from the ManagementCertificate field into a separate file named - cert.pfx
 3. Decode the certificate file :
 
