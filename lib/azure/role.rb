@@ -108,11 +108,12 @@ class Azure
           servicecall = "disks/#{disk_name}"
           storage_account = @connection.query_azure(servicecall, "get")
 
-          counter = 0
-          until @connection.query_azure(servicecall, "get").search("AttachedTo").text == ""
-            exit! if counter == 12  # wait for 5 minutes , and exit if it takes longer.
-            sleep 25 and puts "."
-            counter += 1
+          # OS Disk can only be deleted if it is detached from the VM.
+          # So Iteratively check for disk detachment from the VM while waiting for 5 minutes ,
+          # exit otherwise after 12 attempts.
+          for attempt in 0..12
+             attempt == 12 ? exit! : (sleep 25 and puts ".")
+             break if @connection.query_azure(servicecall, "get").search("AttachedTo").text == ""
           end
 
           @connection.query_azure(servicecall, "delete")

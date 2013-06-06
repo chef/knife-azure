@@ -113,10 +113,11 @@ class Chef
 
             begin
               confirm("Do you really want to delete this server")
-            rescue SystemExit
-              server = nil
+            rescue SystemExit   # Need to handle this as confirming with N/n raises SystemExit exception
+              server = nil      # Cleanup is implicitly performed in other cloud plugins
               exit!
             end
+
             connection.roles.delete(name, params = { :preserve_azure_os_disk_name => locate_config_value(:preserve_azure_os_disk_name),
                                                      :preserve_azure_dns_name => locate_config_value(:preserve_azure_dns_name),
                                                      :azure_dns_name => server.hostedservicename,
