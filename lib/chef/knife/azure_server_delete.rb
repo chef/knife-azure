@@ -113,7 +113,7 @@ class Chef
 
             begin
               confirm("Do you really want to delete this server")
-            rescue Exception
+            rescue SystemExit
               server = nil
               exit!
             end

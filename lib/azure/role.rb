@@ -110,7 +110,7 @@ class Azure
 
           counter = 0
           until @connection.query_azure(servicecall, "get").search("AttachedTo").text == ""
-            exit! if counter == 12
+            exit! if counter == 12  # wait for 5 minutes , and exit if it takes longer.
             sleep 25 and puts "."
             counter += 1
           end
