@@ -55,6 +55,13 @@ describe Chef::Knife::AzureBase do
 				validate_cert()
 			end
 
+			it "- should validate parse method for SchemaVersion2-0 publishsettings file" do
+				@dummy.parse_publish_settings_file("azureValidSchemaVersion-2.0.publishsettings")
+				Chef::Config[:knife][:azure_api_host_name].should == 'management.core.windows.net'
+				Chef::Config[:knife][:azure_subscription_id].should == 'id1'
+				validate_cert()
+			end
+
 			it "- should validate settings file and subscrition id" do
 				@dummy.config[:azure_subscription_id] = "azure_subscription_id"
 				Chef::Config[:knife][:azure_publish_settings_file] = "azureValid.publishsettings"
