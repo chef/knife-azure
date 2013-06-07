@@ -178,6 +178,11 @@ class Chef
         :long => "--identity-file-passphrase PASSWORD",
         :description => "SSH key passphrase. Optional, specify if passphrase for identity-file exists"
 
+      option :azure_subnet_name,
+        :long => "--azure-subnet-name SUBNET_NAME",
+        :description => "Optional, specify the subnet of virtual machine"
+
+
       def strip_non_ascii(string)
         string.gsub(/[^0-9a-z ]/i, '')
       end
@@ -400,7 +405,8 @@ class Chef
           :tcp_endpoints => locate_config_value(:tcp_endpoints),
           :udp_endpoints => locate_config_value(:udp_endpoints),
           :bootstrap_proto => locate_config_value(:bootstrap_protocol),
-          :azure_connect_to_existing_dns => locate_config_value(:azure_connect_to_existing_dns)
+          :azure_connect_to_existing_dns => locate_config_value(:azure_connect_to_existing_dns),
+          :azure_subnet_name => locate_config_value(:azure_subnet_name)
         }
         # If user is connecting a new VM to an existing dns, then
         # the VM needs to have a unique public port. Logic below takes care of this.

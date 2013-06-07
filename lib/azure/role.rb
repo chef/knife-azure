@@ -252,6 +252,11 @@ class Azure
               end
             end
             }
+            if params[:azure_subnet_name]
+                xml.SubnetNames {
+                  xml.SubnetName params[:azure_subnet_name]
+                }
+            end
           }
           }
           xml.Label Base64.encode64(params[:azure_vm_name]).strip
