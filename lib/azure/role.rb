@@ -113,8 +113,7 @@ class Azure
           # exit otherwise after 12 attempts.
           for attempt in 0..12
              break if @connection.query_azure(servicecall, "get").search("AttachedTo").text == ""
-             sleep 25
-             puts "The associated disk could not be deleted due to time out." if attempt == 12
+             if attempt == 12 then puts "The associated disk could not be deleted due to time out." else sleep 25 end
           end
           @connection.query_azure(servicecall, "delete")
 
