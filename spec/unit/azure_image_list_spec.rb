@@ -15,7 +15,7 @@ describe "knife azure " do
       {
         :azure_subscription_id => 'azure_subscription_id',
         :azure_mgmt_cert => 'AzureLinuxCert.pem',
-        :azure_host_name => 'preview.core.windows-int.net',
+        :azure_api_host_name => 'preview.core.windows-int.net',
         :role_name => 'vm01',
         :service_location => 'service_location',
         :source_image => 'source_image',
@@ -27,6 +27,7 @@ describe "knife azure " do
     end
     stub_query_azure (@server_instance.connection)
     @server_instance.stub(:items).and_return(:true)
+     @server_instance.stub(:parse_publish_settings_file)
   end
 
     it "should display only Name and OS columns." do
