@@ -39,7 +39,6 @@ before do
     @server_instance.stub(:sleep).and_return(0)
     @server_instance.stub(:puts)
     @server_instance.stub(:print)
-    @server_instance.stub(:parse_publish_settings_file)
 end
 
 def test_params(testxml, chef_config, role_name, host_name)

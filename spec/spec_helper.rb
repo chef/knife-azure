@@ -28,11 +28,14 @@ end
 Chef::Log.init(tmpFile('debug.log'), 'daily')
 Chef::Log.level=:debug
 
+RSpec.configure do |c|
+  c.before(:each) { Chef::Config[:knife].each do |key, value| Chef::Config[:knife].delete(key) end }
+end
+
 TEST_PARAMS = {
   :azure_subscription_id => "YOUR_SUBSCRIPTION_ID_HERE",
   :azure_mgmt_cert => "AzureLinuxCert.pem",
   :azure_api_host_name => "management-preview.core.windows-int.net",
-  :service_name => "hostedservices"
 }
 
 module AzureSpecHelper

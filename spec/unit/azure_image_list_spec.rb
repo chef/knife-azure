@@ -5,8 +5,6 @@ describe Chef::Knife::AzureImageList do
   include AzureSpecHelper
   include QueryAzureMock
   before do
-    setup_query_azure_mock
-
     @server_instance = Chef::Knife::AzureImageList.new
       {
         :azure_subscription_id => 'azure_subscription_id',
