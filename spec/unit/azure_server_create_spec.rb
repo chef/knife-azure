@@ -97,7 +97,6 @@ describe "parameter test:" do
 			Chef::Config[:knife][:bootstrap_protocol] = 'ssh'
 			Chef::Config[:knife][:ssh_password] = 'ssh_password'
 			Chef::Config[:knife][:ssh_user] = 'ssh_user'
-			# Chef::Config[:knife][:azure_dns_name] = 'vm002'
 			Chef::Config[:knife].delete(:azure_vm_name)
 			Chef::Config[:knife].delete(:azure_storage_account)
 			@bootstrap = Chef::Knife::Bootstrap.new
