@@ -42,9 +42,16 @@ class Azure
       deployName
     end
     def create(params)
-      unless params[:azure_connect_to_existing_dns]
+      if params[:azure_connect_to_existing_dns]
         unless @connection.hosts.exists(params[:azure_dns_name])
-          @connection.hosts.create(params)
+          Chef::Log.fatal 'The specified Azure DNS Name does not exist.'
+          exit 1
+        end
+      else
+        ret_val = @connection.hosts.create(params)
+        if ret_val.css('Error Code').length > 0
+          Chef::Log.fatal 'Unable to create DNS:' + ret_val.at_css('Error Code').content + ' : ' + ret_val.at_css('Error Message').content
+          exit 1
         end
       end
       unless @connection.storageaccounts.exists(params[:azure_storage_account])
@@ -104,7 +111,7 @@ class Azure
       builder = Nokogiri::XML::Builder.new do |xml|
         xml.Deployment(
           'xmlns'=>'http://schemas.microsoft.com/windowsazure',
-          'xmlns:i'=>'http://www.w3.org/2001/XMLSchema-instance' 
+          'xmlns:i'=>'http://www.w3.org/2001/XMLSchema-instance'
         ) {
           xml.Name params['deploy_name']
           xml.DeploymentSlot 'Production'
@@ -117,7 +124,7 @@ class Azure
     end
     def create(params, deployXML)
       servicecall = "hostedservices/#{params[:azure_dns_name]}/deployments"
-      @connection.query_azure(servicecall, "post", deployXML.to_xml) 
+      @connection.query_azure(servicecall, "post", deployXML.to_xml)
     end
   end
 end
