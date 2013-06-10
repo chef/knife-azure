@@ -24,7 +24,7 @@ before do
 		:azure_service_location => 'West Europe',
 		:azure_source_image => 'SUSE__SUSE-Linux-Enterprise-Server-11SP2-20120521-en-us-30GB.vhd',
 		:azure_dns_name => 'service001',
-		:azure_vm_name => 'vm01',
+		:azure_vm_name => 'vm002',
 		:azure_storage_account => 'ka001testeurope',
 		:azure_vm_size => 'Small'
     }.each do |key, value|
@@ -97,7 +97,7 @@ describe "parameter test:" do
 			Chef::Config[:knife][:bootstrap_protocol] = 'ssh'
 			Chef::Config[:knife][:ssh_password] = 'ssh_password'
 			Chef::Config[:knife][:ssh_user] = 'ssh_user'
-			Chef::Config[:knife][:azure_dns_name] = 'vm01'
+			# Chef::Config[:knife][:azure_dns_name] = 'vm002'
 			Chef::Config[:knife].delete(:azure_vm_name)
 			Chef::Config[:knife].delete(:azure_storage_account)
 			@bootstrap = Chef::Knife::Bootstrap.new
@@ -107,8 +107,9 @@ describe "parameter test:" do
 
 		it "quick create" do
 			@server_instance.should_receive(:is_image_windows?).at_least(:twice).and_return(false)
+			Chef::Config[:knife][:azure_dns_name] = 'vmname' # service name to be used as vm name
 			@server_instance.run
-			@server_instance.config[:azure_vm_name].should == "vm01"
+			@server_instance.config[:azure_vm_name].should == "vmname"
 			testxml = Nokogiri::XML(@receivedXML)
 			xml_content(testxml, 'MediaLink').should_not == nil
 			test_params(testxml, Chef::Config[:knife], Chef::Config[:knife][:azure_dns_name],
@@ -118,7 +119,7 @@ describe "parameter test:" do
 		it "advanced create" do
 			# set all params
 			Chef::Config[:knife][:azure_dns_name] = 'service001'
-			Chef::Config[:knife][:azure_vm_name] = 'vm01'
+			Chef::Config[:knife][:azure_vm_name] = 'vm002'
 			Chef::Config[:knife][:azure_storage_account] = 'ka001testeurope'
 			Chef::Config[:knife][:azure_os_disk_name] = 'os-disk'
 			@server_instance.run
@@ -143,7 +144,7 @@ describe "for bootstrap protocol winrm:" do
 		@server_params[:admin_password].should == 'winrm_password'
 		@server_params[:bootstrap_proto].should == 'winrm'
 		@server_params[:azure_dns_name].should == 'service001'
-		@server_params[:azure_vm_name].should == 'vm01'
+		@server_params[:azure_vm_name].should == 'vm002'
 		@server_params[:port].should == '5985'
 	end
 
@@ -158,7 +159,7 @@ describe "for bootstrap protocol winrm:" do
 			Chef::Config[:knife].delete(:azure_storage_account)
 			@server_instance.should_receive(:is_image_windows?).at_least(:twice).and_return(true)
 			@server_instance.run
-			@server_instance.config[:azure_storage_account].should match(/\Avm01/)
+			@server_instance.config[:azure_storage_account].should match(/\Avm002/)
 		end
 
 		it "sets param <azure_storage_account> from storage name" do
@@ -204,7 +205,7 @@ describe "for bootstrap protocol ssh:" do
 			@server_params[:ssh_user].should == 'ssh_user'
 			@server_params[:bootstrap_proto].should == 'ssh'
 			@server_params[:azure_dns_name].should == 'service001'
-			@server_params[:azure_vm_name].should == 'vm01'
+			@server_params[:azure_vm_name].should == 'vm002'
 			@server_params[:port].should == '22'
 		end
 
