@@ -405,12 +405,12 @@ class Chef
         # If user is connecting a new VM to an existing dns, then
         # the VM needs to have a unique public port. Logic below takes care of this.
         if !is_image_windows? or locate_config_value(:bootstrap_protocol) == 'ssh'
-          port = locate_config_value(:ssh_port)
+          port = '22' || locate_config_value(:ssh_port)
           if locate_config_value(:azure_connect_to_existing_dns) && (port == '22')
              port = Random.rand(64000) + 1000
           end
         else
-          port = locate_config_value(:winrm_port)
+          port = '5985' || locate_config_value(:winrm_port)
           if locate_config_value(:azure_connect_to_existing_dns) && (port == '5985')
               port = Random.rand(64000) + 1000
           end

@@ -18,7 +18,7 @@ before do
 	@server_instance = Chef::Knife::AzureServerCreate.new
 
 	{
-   		:azure_subscription_id => 'azure_subscription_id',
+   	:azure_subscription_id => 'azure_subscription_id',
 		:azure_mgmt_cert => 'AzureLinuxCert.pem',
 		:azure_api_host_name => 'preview.core.windows-int.net',
 		:azure_service_location => 'West Europe',

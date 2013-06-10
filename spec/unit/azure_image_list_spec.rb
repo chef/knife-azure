@@ -1,27 +1,23 @@
 require File.expand_path(File.dirname(__FILE__) + '/../spec_helper')
 require File.expand_path(File.dirname(__FILE__) + '/../unit/query_azure_mock')
 
-describe "knife azure " do
+describe Chef::Knife::AzureImageList do
   include AzureSpecHelper
   include QueryAzureMock
-  before 'setup connection' do
+  before do
     setup_query_azure_mock
-  end
 
-  context 'image list' do
-
-  before(:each) do
     @server_instance = Chef::Knife::AzureImageList.new
       {
         :azure_subscription_id => 'azure_subscription_id',
         :azure_mgmt_cert => 'AzureLinuxCert.pem',
-        :azure_host_name => 'preview.core.windows-int.net',
-        :role_name => 'vm01',
-        :service_location => 'service_location',
-        :source_image => 'source_image',
-        :role_size => 'role_size',
-        :hosted_service_name => 'service001',
-        :storage_account => 'ka001testeurope'
+        :azure_api_host_name => 'preview.core.windows-int.net',
+        :azure_service_location => 'West Europe',
+        :azure_source_image => 'SUSE__SUSE-Linux-Enterprise-Server-11SP2-20120521-en-us-30GB.vhd',
+        :azure_dns_name => 'service001',
+        :azure_vm_name => 'vm01',
+        :azure_storage_account => 'ka001testeurope',
+        :azure_vm_size => 'Small'
         }.each do |key, value|
       Chef::Config[:knife][key] = value
     end
@@ -43,7 +39,7 @@ describe "knife azure " do
       @server_instance.run
     end
 
-    it "--full should display Name , Category, Label and OS columns." do
+    it "should display Name, Category, Label and OS columns when show_all_fields set to true." do
       Chef::Config[:knife][:show_all_fields] = true
       @server_instance.h.should_receive(:list).
           with(["Name", "Category", "Label", "OS",
@@ -64,5 +60,5 @@ describe "knife azure " do
           "SUSE", "OpenSUSE64-12.1-Beta", "Linux"], :uneven_columns_across, 4)
       @server_instance.run
     end
-  end
+
 end
