@@ -5,11 +5,11 @@ describe Chef::Knife::AzureServerDelete do
 include AzureSpecHelper
 include QueryAzureMock
 
-before do    
+before do
 	@server_instance = Chef::Knife::AzureServerDelete.new
 
 	{
-   		:azure_subscription_id => 'azure_subscription_id',
+   	:azure_subscription_id => 'azure_subscription_id',
 		:azure_mgmt_cert => 'AzureLinuxCert.pem',
 		:azure_api_host_name => 'preview.core.windows-int.net',
 		:name => 'vm01',
@@ -23,14 +23,13 @@ before do
     end
 
 	stub_query_azure (@server_instance.connection)
-	
+
 	@server_instance.stub(:confirm).and_return(:true)
 
 	@server_instance.stub(:puts)
     @server_instance.stub(:print)
     @server_instance.ui.stub(:warn)
     @server_instance.ui.should_not_receive(:error).and_call_original
-    @server_instance.stub(:parse_publish_settings_file)
 end
 
 	it "server delete test" do

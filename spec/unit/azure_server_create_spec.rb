@@ -18,7 +18,7 @@ before do
 	@server_instance = Chef::Knife::AzureServerCreate.new
 
 	{
-   		:azure_subscription_id => 'azure_subscription_id',
+   	:azure_subscription_id => 'azure_subscription_id',
 		:azure_mgmt_cert => 'AzureLinuxCert.pem',
 		:azure_api_host_name => 'preview.core.windows-int.net',
 		:azure_service_location => 'West Europe',
@@ -39,7 +39,6 @@ before do
     @server_instance.stub(:sleep).and_return(0)
     @server_instance.stub(:puts)
     @server_instance.stub(:print)
-    @server_instance.stub(:parse_publish_settings_file)
 end
 
 def test_params(testxml, chef_config, role_name, host_name)
