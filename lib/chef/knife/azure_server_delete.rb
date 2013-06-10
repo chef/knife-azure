@@ -32,8 +32,8 @@ class Chef
 
       banner "knife azure server delete SERVER [SERVER] (options)"
 
-      option :preserve_azure_os_disk_name,
-        :long => "--preserve-azure-os-disk-name",
+      option :preserve_azure_os_disk,
+        :long => "--preserve-azure-os-disk",
         :boolean => true,
         :default => false,
         :description => "Preserve corresponding OS Disk"
@@ -82,7 +82,7 @@ class Chef
       end
 
       def validate_disk_and_storage
-         if locate_config_value(:preserve_azure_os_disk_name) && locate_config_value(:delete_azure_storage_account)
+         if locate_config_value(:preserve_azure_os_disk) && locate_config_value(:delete_azure_storage_account)
             ui.warn("Cannot delete storage account while keeping OS Disk. Please set any one option.")
             exit
           else
@@ -118,7 +118,7 @@ class Chef
               exit!
             end
 
-            connection.roles.delete(name, params = { :preserve_azure_os_disk_name => locate_config_value(:preserve_azure_os_disk_name),
+            connection.roles.delete(name, params = { :preserve_azure_os_disk => locate_config_value(:preserve_azure_os_disk),
                                                      :preserve_azure_dns_name => locate_config_value(:preserve_azure_dns_name),
                                                      :azure_dns_name => server.hostedservicename,
                                                      :delete_azure_storage_account => locate_config_value(:delete_azure_storage_account) })
