@@ -10,7 +10,7 @@ describe "roles" do
   context 'delete a role' do
     context 'when the role is not the only one in a deployment' do
       it 'should pass in correct name, verb, and body' do
-        @connection.roles.delete('vm002', {:preserve_azure_os_disk_name => true});
+        @connection.roles.delete('vm002', {:preserve_azure_os_disk => true});
         @deletename.should == 'hostedservices/service001/deployments/deployment001/roles/vm002'
         @deleteverb.should == 'delete'
         @deletebody.should == nil
@@ -20,7 +20,7 @@ describe "roles" do
   context 'delete a role' do
     context 'when the role is the only one in a deployment' do
       it 'should pass in correct name, verb, and body' do
-        @connection.roles.delete('vm01', {:preserve_azure_os_disk_name => true});
+        @connection.roles.delete('vm01', {:preserve_azure_os_disk => true});
         @deletename.should == 'hostedservices/service002/deployments/testrequest'
         @deleteverb.should == 'delete'
         @deletebody.should == nil

@@ -61,7 +61,7 @@ end
 		@server_instance.name_args = [test_hostname]
 
 		Chef::Config[:knife][:azure_dns_name] = 'service001'
-		Chef::Config[:knife][:preserve_azure_os_disk_name] = true
+		Chef::Config[:knife][:preserve_azure_os_disk] = true
 
 		@server_instance.connection.roles.should_receive(:delete).and_call_original
 
@@ -76,7 +76,7 @@ end
 		@server_instance.name_args = test_hostnames
 
 		Chef::Config[:knife][:azure_dns_name] = 'service001'
-		Chef::Config[:knife][:preserve_azure_os_disk_name] = true
+		Chef::Config[:knife][:preserve_azure_os_disk] = true
 
 		@server_instance.connection.roles.should_receive(:delete).exactly(3).times.and_call_original
 
@@ -88,18 +88,18 @@ end
 		@server_instance.run
 	end
 
-	it "should preserve OS Disk when --preserve-azure-os-disk-name is set." do
+	it "should preserve OS Disk when --preserve-azure-os-disk is set." do
 		test_hostname = 'role002'
 		test_diskname = 'disk1'
 		@server_instance.name_args = [test_hostname]
-		Chef::Config[:knife][:preserve_azure_os_disk_name] = true
+		Chef::Config[:knife][:preserve_azure_os_disk] = true
 		@server_instance.connection.roles.should_receive(:delete).exactly(:once).and_call_original
 		@server_instance.connection.should_receive(:query_azure).with("hostedservices/#{Chef::Config[:knife][:azure_dns_name]}/deployments/deployment001/roles/#{test_hostname}", "delete").exactly(:once)
 		@server_instance.connection.should_not_receive(:query_azure).with("disks/#{test_diskname}", "delete")
 		@server_instance.run
 	end
 
-	it "should delete OS Disk when --preserve-azure-os-disk-name is not set." do
+	it "should delete OS Disk when --preserve-azure-os-disk is not set." do
 		test_hostname = 'role001'
 		test_diskname = 'deployment001-role002-0-201241722728'
 		@server_instance.name_args = [test_hostname]
@@ -128,9 +128,9 @@ end
 		end
   end
 
-	it "should give a warning and exit when both --preserve-azure-os-disk-name and --delete-azure-storage-account are set." do
+	it "should give a warning and exit when both --preserve-azure-os-disk and --delete-azure-storage-account are set." do
 		test_hostname = 'role001'
-		Chef::Config[:knife][:preserve_azure_os_disk_name] = true
+		Chef::Config[:knife][:preserve_azure_os_disk] = true
 		Chef::Config[:knife][:delete_azure_storage_account] = true
 		@server_instance.name_args = [test_hostname]
 		test_storage_account = 'auxpreview104imagestore'
@@ -142,7 +142,7 @@ end
 	end
 
 	after(:each) do
-		Chef::Config[:knife][:preserve_azure_os_disk_name] = false if Chef::Config[:knife][:preserve_azure_os_disk_name] #cleanup config for each run
+		Chef::Config[:knife][:preserve_azure_os_disk] = false if Chef::Config[:knife][:preserve_azure_os_disk] #cleanup config for each run
 		Chef::Config[:knife][:delete_azure_storage_account] = false if Chef::Config[:knife][:delete_azure_storage_account]
 	end
 end
