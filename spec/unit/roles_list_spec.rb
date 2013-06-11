@@ -12,7 +12,7 @@ describe "roles" do
     roles.each do |role|
       role.name.should_not be_nil
     end
-    roles.length.should == 4
+    roles.length.should == 5
   end
   specify {@connection.roles.exists('vm01').should == true}
   specify {@connection.roles.exists('vm002').should == true}
