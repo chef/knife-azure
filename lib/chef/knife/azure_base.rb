@@ -125,9 +125,18 @@ class Chef
         begin
           doc = Nokogiri::XML(File.open(find_file(filename)))
           profile = doc.at_css("PublishProfile")
-          management_cert = OpenSSL::PKCS12.new(Base64.decode64(profile.attribute("ManagementCertificate").value))
+          subscription = profile.at_css("Subscription")
+          #check given PublishSettings XML file format.Currently PublishSettings file have two different XML format
+          if profile.attribute("SchemaVersion").nil?
+            management_cert = OpenSSL::PKCS12.new(Base64.decode64(profile.attribute("ManagementCertificate").value))
+            Chef::Config[:knife][:azure_api_host_name] = URI(profile.attribute("Url").value).host
+          elsif profile.attribute("SchemaVersion").value == "2.0"
+            management_cert = OpenSSL::PKCS12.new(Base64.decode64(subscription.attribute("ManagementCertificate").value))
+            Chef::Config[:knife][:azure_api_host_name] = URI(subscription.attribute("ServiceManagementUrl").value).host
+          else
+            ui.error("Publish settings file Schema not supported - " + filename)
+          end
           Chef::Config[:knife][:azure_mgmt_cert] = management_cert.certificate.to_pem + management_cert.key.to_pem
-          Chef::Config[:knife][:azure_api_host_name] = URI(profile.attribute("Url").value).host
           Chef::Config[:knife][:azure_subscription_id] = doc.at_css("Subscription").attribute("Id").value
         rescue
           ui.error("Incorrect publish settings file - " + filename)
