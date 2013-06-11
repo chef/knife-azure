@@ -188,12 +188,12 @@ Sample knife.rb for bootstrapping Windows Node with basic authentication
 The plugin also provides the following Knife subcommands. Specific command options can be found by invoking the subcommand with a --help flag
 
 ===Azure Server Delete subcommand
-Deletes an existing server(role) in the currently configured Azure account. By default, this does not delete the associated node and client objects from the Chef server. To do so, add the --purge flag. Also by default, the DNS / hosted service is deleted if you are deleting the last VM from that service. By default, the OS disk is also deleted. If you want to retain them add the --preserve flag as shown below. To delete the storage account, add the --purge-azure-storage-account flag as by default the storage account is not deleted.
+Deletes an existing server(role) in the currently configured Azure account. By default, this does not delete the associated node and client objects from the Chef server. To do so, add the --purge flag. Also by default, the DNS / hosted service is deleted if you are deleting the last VM from that service. By default, the OS disk is also deleted. If you want to retain them add the --preserve flag as shown below. To delete the storage account, add the --delete-azure-storage-account flag as by default the storage account is not deleted.
       knife azure server delete "myvm01"
       knife azure server delete "myvm01" --purge  #purge chef node
-      knife azure server delete "myvm01" --preserve-os-disk
+      knife azure server delete "myvm01" --preserve-azure-os-disk
       knife azure server delete "myvm01" --preserve-azure-dns-name
-      knife azure server delete "myvm01" --purge-azure-storage-account
+      knife azure server delete "myvm01" --delete-azure-storage-account
 Since the VM name can be same across deployments, you can specify the deployment name also to delete the VM. Sample command to delete a VM from a specific deployment:
       knife azure server delete "myvm01" --azure-dns-name "myservice"
       knife azure server delete "myvm01" "myvm02" --azure-dns-name "myservice"
