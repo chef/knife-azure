@@ -180,7 +180,7 @@ class Chef
 
       option :azure_subnet_name,
         :long => "--azure-subnet-name SUBNET_NAME",
-        :description => "Optional, specify the subnet of virtual machine"
+        :description => "Optional. Specifies the subnet of virtual machine"
 
 
       def strip_non_ascii(string)
