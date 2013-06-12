@@ -132,7 +132,7 @@ class Chef
         :long => "--azure-dns-name DNS_NAME",
         :description => "Required. The DNS prefix name that can be used to access the cloud service which is unique within Windows Azure.
                                       If you want to add new VM to an existing service/deployment, specify an exiting dns-name,
-                                      along with --connect-to-existing-dns option.
+                                      along with --azure-connect-to-existing-dns option.
                                       Otherwise a new deployment is created. For example, if the DNS of cloud service is MyService you could access the cloud service
                                       by calling: http://DNS_NAME.cloudapp.net"
 
@@ -165,7 +165,7 @@ class Chef
 
       option :azure_connect_to_existing_dns,
         :short => "-c",
-        :long => "--connect-to-existing-dns",
+        :long => "--azure-connect-to-existing-dns",
         :boolean => true,
         :default => false,
         :description => "Set this flag to add the new VM to an existing deployment/service. Must give the name of the existing
@@ -434,12 +434,12 @@ class Chef
         # If user is connecting a new VM to an existing dns, then
         # the VM needs to have a unique public port. Logic below takes care of this.
         if !is_image_windows? or locate_config_value(:bootstrap_protocol) == 'ssh'
-          port = '22' || locate_config_value(:ssh_port)
+          port = locate_config_value(:ssh_port) || '22'
           if locate_config_value(:azure_connect_to_existing_dns) && (port == '22')
              port = Random.rand(64000) + 1000
           end
         else
-          port = '5985' || locate_config_value(:winrm_port)
+          port = locate_config_value(:winrm_port) || '5985'
           if locate_config_value(:azure_connect_to_existing_dns) && (port == '5985')
               port = Random.rand(64000) + 1000
           end
