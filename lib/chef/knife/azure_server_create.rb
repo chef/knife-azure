@@ -178,6 +178,15 @@ class Chef
         :long => "--identity-file-passphrase PASSWORD",
         :description => "SSH key passphrase. Optional, specify if passphrase for identity-file exists"
 
+      option :hint,
+        :long => "--hint HINT_NAME[=HINT_FILE]",
+        :description => "Specify Ohai Hint to be set on the bootstrap target.  Use multiple --hint options to specify multiple hints.",
+        :proc => Proc.new { |h|
+           Chef::Config[:knife][:hints] ||= {}
+           name, path = h.split("=")
+           Chef::Config[:knife][:hints][name] = path ? JSON.parse(::File.read(path)) : Hash.new
+        }
+
       def strip_non_ascii(string)
         string.gsub(/[^0-9a-z ]/i, '')
       end
@@ -306,13 +315,29 @@ class Chef
         end
       end
 
-      def bootstrap_common_params(bootstrap)
+      def load_cloud_attributes_in_hints(server)
+        # Modify global configuration state to ensure hint gets set by knife-bootstrap
+        # Query azure and load necessary attributes.
+        cloud_attributes = {}
+        cloud_attributes["public_ip"] = server.publicipaddress
+        cloud_attributes["vm_name"] = server.name
+        cloud_attributes["public_fqdn"] = server.hostedservicename.to_s + ".cloudapp.net"
+        cloud_attributes["public_ssh_port"] = server.sshport if server.sshport
+        cloud_attributes["public_winrm_port"] = server.winrmport if server.winrmport
+
+        Chef::Config[:knife][:hints] ||= {}
+        Chef::Config[:knife][:hints]["azure"] ||= cloud_attributes
+
+      end
+
+      def bootstrap_common_params(bootstrap, server)
 
         bootstrap.config[:run_list] = config[:run_list]
         bootstrap.config[:prerelease] = config[:prerelease]
         bootstrap.config[:bootstrap_version] = locate_config_value(:bootstrap_version)
         bootstrap.config[:distro] = locate_config_value(:distro)
         bootstrap.config[:template_file] = locate_config_value(:template_file)
+        load_cloud_attributes_in_hints(server)
         bootstrap
       end
 
@@ -348,7 +373,7 @@ class Chef
         bootstrap.config[:chef_node_name] = config[:chef_node_name] || server.name
         bootstrap.config[:encrypted_data_bag_secret] = config[:encrypted_data_bag_secret]
         bootstrap.config[:encrypted_data_bag_secret_file] = config[:encrypted_data_bag_secret_file]
-        bootstrap_common_params(bootstrap)
+        bootstrap_common_params(bootstrap, server)
       end
 
       def bootstrap_for_node(server,fqdn,port)
@@ -369,6 +394,10 @@ class Chef
         bootstrap.config[:environment] = locate_config_value(:environment)
         # may be needed for vpc_mode
         bootstrap.config[:host_key_verify] = config[:host_key_verify]
+
+        # Load cloud attributes.
+        load_cloud_attributes_in_hints(server)
+
         bootstrap
       end
 
