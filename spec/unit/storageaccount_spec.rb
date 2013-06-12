@@ -13,7 +13,6 @@ describe "storageaccounts" do
     specify {@connection.storageaccounts.all.length.should be > 0}
     it "entry fields should not be null" do
       items = @connection.storageaccounts.all
-      puts items.length
       items.each do |storageaccount|
         storageaccount.name.should_not be_nil
       end

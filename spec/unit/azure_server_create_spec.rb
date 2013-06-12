@@ -129,6 +129,56 @@ describe "parameter test:" do
 	end
 end
 
+describe "cloud attributes" do
+	context "WinRM protocol:" do
+		before do
+			@bootstrap = Chef::Knife::BootstrapWindowsWinrm.new
+			Chef::Knife::BootstrapWindowsWinrm.stub(:new).and_return(@bootstrap)
+			@bootstrap.should_receive(:run)
+			@server_instance.should_receive(:is_image_windows?).any_number_of_times.and_return(true)
+			Chef::Config[:knife][:bootstrap_protocol] = 'winrm'
+			Chef::Config[:knife][:winrm_password] = 'winrm_password'
+			Chef::Config[:knife][:azure_dns_name] = 'service004'
+			Chef::Config[:knife][:azure_vm_name] = 'winrm-vm'
+			Chef::Config[:knife][:hints] = nil # reset as this is loaded only once for app(test here)
+			@server_instance.run
+		end
+
+		it "should set the cloud attributes in hints" do
+			cloud_attributes = Chef::Config[:knife][:hints]["azure"]
+			cloud_attributes["public_ip"].should == "65.52.249.191"
+			cloud_attributes["vm_name"].should == "winrm-vm"
+			cloud_attributes["public_fqdn"].should == "service004.cloudapp.net"
+			cloud_attributes["public_ssh_port"].should be_nil
+			cloud_attributes["public_winrm_port"].should == "5985"
+		end
+	end
+	context "SSH protocol:" do
+		before do
+			@bootstrap = Chef::Knife::Bootstrap.new
+			Chef::Knife::Bootstrap.stub(:new).and_return(@bootstrap)
+			@bootstrap.should_receive(:run)
+			@server_instance.should_receive(:is_image_windows?).any_number_of_times.and_return(false)
+			Chef::Config[:knife][:bootstrap_protocol] = 'ssh'
+			Chef::Config[:knife][:ssh_password] = 'ssh_password'
+			Chef::Config[:knife][:ssh_user] = 'ssh_user'
+			Chef::Config[:knife][:azure_dns_name] = 'service004'
+			Chef::Config[:knife][:azure_vm_name] = 'ssh-vm'
+			Chef::Config[:knife][:hints] = nil # reset as this is loaded only once for app(test here)
+			@server_instance.run
+		end
+
+		it "should set the cloud attributes in hints" do
+			cloud_attributes = Chef::Config[:knife][:hints]["azure"]
+			cloud_attributes["public_ip"].should == "65.52.251.57"
+			cloud_attributes["vm_name"].should == "ssh-vm"
+			cloud_attributes["public_fqdn"].should == "service004.cloudapp.net"
+			cloud_attributes["public_ssh_port"].should  == "22"
+			cloud_attributes["public_winrm_port"].should be_nil
+		end
+	end
+end
+
 describe "for bootstrap protocol winrm:" do
 	before do
 		Chef::Config[:knife][:bootstrap_protocol] = 'winrm'
@@ -182,6 +232,7 @@ describe "for bootstrap protocol ssh:" do
 
 	context "windows instance:" do
 		it "successful bootstrap" do
+			pending "OC-8384-support ssh for windows vm's in knife-azure"
 			@server_instance.should_receive(:is_image_windows?).exactly(3).times.and_return(true)
 			@bootstrap = Chef::Knife::BootstrapWindowsSsh.new
 		   	Chef::Knife::BootstrapWindowsSsh.stub(:new).and_return(@bootstrap)

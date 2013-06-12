@@ -26,7 +26,9 @@ include AzureSpecHelper
         role.status.should_not be_nil
         role.size.should_not be_nil
         role.ipaddress.should_not be_nil
-        role.sshport.should_not be_nil
+        # We either have ssh port or winrm port on a role
+        role.winrmport.should_not be_nil if role.sshport.nil?
+        role.sshport.should_not be_nil if role.winrmport.nil?
         role.publicipaddress.should_not be_nil
       end
     end
