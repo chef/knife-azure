@@ -21,7 +21,7 @@ describe Chef::Knife::AzureImageList do
     end
     stub_query_azure (@server_instance.connection)
     @server_instance.stub(:items).and_return(:true)
-     @server_instance.stub(:parse_publish_settings_file)
+    @server_instance.stub(:puts)
   end
 
     it "should display only Name and OS columns." do
