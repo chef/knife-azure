@@ -110,30 +110,30 @@ class Chef
       option :azure_storage_account,
         :short => "-a NAME",
         :long => "--azure-storage-account NAME",
-        :description => "Required for advanced server-create option. 
-                                      A name for the storage account that is unique within Windows Azure. Storage account names must be 
-                                      between 3 and 24 characters in length and use numbers and lower-case letters only. 
-                                      This name is the DNS prefix name and can be used to access blobs, queues, and tables in the storage account. 
+        :description => "Required for advanced server-create option.
+                                      A name for the storage account that is unique within Windows Azure. Storage account names must be
+                                      between 3 and 24 characters in length and use numbers and lower-case letters only.
+                                      This name is the DNS prefix name and can be used to access blobs, queues, and tables in the storage account.
                                       For example: http://ServiceName.blob.core.windows.net/mycontainer/"
 
       option :azure_vm_name,
         :long => "--azure-vm-name NAME",
-        :description => "Required for advanced server-create option. 
+        :description => "Required for advanced server-create option.
                                       Specifies the name for the virtual machine. The name must be unique within the deployment."
 
       option :azure_service_location,
         :short => "-m LOCATION",
         :long => "--azure-service-location LOCATION",
-        :description => "Required. Specifies the geographic location - the name of the data center location that is valid for your subscription. 
+        :description => "Required. Specifies the geographic location - the name of the data center location that is valid for your subscription.
                                       Eg: West US, East US, East Asia, Southeast Asia, North Europe, West Europe"
 
       option :azure_dns_name,
         :short => "-d DNS_NAME",
         :long => "--azure-dns-name DNS_NAME",
-        :description => "Required. The DNS prefix name that can be used to access the cloud service which is unique within Windows Azure. 
-                                      If you want to add new VM to an existing service/deployment, specify an exiting dns-name, 
+        :description => "Required. The DNS prefix name that can be used to access the cloud service which is unique within Windows Azure.
+                                      If you want to add new VM to an existing service/deployment, specify an exiting dns-name,
                                       along with --connect-to-existing-dns option.
-                                      Otherwise a new deployment is created. For example, if the DNS of cloud service is MyService you could access the cloud service 
+                                      Otherwise a new deployment is created. For example, if the DNS of cloud service is MyService you could access the cloud service
                                       by calling: http://DNS_NAME.cloudapp.net"
 
       option :azure_os_disk_name,
@@ -411,19 +411,15 @@ class Chef
         # If user is connecting a new VM to an existing dns, then
         # the VM needs to have a unique public port. Logic below takes care of this.
         if !is_image_windows? or locate_config_value(:bootstrap_protocol) == 'ssh'
-          port = locate_config_value(:ssh_port)
-          if locate_config_value(:azure_connect_to_existing_dns) and (port.nil? or port == 22)
+          port = '22' || locate_config_value(:ssh_port)
+          if locate_config_value(:azure_connect_to_existing_dns) && (port == '22')
              port = Random.rand(64000) + 1000
-          else
-            port = '22'
           end
         else
-          port = locate_config_value(:winrm_port)
-          if locate_config_value(:azure_connect_to_existing_dns) and (port.nil? or port == 5985)
+          port = '5985' || locate_config_value(:winrm_port)
+          if locate_config_value(:azure_connect_to_existing_dns) && (port == '5985')
               port = Random.rand(64000) + 1000
-          else
-            port = '5985'
-          end          
+          end
         end
         server_def[:port] = port
 
@@ -433,7 +429,7 @@ class Chef
             ui.error("WinRM Password and Bootstrapping Protocol are compulsory parameters")
           end
           server_def[:admin_password] = locate_config_value(:winrm_password)
-          server_def[:bootstrap_proto] = locate_config_value(:bootstrap_protocol)          
+          server_def[:bootstrap_proto] = locate_config_value(:bootstrap_protocol)
         else
           server_def[:os_type] = 'Linux'
           server_def[:bootstrap_proto] = 'ssh'
@@ -441,11 +437,11 @@ class Chef
             ui.error("SSH User is compulsory parameter")
             exit 1
           end
-          unless locate_config_value(:ssh_password) or locate_config_value(:identity_file) 
+          unless locate_config_value(:ssh_password) or locate_config_value(:identity_file)
               ui.error("Specify either SSH Key or SSH Password")
               exit 1
           end
-          
+
           server_def[:ssh_user] = locate_config_value(:ssh_user)
           server_def[:ssh_password] = locate_config_value(:ssh_password)
           server_def[:identity_file] = locate_config_value(:identity_file)
@@ -456,4 +452,4 @@ class Chef
     end
   end
 end
- 
+

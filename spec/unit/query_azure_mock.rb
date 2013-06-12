@@ -28,11 +28,13 @@ module QueryAzureMock
       if verb == 'get' || verb == nil
         retval = ''
         if name == 'images'
-          retval = Nokogiri::XML readFile('list_images.xml') 
+          retval = Nokogiri::XML readFile('list_images.xml')
         elsif name == 'disks'
-          retval = Nokogiri::XML readFile('list_disks.xml') 
+          retval = Nokogiri::XML readFile('list_disks.xml')
+        elsif name == 'disks/deployment001-role002-0-201241722728'
+          retval = Nokogiri::XML readFile('list_disks_for_role002.xml')
         elsif name == 'hostedservices'
-          retval = Nokogiri::XML readFile('list_hosts.xml') 
+          retval = Nokogiri::XML readFile('list_hosts.xml')
         elsif name == 'hostedservices/service001/deploymentslots/Production'
           retval = Nokogiri::XML readFile('list_deployments_for_service001.xml')
         elsif name == 'hostedservices/service001/deployments/deployment001/roles/role001'
@@ -43,6 +45,8 @@ module QueryAzureMock
           retval = Nokogiri::XML readFile('list_deployments_for_service002.xml')
         elsif name == 'hostedservices/service003/deploymentslots/Production'
           retval = Nokogiri::XML readFile('list_deployments_for_service003.xml')
+        elsif name == 'hostedservices/vmname/deploymentslots/Production'
+          retval = Nokogiri::XML readFile('list_deployments_for_vmname.xml')
         elsif name == 'storageservices'
           retval = Nokogiri::XML readFile('list_storageaccounts.xml')
         else
@@ -62,6 +66,10 @@ module QueryAzureMock
           retval = Nokogiri::XML readFile('post_success.xml')
           @receivedXML = body
         elsif name =~ /hostedservices\/vm01.*\/deployments/
+          retval = Nokogiri::XML readFile('post_success.xml')
+          @receivedXML = body
+        elsif name =~ /hostedservices\/vmname\/deployments/
+          # Case when vm name and service name are same.
           retval = Nokogiri::XML readFile('post_success.xml')
           @receivedXML = body
         else
