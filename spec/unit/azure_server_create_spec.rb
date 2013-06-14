@@ -385,7 +385,7 @@ describe "for bootstrap protocol ssh:" do
 
 	context "windows instance:" do
 		it "successful bootstrap" do
-			pending "OC-8384-support ssh for windows vm's in knife-azure"
+			#pending "OC-8384-support ssh for windows vm's in knife-azure"
 			@server_instance.should_receive(:is_image_windows?).exactly(3).times.and_return(true)
 			@bootstrap = Chef::Knife::BootstrapWindowsSsh.new
 		   	Chef::Knife::BootstrapWindowsSsh.stub(:new).and_return(@bootstrap)

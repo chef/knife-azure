@@ -492,10 +492,6 @@ class Chef
 
         if is_image_windows?
           server_def[:os_type] = 'Windows'
-          if not locate_config_value(:winrm_password) or not locate_config_value(:bootstrap_protocol)
-            ui.error("WinRM Password and Bootstrapping Protocol are compulsory parameters")
-            exit 1
-          end
           # We can specify the AdminUsername after API version 2013-03-01. However, in this API version,
           # the AdminUsername is a required parameter.
           # Also, the user name cannot be Administrator, Admin, Admin1 etc, for enhanced security (provided by Azure)
@@ -505,6 +501,19 @@ class Chef
           end
           server_def[:admin_password] = locate_config_value(:winrm_password)
           server_def[:bootstrap_proto] = locate_config_value(:bootstrap_protocol)
+          if locate_config_value(:bootstrap_protocol) == 'winrm'
+            unless locate_config_value(:winrm_password)
+              ui.error("WinRM Password is compulsory parameter")
+              exit 1
+            end
+            server_def[:admin_password] = locate_config_value(:winrm_password)
+          else
+            unless locate_config_value(:ssh_password)
+              ui.error("SSH Password is compulsory parameter for windows image")
+              exit 1
+            end
+            server_def[:admin_password] = locate_config_value(:ssh_password)
+          end
         else
           server_def[:os_type] = 'Linux'
           server_def[:bootstrap_proto] = 'ssh'
