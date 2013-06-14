@@ -80,7 +80,7 @@ This subcommand provisions a new server in Azure and then performs a Chef bootst
       :azure_dns_name                   Required. The DNS prefix name that can be used to access the cloud
                                         service which is unique within Windows Azure. If you want to add
                                         new VM to an existing service/deployment, specify an exiting
-                                        dns-name, along with --connect-to-existing-dns option. Otherwise
+                                        dns-name, along with --azure-connect-to-existing-dns option. Otherwise
                                         a new deployment is created.
       :azure_service_location           Required. Specifies the geographic location - the name of data
                                         center location that is valid for your subscription.
@@ -131,7 +131,7 @@ To connect to an existing DNS/service, you can use a command as below:
                 --azure-subscription-id 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx'
                 --azure-mgmt-cert '/path/to/your/mgmtCert.pem'
                 --azure-api-host-name 'management.core.windows.net'
-                --connect-to-existing-dns
+                --azure-connect-to-existing-dns
                 --azure-dns-name 'myservice'
                 --azure-vm-name 'myvm02'
                 --azure-service-location 'West US'
