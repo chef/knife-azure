@@ -22,14 +22,16 @@ class Azure
       @connection=connection
     end
     def all
-      images = Array.new
-      response = @connection.query_azure('images')
-      osimages = response.css('OSImage')
-      osimages.each do |image|
-        item = Image.new(image)
-        images << item
+      @images ||= begin
+        images = Array.new
+        response = @connection.query_azure('images')
+        osimages = response.css('OSImage')
+        osimages.each do |image|
+          item = Image.new(image)
+          images << item
+        end
+        images
       end
-      images
     end
     def exists(name)
       imageExists = false
