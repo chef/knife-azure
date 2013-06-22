@@ -21,25 +21,29 @@ class Azure
     def initialize(connection)
       @connection=connection
     end
-    def all
+    def load
       @images ||= begin
-        images = Array.new
+        images = Hash.new
         response = @connection.query_azure('images')
         osimages = response.css('OSImage')
         osimages.each do |image|
           item = Image.new(image)
-          images << item
+          images[item.name] = item
         end
         images
       end
     end
-    def exists(name)
-      imageExists = false
-      self.all.each do |host|
-        next unless host.name == name
-        imageExists = true
-      end
-      imageExists
+
+    def all
+      self.load.values
+    end
+
+    def exists?(name)
+      self.all.key?(name)
+    end
+
+    def find(name)
+      self.load[name]
     end
   end
 end
