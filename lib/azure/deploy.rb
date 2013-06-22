@@ -54,7 +54,7 @@ class Azure
           exit 1
         end
       end
-      unless @connection.storageaccounts.exists(params[:azure_storage_account])
+      unless @connection.storageaccounts.exists?(params[:azure_storage_account])
         @connection.storageaccounts.create(params)
       end
       if params[:identity_file]
