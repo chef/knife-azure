@@ -23,8 +23,8 @@ describe "hosts" do
         host.status.should_not be_nil
       end
     end
-    specify {@connection.hosts.exists("notExpectedName").should == false}
-    specify {@connection.hosts.exists("service001").should == true}
+    specify {@connection.hosts.exists?("notExpectedName").should == false}
+    specify {@connection.hosts.exists?("service001").should == true}
   end
 
   context 'create a new host' do

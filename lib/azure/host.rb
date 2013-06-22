@@ -21,30 +21,52 @@ class Azure
     def initialize(connection)
       @connection=connection
     end
+
+    # force_load should be true when there is something in local cache and we want to reload
+    # first call is always load.
+    def load(force_load = false)
+      if not @hosted_services || force_load
+        @hosted_services = begin
+          hosted_services = Hash.new
+          responseXML = @connection.query_azure('hostedservices')
+          servicesXML = responseXML.css('HostedServices HostedService')
+          servicesXML.each do |serviceXML|
+            host = Host.new(@connection).parse(serviceXML)
+            hosted_services[host.name] = host
+          end
+          hosted_services
+        end
+      end
+      @hosted_services
+    end
+
     def all
-      hosted_services = Array.new
-      responseXML = @connection.query_azure('hostedservices')
-      servicesXML = responseXML.css('HostedServices HostedService')
-      servicesXML.each do |serviceXML|
-        host = Host.new(@connection)
-        hosted_services << host.parse(serviceXML)
-      end
-      hosted_services
+      self.load.values
     end
-    def exists(name)
-      hostExists = false
-      self.all.each do |host|
-        next unless host.name == name
-        hostExists = true
-      end
-      hostExists
+
+    # first look up local cache if we have already loaded list.
+    def exists?(name)
+      return @hosted_services.key?(name) if @hosted_services
+      self.exists_on_cloud?(name)
     end
+
+    # Look up on cloud and not local cache
+    def exists_on_cloud?(name)
+      ret_val = @connection.query_azure("hostedservices/#{name}")
+      if ret_val.nil? || ret_val.css('Error Code').length > 0
+        Chef::Log.warn 'Unable to find hosted(cloud) service:' + ret_val.at_css('Error Code').content + ' : ' + ret_val.at_css('Error Message').content if ret_val
+        false
+      else
+        true
+      end
+    end
+
     def create(params)
       host = Host.new(@connection)
       host.create(params)
     end
     def delete(name)
-      if self.exists name
+      if self.exists?(name)
           servicecall = "hostedservices/" + name
         @connection.query_azure(servicecall, "delete") 
       end
