@@ -1,4 +1,7 @@
+require File.expand_path(File.dirname(__FILE__) + '/../spec_helper')
+
 module QueryAzureMock
+  include AzureUtility
   def setup_query_azure_mock
     create_connection
     stub_query_azure (@connection)
@@ -51,6 +54,19 @@ module QueryAzureMock
           retval = Nokogiri::XML readFile('list_deployments_for_service004.xml')
         elsif name == 'storageservices'
           retval = Nokogiri::XML readFile('list_storageaccounts.xml')
+        elsif name =~ /storageservices\/.*/
+          service_name = /storageservices\/(.*)/.match(name)[1]
+          responseXML = Nokogiri::XML readFile('list_storageaccounts.xml')
+          servicesXML = responseXML.css('StorageServices StorageService')
+          not_found = true
+          servicesXML.each do |serviceXML|
+            if xml_content(serviceXML, 'ServiceName') == service_name
+              not_found = false
+              retval = serviceXML
+              break
+            end
+          end
+          retval = Nokogiri::XML readFile('error_404.xml') if not_found
         else
           Chef::Log.warn 'unknown get value:' + name
         end

@@ -8,6 +8,7 @@ require 'azure/image'
 require 'azure/deploy'
 require 'azure/role'
 require 'azure/disk'
+require 'azure/utility'
 
 require 'chef/knife/azure_server_list'
 require 'chef/knife/azure_server_delete'
