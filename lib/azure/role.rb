@@ -63,16 +63,14 @@ class Azure
       nil
     end
 
-    def alone_on_host(found_role)
-      @roles.each do |role|
-        if (role.name != found_role.name &&
-            role.deployname == found_role.deployname &&
-            role.hostedservicename == found_role.hostedservicename)
-          return false;
-        end
+    def alone_on_hostedservice(found_role)
+      roles = find_roles_within_hostedservice(found_role.hostedservicename)
+      if roles && roles.length > 1
+        return false
       end
-      true
+      return true
     end
+
     def exists(name)
       find(name) != nil
     end
@@ -80,7 +78,7 @@ class Azure
     def delete(name, params)
       role = find(name)
       if role != nil
-        if alone_on_host(role)
+        if alone_on_hostedservice(role)
           servicecall = "hostedservices/#{role.hostedservicename}/deployments" +
           "/#{role.deployname}"
         else
@@ -96,7 +94,8 @@ class Azure
 
         @connection.query_azure(servicecall, "delete")
         # delete role from local cache as well.
-        @roles.delete(role)
+        @connection.hosts.find(role.hostedservicename).delete_role(role)
+        @roles.delete(role) if @roles
 
         unless params[:preserve_azure_dns_name]
           unless params[:azure_dns_name].nil?

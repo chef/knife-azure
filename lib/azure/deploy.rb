@@ -142,5 +142,9 @@ class Azure
       servicecall = "hostedservices/#{params[:azure_dns_name]}/deployments"
       @connection.query_azure(servicecall, "post", deployXML.to_xml)
     end
+    # just delete from local cache
+    def delete_role_if_present(role)
+      @roles.delete_if { |r| r.name == role.name } if @roles
+    end
   end
 end
