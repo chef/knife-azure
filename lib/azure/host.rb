@@ -61,6 +61,23 @@ class Azure
       end
     end
 
+    # first look up local cache if we have already loaded list.
+    def find(name)
+      return @hosted_services[name] if @hosted_services && @hosted_services.key?(name)
+      self.fetch_from_cloud(name)
+    end
+
+    # Look up hosted service on cloud and not local cache
+    def fetch_from_cloud(name)
+      ret_val = @connection.query_azure("hostedservices/#{name}")
+      if ret_val.nil? || ret_val.css('Error Code').length > 0
+        Chef::Log.warn 'Unable to find hosted(cloud) service:' + ret_val.at_css('Error Code').content + ' : ' + ret_val.at_css('Error Message').content if ret_val
+        nil
+      else
+        Host.new(@connection).parse(ret_val)
+      end
+    end
+
     def create(params)
       host = Host.new(@connection)
       host.create(params)
@@ -80,11 +97,11 @@ class Azure
     attr_accessor :connection, :name, :url, :label
     attr_accessor :dateCreated, :description, :location
     attr_accessor :dateModified, :status
-    attr_accessor :deploys
 
     def initialize(connection)
       @connection = connection
-      @deploys = []
+      @deploys_loaded = false
+      @deploys = Hash.new
     end
     def parse(serviceXML)
       @name = xml_content(serviceXML, 'ServiceName')
@@ -112,9 +129,23 @@ class Azure
       response = @connection.query_azure('hostedservices/' + @name + '?embed-detail=true')
     end
 
-    # Deploys within this hostedservice
+    # Deployments within this hostedservice
     def add_deploy(deploy)
-      @deploys << deploy
+      @deploys[deploy.name] = deploy
+    end
+
+    def load_deploys
+    end
+
+    def deploys
+      # check if we have deploys loaded, else load.
+      if (@deploys.length == 0) && !@deploys_loaded
+        deploy = Deploy.new(@connection)
+        deploy.retrieve(@name)
+        @deploys[deploy.name] = deploy
+        @deploys_loaded = true
+      end
+      @deploys.values
     end
   end
 end
