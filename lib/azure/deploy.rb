@@ -46,17 +46,20 @@ class Azure
       self.load
     end
 
-    def find(hostedservicename)
-      deployName = nil
-      self.all.each do |deploy|
-        next unless deploy.hostedservicename == hostedservicename
-        deployName = deploy.name
+    # TODO - Current knife-azure plug-in seems to have assumption that single hostedservice
+    # will always have one deployment (production). see Deploy#retrieve below
+    def get_deploy_name_for_hostedservice(hostedservicename)
+      host = @connection.hosts.find(hostedservicename)
+      if host && host.deploys.length > 0
+        host.deploys[0].name
+      else
+        nil
       end
-      deployName
     end
+
     def create(params)
       if params[:azure_connect_to_existing_dns]
-        unless @connection.hosts.exists(params[:azure_dns_name])
+        unless @connection.hosts.exists?(params[:azure_dns_name])
           Chef::Log.fatal 'The specified Azure DNS Name does not exist.'
           exit 1
         end
@@ -73,7 +76,7 @@ class Azure
       if params[:identity_file]
         params[:fingerprint] = @connection.certificates.create(params)
       end
-      params['deploy_name'] = find(params[:azure_dns_name])
+      params['deploy_name'] = get_deploy_name_for_hostedservice(params[:azure_dns_name])
 
       if params['deploy_name'] != nil
         role = Role.new(@connection)
