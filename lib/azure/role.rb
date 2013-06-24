@@ -34,29 +34,35 @@ class Azure
       @roles
     end
 
-    def find_in_hosted_service(name, hostedservicename)
-      find_roles_with_hostedservice(hostedservicename).each do | role |
-        if (role.name == name)
-          return role
-        end
-      end
-      return nil
+    def find_roles_within_hostedservice(hostedservicename)
+      host = @connection.hosts.find(hostedservicename)
+      (host) ? host.roles : nil # nil says invalid hosted service
     end
 
-    def find(name, params= nil)
+    def find_in_hosted_service(role_name, hostedservicename)
+      roles = find_roles_within_hostedservice(hostedservicename)
+      return nil if roles.nil?
+      roles.each do | role |
+        return role if (role.name == role_name)
+      end
+    end
+
+    def find(role_name, params= nil)
       if params && params[:azure_dns_name]
-        return find_in_hosted_service(name, params[:azure_dns_name])
+        return find_in_hosted_service(role_name, params[:azure_dns_name])
       end
-      if @roles == nil
-        all
-      end
+
+      all if @roles == nil
+
+      # TODO - optimize this lookup
       @roles.each do |role|
-        if(role.name == name)
+        if(role.name == role_name)
           return role
         end
       end
       nil
     end
+
     def alone_on_host(found_role)
       @roles.each do |role|
         if (role.name != found_role.name &&
@@ -94,7 +100,7 @@ class Azure
 
         unless params[:preserve_azure_dns_name]
           unless params[:azure_dns_name].nil?
-            roles_using_same_service = find_roles_with_hostedservice(params[:azure_dns_name])
+            roles_using_same_service = find_roles_within_hostedservice(params[:azure_dns_name])
             if roles_using_same_service.size <= 1
               servicecall = "hostedservices/" + params[:azure_dns_name]
               @connection.query_azure(servicecall, "delete")
@@ -135,19 +141,9 @@ class Azure
 
       end
     end
-    def find_roles_with_hostedservice(hostedservicename)
-      if @roles == nil
-        all
-      end
-      return_roles = Array.new
-      @roles.each do |role|
-        if(role.hostedservicename == hostedservicename)
-          return_roles << role
-        end
-      end
-      return_roles
-    end
+
   end
+
   class Role
     include AzureUtility
     attr_accessor :connection, :name, :status, :size, :ipaddress, :publicipaddress
