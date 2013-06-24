@@ -258,11 +258,107 @@ describe 'knife-azure' do
           end
         end
 
-        context 'create Windows VM by using standard option and connect-to-existing-dns and over write winrm port ' do
-          after(:each)  { run(delete_instance_cmd(@vm_name) + append_azure_creds(is_list_cmd = true) + " --yes --purge") }
-          let(:command) { "knife azure server create --azure-vm-name #{@vm_name} --azure-dns-name #{@dns_name}" + append_azure_creds_for_windows + ' --azure-source-image "clogeny_win2k8_winrm_enabled"' + " --template-file " + get_windows_msi_template_file_path + " --server-url http://localhost:8889" + " --winrm-port 56892 --yes --azure-connect-to-existing-dns" }
+        context 'create Windows VM by using standard option and connect-to-existing-dns and over write default winrm port ' do
+          after(:each)  { run(delete_instance_cmd(@vm_name) + append_azure_creds(is_list_cmd = true) + " --yes --purge --preserve-azure-dns-name") }
+          let(:command) { "knife azure server create --azure-vm-name #{@vm_name} --azure-dns-name #{@dns_name}" + append_azure_creds_for_windows + ' --azure-source-image "clogeny_win2k8_winrm_enabled"' + " --template-file " + get_windows_msi_template_file_path + " --server-url http://localhost:8889" + " --winrm-port 5682 --yes --azure-connect-to-existing-dns" }
           it 'should succeed' do
             match_status("should succeed")
+          end
+        end
+
+        context 'create Windows VM by using standard option and connect-to-existing-dns and having duplicate winrm port' do
+          before(:each) {run ("knife azure server create --azure-vm-name #{@dns_name} --azure-dns-name #{@dns_name}" + append_azure_creds_for_windows + ' --azure-source-image "clogeny_win2k8_winrm_enabled"' + " --template-file " + get_windows_msi_template_file_path + " --server-url http://localhost:8889" + " --winrm-port 5682 --yes --azure-connect-to-existing-dns")}
+          after(:each)  { run(delete_instance_cmd(@dns_name) + append_azure_creds(is_list_cmd = true) + " --yes --purge")}
+          let(:command) { "knife azure server create --azure-vm-name #{@vm_name} --azure-dns-name #{@dns_name}" + append_azure_creds_for_windows + ' --azure-source-image "clogeny_win2k8_winrm_enabled"' + " --template-file " + get_windows_msi_template_file_path + " --server-url http://localhost:8889" + " --winrm-port 5682 --yes --azure-connect-to-existing-dns" }
+          it 'should fail' do
+            match_status("should fail")
+          end
+        end
+
+        context 'create Windows VM by using standard option and connect-to-existing-dns and having out of range winrm port' do
+          let(:command) { "knife azure server create --azure-dns-name #{@dns_name}" + append_azure_creds_for_windows + ' --azure-source-image "clogeny_win2k8_winrm_enabled"' + " --template-file " + get_windows_msi_template_file_path + " --server-url http://localhost:8889" + " --winrm-port 90000 --yes" }
+          it 'should fail' do
+            match_status("should fail")
+          end
+        end
+      end
+
+      context 'server' do
+        before(:all) { create_dns_name; }
+        before(:each) {run ("knife azure server create --azure-dns-name #{@dns_name}" + append_azure_creds_for_windows(:is_publishsettings_file) + ' --azure-source-image "clogeny_win2k8_winrm_enabled"' + " --template-file " + get_windows_msi_template_file_path + " --server-url http://localhost:8889" + " --yes")}
+        after(:each) {run(delete_instance_cmd(@dns_name) + append_azure_creds(is_list_cmd = true, is_identity_file= false, is_publishsettings_file= true ) + " --yes --purge")}
+        context 'create Windows VM by using publishsettings file and having duplicate dns name option' do
+          let(:command) { "knife azure server create --azure-dns-name #{@dns_name}" + append_azure_creds_for_windows(:is_publishsettings_file) + ' --azure-source-image "clogeny_win2k8_winrm_enabled"' + " --template-file " + get_windows_msi_template_file_path + " --server-url http://localhost:8889" + " --yes" }
+          it 'should fail' do
+            match_status("should fail")
+          end
+        end
+      end
+
+      context 'server' do
+        before(:all) { create_dns_name; create_vm_name }
+        context 'create Linux VM by using standard option for azure-connect-to-existing-dns' do
+          let(:command) { "knife azure server create --azure-dns-name #{@dns_name}" + append_azure_creds_for_linux + ' --azure-source-image "b39f27a8b8c64d52b05eac6a62ebad85__Ubuntu-12_10-amd64-server-20130414-en-us-30GB"' + " --template-file " + get_linux_template_file_path + " --server-url http://localhost:8889" + " --yes" }
+          it 'should succeed' do
+            match_status("should succeed")
+          end
+        end
+
+        context 'create Linux VM by using standard option and connect-to-existing-dns' do
+          let(:command) { "knife azure server create --azure-vm-name #{@vm_name} --azure-dns-name #{@dns_name}" + append_azure_creds_for_linux + ' --azure-source-image "b39f27a8b8c64d52b05eac6a62ebad85__Ubuntu-12_10-amd64-server-20130414-en-us-30GB"' + " --template-file " + get_linux_template_file_path + " --server-url http://localhost:8889" + " --yes --azure-connect-to-existing-dns" }
+          it 'should succeed' do
+            match_status("should succeed")
+          end
+        end
+
+        context 'delete Linux server, Chef node, Chef client by using --purge' do
+          let(:command) { delete_instance_cmd(@dns_name) + append_azure_creds(is_list_cmd = true) + " --yes --purge" }
+          it 'should succeed' do
+            match_status("should succeed")
+          end
+        end
+
+        context 'delete Linux server, Chef node, Chef client by using --purge and preserve dns' do
+          let(:command) { delete_instance_cmd(@vm_name) + append_azure_creds(is_list_cmd = true) + " --yes --purge --preserve-azure-dns-name"}
+          it 'should succeed' do
+            match_status("should succeed")
+          end
+        end
+
+        context 'create Linux VM by using standard option and connect-to-existing-dns and over write default ssh port ' do
+          after(:each)  { run(delete_instance_cmd(@vm_name) + append_azure_creds(is_list_cmd = true) + " --yes --purge --preserve-azure-dns-name") }
+          let(:command) { "knife azure server create --azure-vm-name #{@vm_name} --azure-dns-name #{@dns_name}" + append_azure_creds_for_linux + ' --azure-source-image "b39f27a8b8c64d52b05eac6a62ebad85__Ubuntu-12_10-amd64-server-20130414-en-us-30GB"' + " --template-file " + get_linux_template_file_path + " --server-url http://localhost:8889" + " --ssh-port 3245 --yes --azure-connect-to-existing-dns" }
+          it 'should succeed' do
+            match_status("should succeed")
+          end
+        end
+
+        context 'create Linux VM by using standard option and connect-to-existing-dns having duplicate ssh port ' do
+          before(:each) {run("knife azure server create --azure-vm-name #{@dns_name} --azure-dns-name #{@dns_name}" + append_azure_creds_for_linux + ' --azure-source-image "b39f27a8b8c64d52b05eac6a62ebad85__Ubuntu-12_10-amd64-server-20130414-en-us-30GB"' + " --template-file " + get_linux_template_file_path + " --server-url http://localhost:8889" + " --ssh-port 245 --yes --azure-connect-to-existing-dns")}
+          after(:each)  { run(delete_instance_cmd(@dns_name) + append_azure_creds(is_list_cmd = true) + " --yes --purge")}
+
+          let(:command) { "knife azure server create --azure-vm-name #{@vm_name} --azure-dns-name #{@dns_name}" + append_azure_creds_for_linux + ' --azure-source-image "b39f27a8b8c64d52b05eac6a62ebad85__Ubuntu-12_10-amd64-server-20130414-en-us-30GB"' + " --template-file " + get_linux_template_file_path + " --server-url http://localhost:8889" + " --ssh-port 245 --yes --azure-connect-to-existing-dns" }
+          it 'should fail' do
+            match_status("should fail")
+          end
+        end
+
+        context 'create Linux VM by using standard option and connect-to-existing-dns having out of range ssh port' do
+          let(:command) { "knife azure server create --azure-dns-name #{@dns_name}" + append_azure_creds_for_linux + ' --azure-source-image "b39f27a8b8c64d52b05eac6a62ebad85__Ubuntu-12_10-amd64-server-20130414-en-us-30GB"' + " --template-file " + get_linux_template_file_path + " --server-url http://localhost:8889" + " --ssh-port 900000 --yes" }
+          it 'should fail' do
+            match_status("should fail")
+          end
+        end
+      end
+
+      context 'server' do
+        before(:all) { create_dns_name; }
+        before(:each) {run ("knife azure server create --azure-dns-name #{@dns_name}" + append_azure_creds_for_linux(:is_publishsettings_file) + ' --azure-source-image "b39f27a8b8c64d52b05eac6a62ebad85__Ubuntu-12_10-amd64-server-20130414-en-us-30GB"' + " --template-file " + get_linux_template_file_path + " --server-url http://localhost:8889" + " --yes")}
+        after(:each) {run(delete_instance_cmd(@dns_name) + append_azure_creds(is_list_cmd = true, is_identity_file= false, is_publishsettings_file= true ) + " --yes --purge")}
+        context 'create Linux VM by using publishsettings file and having duplicate dns name option' do
+          let(:command) { "knife azure server create --azure-dns-name #{@dns_name}" + append_azure_creds_for_linux(:is_publishsettings_file) + ' --azure-source-image "b39f27a8b8c64d52b05eac6a62ebad85__Ubuntu-12_10-amd64-server-20130414-en-us-30GB"' + " --template-file " + get_linux_template_file_path + " --server-url http://localhost:8889" + " --yes" }
+          it 'should fail' do
+            match_status("should fail")
           end
         end
       end
