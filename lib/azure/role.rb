@@ -24,6 +24,7 @@ class Azure
       @connection = connection
       @roles = nil
     end
+    # do not use this unless you want a list of all roles(vms) in your subscription
     def all
       @roles = Array.new
       @connection.deploys.all.each do |deploy|
@@ -40,11 +41,9 @@ class Azure
     end
 
     def find_in_hosted_service(role_name, hostedservicename)
-      roles = find_roles_within_hostedservice(hostedservicename)
-      return nil if roles.nil?
-      roles.each do | role |
-        return role if (role.name == role_name)
-      end
+      host = @connection.hosts.find(hostedservicename)
+      return nil if host.nil?
+      host.find_role(role_name)
     end
 
     def find(role_name, params= nil)
