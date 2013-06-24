@@ -100,7 +100,8 @@ class Azure
 
   class Deploy
     include AzureUtility
-    attr_accessor :connection, :name, :status, :url, :roles, :hostedservicename
+    attr_accessor :connection, :name, :status, :url, :hostedservicename
+
     def initialize(connection)
       @connection = connection
     end
@@ -111,12 +112,12 @@ class Azure
         @name = xml_content(deployXML, 'Deployment Name')
         @status = xml_content(deployXML,'Deployment Status')
         @url = xml_content(deployXML, 'Deployment Url')
-        @roles = Array.new
+        @roles = Hash.new
         rolesXML = deployXML.css('Deployment RoleInstanceList RoleInstance')
         rolesXML.each do |roleXML|
           role = Role.new(@connection)
           role.parse(roleXML, hostedservicename, @name)
-          @roles << role
+          @roles[role.name] = role
         end
       end
     end
@@ -142,9 +143,19 @@ class Azure
       servicecall = "hostedservices/#{params[:azure_dns_name]}/deployments"
       @connection.query_azure(servicecall, "post", deployXML.to_xml)
     end
+
+    def roles
+      @roles.values if @roles
+    end
+
     # just delete from local cache
     def delete_role_if_present(role)
-      @roles.delete_if { |r| r.name == role.name } if @roles
+      @roles.delete(role.name) if @roles
     end
+
+    def find_role(name)
+      @roles[name] if @roles
+    end
+
   end
 end

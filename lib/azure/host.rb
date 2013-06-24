@@ -156,5 +156,14 @@ class Azure
       end
       roles
     end
+
+    def find_role(role_name, deploy_name = nil)
+      return @deploys[deploy_name].find_role(role_name) if deploy_name && deploys
+      # else lookup all deploys within hostedservice
+      deploys.each do |deploy|
+        role = deploy.find_role(role_name)
+        return role if role
+      end
+    end
   end
 end
