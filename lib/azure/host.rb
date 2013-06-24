@@ -134,7 +134,8 @@ class Azure
       @deploys[deploy.name] = deploy
     end
 
-    def load_deploys
+    def delete_role(role)
+      deploys.each { |d| d.delete_role_if_present(role) }
     end
 
     def deploys
