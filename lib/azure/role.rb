@@ -70,7 +70,7 @@ class Azure
       return true
     end
 
-    def exists(name)
+    def exists?(name)
       find(name) != nil
     end
 
