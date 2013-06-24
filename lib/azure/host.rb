@@ -147,5 +147,13 @@ class Azure
       end
       @deploys.values
     end
+
+    def roles
+      roles = []
+      deploys.each do |deploy|
+        roles.concat(deploy.roles) if deploy.roles
+      end
+      roles
+    end
   end
 end
