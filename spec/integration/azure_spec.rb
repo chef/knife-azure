@@ -157,6 +157,27 @@ describe 'knife-azure' do
           end
         end
       end
+
+      context 'server create --help' do
+       let(:command) { "knife azure server create --help" }
+         it 'should list all the options available for server create command.' do
+          match_stdout(/--help/)
+        end
+      end
+
+      context 'server delete --help' do
+       let(:command) { "knife azure server delete --help" }
+         it 'should list all the options available for server delete command.' do
+          match_stdout(/--help/)
+        end
+      end
+
+      context 'server list --help' do
+       let(:command) { "knife azure server list --help" }
+         it 'should list all the options available for server list command.' do
+          match_stdout(/--help/)
+        end
+      end
     end
 
     describe 'knife' , :if => is_config_present do
@@ -330,6 +351,38 @@ describe 'knife-azure' do
           let(:command) { "knife azure server create --azure-vm-name #{@vm_name} --azure-dns-name #{@dns_name}" + append_azure_creds_for_linux + ' --azure-source-image "b39f27a8b8c64d52b05eac6a62ebad85__Ubuntu-12_10-amd64-server-20130414-en-us-30GB"' + " --template-file " + get_linux_template_file_path + " --server-url http://localhost:8889" + " --ssh-port 3245 --yes --azure-connect-to-existing-dns" }
           it 'should succeed' do
             match_status("should succeed")
+          end
+        end
+
+        context 'create Linux VM by using Invalid identity file' do
+          before(:all) {  begin
+                            data_to_write = File.read(File.expand_path("../config/id_rsa", __FILE__));
+                            data_to_write = "this is invalid data for id_rsa file" + data_to_write;
+                            File.open("#{temp_dir}/invalid_id_rsa", 'w') {|f| f.write(data_to_write)};
+                          rescue
+                            puts "Error while creating file - invalid identity_file"
+                          end
+           }
+          let(:command) { "knife azure server create --azure-vm-name #{@dns_name} --azure-dns-name #{@dns_name} --azure-source-image b39f27a8b8c64d52b05eac6a62ebad85__Ubuntu-12_10-amd64-server-20130414-en-us-30GB --azure-publish-settings-file #{temp_dir}/azure.publishsettings --config #{temp_dir}/knife.rb --azure-service-location 'West US'  --ssh-user azure --identity-file #{temp_dir}/invalid_id_rsa --template-file " + get_linux_template_file_path + " --server-url http://localhost:8889" + " --yes --azure-connect-to-existing-dns" }
+          it 'should fail' do
+            match_status("should fail")
+          end
+        end
+
+        context 'create Linux VM by using Invalid publishsettings file overrides standard options' do
+          before(:all) {  begin
+                            data_to_write = File.read(File.expand_path("../config/azure.publishsettings", __FILE__));
+                            data_to_write = "this is invalid data for publishsettings file" + data_to_write;
+                            File.open("#{temp_dir}/invalid.publishsettings", 'w') {|f| f.write(data_to_write)};
+                          rescue
+                            puts "Error while creating file - invalid publishsettings file"
+                          end
+           }
+
+          let(:command) { "knife azure server create --azure-vm-name #{@vm_name} --azure-dns-name #{@dns_name} --azure-publish-settings-file #{temp_dir}/invalid.publishsettings" + append_azure_creds_for_linux + ' --azure-source-image "b39f27a8b8c64d52b05eac6a62ebad85__Ubuntu-12_10-amd64-server-20130414-en-us-30GB"' + " --template-file " + get_linux_template_file_path + " --server-url http://localhost:8889" + " --ssh-port 3245 --yes --azure-connect-to-existing-dns" }
+
+          it 'should fail' do
+            match_status("should fail")
           end
         end
 
