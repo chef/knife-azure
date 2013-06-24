@@ -80,8 +80,11 @@ class Azure
     attr_accessor :connection, :name, :url, :label
     attr_accessor :dateCreated, :description, :location
     attr_accessor :dateModified, :status
+    attr_accessor :deploys
+
     def initialize(connection)
       @connection = connection
+      @deploys = []
     end
     def parse(serviceXML)
       @name = xml_content(serviceXML, 'ServiceName')
@@ -107,6 +110,11 @@ class Azure
     end
     def details
       response = @connection.query_azure('hostedservices/' + @name + '?embed-detail=true')
+    end
+
+    # Deploys within this hostedservice
+    def add_deploy(deploy)
+      @deploys << deploy
     end
   end
 end

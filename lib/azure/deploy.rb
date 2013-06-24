@@ -21,18 +21,31 @@ class Azure
     def initialize(connection)
       @connection=connection
     end
-    def all
-      deploys = Array.new
-      hosts = @connection.hosts.all
-      hosts.each do |host|
-        deploy = Deploy.new(@connection)
-        deploy.retrieve(host.name)
-        unless deploy.name == nil
-          deploys << deploy
+    # force_load should be true when there is something in local cache and we want to reload
+    # first call is always load.
+    def load(force_load = false)
+      if not @deploys || force_load
+        @deploys = begin
+          deploys = Array.new
+          hosts = @connection.hosts.all
+          hosts.each do |host|
+            deploy = Deploy.new(@connection)
+            deploy.retrieve(host.name)
+            if deploy.name
+              host.add_deploy(deploy)
+              deploys << deploy
+            end
+          end
+          deploys
         end
       end
-      deploys
+      @deploys
     end
+
+    def all
+      self.load
+    end
+
     def find(hostedservicename)
       deployName = nil
       self.all.each do |deploy|
