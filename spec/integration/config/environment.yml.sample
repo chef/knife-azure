@@ -1,4 +1,4 @@
-# Copyright: Copyright (c) 2012 Opscode, Inc.
+# Copyright: Copyright (c) 2013 Opscode, Inc.
 # License: Apache License, Version 2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,3 +26,5 @@ development:
   ssh_password: ssh_password
   winrm_user: winrm_user
   winrm_password: winrm_password
+  azure_linux_image: azure_linux_img
+  azure_windows_image: azure_windows_img  
