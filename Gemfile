@@ -7,4 +7,7 @@ group :development do
   gem 'guard-rspec'
   gem 'rspec_junit_formatter'
   gem 'rake'
+  gem 'mixlib-shellout'
+  gem 'active_support'
+  gem 'knife-cloud', :git => 'git://github.com/ClogenyTechnologies/knife-cloud.git', :branch => 'knife-cloud-test-utils'
 end
