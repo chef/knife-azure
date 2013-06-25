@@ -19,6 +19,15 @@ describe "storageaccounts" do
     end
   end
 
+  context 'check storage account existence' do
+    it 'storage account should exist' do
+      expect(@connection.storageaccounts.exists?("storage-service-name")).to be_true
+    end
+    it 'storage account should not exist' do
+      expect(@connection.storageaccounts.exists?("invalid-storage-service-name")).to be_false
+    end
+  end
+
   context 'create a new storage account' do
     it 'using explicity parameters it should pass in expected body' do
       params = {

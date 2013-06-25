@@ -21,29 +21,45 @@ class Azure
     def initialize(connection)
       @connection=connection
     end
-    def all
-      deploys = Array.new
-      hosts = @connection.hosts.all
-      hosts.each do |host|
-        deploy = Deploy.new(@connection)
-        deploy.retrieve(host.name)
-        unless deploy.name == nil
-          deploys << deploy
+    # force_load should be true when there is something in local cache and we want to reload
+    # first call is always load.
+    def load(force_load = false)
+      if not @deploys || force_load
+        @deploys = begin
+          deploys = Array.new
+          hosts = @connection.hosts.all
+          hosts.each do |host|
+            deploy = Deploy.new(@connection)
+            deploy.retrieve(host.name)
+            if deploy.name
+              host.add_deploy(deploy)
+              deploys << deploy
+            end
+          end
+          deploys
         end
       end
-      deploys
+      @deploys
     end
-    def find(hostedservicename)
-      deployName = nil
-      self.all.each do |deploy|
-        next unless deploy.hostedservicename == hostedservicename
-        deployName = deploy.name
+
+    def all
+      self.load
+    end
+
+    # TODO - Current knife-azure plug-in seems to have assumption that single hostedservice
+    # will always have one deployment (production). see Deploy#retrieve below
+    def get_deploy_name_for_hostedservice(hostedservicename)
+      host = @connection.hosts.find(hostedservicename)
+      if host && host.deploys.length > 0
+        host.deploys[0].name
+      else
+        nil
       end
-      deployName
     end
+
     def create(params)
       if params[:azure_connect_to_existing_dns]
-        unless @connection.hosts.exists(params[:azure_dns_name])
+        unless @connection.hosts.exists?(params[:azure_dns_name])
           Chef::Log.fatal 'The specified Azure DNS Name does not exist.'
           exit 1
         end
@@ -54,13 +70,13 @@ class Azure
           exit 1
         end
       end
-      unless @connection.storageaccounts.exists(params[:azure_storage_account])
+      unless @connection.storageaccounts.exists?(params[:azure_storage_account])
         @connection.storageaccounts.create(params)
       end
       if params[:identity_file]
         params[:fingerprint] = @connection.certificates.create(params)
       end
-      params['deploy_name'] = find(params[:azure_dns_name])
+      params['deploy_name'] = get_deploy_name_for_hostedservice(params[:azure_dns_name])
 
       if params['deploy_name'] != nil
         role = Role.new(@connection)
@@ -84,7 +100,8 @@ class Azure
 
   class Deploy
     include AzureUtility
-    attr_accessor :connection, :name, :status, :url, :roles, :hostedservicename
+    attr_accessor :connection, :name, :status, :url, :hostedservicename
+
     def initialize(connection)
       @connection = connection
     end
@@ -95,12 +112,12 @@ class Azure
         @name = xml_content(deployXML, 'Deployment Name')
         @status = xml_content(deployXML,'Deployment Status')
         @url = xml_content(deployXML, 'Deployment Url')
-        @roles = Array.new
+        @roles = Hash.new
         rolesXML = deployXML.css('Deployment RoleInstanceList RoleInstance')
         rolesXML.each do |roleXML|
           role = Role.new(@connection)
           role.parse(roleXML, hostedservicename, @name)
-          @roles << role
+          @roles[role.name] = role
         end
       end
     end
@@ -126,5 +143,19 @@ class Azure
       servicecall = "hostedservices/#{params[:azure_dns_name]}/deployments"
       @connection.query_azure(servicecall, "post", deployXML.to_xml)
     end
+
+    def roles
+      @roles.values if @roles
+    end
+
+    # just delete from local cache
+    def delete_role_if_present(role)
+      @roles.delete(role.name) if @roles
+    end
+
+    def find_role(name)
+      @roles[name] if @roles
+    end
+
   end
 end
