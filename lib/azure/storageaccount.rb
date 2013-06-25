@@ -21,24 +21,45 @@ class Azure
     def initialize(connection)
       @connection=connection
     end
+    # force_load should be true when there is something in local cache and we want to reload
+    # first call is always load.
+    def load(force_load = false)
+      if not @azure_storage_accounts || force_load
+        @azure_storage_accounts = begin
+          azure_storage_accounts = Hash.new
+          responseXML = @connection.query_azure('storageservices')
+          servicesXML = responseXML.css('StorageServices StorageService')
+          servicesXML.each do |serviceXML|
+            storage = StorageAccount.new(@connection).parse(serviceXML)
+            azure_storage_accounts[storage.name] = storage
+          end
+          azure_storage_accounts
+        end
+      end
+      @azure_storage_accounts
+    end
+
     def all
-      azure_storage_accounts = Array.new
-      responseXML = @connection.query_azure('storageservices')
-      servicesXML = responseXML.css('StorageServices StorageService')
-      servicesXML.each do |serviceXML|
-        azure_storage_account = StorageAccount.new(@connection)
-        azure_storage_accounts << azure_storage_account.parse(serviceXML)
-      end
-      azure_storage_accounts
+      self.load.values
     end
-    def exists(name)
-      storageExists = false
-      self.all.each do |storage|
-        next unless storage.name == name
-        storageExists = true
-      end
-      storageExists
+
+    # first look up local cache if we have already loaded list.
+    def exists?(name)
+      return @azure_storage_accounts.key?(name) if @azure_storage_accounts
+      self.exists_on_cloud?(name)
     end
+
+    # Look up on cloud and not local cache
+    def exists_on_cloud?(name)
+      ret_val = @connection.query_azure("storageservices/#{name}")
+      if ret_val.nil? || ret_val.css('Error Code').length > 0
+        Chef::Log.warn 'Unable to find storage account:' + ret_val.at_css('Error Code').content + ' : ' + ret_val.at_css('Error Message').content if ret_val
+        false
+      else
+        true
+      end
+    end
+
     def create(params)
       storage = StorageAccount.new(@connection)
       storage.create(params)
