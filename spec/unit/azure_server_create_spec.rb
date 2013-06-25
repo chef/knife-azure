@@ -134,7 +134,9 @@ describe "parameter test:" do
 		end
 		it "should throw error when DNS does not exist" do
 			Chef::Config[:knife][:azure_dns_name] = 'does-not-exist'
-			expect {@server_instance.run}.to raise_error
+            Chef::Config[:knife][:ssh_user] = 'azureuser'
+            Chef::Config[:knife][:ssh_password] = 'Jetstream123!'
+            expect {@server_instance.run}.to raise_error
 		end
 		it "port should be unique number when winrm-port not specified for winrm" do
 			Chef::Config[:knife][:azure_dns_name] = 'service001'
@@ -147,7 +149,10 @@ describe "parameter test:" do
 			@server_params[:port].should_not == '5985'
 		end
 		it "port should be winrm-port value specified in the option" do
-			Chef::Config[:knife][:winrm_port] = '5990'
+            Chef::Config[:knife][:bootstrap_protocol] = 'winrm'
+            Chef::Config[:knife][:winrm_user] = 'administrator'
+            Chef::Config[:knife][:winrm_password] = 'Jetstream123!'
+            Chef::Config[:knife][:winrm_port] = '5990'
 			@server_instance.should_receive(:is_image_windows?).twice.and_return(true)
 			@server_params = @server_instance.create_server_def
 			@server_params[:port].should == '5990'
