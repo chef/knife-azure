@@ -19,7 +19,7 @@ require 'chef/knife/azure_image_list'
 require 'fileutils'
 require "securerandom"
 require 'knife-azure/version'
-require 'test/knife-utils/test_bed'
+
 
 
 #Create an empty mock certificate file
