@@ -134,6 +134,8 @@ To connect to an existing DNS/service, you can use a command as below:
                 --azure-connect-to-existing-dns
                 --azure-dns-name 'myservice'
                 --azure-vm-name 'myvm02'
+                --azure-network-name 'mynetwork'
+                --azure-subnet-name 'mysubnet'
                 --azure-service-location 'West US'
                 --azure-source-image 'source-image-name'
                 --ssh-user 'jetstream'
@@ -146,6 +148,8 @@ As mentioned, you can set these options from knife.rb. A typical knife.rb will l
   knife[:azure_service_location] = 'West US'
   knife[:azure_dns_name]='myservice'
   knife[:azure_vm_name]='myvm02'
+  knife[:azure_network_name]='mynetwork'
+  knife[:azure_subnet_name]='mysubnet'
   knife[:ssh_user]='jetstream'
   knife[:identity_file]='/path/to/RSA/private/key'
   knife[:azure_storage_account]='auxpreview104'
