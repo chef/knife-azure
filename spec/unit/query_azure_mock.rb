@@ -1,4 +1,7 @@
+require File.expand_path(File.dirname(__FILE__) + '/../spec_helper')
+
 module QueryAzureMock
+  include AzureUtility
   def setup_query_azure_mock
     create_connection
     stub_query_azure (@connection)
@@ -6,6 +9,22 @@ module QueryAzureMock
 
   def create_connection
     @connection = Azure::Connection.new(TEST_PARAMS)
+  end
+
+  def lookup_resource_in_test_xml(lookup_name, lookup_pty, tag, in_file)
+    dataXML = Nokogiri::XML readFile(in_file)
+    itemsXML = dataXML.css(tag)
+    not_found = true
+    retval = ''
+    itemsXML.each do |itemXML|
+      if xml_content(itemXML, lookup_pty) == lookup_name
+        not_found = false
+        retval = itemXML
+        break
+      end
+    end
+    retval = Nokogiri::XML readFile('error_404.xml') if not_found
+    retval
   end
 
   def stub_query_azure (connection)
@@ -35,6 +54,9 @@ module QueryAzureMock
           retval = Nokogiri::XML readFile('list_disks_for_role002.xml')
         elsif name == 'hostedservices'
           retval = Nokogiri::XML readFile('list_hosts.xml')
+        elsif name =~ /hostedservices\/([-\w]*)$/
+          service_name = /hostedservices\/([-\w]*)/.match(name)[1]
+          retval = lookup_resource_in_test_xml(service_name, 'ServiceName', 'HostedServices HostedService', 'list_hosts.xml')
         elsif name == 'hostedservices/service001/deploymentslots/Production'
           retval = Nokogiri::XML readFile('list_deployments_for_service001.xml')
         elsif name == 'hostedservices/service001/deployments/deployment001/roles/role001'
@@ -47,8 +69,13 @@ module QueryAzureMock
           retval = Nokogiri::XML readFile('list_deployments_for_service003.xml')
         elsif name == 'hostedservices/vmname/deploymentslots/Production'
           retval = Nokogiri::XML readFile('list_deployments_for_vmname.xml')
+        elsif name == 'hostedservices/service004/deploymentslots/Production'
+          retval = Nokogiri::XML readFile('list_deployments_for_service004.xml')
         elsif name == 'storageservices'
           retval = Nokogiri::XML readFile('list_storageaccounts.xml')
+        elsif name =~ /storageservices\/[-\w]*$/
+          service_name = /storageservices\/([-\w]*)/.match(name)[1]
+          retval = lookup_resource_in_test_xml(service_name, 'ServiceName', 'StorageServices StorageService', 'list_storageaccounts.xml')
         else
           Chef::Log.warn 'unknown get value:' + name
         end
@@ -63,6 +90,9 @@ module QueryAzureMock
           retval = Nokogiri::XML readFile('post_success.xml')
           @receivedXML = body
         elsif name == 'hostedservices/service001/deployments/deployment001/roles'
+          retval = Nokogiri::XML readFile('post_success.xml')
+          @receivedXML = body
+        elsif name == 'hostedservices/service004/deployments/deployment004/roles'
           retval = Nokogiri::XML readFile('post_success.xml')
           @receivedXML = body
         elsif name =~ /hostedservices\/vm01.*\/deployments/

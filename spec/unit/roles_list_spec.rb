@@ -12,13 +12,13 @@ describe "roles" do
     roles.each do |role|
       role.name.should_not be_nil
     end
-    roles.length.should == 5
+    roles.length.should == 7
   end
-  specify {@connection.roles.exists('vm01').should == true}
-  specify {@connection.roles.exists('vm002').should == true}
-  specify {@connection.roles.exists('role001').should == true}
-  specify {@connection.roles.exists('role002').should == true}
-  specify {@connection.roles.exists('role002qqqqq').should == false}
+  specify {@connection.roles.exists?('vm01').should == true}
+  specify {@connection.roles.exists?('vm002').should == true}
+  specify {@connection.roles.exists?('role001').should == true}
+  specify {@connection.roles.exists?('role002').should == true}
+  specify {@connection.roles.exists?('role002qqqqq').should == false}
 
   it 'each role should have values' do
     role = @connection.roles.find('vm01')

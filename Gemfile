@@ -7,4 +7,6 @@ group :development do
   gem 'guard-rspec'
   gem 'rspec_junit_formatter'
   gem 'rake'
+  gem 'mixlib-shellout'
+  gem 'active_support'
 end

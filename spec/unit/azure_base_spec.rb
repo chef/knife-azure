@@ -10,7 +10,7 @@ describe Chef::Knife::AzureBase do
   		class Knife
 			class DummyClass < Knife
 				include Knife::AzureBase
-  			end 
+  			end
   		end
   	end
 	before do

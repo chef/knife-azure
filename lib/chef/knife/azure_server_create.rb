@@ -132,7 +132,7 @@ class Chef
         :long => "--azure-dns-name DNS_NAME",
         :description => "Required. The DNS prefix name that can be used to access the cloud service which is unique within Windows Azure.
                                       If you want to add new VM to an existing service/deployment, specify an exiting dns-name,
-                                      along with --connect-to-existing-dns option.
+                                      along with --azure-connect-to-existing-dns option.
                                       Otherwise a new deployment is created. For example, if the DNS of cloud service is MyService you could access the cloud service
                                       by calling: http://DNS_NAME.cloudapp.net"
 
@@ -165,7 +165,7 @@ class Chef
 
       option :azure_connect_to_existing_dns,
         :short => "-c",
-        :long => "--connect-to-existing-dns",
+        :long => "--azure-connect-to-existing-dns",
         :boolean => true,
         :default => false,
         :description => "Set this flag to add the new VM to an existing deployment/service. Must give the name of the existing
@@ -186,6 +186,14 @@ class Chef
         :long => "--azure-network-name NETWORK_NAME",
         :description => "Optional. Specifies the network of virtual machine"
 
+      option :hint,
+        :long => "--hint HINT_NAME[=HINT_FILE]",
+        :description => "Specify Ohai Hint to be set on the bootstrap target.  Use multiple --hint options to specify multiple hints.",
+        :proc => Proc.new { |h|
+           Chef::Config[:knife][:hints] ||= {}
+           name, path = h.split("=")
+           Chef::Config[:knife][:hints][name] = path ? JSON.parse(::File.read(path)) : Hash.new
+        }
 
       def strip_non_ascii(string)
         string.gsub(/[^0-9a-z ]/i, '')
@@ -315,13 +323,29 @@ class Chef
         end
       end
 
-      def bootstrap_common_params(bootstrap)
+      def load_cloud_attributes_in_hints(server)
+        # Modify global configuration state to ensure hint gets set by knife-bootstrap
+        # Query azure and load necessary attributes.
+        cloud_attributes = {}
+        cloud_attributes["public_ip"] = server.publicipaddress
+        cloud_attributes["vm_name"] = server.name
+        cloud_attributes["public_fqdn"] = server.hostedservicename.to_s + ".cloudapp.net"
+        cloud_attributes["public_ssh_port"] = server.sshport if server.sshport
+        cloud_attributes["public_winrm_port"] = server.winrmport if server.winrmport
+
+        Chef::Config[:knife][:hints] ||= {}
+        Chef::Config[:knife][:hints]["azure"] ||= cloud_attributes
+
+      end
+
+      def bootstrap_common_params(bootstrap, server)
 
         bootstrap.config[:run_list] = config[:run_list]
         bootstrap.config[:prerelease] = config[:prerelease]
         bootstrap.config[:bootstrap_version] = locate_config_value(:bootstrap_version)
         bootstrap.config[:distro] = locate_config_value(:distro)
         bootstrap.config[:template_file] = locate_config_value(:template_file)
+        load_cloud_attributes_in_hints(server)
         bootstrap
       end
 
@@ -357,7 +381,7 @@ class Chef
         bootstrap.config[:chef_node_name] = config[:chef_node_name] || server.name
         bootstrap.config[:encrypted_data_bag_secret] = config[:encrypted_data_bag_secret]
         bootstrap.config[:encrypted_data_bag_secret_file] = config[:encrypted_data_bag_secret_file]
-        bootstrap_common_params(bootstrap)
+        bootstrap_common_params(bootstrap, server)
       end
 
       def bootstrap_for_node(server,fqdn,port)
@@ -378,6 +402,10 @@ class Chef
         bootstrap.config[:environment] = locate_config_value(:environment)
         # may be needed for vpc_mode
         bootstrap.config[:host_key_verify] = config[:host_key_verify]
+
+        # Load cloud attributes.
+        load_cloud_attributes_in_hints(server)
+
         bootstrap
       end
 
@@ -416,12 +444,12 @@ class Chef
         # If user is connecting a new VM to an existing dns, then
         # the VM needs to have a unique public port. Logic below takes care of this.
         if !is_image_windows? or locate_config_value(:bootstrap_protocol) == 'ssh'
-          port = '22' || locate_config_value(:ssh_port)
+          port = locate_config_value(:ssh_port) || '22'
           if locate_config_value(:azure_connect_to_existing_dns) && (port == '22')
              port = Random.rand(64000) + 1000
           end
         else
-          port = '5985' || locate_config_value(:winrm_port)
+          port = locate_config_value(:winrm_port) || '5985'
           if locate_config_value(:azure_connect_to_existing_dns) && (port == '5985')
               port = Random.rand(64000) + 1000
           end

@@ -13,10 +13,18 @@ describe "storageaccounts" do
     specify {@connection.storageaccounts.all.length.should be > 0}
     it "entry fields should not be null" do
       items = @connection.storageaccounts.all
-      puts items.length
       items.each do |storageaccount|
         storageaccount.name.should_not be_nil
       end
+    end
+  end
+
+  context 'check storage account existence' do
+    it 'storage account should exist' do
+      expect(@connection.storageaccounts.exists?("storage-service-name")).to be_true
+    end
+    it 'storage account should not exist' do
+      expect(@connection.storageaccounts.exists?("invalid-storage-service-name")).to be_false
     end
   end
 
