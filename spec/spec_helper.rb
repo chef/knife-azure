@@ -48,6 +48,10 @@ module AzureSpecHelper
   def readFile filename
     File.read(File.dirname(__FILE__) + "/unit/assets/#{filename}")
   end
+
+  def get_publish_settings_file_path filename
+    File.dirname(__FILE__) + "/unit/assets/publish-settings-files/#{filename}"
+  end
 end
 
 def is_config_present 
