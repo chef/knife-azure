@@ -82,9 +82,10 @@ This subcommand provisions a new server in Azure and then performs a Chef bootst
                                         new VM to an existing service/deployment, specify an exiting
                                         dns-name, along with --azure-connect-to-existing-dns option. Otherwise
                                         a new deployment is created.
-      :azure_service_location           Required. Specifies the geographic location - the name of data
+      :azure_service_location           Required if not using Affinity Group. Specifies the geographic location - the name of data
                                         center location that is valid for your subscription.
                                         Eg: West US, East US, East Asia, Southeast Asia, North Europe, West Europe
+      :azure_affinity_group             Required if using Virtual Network.  Cannot be used with a service location.
       :azure_source_image               Required. Specifies the name of the disk image to use to create
                                         the virtual machine. Do a "knife azure image list" to see a
                                         list of available images.
@@ -95,6 +96,8 @@ This subcommand provisions a new server in Azure and then performs a Chef bootst
                                         tables in the storage account.
       :azure_vm_name                    Specifies the name for the virtual machine. The name must
                                         be unique within the deployment.
+      :azure_network_name               Optional. Name of Virtual Network to add server into.
+      :azure_subnet_name                Optional. Name of subnet within Virtual Network to add server into.
       :azure_os_disk_name               Optional. Specifies the friendly name of the disk containing
                                         the guest OS image in the image repository.
       :azure_vm_size                    Size of virtual machine. Default is Small.

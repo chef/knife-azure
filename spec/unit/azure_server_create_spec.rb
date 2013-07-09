@@ -69,11 +69,6 @@ describe "parameter test:" do
 			@server_instance.ui.should_receive(:error)
 			expect {@server_instance.run}.to raise_error
 		end
-		it "azure_service_location" do
-			Chef::Config[:knife].delete(:azure_service_location)
-			@server_instance.ui.should_receive(:error)
-			expect {@server_instance.run}.to raise_error
-		end
 		it "azure_source_image" do
 			Chef::Config[:knife].delete(:azure_source_image)
 			@server_instance.ui.should_receive(:error)
@@ -89,6 +84,16 @@ describe "parameter test:" do
 			@server_instance.ui.should_receive(:error)
 			expect {@server_instance.run}.to raise_error
 		end
+    it "azure_service_location and azure_affinity_group not allowed" do
+      Chef::Config[:knife][:azure_affinity_group] = 'test-affinity'
+      @server_instance.ui.should_receive(:error)
+      expect {@server_instance.run}.to raise_error
+    end
+    it "azure_service_location or azure_affinity_group must be provided" do
+      Chef::Config[:knife].delete(:azure_service_location)
+      @server_instance.ui.should_receive(:error)
+      expect {@server_instance.run}.to raise_error
+    end
 	end
 
 	context "server create options" do
@@ -125,7 +130,16 @@ describe "parameter test:" do
 			xml_content(testxml, 'MediaLink').should == 'http://ka001testeurope.blob.core.windows.net/vhds/os-disk.vhd'
 			test_params(testxml, Chef::Config[:knife], Chef::Config[:knife][:azure_vm_name],
 										Chef::Config[:knife][:azure_vm_name])
-		end
+    end
+
+    it "server create with virtual network and subnet" do
+      Chef::Config[:knife][:azure_dns_name] = 'vmname'
+      Chef::Config[:knife][:azure_network_name] = 'test-network'
+      Chef::Config[:knife][:azure_subnet_name] = 'test-subnet'
+      @server_instance.run
+      testxml = Nokogiri::XML(@receivedXML)
+      xml_content(testxml, 'SubnetName').should == 'test-subnet'
+    end
 	end
 
 	context "connect to existing DNS tests" do

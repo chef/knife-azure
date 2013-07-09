@@ -27,20 +27,29 @@ describe "hosts" do
     specify {@connection.hosts.exists?("service001").should == true}
   end
 
-  context 'create a new host' do
+  context 'create a new host with service location' do
     it 'using explicit parameters it should pass in expected body' do
-      params = {:azure_dns_name=>'service003', 'hosted_azure_service_location'=>'Windows Azure Preview'}
+      params = {:azure_dns_name=>'service003', :azure_service_location=>'West US', 'hosted_azure_service_location'=>'Windows Azure Preview'}
       host = @connection.hosts.create(params)
       @postname.should == 'hostedservices'
       @postverb.should == 'post'
-      Nokogiri::XML(@postbody).should be_equivalent_to(Nokogiri::XML readFile('create_host.xml'))
+      Nokogiri::XML(@postbody).should be_equivalent_to(Nokogiri::XML readFile('create_host_location.xml'))
     end
     it 'using default parameters it should pass in expected body' do
-      params = {:azure_dns_name=>'service003'}
+      params = {:azure_dns_name=>'service003', :azure_service_location=>'West US'}
       host = @connection.hosts.create(params)
       @postname.should == 'hostedservices'
       @postverb.should == 'post'
-      Nokogiri::XML(@postbody).should be_equivalent_to(Nokogiri::XML readFile('create_host.xml'))
+      Nokogiri::XML(@postbody).should be_equivalent_to(Nokogiri::XML readFile('create_host_location.xml'))
+    end
+  end
+  context 'create a new host with affinity group' do
+    it 'using explicit parameters it should pass in expected body' do
+      params = {:azure_dns_name=>'service003', :azure_affinity_group=>'test-affinity' }
+      host = @connection.hosts.create(params)
+      @postname.should == 'hostedservices'
+      @postverb.should == 'post'
+      Nokogiri::XML(@postbody).should be_equivalent_to(Nokogiri::XML readFile('create_host_affinity.xml'))
     end
   end
   context 'delete a host' do
