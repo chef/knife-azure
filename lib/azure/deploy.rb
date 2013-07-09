@@ -133,6 +133,9 @@ class Azure
           xml.DeploymentSlot 'Production'
           xml.Label Base64.encode64(params['deploy_name']).strip
           xml.RoleList { xml.Role('i:type'=>'PersistentVMRole') }
+          if params[:azure_network_name]
+            xml.VirtualNetworkName params[:azure_network_name]
+          end
         }
       end
       builder.doc.at_css('Role') << roleXML.at_css('PersistentVMRole').children.to_s

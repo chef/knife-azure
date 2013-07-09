@@ -106,7 +106,11 @@ class Azure
           xml.Label Base64.encode64(params[:azure_storage_account])
           xml.Description params[:azure_storage_account_description] || 'Explicitly created storage service'
           # Location defaults to 'West US'
-          xml.Location params[:azure_service_location] || 'West US'
+          if params[:azure_affinity_group]
+            xml.AffinityGroup params[:azure_affinity_group]
+          else 
+            xml.Location params[:azure_service_location] || 'West US'
+          end
         }
       end
       @connection.query_azure("storageservices", "post", builder.to_xml)
