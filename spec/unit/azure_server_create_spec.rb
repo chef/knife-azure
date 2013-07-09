@@ -26,7 +26,8 @@ before do
 		:azure_dns_name => 'service001',
 		:azure_vm_name => 'vm002',
 		:azure_storage_account => 'ka001testeurope',
-		:azure_vm_size => 'Small'
+		:azure_vm_size => 'Small',
+    :ssh_user => 'test-user'
     }.each do |key, value|
       Chef::Config[:knife][key] = value
     end

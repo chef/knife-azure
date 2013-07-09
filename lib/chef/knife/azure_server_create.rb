@@ -428,12 +428,10 @@ class Chef
           ui.error("Specify the VM name using --azure-vm-name option, since you are connecting to existing dns")
           exit 1
         end
-        puts locate_config_value(:azure_service_location)
-        puts locate_config_value(:azure_affinity_group)
-#        if locate_config_value(:azure_service_location) && locate_config_value(:azure_affinity_group)
-#          ui.error("Cannot specify both --azure_service_location and --azure_affinity_group, use one or the other.")
-#          exit 1
-        if locate_config_value(:azure_service_location).nil? && locate_config_value(:azure_affinity_group).nil?
+        if locate_config_value(:azure_service_location) && locate_config_value(:azure_affinity_group)
+          ui.error("Cannot specify both --azure_service_location and --azure_affinity_group, use one or the other.")
+          exit 1
+        elsif locate_config_value(:azure_service_location).nil? && locate_config_value(:azure_affinity_group).nil?
           ui.error("Must specify either --azure_service_location or --azure_affinity_group.")
           exit 1
         end
