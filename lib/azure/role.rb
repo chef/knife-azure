@@ -278,6 +278,9 @@ class Azure
             }
           }
           }
+          if params[:azure_availability_set]
+            xml.AvailabilitySetName params[:azure_availability_set]
+          end
           xml.Label Base64.encode64(params[:azure_vm_name]).strip
           xml.OSVirtualHardDisk {
             xml.MediaLink 'http://' + params[:azure_storage_account] + '.blob.core.windows.net/vhds/' + (params[:azure_os_disk_name] || Time.now.strftime('disk_%Y_%m_%d_%H_%M')) + '.vhd'
