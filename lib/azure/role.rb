@@ -276,6 +276,11 @@ class Azure
               end
             end
             }
+            if params[:azure_subnet_name]
+              xml.SubnetNames {
+                xml.SubnetName params[:azure_subnet_name]
+              }
+            end
           }
           }
           if params[:azure_availability_set]

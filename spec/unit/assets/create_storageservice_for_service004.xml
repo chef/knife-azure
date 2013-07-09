@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+  <CreateStorageServiceInput xmlns="http://schemas.microsoft.com/windowsazure">
+  <ServiceName>ka001testeurope</ServiceName>
+  <Label>a2EwMDF0ZXN0ZXVyb3Bl</Label>
+  <Description>Explicitly created storage service</Description>
+  <AffinityGroup>test-affinity-group</AffinityGroup>
+</CreateStorageServiceInput>
+
