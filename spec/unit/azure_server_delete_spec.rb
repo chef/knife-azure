@@ -39,6 +39,18 @@ end
 		@server_instance.run
 	end
 
+	it "display valid nomenclature in delete output" do
+		@server_instance.name_args = ['role001']
+		@server_instance.ui.should_receive(:warn).twice
+		@server_instance.should_receive(:msg_pair).with("DNS Name", Chef::Config[:knife][:azure_dns_name] + ".cloudapp.net")
+		@server_instance.should_receive(:msg_pair).with("Deployment", "deployment001")
+		@server_instance.should_receive(:msg_pair).with("VM Name", "role001")
+		@server_instance.should_receive(:msg_pair).with("Size", "Small")
+		@server_instance.should_receive(:msg_pair).with("Public Ip Address", "65.52.249.191")
+		@server_instance.connection.roles.should_receive(:delete).and_call_original
+		@server_instance.run
+	end
+
 	it "test hosted service cleanup with shared service" do
 		@server_instance.name_args = ['role001']
 		@server_instance.ui.should_receive(:warn).twice
