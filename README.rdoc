@@ -27,13 +27,22 @@ Set the option :azure_publish_settings_file by specifying the path to the downlo
 Follow these steps to generate the certificate in the PEM format
 
 1. Download the settings file from https://manage.windowsazure.com/publishsettings/index?client=xplat
-2. Extract the data from the ManagementCertificate field into a separate file named - cert.pfx
-3. Decode the certificate file :
+2. Extract the data from the ManagementCertificate field into a separate file named cert.pfx. If you have xmlstarlet installed, this command will work:
 
-===== On Linux/Mac(Homebrew)
- base64 -d cert.pfx > cert_decoded.pfx
+ xmlstarlet sel -t -m "//PublishData/PublishProfile[@PublishMethod='AzureServiceManagementAPI']" -v @ManagementCertificate credentials.publishsettings
 
-===== On Windows
+3. Decode the certificate file:
+
+==== On Linux (with GNU coreutils)
+
+ base64 --decode cert.pfx > cert_decoded.pfx
+
+==== On Mac
+
+ base64 --decode -i cert.pfx -o cert_decoded.pfx
+
+==== On Windows
+
 You can decode and extract the PFX file using powershell or a free windows base 64 decoder such as http://www.fourmilab.ch/webtools/base64/base64.zip,
 
  base64.exe -d cert.pfx -> cert_decoded.pfx
