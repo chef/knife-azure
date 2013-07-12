@@ -126,6 +126,14 @@ describe "parameter test:" do
 			test_params(testxml, Chef::Config[:knife], Chef::Config[:knife][:azure_vm_name],
 										Chef::Config[:knife][:azure_vm_name])
 		end
+
+		it "with subnet" do
+			Chef::Config[:knife][:azure_dns_name] = 'vmname'
+			Chef::Config[:knife][:azure_subnet_name] = 'test-subnet'
+			@server_instance.run
+			testxml = Nokogiri::XML(@receivedXML)
+			xml_content(testxml, 'SubnetName').should == 'test-subnet'
+		end
 	end
 
 	context "connect to existing DNS tests" do

@@ -178,6 +178,14 @@ class Chef
         :long => "--identity-file-passphrase PASSWORD",
         :description => "SSH key passphrase. Optional, specify if passphrase for identity-file exists"
 
+      option :azure_subnet_name,
+        :long => "--azure-subnet-name SUBNET_NAME",
+        :description => "Optional. Specifies the subnet of virtual machine"
+
+      option :azure_network_name,
+        :long => "--azure-network-name NETWORK_NAME",
+        :description => "Optional. Specifies the network of virtual machine"
+
       option :hint,
         :long => "--hint HINT_NAME[=HINT_FILE]",
         :description => "Specify Ohai Hint to be set on the bootstrap target.  Use multiple --hint options to specify multiple hints.",
@@ -429,7 +437,9 @@ class Chef
           :tcp_endpoints => locate_config_value(:tcp_endpoints),
           :udp_endpoints => locate_config_value(:udp_endpoints),
           :bootstrap_proto => locate_config_value(:bootstrap_protocol),
-          :azure_connect_to_existing_dns => locate_config_value(:azure_connect_to_existing_dns)
+          :azure_connect_to_existing_dns => locate_config_value(:azure_connect_to_existing_dns),
+          :azure_subnet_name => locate_config_value(:azure_subnet_name),
+          :azure_network_name => locate_config_value(:azure_network_name)
         }
         # If user is connecting a new VM to an existing dns, then
         # the VM needs to have a unique public port. Logic below takes care of this.
