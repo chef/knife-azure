@@ -10,7 +10,7 @@ before do
 
 	{
    	:azure_subscription_id => 'azure_subscription_id',
-		:azure_mgmt_cert => 'AzureLinuxCert.pem',
+		:azure_mgmt_cert => @cert_file,
 		:azure_api_host_name => 'preview.core.windows-int.net',
 		:name => 'vm01',
 		:azure_service_location => 'West Europe',
