@@ -20,9 +20,12 @@ require 'fileutils'
 require "securerandom"
 require 'knife-azure/version'
 
+def temp_dir
+  @_temp_dir ||= Dir.mktmpdir
+end
+
 def tmpFile filename
-  Dir::mkdir @tmpdir unless FileTest::directory?(@tmpdir)
-  @tmpdir + '/' + filename
+  temp_dir + "/" + filename
 end
 
 RSpec.configure do |c|
@@ -30,18 +33,15 @@ RSpec.configure do |c|
 
   c.before(:all) do
     #Create an empty mock certificate file
-    @cert_file = 'AzureLinuxCert.pem'
+    @cert_file = tmpFile('AzureLinuxCert.pem')
     FileUtils.touch(@cert_file)
-
-    @tmpdir = 'tmp'
     Chef::Log.init(tmpFile('debug.log'), 'daily')
     Chef::Log.level=:debug
   end
 
   c.after(:all) do
     #Cleanup files and dirs
-    FileUtils.rm_rf(@cert_file)  
-    FileUtils.rm_rf(@tmpdir)
+    FileUtils.rm_rf("#{temp_dir}")
   end
 end
 
