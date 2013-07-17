@@ -24,7 +24,6 @@ require 'rspec/core'
 require 'rspec/core/rake_task'
 RSpec::Core::RakeTask.new(:spec) do |spec|
   spec.pattern = FileList['spec/unit/**/*_spec.rb']
-  touch "AzureLinuxCert.pem"
 end
 
 RSpec::Core::RakeTask.new(:functional) do |spec|

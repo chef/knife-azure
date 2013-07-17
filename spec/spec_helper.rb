@@ -20,27 +20,34 @@ require 'fileutils'
 require "securerandom"
 require 'knife-azure/version'
 
-
-
-#Create an empty mock certificate file
-FileUtils.touch('AzureLinuxCert.pem')
-
-def tmpFile filename
-  tmpdir = 'tmp'
-  Dir::mkdir tmpdir unless FileTest::directory?(tmpdir)
-  tmpdir + '/' + filename
+def temp_dir
+  @_temp_dir ||= Dir.mktmpdir
 end
 
-Chef::Log.init(tmpFile('debug.log'), 'daily')
-Chef::Log.level=:debug
+def tmpFile filename
+  temp_dir + "/" + filename
+end
 
 RSpec.configure do |c|
   c.before(:each) { Chef::Config[:knife].each do |key, value| Chef::Config[:knife].delete(key) end }
+
+  c.before(:all) do
+    #Create an empty mock certificate file
+    @cert_file = tmpFile('AzureLinuxCert.pem')
+    FileUtils.touch(@cert_file)
+    Chef::Log.init(tmpFile('debug.log'), 'daily')
+    Chef::Log.level=:debug
+  end
+
+  c.after(:all) do
+    #Cleanup files and dirs
+    FileUtils.rm_rf("#{temp_dir}")
+  end
 end
 
 TEST_PARAMS = {
   :azure_subscription_id => "YOUR_SUBSCRIPTION_ID_HERE",
-  :azure_mgmt_cert => "AzureLinuxCert.pem",
+  :azure_mgmt_cert => @cert_file,
   :azure_api_host_name => "management-preview.core.windows-int.net",
 }
 

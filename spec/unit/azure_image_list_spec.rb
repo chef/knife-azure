@@ -8,7 +8,7 @@ describe Chef::Knife::AzureImageList do
     @server_instance = Chef::Knife::AzureImageList.new
       {
         :azure_subscription_id => 'azure_subscription_id',
-        :azure_mgmt_cert => 'AzureLinuxCert.pem',
+        :azure_mgmt_cert => @cert_file,
         :azure_api_host_name => 'preview.core.windows-int.net',
         :azure_service_location => 'West Europe',
         :azure_source_image => 'SUSE__SUSE-Linux-Enterprise-Server-11SP2-20120521-en-us-30GB.vhd',
