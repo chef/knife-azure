@@ -115,6 +115,21 @@ describe "parameter test:" do
 										Chef::Config[:knife][:azure_dns_name])
 		end
 
+        it "generate unique OS DiskName" do
+          os_disks = []
+          @bootstrap.stub(:run)
+          Chef::Config[:knife][:azure_dns_name] = 'vmname'
+
+          5.times do
+            @server_instance.config[:azure_mgmt_cert] = "AzureLinuxCert.pem"
+            @server_instance.run
+            testxml = Nokogiri::XML(@receivedXML)
+            disklink = xml_content(testxml, 'MediaLink')
+            os_disks.should_not include(disklink)
+            os_disks.push(disklink)
+          end
+        end
+
 		it "advanced create" do
 			# set all params
 			Chef::Config[:knife][:azure_dns_name] = 'service001'
