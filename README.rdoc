@@ -15,7 +15,7 @@ OR
       option :azure_mgmt_cert                   Management certificate in PEM format
       option :azure_api_host_name               Your Azure API host name
 
-==Management Certifcate
+==Management Certificate
 The management certificate is required for secure communication with the Windows Azure Platform via the REST APIs. These can be obtained from the publishsettings file. You need to download the .publishsettings file from the link given below. You can either provide the path to the .publishsettings file OR you can generate the management certificate yourself from the .publishsettings file.
 
 ===Management Certificate using the .publishsettings file
