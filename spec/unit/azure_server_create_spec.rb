@@ -118,10 +118,10 @@ describe "parameter test:" do
         it "generate unique OS DiskName" do
           os_disks = []
           @bootstrap.stub(:run)
+          @server_instance.stub(:validate!)
           Chef::Config[:knife][:azure_dns_name] = 'vmname'
 
           5.times do
-            @server_instance.config[:azure_mgmt_cert] = "AzureLinuxCert.pem"
             @server_instance.run
             testxml = Nokogiri::XML(@receivedXML)
             disklink = xml_content(testxml, 'MediaLink')
