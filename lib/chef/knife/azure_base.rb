@@ -154,7 +154,7 @@ class Chef
           file = File.join(ENV['HOME'], '.chef', name)
         else
           ui.error('Unable to find file - ' + name)
-          exit 1
+          raise "Unabled to find file - #{name}"
         end
         file
       end
