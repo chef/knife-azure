@@ -110,9 +110,25 @@ describe "parameter test:" do
 			@server_instance.config[:azure_vm_name].should == "vmname"
 			testxml = Nokogiri::XML(@receivedXML)
 			xml_content(testxml, 'MediaLink').should_not == nil
+			xml_content(testxml, 'DiskName').should_not == nil
 			test_params(testxml, Chef::Config[:knife], Chef::Config[:knife][:azure_dns_name],
 										Chef::Config[:knife][:azure_dns_name])
 		end
+
+        it "generate unique OS DiskName" do
+          os_disks = []
+          @bootstrap.stub(:run)
+          @server_instance.stub(:validate!)
+          Chef::Config[:knife][:azure_dns_name] = 'vmname'
+
+          5.times do
+            @server_instance.run
+            testxml = Nokogiri::XML(@receivedXML)
+            disklink = xml_content(testxml, 'MediaLink')
+            os_disks.should_not include(disklink)
+            os_disks.push(disklink)
+          end
+        end
 
 		it "advanced create" do
 			# set all params
@@ -123,6 +139,7 @@ describe "parameter test:" do
 			@server_instance.run
 			testxml = Nokogiri::XML(@receivedXML)
 			xml_content(testxml, 'MediaLink').should == 'http://ka001testeurope.blob.core.windows.net/vhds/os-disk.vhd'
+			xml_content(testxml, 'DiskName').should == Chef::Config[:knife][:azure_os_disk_name]
 			test_params(testxml, Chef::Config[:knife], Chef::Config[:knife][:azure_vm_name],
 										Chef::Config[:knife][:azure_vm_name])
 		end
