@@ -25,6 +25,9 @@ require File.expand_path('../disk', __FILE__)
 require File.expand_path('../image', __FILE__)
 require File.expand_path('../certificate', __FILE__)
 
+class ConnectionExceptions
+  class QueryAzureException < RuntimeError; end
+end
 class Azure
   class Connection
     include AzureAPI
@@ -50,7 +53,9 @@ class Azure
       else
         if response.body
           ret_val = Nokogiri::XML response.body
-          Chef::Log.warn ret_val.at_css('Error Code').content + ' : ' + ret_val.at_css('Error Message').content
+          e = ret_val.at_css('Error Code').content + ' : ' + ret_val.at_css('Error Message').content
+          Chef::Log.warn e
+          raise ConnectionExceptions::QueryAzureException, e
         else
           Chef::Log.warn 'http error: ' + response.code
         end
