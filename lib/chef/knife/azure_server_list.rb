@@ -38,7 +38,7 @@ class Chef
         begin
           items = connection.roles.all
         rescue ConnectionExceptions::QueryAzureException => e
-          Chef::Log.error e.message
+          ui.error e.message
           exit 1
         end
 

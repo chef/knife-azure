@@ -49,7 +49,7 @@ class Chef
         begin
           items = connection.images.all
         rescue ConnectionExceptions::QueryAzureException => e
-          Chef::Log.error e.message
+          ui.error e.message
           exit 1
         end
 
