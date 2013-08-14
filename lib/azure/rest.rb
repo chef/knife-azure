@@ -28,12 +28,13 @@ module AzureAPI
       @host_name = params[:azure_api_host_name]
       @verify_ssl = params[:verify_ssl_cert]
     end
-    def query_azure(service_name, verb = 'get', body = '')
+    def query_azure(service_name, verb = 'get', body = '', params = '', version = "2012-03-01")
       request_url = "https://#{@host_name}/#{@subscription_id}/services/#{service_name}"
       print '.'
       uri = URI.parse(request_url)
+      uri.query = params
       http = http_setup(uri)
-      request = request_setup(uri, verb, body)
+      request = request_setup(uri, verb, body, version)
       response = http.request(request)
       @last_request_id = response['x-ms-request-id']
       response
@@ -64,7 +65,7 @@ module AzureAPI
         http.key = OpenSSL::PKey::RSA.new(@pem_file)
       http
     end
-    def request_setup(uri, verb, body)
+    def request_setup(uri, verb, body, version = "2012-03-01")
       if verb == 'get'
         request = Net::HTTP::Get.new(uri.request_uri)
       elsif verb == 'post'
@@ -72,7 +73,7 @@ module AzureAPI
       elsif verb == 'delete'
         request = Net::HTTP::Delete.new(uri.request_uri)
       end
-      request["x-ms-version"] = "2012-03-01"
+      request["x-ms-version"] = version
       request["content-type"] = "application/xml"
       request["accept"] = "application/xml"
       request["accept-charset"] = "utf-8"

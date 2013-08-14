@@ -119,7 +119,12 @@ class Azure
              break if @connection.query_azure(servicecall, "get").search("AttachedTo").text == ""
              if attempt == 12 then puts "The associated disk could not be deleted due to time out." else sleep 25 end
           end
-          @connection.query_azure(servicecall, "delete")
+
+          unless params[:preserve_azure_vhd]
+           @connection.query_azure(servicecall, 'delete', '', 'comp=media', '2012-08-01')
+          else
+            @connection.query_azure(servicecall, 'delete')
+          end
 
           if params[:delete_azure_storage_account]
             storage_account_name = xml_content(storage_account, "MediaLink")
