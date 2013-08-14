@@ -28,10 +28,11 @@ module AzureAPI
       @host_name = params[:azure_api_host_name]
       @verify_ssl = params[:verify_ssl_cert]
     end
-    def query_azure(service_name, verb = 'get', body = '')
+    def query_azure(service_name, verb = 'get', body = '', params = '')
       request_url = "https://#{@host_name}/#{@subscription_id}/services/#{service_name}"
       print '.'
       uri = URI.parse(request_url)
+      uri.query = params
       http = http_setup(uri)
       request = request_setup(uri, verb, body)
       response = http.request(request)
