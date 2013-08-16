@@ -273,6 +273,13 @@ class Chef
 
         puts("\n")
         if is_image_windows?
+          server.tcpports.each do |endpoint|
+            if endpoint["Name"] == "RDP"
+              ui.info("RDP details for #{ui.color(server.name, :bold)}: ")
+              ui.info("\tRDP Public Port: #{ui.color(endpoint['PublicPort'], :bold)}")
+              ui.info("\tRDP Private Port: #{ui.color(endpoint['LocalPort'], :bold)}")
+            end
+          end
           if locate_config_value(:bootstrap_protocol) == 'ssh'
             port = server.sshport
             print "\n#{ui.color("Waiting for sshd on #{fqdn}:#{port}", :magenta)}"
