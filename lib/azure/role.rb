@@ -244,7 +244,17 @@ class Azure
                   xml.Protocol 'TCP'
                 }
               end
-
+              if params[:os_type] == 'Windows'
+                begin
+                  rdp_port = Random.rand(64000) + 1000  
+                end until rdp_port != params[:port]
+                xml.InputEndpoint {
+                  xml.LocalPort '3389'
+                  xml.Name 'RDP'
+                  xml.Port rdp_port
+                  xml.Protocol 'TCP'
+                }
+              end
             if params[:tcp_endpoints]
               params[:tcp_endpoints].split(',').each do |endpoint|
                 ports = endpoint.split(':')
