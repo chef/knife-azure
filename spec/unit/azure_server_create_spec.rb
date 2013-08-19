@@ -200,6 +200,26 @@ describe "parameter test:" do
 		end
 	end
 
+    context "Windows Server create" do
+		before do
+			@bootstrap = Chef::Knife::BootstrapWindowsWinrm.new
+			Chef::Knife::BootstrapWindowsWinrm.stub(:new).and_return(@bootstrap)
+			@bootstrap.should_receive(:run)
+			@server_instance.should_receive(:is_image_windows?).any_number_of_times.and_return(true)
+			Chef::Config[:knife][:bootstrap_protocol] = 'winrm'
+			Chef::Config[:knife][:winrm_password] = 'winrm_password'
+			Chef::Config[:knife][:azure_dns_name] = 'service004'
+			Chef::Config[:knife][:azure_vm_name] = 'winrm-vm'
+			Chef::Config[:knife][:hints] = nil # reset as this is loaded only once for app(test here)
+			@server_instance.run
+	    end
+
+		it "set RDP port" do
+		  testxml = Nokogiri::XML(@receivedXML)
+		  xml_content(testxml, "InputEndpoints").should include("RDP")
+		  xml_content(testxml, "InputEndpoints").should include("3389")
+		end		    
+	end
 end
 
 describe "cloud attributes" do
