@@ -50,12 +50,13 @@ class Azure
         ret_val = Nokogiri::XML response.body
       elsif response.code.to_i >= 201 && response.code.to_i <= 299
         ret_val = wait_for_completion()
+      elsif response.code.to_i == 401 || response.code.to_i == 403
+        ret_val = Nokogiri::XML response.body
+        raise ConnectionExceptions::QueryAzureException, ret_val.at_css('Error Code').content + ' : ' + ret_val.at_css('Error Message').content
       else
         if response.body
           ret_val = Nokogiri::XML response.body
-          e = ret_val.at_css('Error Code').content + ' : ' + ret_val.at_css('Error Message').content
-          Chef::Log.warn e
-          raise ConnectionExceptions::QueryAzureException, e
+          Chef::Log.warn ret_val.at_css('Error Code').content + ' : ' + ret_val.at_css('Error Message').content
         else
           Chef::Log.warn 'http error: ' + response.code
         end
