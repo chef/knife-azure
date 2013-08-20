@@ -207,7 +207,8 @@ describe "parameter test:" do
 			@bootstrap.should_receive(:run)
 			@server_instance.should_receive(:is_image_windows?).any_number_of_times.and_return(true)
 			Chef::Config[:knife][:bootstrap_protocol] = 'winrm'
-			Chef::Config[:knife][:winrm_password] = 'winrm_password'
+			Chef::Config[:knife][:winrm_user] = 'winrm_user'
+            Chef::Config[:knife][:winrm_password] = 'winrm_password'
 			Chef::Config[:knife][:azure_dns_name] = 'service004'
 			Chef::Config[:knife][:azure_vm_name] = 'winrm-vm'
 			Chef::Config[:knife][:hints] = nil # reset as this is loaded only once for app(test here)
