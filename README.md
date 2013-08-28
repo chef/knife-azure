@@ -1,7 +1,7 @@
 # Knife Azure
 
 ## Description
-A [knife] (http://wiki.opscode.com/display/chef/Knife) plugin to create,
+A [knife] (http://docs.opscode.com/knife.html) plugin to create,
 delete and enumerate
 [Windows Azure] (https://www.windowsazure.com)
 resources to be managed by Chef.
@@ -17,29 +17,29 @@ This plugin is distributed as a Ruby Gem. To install it, run:
     gem install knife-azure
     
 Depending on your system's configuration, you may need to run this command
-with root privileges.
+with root/administrator privileges.
 
 ## Configuration
 For this plugin to interact with Azure's REST API, you will need to give Knife
 information about your Azure account and credentials. The easiest way to do
-this is to sign in to your Azure portal and download a publishsettings file
+this is to sign in to the Azure portal and download a publishsettings file
 from https://manage.windowsazure.com/publishsettings/index?client=xplat to a
 local file system location, and
 then refer to the local file via an entry in your knife.rb:
 
-    knife[:aure_publish_settings_file] = "~/myazure.publishsettings"
+    knife[:azure_publish_settings_file] = "~/myazure.publishsettings"
     
-Alternatively, all subcommands for this plugin will accept a
+Alternatively, all subcommands for this plugin will accept an
 --azure-publish-settings-file option to allow you to specify the path to that
 file with each command invocation.
 
 The plug-in also accepts authentication information specified using an
-alternative set of options -- see the section on "Optional Management
+alternative set of options -- see the section on "Alternative Management
 Certificate Specification" for details.
 
 ## Basic Examples
 The following examples assume that you've configured the publishsettings file
-locatin in your knife.rb:
+location in your knife.rb:
 
       # List images for use in creating new VM's:
       $ knife azure image list
@@ -56,37 +56,44 @@ locatin in your knife.rb:
       # Delete a server and purge it from the Chef server
       $ knife azure server delete MyNewNode --purge -y
 
+Use the --help option to read more about each subcommand. Eg:
+
+    knife azure server create --help
+
 ## Detailed Usage
 
 ### Common Configuration
 Most configuration options can be specified either in your knife.rb file or as command line parameters. The CLI parameters override the knife.rb parameters.
 
-Use --help option to read more about each subcommand. Eg:
-      knife azure server create --help
+The following options are required for all subcommands:
 
-Options common and necessary for all subcommands:
-      option :azure\_publish\_settings\_file       Path to your .publishsettings file
+    option :azure\_publish\_settings\_file      Path to your .publishsettings file
+
 OR
-      option :azure\_subscription\_id             Your Azure subscription ID
-      option :azure\_mgmt\_cert                   Management certificate in PEM format
-      option :azure\_api\_host\_name               Your Azure API host name
+
+    option :azure\_subscription\_id             Your Azure subscription ID
+    option :azure\_mgmt\_cert                   Management certificate in PEM format
+    option :azure\_api\_host\_name              Your Azure API host name
 
 ### Azure Image List Subcommand
 Outputs a list of all linux images that are available to use for provisioning. You should choose one of these to use for the :azure_source_image parameter to the server create command. You can use the filter option to see a detailed image list.
-      knife azure image list
+
+    knife azure image list
 
 ### Azure Server Create Subcommand
 This subcommand provisions a new server in Azure and then performs a Chef bootstrap. The goal of the bootstrap is to get Chef installed on the target system so it can run Chef Client with a Chef Server.
 
 #### Windows Bootstrapping Requirements
-knife-azure depends on knife-windows: https://github.com/opscode/knife-windows to bootstrap Windows machines via winrm(Basic, NTLM and Kerberos) or ssh.
+knife-azure depends on knife-windows: https://github.com/opscode/knife-windows
+to bootstrap Windows machines via winrm (Basic, NTLM and Kerberos authentication) or ssh.
 
-The distro/template to be used for the same is: https://github.com/opscode/knife-windows/blob/master/lib/chef/knife/bootstrap/windows-chef-client-msi.erb
+The distro/template to be used for bootstrapping is: https://github.com/opscode/knife-windows/blob/master/lib/chef/knife/bootstrap/windows-chef-client-msi.erb
 
-Windows source images should have the WinRM service enabled and the authentication should be set accordingly(Basic, NTLM and Kerberos). Firewall rules should be added accordingly to the source images. Refer to the link to configure this:
+Windows source images should have the WinRM service enabled and the
+authentication should be set accordingly (Basic, NTLM and Kerberos). Firewall rules should be added accordingly to the source images. Refer to the link to configure this:
 https://github.com/opscode/knife-windows#nodes
 
-#### Azure specific options
+#### Azure-specific Options
       :azure_dns_name                   Required. The DNS prefix name that can be used to access the cloud
                                         service which is unique within Windows Azure. If you want to add
                                         new VM to an existing service/deployment, specify an exiting
@@ -114,8 +121,9 @@ https://github.com/opscode/knife-windows#nodes
                                         DNS correctly in the --azure-dns-name option
 
 #### Azure VM Quick Create
-You can create a server with minimal configuration. On the Azure Management Portal, this corresponds to a "Quick Create - VM". Sample command for quick create (for an ubuntu instance):
-      knife azure server create
+You can create a server with minimal configuration. On the Azure Management Portal, this corresponds to a "Quick Create - VM". Sample command for quick create (for an Ubuntu instance):
+
+    knife azure server create
                 --azure-publish-settings-file '/path/to/your/cert.publishsettingsfile'
                 --azure-dns-name 'myservice'
                 --azure-service-location 'West US'
@@ -123,13 +131,15 @@ You can create a server with minimal configuration. On the Azure Management Port
                 --ssh-user 'jetstream'
                 --ssh-password 'jetstream@123'
 
-As mentioned, you can set these options from knife.rb. A typical knife.rb will look as below:
-      knife[:azure_publish_settings_file] = '/path/to/your/cert.publishsettingsfile'
-      knife[:azure_dns_name] = 'myservice'
-      knife[:azure_service_location] = 'West US'
-      knife[:azure_source_image] = 'source-image-name'
-      knife[:ssh_user] = 'jetstream'
-      knife[:ssh_password] = 'jetstream@123'
+As mentioned, you can set these options from knife.rb. A typical knife.rb is
+shown below:
+
+    knife[:azure_publish_settings_file] = '/path/to/your/cert.publishsettingsfile'
+    knife[:azure_dns_name] = 'myservice'
+    knife[:azure_service_location] = 'West US'
+    knife[:azure_source_image] = 'source-image-name'
+    knife[:ssh_user] = 'jetstream'
+    knife[:ssh_password] = 'jetstream@123'
 
 #### Azure VM Advanced Create
 You can set various other options in the advanced create.
@@ -137,7 +147,8 @@ You can set various other options in the advanced create.
   Eg: If you want to specify a Storage Account Name, set the option :azure_storage_account
 
 To connect to an existing DNS/service, you can use a command as below:
-      knife azure server create
+
+    knife azure server create
                 --azure-subscription-id 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx'
                 --azure-mgmt-cert '/path/to/your/mgmtCert.pem'
                 --azure-api-host-name 'management.core.windows.net'
@@ -150,18 +161,19 @@ To connect to an existing DNS/service, you can use a command as below:
                 --ssh-password 'jetstream@123'
 
 These options may also be configured from knife.rb, as in this example:
-      knife[:azure_subscription_id] = 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx'
-      knife[:azure_mgmt_cert] = '/path/to/your/mgmtCert.pem'
-      knife[:azure_api_host_name] = 'management.core.windows.net'
-      knife[:azure_service_location] = 'West US'
-      knife[:azure_dns_name]='myservice'
-      knife[:azure_vm_name]='myvm02'
-      knife[:ssh_user]='jetstream'
-      knife[:identity_file]='/path/to/RSA/private/key'
-      knife[:azure_storage_account]='auxpreview104'
-      knife[:azure_os_disk_name]='disk107'
-      knife[:tcp_endpoints]='66'
-      knife[:udp_endpoints]='77,88,99'
+
+    knife[:azure_subscription_id] = 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx'
+    knife[:azure_mgmt_cert] = '/path/to/your/mgmtCert.pem'
+    knife[:azure_api_host_name] = 'management.core.windows.net'
+    knife[:azure_service_location] = 'West US'
+    knife[:azure_dns_name]='myservice'
+    knife[:azure_vm_name]='myvm02'
+    knife[:ssh_user]='jetstream'
+    knife[:identity_file]='/path/to/RSA/private/key'
+    knife[:azure_storage_account]='auxpreview104'
+    knife[:azure_os_disk_name]='disk107'
+    knife[:tcp_endpoints]='66'
+    knife[:udp_endpoints]='77,88,99'
 
 #### Options for Bootstrapping a Windows Node in Azure
 
@@ -211,7 +223,8 @@ Since the VM name can be same across deployments, you can specify the deployment
 
 ### Azure Server List Subcommand
 Outputs a list of all servers in the currently configured Azure account. PLEASE NOTE - this shows all instances associated with the account, some of which may not be currently managed by the Chef server.
-      knife azure server list
+
+    knife azure server list
 
 ## Alternative Management Certificate Specification
 In addition to specifying the management certificate using the publishsettings
@@ -222,24 +235,26 @@ file, you can also specify it in PEM format. Follow these steps to generate the 
 3. Decode the certificate file:
 
 #### On Linux/Mac(Homebrew)
- base64 -d cert.pfx > cert_decoded.pfx
+
+    base64 -d cert.pfx > cert_decoded.pfx
 
 #### On Windows
 You can decode and extract the PFX file using powershell or a free windows base 64 decoder such as http://www.fourmilab.ch/webtools/base64/base64.zip,
 
- base64.exe -d cert.pfx -> cert_decoded.pfx
+    base64.exe -d cert.pfx -> cert_decoded.pfx
 
 4. Convert the decoded PFX file to a PEM file
 
 #### On Linux/Mac(Homebrew)
- openssl pkcs12 -in cert_decoded.pfx -out managementCertificate.pem -nodes
+
+    openssl pkcs12 -in cert_decoded.pfx -out managementCertificate.pem -nodes
 
 #### On Windows
- Use powershell & run following command. If openssl.exe not already installed it can be downloaded from http://www.openssl.org/related/binaries.html (Note: openssl dependents on Microsoft Visual C++ Redistributable package (x86) which must be installed for openssl to function properly).
+ Use powershell & run following command. If openssl.exe is not already installed it can be downloaded from http://www.openssl.org/related/binaries.html (Note: openssl dependends on Microsoft Visual C++ Redistributable package (x86) which must be installed for openssl to function properly).
 
- openssl base64 -d -A -in cert_decoded.pfx -out cert_decode.der
+    openssl base64 -d -A -in cert_decoded.pfx -out cert_decode.der
 
- openssl pkcs12 -in cert_decoded.der -out managementCertificate.pem -nodes
+    openssl pkcs12 -in cert_decoded.der -out managementCertificate.pem -nodes
 
 You might be asked to enter a password which is usually blank.
 You might be also asked to enter a passphrase. Please enter the phrase of your choice.
