@@ -99,9 +99,9 @@ https://github.com/opscode/knife-windows#nodes
                                         new VM to an existing service/deployment, specify an exiting
                                         dns-name, along with --azure-connect-to-existing-dns option. Otherwise
                                         a new deployment is created.
-      :azure_service_location           Required. Specifies the geographic location - the name of data
-      center location that is valid for your subscription.
-                                        Eg: West US, East US, East Asia, Southeast Asia, North Europe, West Europe
+      :azure_service_location           Required. Specifies the geographic location of the resource as the
+                                        name of a datacenter location that is valid for your subscription. Eg:
+                                        West US, East US, East Asia, Southeast Asia, North Europe, West Europe.
       :azure_source_image               Required. Specifies the name of the disk image to use to create
                                         the virtual machine. Do a "knife azure image list" to see a
                                         list of available images.
