@@ -2,7 +2,7 @@
 
 ## Description
 A [knife] (http://docs.opscode.com/knife.html) plugin to create,
-delete and enumerate
+delete, and enumerate
 [Windows Azure] (https://www.windowsazure.com)
 resources to be managed by Chef.
 
@@ -67,13 +67,13 @@ Most configuration options can be specified either in your knife.rb file or as c
 
 The following options are required for all subcommands:
 
-    option :azure\_publish\_settings\_file      Path to your .publishsettings file
+    option :azure_publish_settings_file      Path to your .publishsettings file
 
 OR
 
-    option :azure\_subscription\_id             Your Azure subscription ID
-    option :azure\_mgmt\_cert                   Management certificate in PEM format
-    option :azure\_api\_host\_name              Your Azure API host name
+    option :azure_subscription_id            Your Azure subscription ID
+    option :azure_mgmt_cert                  Management certificate in PEM format
+    option :azure_api_host_name              Your Azure API host name
 
 ### Azure Image List Subcommand
 Outputs a list of all linux images that are available to use for provisioning. You should choose one of these to use for the :azure_source_image parameter to the server create command. You can use the filter option to see a detailed image list.
