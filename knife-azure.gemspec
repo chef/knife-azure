@@ -15,7 +15,7 @@ Gem::Specification.new do |s|
   s.extra_rdoc_files = [
     "LICENSE"
   ]
-  s.files = %w(LICENSE README.rdoc) + Dir.glob("lib/**/*")
+  s.files = %w(LICENSE README.md) + Dir.glob("lib/**/*")
   s.homepage = "http://github.com/opscode/knife-azure"
   s.require_paths = ["lib"]
   s.add_dependency(%q<chef>, [">= 0.10.0"])
