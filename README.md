@@ -48,10 +48,12 @@ location in your knife.rb:
       $ knife azure server list
   
       # Create and bootstrap an Ubuntu VM over ssh
-      $ knife azure server create -N MyNewNode --azure-vm-size Medium --I 8fcc3d\_Ubuntu-12\_04-amd64-30GB -m 'West US' --ssh-user myuser --identity-file ~/.ssh/myprivatekey\_rsa
+      $ knife azure server create -N MyNewNode --azure-vm-size Medium --I 8fcc3d_Ubuntu-12_04-amd64-30GB -m 'West US' --ssh-user myuser --identity-file ~/.ssh/myprivatekey_rsa
   
       # Create and bootstrap a Windows VM over winrm
-      $ knife azure server create -N MyNewNode --azure-vm-size Medium --I 8fcc3d\_Win2012-amd64-30GB -m 'West US' --winrm-user myuser --winrm-password 'mypassword' --bootstrap-protocol winrm
+      $ knife azure server create --azure-dns-name MyNewServerName --azure-vm-size Medium --I
+      8fcc3d_Win2012-amd64-30GB -m 'West US' --winrm-user myuser
+      --winrm-password 'mypassword' --bootstrap-protocol winrm --distro 'windows-chef-client-msi'
   
       # Delete a server and purge it from the Chef server
       $ knife azure server delete MyNewNode --purge -y
@@ -129,9 +131,18 @@ You can create a server with minimal configuration. On the Azure Management Port
                 --azure-service-location 'West US'
                 --azure-source-image 'source-image-name'
                 --ssh-user 'jetstream'
-                --ssh-password 'jetstream@123'
+                --identity-file '~/.ssh/myazure_rsa'
 
-As mentioned, you can set these options from knife.rb. A typical knife.rb is
+Note that the --identity-file option, which enables specification of a private
+key authorized to communicate securely with the created server during the
+bootstrap process, will also configure the user specified by --ssh-user with
+the public key that corresponds to the private key specified by
+--identity-file. This configuration persists even after the create subcommand
+has completed successfully, so that the key specified with --identity-file can
+be used with ssh clients for subsequent access to the server as the user
+specified by --ssh-user.
+
+You can set these options from knife.rb. A typical knife.rb is
 shown below:
 
     knife[:azure_publish_settings_file] = '/path/to/your/cert.publishsettingsfile'
@@ -139,7 +150,7 @@ shown below:
     knife[:azure_service_location] = 'West US'
     knife[:azure_source_image] = 'source-image-name'
     knife[:ssh_user] = 'jetstream'
-    knife[:ssh_password] = 'jetstream@123'
+    knife[:identity_file] = '~/.ssh/myazure_rsa'
 
 #### Azure VM Advanced Create
 You can set various other options in the advanced create.
@@ -187,28 +198,30 @@ These options may also be configured from knife.rb, as in this example:
     :ca_trust_file                The Certificate Authority (CA) trust file used for SSL transport
 
 #### Azure Windows Node Create
-The quick create option requires just following options for a windows instance:
+The quick create option requires the following options for a windows instance:
     
     knife azure server create
                 --azure-publish-settings-file '/path/to/your/cert.publishsettingsfile'
-                --azure-dns-name 'myservice'
+                --azure-dns-name 'myserverdnsname'
                 --azure-service-location 'West US'
-                --azure-source-image 'windows-image-name'
+                --azure-source-image 'windows-2012-image-id'
                 --winrm-user 'jetstream'
-                --winrm-password 'jetstream@123'
-                --template-file 'windows-chef-client-msi.erb'
+                --winrm-password 'jetstream@123'                
+                --distro 'windows-chef-client-msi'
 
 Sample knife.rb for bootstrapping Windows Node with basic authentication
 
     knife[:bootstrap_protocol] = 'winrm'
     knife[:winrm_password] = 'mgcvTuvV2Rh'
-    knife[:winrm_transport] = 'plaintext'
+    knife[:winrm_user] = 'myuser'
     knife[:winrm_port] = '5985'
     knife[:distro] = 'windows-chef-client-msi'
-    knife[:azure_source_image]='w2k12Basic.vhd'
+    knife[:azure_source_image]='windows-2012-image-id'
 
 ### Azure Server Delete Subcommand
-Deletes an existing server(role) in the currently configured Azure account. By default, this does not delete the associated node and client objects from the Chef server. To do so, add the --purge flag. Also by default, the DNS / hosted service is deleted if you are deleting the last VM from that service. By default, the OS disk is also deleted. If you want to retain them add the --preserve flag as shown below. To delete the storage account, add the --delete-azure-storage-account flag as by default the storage account is not deleted.
+Deletes an existing server in the currently configured Azure account. By
+default, this does not delete the associated node and client objects from the
+Chef server. To do so, add the --purge flag. Also by default, the DNS name, also called "cloud service", is deleted if you are deleting the last VM from that service. By default, the OS disk is also deleted. If you want to retain them add the --preserve flag as shown below. To delete the storage account, add the --delete-azure-storage-account flag since by default the storage account is not deleted.
 
     knife azure server delete "myvm01"
     knife azure server delete "myvm01" --purge  #purge chef node
@@ -216,10 +229,11 @@ Deletes an existing server(role) in the currently configured Azure account. By d
     knife azure server delete "myvm01" --preserve-azure-dns-name
     knife azure server delete "myvm01" --delete-azure-storage-account
 
-Since the VM name can be same across deployments, you can specify the deployment name also to delete the VM. Sample command to delete a VM from a specific deployment:
+Since the VM name can be the same across DNS name, you must specify the DNS
+name also to delete the VM. Sample command to delete a VM for a given DNS name:
 
-    knife azure server delete "myvm01" --azure-dns-name "myservice"
-    knife azure server delete "myvm01" "myvm02" --azure-dns-name "myservice"
+    knife azure server delete "myvm01" --azure-dns-name "mydnsname"
+    knife azure server delete "myvm01" "myvm02" --azure-dns-name "mydnsname"
 
 ### Azure Server List Subcommand
 Outputs a list of all servers in the currently configured Azure account. PLEASE NOTE - this shows all instances associated with the account, some of which may not be currently managed by the Chef server.
@@ -250,7 +264,7 @@ You can decode and extract the PFX file using powershell or a free windows base 
     openssl pkcs12 -in cert_decoded.pfx -out managementCertificate.pem -nodes
 
 #### On Windows
- Use powershell & run following command. If openssl.exe is not already installed it can be downloaded from http://www.openssl.org/related/binaries.html (Note: openssl dependends on Microsoft Visual C++ Redistributable package (x86) which must be installed for openssl to function properly).
+ Use powershell & run following command. If openssl.exe is not already installed it can be downloaded from http://www.openssl.org/related/binaries.html (Note: openssl depends on Microsoft Visual C++ Redistributable package (x86) which must be installed for openssl to function properly).
 
     openssl base64 -d -A -in cert_decoded.pfx -out cert_decode.der
 
