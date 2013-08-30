@@ -51,9 +51,7 @@ location in your knife.rb:
       $ knife azure server create -N MyNewNode --azure-vm-size Medium --I 8fcc3d_Ubuntu-12_04-amd64-30GB -m 'West US' --ssh-user myuser --identity-file ~/.ssh/myprivatekey_rsa
   
       # Create and bootstrap a Windows VM over winrm
-      $ knife azure server create --azure-dns-name MyNewServerName --azure-vm-size Medium --I
-      8fcc3d_Win2012-amd64-30GB -m 'West US' --winrm-user myuser
-      --winrm-password 'mypassword' --bootstrap-protocol winrm --distro 'windows-chef-client-msi'
+      $ knife azure server create --azure-dns-name MyNewServerName --azure-vm-size Medium --I 8fcc3d_Win2012-amd64-30GB -m 'West US' --winrm-user myuser --winrm-password 'mypassword' --bootstrap-protocol winrm --distro 'windows-chef-client-msi'
   
       # Delete a server and purge it from the Chef server
       $ knife azure server delete MyNewNode --purge -y
