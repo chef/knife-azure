@@ -7,7 +7,6 @@ Gem::Specification.new do |s|
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Barry Davis", "Chirag Jog"]
-  s.date = "2012-06-06"
   s.summary = "A plugin to Opscode knife for creating instances on the Microsoft Azure platform"
   s.description = s.summary
   s.email = "oss@opscode.com"
@@ -15,7 +14,7 @@ Gem::Specification.new do |s|
   s.extra_rdoc_files = [
     "LICENSE"
   ]
-  s.files = %w(LICENSE README.rdoc) + Dir.glob("lib/**/*")
+  s.files = %w(LICENSE README.md) + Dir.glob("lib/**/*")
   s.homepage = "http://github.com/opscode/knife-azure"
   s.require_paths = ["lib"]
   s.add_dependency(%q<chef>, [">= 0.10.0"])

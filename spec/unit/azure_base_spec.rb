@@ -17,7 +17,7 @@ describe Chef::Knife::AzureBase do
 		@dummy = Chef::Knife::DummyClass.new
 		Chef::Config[:knife][:azure_api_host_name] = 'preview.core.windows-int.net'
 		Chef::Config[:knife][:azure_subscription_id] = 'azure_subscription_id'
-		Chef::Config[:knife][:azure_mgmt_cert] = 'AzureLinuxCert.pem'
+		Chef::Config[:knife][:azure_mgmt_cert] = @cert_file
 		@dummy.ui.stub(:error)
 	end
 	describe "azure base tests - " do
@@ -41,7 +41,7 @@ describe Chef::Knife::AzureBase do
 			end
 
 			it "- should validate extract parameters" do
-				Chef::Config[:knife][:azure_publish_settings_file] = "azureValid.publishsettings"
+				Chef::Config[:knife][:azure_publish_settings_file] = get_publish_settings_file_path("azureValid.publishsettings")
 				@dummy.validate!
 				Chef::Config[:knife][:azure_api_host_name].should == 'management.core.windows.net'
 				Chef::Config[:knife][:azure_subscription_id].should == 'id1'
@@ -49,14 +49,14 @@ describe Chef::Knife::AzureBase do
 			end
 
 			it "- should validate parse method" do
-				@dummy.parse_publish_settings_file("azureValid.publishsettings")
+				@dummy.parse_publish_settings_file(get_publish_settings_file_path("azureValid.publishsettings"))
 				Chef::Config[:knife][:azure_api_host_name].should == 'management.core.windows.net'
 				Chef::Config[:knife][:azure_subscription_id].should == 'id1'
 				validate_cert()
 			end
 
 			it "- should validate parse method for SchemaVersion2-0 publishsettings file" do
-				@dummy.parse_publish_settings_file("azureValidSchemaVersion-2.0.publishsettings")
+				@dummy.parse_publish_settings_file(get_publish_settings_file_path("azureValidSchemaVersion-2.0.publishsettings"))
 				Chef::Config[:knife][:azure_api_host_name].should == 'management.core.windows.net'
 				Chef::Config[:knife][:azure_subscription_id].should == 'id1'
 				validate_cert()
@@ -64,7 +64,7 @@ describe Chef::Knife::AzureBase do
 
 			it "- should validate settings file and subscrition id" do
 				@dummy.config[:azure_subscription_id] = "azure_subscription_id"
-				Chef::Config[:knife][:azure_publish_settings_file] = "azureValid.publishsettings"
+				Chef::Config[:knife][:azure_publish_settings_file] = get_publish_settings_file_path("azureValid.publishsettings")
 				@dummy.validate!
 				Chef::Config[:knife][:azure_api_host_name].should == 'management.core.windows.net'
 				@dummy.config[:azure_subscription_id].should == 'azure_subscription_id'
@@ -73,12 +73,12 @@ describe Chef::Knife::AzureBase do
 			end
 
 			it "- should raise error if invalid publish settings provided" do
-				Chef::Config[:knife][:azure_publish_settings_file] = "azureInvalid.publishsettings"
+				Chef::Config[:knife][:azure_publish_settings_file] = get_publish_settings_file_path("azureInvalid.publishsettings")
 				expect {@dummy.validate!}.to raise_error
 			end
 
 			it "- should raise error if publish settings file does not exists" do
-				Chef::Config[:knife][:azure_publish_settings_file] = "azureNotAvailable.publishsettings"
+				Chef::Config[:knife][:azure_publish_settings_file] = get_publish_settings_file_path("azureNotAvailable.publishsettings")
 				expect {@dummy.validate!}.to raise_error
 			end
 		end

@@ -104,9 +104,8 @@ class Chef
               return
             end
             puts "\n"
-            msg_pair('Service', server.hostedservicename)
-            msg_pair('Deployment', server.deployname)
-            msg_pair('Role', server.name)
+            msg_pair('DNS Name', server.hostedservicename + ".cloudapp.net")
+            msg_pair('VM Name', server.name)
             msg_pair('Size', server.size)
             msg_pair('Public Ip Address', server.publicipaddress)
             puts "\n"
