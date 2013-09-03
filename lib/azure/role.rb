@@ -15,7 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-
+require 'securerandom'
 class Azure
   class Roles
     include AzureUtility
@@ -283,7 +283,9 @@ class Azure
           end
           xml.Label Base64.encode64(params[:azure_vm_name]).strip
           xml.OSVirtualHardDisk {
-            xml.MediaLink 'http://' + params[:azure_storage_account] + '.blob.core.windows.net/vhds/' + (params[:azure_os_disk_name] || Time.now.strftime('disk_%Y_%m_%d_%H_%M')) + '.vhd'
+            disk_name = params[:azure_os_disk_name] || "disk_" + SecureRandom.uuid
+            xml.DiskName disk_name
+            xml.MediaLink 'http://' + params[:azure_storage_account] + '.blob.core.windows.net/vhds/' + disk_name + '.vhd'
             xml.SourceImageName params[:azure_source_image]
           }
           xml.RoleSize params[:azure_vm_size]

@@ -17,7 +17,7 @@ describe Chef::Knife::AzureBase do
 		@dummy = Chef::Knife::DummyClass.new
 		Chef::Config[:knife][:azure_api_host_name] = 'preview.core.windows-int.net'
 		Chef::Config[:knife][:azure_subscription_id] = 'azure_subscription_id'
-		Chef::Config[:knife][:azure_mgmt_cert] = 'AzureLinuxCert.pem'
+		Chef::Config[:knife][:azure_mgmt_cert] = @cert_file
 		@dummy.ui.stub(:error)
 	end
 	describe "azure base tests - " do
