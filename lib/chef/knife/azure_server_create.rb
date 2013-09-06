@@ -273,6 +273,13 @@ class Chef
 
         puts("\n")
         if is_image_windows?
+          server.tcpports.each do |endpoint|
+            if endpoint["Name"] == "RDP"
+              ui.info("RDP details for #{ui.color(server.name, :bold)}: ")
+              ui.info("\tRDP Public Port: #{ui.color(endpoint['PublicPort'], :bold)}")
+              ui.info("\tRDP Private Port: #{ui.color(endpoint['LocalPort'], :bold)}")
+            end
+          end
           if locate_config_value(:bootstrap_protocol) == 'ssh'
             port = server.sshport
             print "\n#{ui.color("Waiting for sshd on #{fqdn}:#{port}", :magenta)}"
@@ -429,7 +436,8 @@ class Chef
           :tcp_endpoints => locate_config_value(:tcp_endpoints),
           :udp_endpoints => locate_config_value(:udp_endpoints),
           :bootstrap_proto => locate_config_value(:bootstrap_protocol),
-          :azure_connect_to_existing_dns => locate_config_value(:azure_connect_to_existing_dns)
+          :azure_connect_to_existing_dns => locate_config_value(:azure_connect_to_existing_dns),
+          :winrm_user => locate_config_value(:winrm_user)
         }
         # If user is connecting a new VM to an existing dns, then
         # the VM needs to have a unique public port. Logic below takes care of this.
@@ -450,6 +458,14 @@ class Chef
           server_def[:os_type] = 'Windows'
           if not locate_config_value(:winrm_password) or not locate_config_value(:bootstrap_protocol)
             ui.error("WinRM Password and Bootstrapping Protocol are compulsory parameters")
+            exit 1
+          end
+          # We can specify the AdminUsername after API version 2013-03-01. However, in this API version,
+          # the AdminUsername is a required parameter.
+          # Also, the user name cannot be Administrator, Admin, Admin1 etc, for enhanced security (provided by Azure)
+          if locate_config_value(:winrm_user).nil? || locate_config_value(:winrm_user).downcase =~ /admin*/
+            ui.error("WinRM User is compulsory parameter and it cannot be named 'admin*'")
+            exit
           end
           server_def[:admin_password] = locate_config_value(:winrm_password)
           server_def[:bootstrap_proto] = locate_config_value(:bootstrap_protocol)

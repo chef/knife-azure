@@ -45,8 +45,13 @@ class Chef
         validate!
 
         image_labels = !locate_config_value(:show_all_fields) ? ['Name', 'OS'] : ['Name', 'Category', 'Label', 'OS'] 
-        image_list =  image_labels.map {|label| ui.color(label, :bold)}          
-        items = connection.images.all
+        image_list =  image_labels.map {|label| ui.color(label, :bold)}
+        begin
+          items = connection.images.all
+        rescue ConnectionExceptions::QueryAzureException => e
+          ui.error e.message
+          exit 1
+        end
 
         image_items = image_labels.map {|item| item.downcase }
         items.each do |image|

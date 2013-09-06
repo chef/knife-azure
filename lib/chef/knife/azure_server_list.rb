@@ -35,7 +35,12 @@ class Chef
 
         server_labels = ['DNS Name', 'VM Name', 'Status', 'IP Address', 'SSH Port', 'WinRM Port' ]
         server_list =  server_labels.map {|label| ui.color(label, :bold)}
-        items = connection.roles.all
+        begin
+          items = connection.roles.all
+        rescue ConnectionExceptions::QueryAzureException => e
+          ui.error e.message
+          exit 1
+        end
 
         items.each do |server|
           server_list << server.hostedservicename.to_s+".cloudapp.net"  # Info about the DNS name at http://msdn.microsoft.com/en-us/library/ee460806.aspx

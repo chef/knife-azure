@@ -159,7 +159,7 @@ describe "parameter test:" do
 			Chef::Config[:knife][:azure_dns_name] = 'service001'
 			Chef::Config[:knife][:azure_vm_name] = 'newvm01'
 			Chef::Config[:knife][:bootstrap_protocol] = 'winrm'
-			Chef::Config[:knife][:winrm_user] = 'administrator'
+			Chef::Config[:knife][:winrm_user] = 'testuser'
 			Chef::Config[:knife][:winrm_password] = 'Jetstream123!'
 			@server_instance.should_receive(:is_image_windows?).twice.and_return(true)
 			@server_params = @server_instance.create_server_def
@@ -167,7 +167,7 @@ describe "parameter test:" do
 		end
 		it "port should be winrm-port value specified in the option" do
             Chef::Config[:knife][:bootstrap_protocol] = 'winrm'
-            Chef::Config[:knife][:winrm_user] = 'administrator'
+            Chef::Config[:knife][:winrm_user] = 'testuser'
             Chef::Config[:knife][:winrm_password] = 'Jetstream123!'
             Chef::Config[:knife][:winrm_port] = '5990'
 			@server_instance.should_receive(:is_image_windows?).twice.and_return(true)
@@ -200,6 +200,27 @@ describe "parameter test:" do
 		end
 	end
 
+    context "Windows Server create" do
+		before do
+			@bootstrap = Chef::Knife::BootstrapWindowsWinrm.new
+			Chef::Knife::BootstrapWindowsWinrm.stub(:new).and_return(@bootstrap)
+			@bootstrap.should_receive(:run)
+			@server_instance.should_receive(:is_image_windows?).any_number_of_times.and_return(true)
+			Chef::Config[:knife][:bootstrap_protocol] = 'winrm'
+			Chef::Config[:knife][:winrm_user] = 'winrm_user'
+            Chef::Config[:knife][:winrm_password] = 'winrm_password'
+			Chef::Config[:knife][:azure_dns_name] = 'service004'
+			Chef::Config[:knife][:azure_vm_name] = 'winrm-vm'
+			Chef::Config[:knife][:hints] = nil # reset as this is loaded only once for app(test here)
+			@server_instance.run
+	    end
+
+		it "set RDP port" do
+		  testxml = Nokogiri::XML(@receivedXML)
+		  xml_content(testxml, "InputEndpoints").should include("RDP")
+		  xml_content(testxml, "InputEndpoints").should include("3389")
+		end		    
+	end
 end
 
 describe "cloud attributes" do
@@ -210,6 +231,7 @@ describe "cloud attributes" do
 			@bootstrap.should_receive(:run)
 			@server_instance.should_receive(:is_image_windows?).any_number_of_times.and_return(true)
 			Chef::Config[:knife][:bootstrap_protocol] = 'winrm'
+			Chef::Config[:knife][:winrm_user] = 'testuser'
 			Chef::Config[:knife][:winrm_password] = 'winrm_password'
 			Chef::Config[:knife][:azure_dns_name] = 'service004'
 			Chef::Config[:knife][:azure_vm_name] = 'winrm-vm'
@@ -255,6 +277,7 @@ end
 describe "for bootstrap protocol winrm:" do
 	before do
 		Chef::Config[:knife][:bootstrap_protocol] = 'winrm'
+		Chef::Config[:knife][:winrm_user] = 'testuser'
 		Chef::Config[:knife][:winrm_password] = 'winrm_password'
 	end
 
@@ -266,7 +289,20 @@ describe "for bootstrap protocol winrm:" do
 		@server_params[:bootstrap_proto].should == 'winrm'
 		@server_params[:azure_dns_name].should == 'service001'
 		@server_params[:azure_vm_name].should == 'vm002'
+		@server_params[:winrm_user].should == 'testuser'
 		@server_params[:port].should == '5985'
+	end
+
+	it "winrm_user cannot be 'administrator'" do
+		@server_instance.should_receive(:is_image_windows?).twice.and_return(true)
+		Chef::Config[:knife][:winrm_user] = 'administrator'
+		expect {@server_instance.create_server_def}.to raise_error
+	end
+
+	it "winrm_user cannot be 'admin*'" do
+		@server_instance.should_receive(:is_image_windows?).twice.and_return(true)
+		Chef::Config[:knife][:winrm_user] = 'Admin12'
+		expect {@server_instance.create_server_def}.to raise_error
 	end
 
 	context "bootstrap node" do
