@@ -273,6 +273,9 @@ class Chef
 
         puts("\n")
         if is_image_windows?
+          # Set distro to windows-chef-client-msi
+          config[:distro] = "windows-chef-client-msi" if (config[:distro].nil? || config[:distro] == "chef-full")
+
           if locate_config_value(:bootstrap_protocol) == 'ssh'
             port = server.sshport
             print "\n#{ui.color("Waiting for sshd on #{fqdn}:#{port}", :magenta)}"

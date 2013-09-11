@@ -276,6 +276,12 @@ describe "for bootstrap protocol winrm:" do
 		   	@bootstrap.should_receive(:run)
 		end
 
+		it "sets valid distro for windows vm" do
+			@server_instance.should_receive(:is_image_windows?).at_least(:twice).and_return(true)
+			@server_instance.run
+			@server_instance.config[:distro].should == 'windows-chef-client-msi'
+		end
+
 		it "sets param <azure_storage_account> from azure_vm_name" do
 			Chef::Config[:knife].delete(:azure_storage_account)
 			@server_instance.should_receive(:is_image_windows?).at_least(:twice).and_return(true)
