@@ -72,7 +72,7 @@ module AzureAPI
       elsif verb == 'delete'
         request = Net::HTTP::Delete.new(uri.request_uri)
       end
-      request["x-ms-version"] = "2012-03-01"
+      request["x-ms-version"] = "2013-03-01"
       request["content-type"] = "application/xml"
       request["accept"] = "application/xml"
       request["accept-charset"] = "utf-8"
