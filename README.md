@@ -219,11 +219,16 @@ Sample knife.rb for bootstrapping Windows Node with basic authentication
 ### Azure Server Delete Subcommand
 Deletes an existing server in the currently configured Azure account. By
 default, this does not delete the associated node and client objects from the
-Chef server. To do so, add the --purge flag. Also by default, the DNS name, also called "cloud service", is deleted if you are deleting the last VM from that service. By default, the OS disk is also deleted. If you want to retain them add the --preserve flag as shown below. To delete the storage account, add the --delete-azure-storage-account flag since by default the storage account is not deleted.
+Chef server. To do so, add the --purge flag. Also by default, the DNS name, also called 
+"cloud service", is deleted if you are deleting the last VM from that service. By default,
+the OS disk is also deleted. The underlying VHD blob is also deleted by default. If you want to
+retain them add the --preserve flag as shown below. To delete the storage account,
+add the --delete-azure-storage-account flag since by default the storage account is not deleted.
 
     knife azure server delete "myvm01"
     knife azure server delete "myvm01" --purge  #purge chef node
     knife azure server delete "myvm01" --preserve-azure-os-disk
+    knife azure server delete "myvm01" --preserve-azure-vhd
     knife azure server delete "myvm01" --preserve-azure-dns-name
     knife azure server delete "myvm01" --delete-azure-storage-account
 
