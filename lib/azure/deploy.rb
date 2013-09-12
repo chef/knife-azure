@@ -89,8 +89,7 @@ class Azure
         ret_val = deploy.create(params, deployXML)
       end
       if ret_val.css('Error Code').length > 0
-          Chef::Log.fatal 'Unable to create role:' + ret_val.at_css('Error Code').content + ' : ' + ret_val.at_css('Error Message').content
-          exit 1
+        raise Chef::Log.fatal 'Unable to create role:' + ret_val.at_css('Error Code').content + ' : ' + ret_val.at_css('Error Message').content
       end
       @connection.roles.find_in_hosted_service(params[:azure_vm_name], params[:azure_dns_name])
     end
