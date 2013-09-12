@@ -257,19 +257,31 @@ class Chef
           config[:azure_vm_name] = locate_config_value(:azure_dns_name)
         end
 
+        remove_hosted_service_on_failure = locate_config_value(:azure_dns_name)
+        if connection.hosts.exists?(locate_config_value(:azure_dns_name))
+          remove_hosted_service_on_failure = nil
+        end
+        remove_storage_service_on_failure = locate_config_value(:azure_storage_account)
+
         #If Storage Account is not specified, check if the geographic location has one to re-use
         if not locate_config_value(:azure_storage_account)
           storage_accts = connection.storageaccounts.all
           storage = storage_accts.find { |storage_acct| storage_acct.location.to_s == locate_config_value(:azure_service_location) }
           if not storage
             config[:azure_storage_account] = [strip_non_ascii(locate_config_value(:azure_vm_name)), random_string].join.downcase
+            remove_storage_service_on_failure = config[:azure_storage_account]
           else
+            remove_storage_service_on_failure = nil
             config[:azure_storage_account] = storage.name.to_s
           end
         end
 
-        server = connection.deploys.create(create_server_def)
-        fqdn = server.publicipaddress
+        begin
+          server = connection.deploys.create(create_server_def)
+          fqdn = server.publicipaddress
+        rescue Exception => e
+          cleanup_and_exit(remove_hosted_service_on_failure, remove_storage_service_on_failure)
+        end
 
         puts("\n")
         if is_image_windows?
@@ -475,6 +487,17 @@ class Chef
         end
         server_def
       end
+
+      def cleanup_and_exit(remove_hosted_service_on_failure, remove_storage_service_on_failure)
+        if remove_hosted_service_on_failure
+          connection.hosts.delete(remove_hosted_service_on_failure)
+        end
+        if remove_storage_service_on_failure
+          connection.storageaccounts.delete(remove_storage_service_on_failure)
+        end
+        exit 1
+      end
+      
     end
   end
 end
