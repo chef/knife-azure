@@ -143,7 +143,19 @@ describe "parameter test:" do
 			test_params(testxml, Chef::Config[:knife], Chef::Config[:knife][:azure_vm_name],
 										Chef::Config[:knife][:azure_vm_name])
 		end
-	end
+
+    it "create with availability set" do
+      # set all params
+      Chef::Config[:knife][:azure_dns_name] = 'service001'
+      Chef::Config[:knife][:azure_vm_name] = 'vm002'
+      Chef::Config[:knife][:azure_storage_account] = 'ka001testeurope'
+      Chef::Config[:knife][:azure_os_disk_name] = 'os-disk'
+      Chef::Config[:knife][:azure_availability_set] = 'test-availability-set'
+      @server_instance.run
+      testxml = Nokogiri::XML(@receivedXML)
+      xml_content(testxml, 'AvailabilitySetName').should == 'test-availability-set'
+    end
+  end
 
 	context "connect to existing DNS tests" do
 		before do
