@@ -119,6 +119,9 @@ https://github.com/opscode/knife-windows#nodes
       :azure_connect_to_existing_dns    Set this flag to add the new VM to an existing
                                         deployment/service. Must give the name of the existing
                                         DNS correctly in the --azure-dns-name option
+      :azure_affinity_group             Required if using Virtual Network.  Cannot be used with a service location.
+      :azure_network_name               Optional. Name of Virtual Network to add server into.
+      :azure_subnet_name                Optional. Name of subnet within Virtual Network to add server into.
 
 #### Azure VM Quick Create
 You can create a server with minimal configuration. On the Azure Management Portal, this corresponds to a "Quick Create - VM". Sample command for quick create (for an Ubuntu instance):

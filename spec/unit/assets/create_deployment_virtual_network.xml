@@ -1,0 +1,44 @@
+<?xml version="1.0"?>
+       <Deployment xmlns="http://schemas.microsoft.com/windowsazure" xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+         <Name>unknown_yet</Name>
+         <DeploymentSlot>Production</DeploymentSlot>
+         <Label>dW5rbm93bl95ZXQ=</Label>
+         <RoleList>
+           <Role i:type="PersistentVMRole">
+             <RoleName>vm01</RoleName>
+             <OsVersion i:nil="true"/>
+             <RoleType>PersistentVMRole</RoleType>
+             <ConfigurationSets>
+         <ConfigurationSet i:type="LinuxProvisioningConfigurationSet">
+           <ConfigurationSetType>LinuxProvisioningConfiguration</ConfigurationSetType>
+           <HostName>vm01</HostName>
+           <UserName>jetstream</UserName>
+           <UserPassword>jetstream1!</UserPassword>
+           <DisableSshPasswordAuthentication>false</DisableSshPasswordAuthentication>
+         </ConfigurationSet>
+         <ConfigurationSet i:type="NetworkConfigurationSet">
+           <ConfigurationSetType>NetworkConfiguration</ConfigurationSetType>
+           <InputEndpoints>
+             <InputEndpoint>
+               <LocalPort>22</LocalPort>
+               <Name>SSH</Name>
+               <Port>22</Port>
+               <Protocol>TCP</Protocol>
+             </InputEndpoint>
+           </InputEndpoints>
+           <SubnetNames>
+             <SubnetName>test-subnet</SubnetName>
+           </SubnetNames>
+         </ConfigurationSet>
+       </ConfigurationSets>
+             <Label>dm0wMQ==</Label>
+             <OSVirtualHardDisk>
+         <DiskName>disk004Test</DiskName>
+         <MediaLink>http://storageaccount001.blob.core.windows.net/vhds/disk004Test.vhd</MediaLink>
+         <SourceImageName>SUSE__OpenSUSE64121-03192012-en-us-15GB</SourceImageName>
+       </OSVirtualHardDisk>
+             <RoleSize>ExtraSmall</RoleSize>
+           </Role>
+         </RoleList>
+  <VirtualNetworkName>test-network</VirtualNetworkName>
+</Deployment>
