@@ -51,12 +51,13 @@ end
 class Azure
   class Image
     attr_accessor :category, :label
-    attr_accessor :name, :os, :eula, :description
+    attr_accessor :name, :os, :eula, :description, :location
     def initialize(image)
       @category = image.at_css('Category').content
       @label = image.at_css('Label').content
       @name = image.at_css('Name').content
       @os = image.at_css('OS').content
+      @location = image.at_css('Location').content.gsub(";", ", ")
       @eula = image.at_css('Eula').content if image.at_css('Eula')
       @description = image.at_css('Description').content if image.at_css('Description')
     end

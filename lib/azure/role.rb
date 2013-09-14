@@ -222,7 +222,7 @@ class Azure
               xml.AdminPassword params[:admin_password]
               xml.ResetPasswordOnFirstLogon 'false'
               xml.EnableAutomaticUpdates 'false'
-
+              xml.AdminUsername params[:winrm_user]
               }
             end
 

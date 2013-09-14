@@ -44,7 +44,7 @@ class Chef
 
         validate!
 
-        image_labels = !locate_config_value(:show_all_fields) ? ['Name', 'OS'] : ['Name', 'Category', 'Label', 'OS'] 
+        image_labels = !locate_config_value(:show_all_fields) ? ['Name', 'OS', 'Location'] : ['Name', 'Category', 'Label', 'OS', 'Location'] 
         image_list =  image_labels.map {|label| ui.color(label, :bold)}          
         items = connection.images.all
 
@@ -54,7 +54,7 @@ class Chef
         end
 
         puts "\n"
-        puts h.list(image_list, :uneven_columns_across, !locate_config_value(:show_all_fields) ? 2 : 4) 
+        puts h.list(image_list, :uneven_columns_across, !locate_config_value(:show_all_fields) ? 3 : 5) 
 
       end
     end
