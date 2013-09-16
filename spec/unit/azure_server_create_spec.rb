@@ -145,6 +145,24 @@ describe "parameter test:" do
 		end
 	end
 
+	context "#cleanup_and_exit" do
+		it "service leak cleanup" do
+			expect {@server_instance.cleanup_and_exit("hosted_srvc", "storage_srvc")}.to raise_error
+		end
+
+		it "service leak cleanup with nil params" do
+			@server_instance.connection.hosts.should_not_receive(:delete)
+			@server_instance.connection.storageaccounts.should_not_receive(:delete)
+			expect {@server_instance.cleanup_and_exit(nil, nil)}.to raise_error
+		end
+
+		it "service leak cleanup with valid params" do
+			@server_instance.connection.hosts.should_receive(:delete).with("hosted_srvc")
+			@server_instance.connection.storageaccounts.should_receive(:delete).with("storage_srvc")
+			expect {@server_instance.cleanup_and_exit("hosted_srvc", "storage_srvc")}.to raise_error
+		end
+	end
+
 	context "connect to existing DNS tests" do
 		before do
 			Chef::Config[:knife][:azure_connect_to_existing_dns] = true
