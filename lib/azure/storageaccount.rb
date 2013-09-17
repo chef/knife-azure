@@ -70,6 +70,13 @@ class Azure
         @connection.query_azure('storageaccounts/' + storage.name, 'delete')
       end
     end
+
+    def delete(name)
+      if self.exists?(name)
+          servicecall = "storageservices/" + name
+        @connection.query_azure(servicecall, "delete") 
+      end
+    end
   end
 end
 
