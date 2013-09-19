@@ -17,7 +17,6 @@
 # limitations under the License.
 #
 
-require 'chef/knife'
 require File.expand_path('../../../azure/connection', __FILE__)
 
 class Chef
@@ -33,6 +32,8 @@ class Chef
           deps do
             require 'readline'
             require 'chef/json_compat'
+            require 'chef/knife'
+            Chef::Knife.load_deps
           end
 
           option :azure_subscription_id,

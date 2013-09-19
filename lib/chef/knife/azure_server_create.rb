@@ -28,8 +28,6 @@ class Chef
       include Knife::WinrmBase
 
       deps do
-        require 'readline'
-        require 'chef/json_compat'
         require 'chef/knife/bootstrap'
         require 'chef/knife/bootstrap_windows_ssh'
         require 'chef/knife/core/windows_bootstrap_context'
