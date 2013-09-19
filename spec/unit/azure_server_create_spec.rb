@@ -226,7 +226,7 @@ describe "cloud attributes" do
 			@bootstrap = Chef::Knife::BootstrapWindowsWinrm.new
 			Chef::Knife::BootstrapWindowsWinrm.stub(:new).and_return(@bootstrap)
 			@bootstrap.should_receive(:run)
-			@server_instance.should_receive(:is_image_windows?).any_number_of_times.and_return(true)
+			@server_instance.stub(:is_image_windows?).and_return(true)
 			Chef::Config[:knife][:bootstrap_protocol] = 'winrm'
 			Chef::Config[:knife][:winrm_user] = 'testuser'
 			Chef::Config[:knife][:winrm_password] = 'winrm_password'
@@ -250,7 +250,7 @@ describe "cloud attributes" do
 			@bootstrap = Chef::Knife::Bootstrap.new
 			Chef::Knife::Bootstrap.stub(:new).and_return(@bootstrap)
 			@bootstrap.should_receive(:run)
-			@server_instance.should_receive(:is_image_windows?).any_number_of_times.and_return(false)
+			@server_instance.stub(:is_image_windows?).and_return(false)
 			Chef::Config[:knife][:bootstrap_protocol] = 'ssh'
 			Chef::Config[:knife][:ssh_password] = 'ssh_password'
 			Chef::Config[:knife][:ssh_user] = 'ssh_user'
@@ -276,6 +276,7 @@ describe "for bootstrap protocol winrm:" do
 		Chef::Config[:knife][:bootstrap_protocol] = 'winrm'
 		Chef::Config[:knife][:winrm_user] = 'testuser'
 		Chef::Config[:knife][:winrm_password] = 'winrm_password'
+		@server_instance.ui.stub(:error)
 	end
 
 	it "check if all server params are set correctly" do
