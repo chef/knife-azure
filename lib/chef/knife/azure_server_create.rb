@@ -153,6 +153,10 @@ class Chef
         :description => "Optional. Size of virtual machine (ExtraSmall, Small, Medium, Large, ExtraLarge)",
         :default => 'Small'
 
+      option :azure_availability_set,
+             :long => "--azure-availability-set NAME",
+             :description => "Optional. Name of availability set to add virtual machine into."
+
       option :tcp_endpoints,
         :short => "-t PORT_LIST",
         :long => "--tcp-endpoints PORT_LIST",
@@ -445,7 +449,8 @@ class Chef
           :udp_endpoints => locate_config_value(:udp_endpoints),
           :bootstrap_proto => locate_config_value(:bootstrap_protocol),
           :azure_connect_to_existing_dns => locate_config_value(:azure_connect_to_existing_dns),
-          :winrm_user => locate_config_value(:winrm_user)
+          :winrm_user => locate_config_value(:winrm_user),
+          :azure_availability_set => locate_config_value(:azure_availability_set)
         }
         # If user is connecting a new VM to an existing dns, then
         # the VM needs to have a unique public port. Logic below takes care of this.
