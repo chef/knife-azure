@@ -248,18 +248,24 @@ class Azure
             if params[:tcp_endpoints]
               params[:tcp_endpoints].split(',').each do |endpoint|
                 ports = endpoint.split(':')
-                xml.InputEndpoint {
-                  xml.LocalPort ports[0]
-                  xml.Name 'tcpport_' + ports[0] + '_' + params[:azure_vm_name]
-                  if ports.length > 1
-                    xml.Port ports[1]
-                  else
-                    xml.Port ports[0]
-                  end
-                  xml.Protocol 'TCP'
-                }
+                if !(ports.length > 1 && ports[1] == params[:port] || ports.length == 1 && ports[0] == params[:port])
+                  xml.InputEndpoint {
+                    xml.LocalPort ports[0]
+                    xml.Name 'tcpport_' + ports[0] + '_' + params[:azure_vm_name]
+                    if ports.length > 1
+                      xml.Port ports[1]
+                    else
+                      xml.Port ports[0]
+                    end
+                    xml.Protocol 'TCP'
+                  }
+                else
+                  warn_message = ports.length > 1 ? "#{ports.join(':')} because this ports are" : "#{ports[0]} because this port is"
+                  puts("Skipping tcp-endpoints: #{warn_message} already in use by ssh/winrm endpoint in current VM.")
+                end
               end
             end
+
             if params[:udp_endpoints]
               params[:udp_endpoints].split(',').each do |endpoint|
                 ports = endpoint.split(':')
