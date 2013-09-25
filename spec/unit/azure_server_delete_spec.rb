@@ -110,15 +110,24 @@ end
 		@server_instance.run
 	end
 
-	it "should delete OS Disk when --preserve-azure-os-disk is not set." do
+	it "should delete OS Disk and VHD when --preserve-azure-os-disk and --preserve-azure-vhd are not set." do
 		test_hostname = 'role001'
 		test_diskname = 'deployment001-role002-0-201241722728'
 		@server_instance.name_args = [test_hostname]
 		@server_instance.connection.roles.should_receive(:delete).exactly(1).and_call_original
-		@server_instance.connection.should_receive(:query_azure).with("disks/#{test_diskname}", "delete")
+		@server_instance.connection.should_receive(:query_azure).with("disks/#{test_diskname}", "delete", "", "comp=media")
 		@server_instance.run
 	end
 
+  it "should preserve VHD when --preserve-azure-vhd is set." do
+    test_hostname = 'role001'
+    test_diskname = 'deployment001-role002-0-201241722728'
+    Chef::Config[:knife][:preserve_azure_vhd] = true
+    @server_instance.name_args = [test_hostname]
+    @server_instance.connection.roles.should_receive(:delete).exactly(1).and_call_original
+    @server_instance.connection.should_receive(:query_azure).with("disks/#{test_diskname}", "delete")
+    @server_instance.run
+  end
 
 	describe "Storage Account" do
 		before(:each) do
