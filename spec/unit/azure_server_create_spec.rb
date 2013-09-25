@@ -130,6 +130,19 @@ describe "parameter test:" do
           end
         end
 
+		it "skip user specified tcp-endpoints if its ports already use by ssh endpoint" do
+			# Default external port for ssh endpoint is 22.
+			@server_instance.config[:tcp_endpoints] = "12:22"
+			@server_instance.should_receive(:is_image_windows?).at_least(:twice).and_return(false)
+			Chef::Config[:knife][:azure_dns_name] = 'vmname' # service name to be used as vm name
+			@server_instance.run
+			testxml = Nokogiri::XML(@receivedXML)
+			testxml.css('InputEndpoint Protocol:contains("TCP")').each do | port |
+			  # Test data in @server_instance.config[:tcp_endpoints]:=> "12:22" this endpoints external port 22 is already use by ssh endpoint. So it should skip endpoint "12:22".
+			  port.parent.css("LocalPort").text.should_not eq("12")
+			end
+		end
+
 		it "advanced create" do
 			# set all params
 			Chef::Config[:knife][:azure_dns_name] = 'service001'
