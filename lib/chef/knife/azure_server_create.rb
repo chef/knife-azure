@@ -390,8 +390,8 @@ class Chef
         end
         bootstrap.name_args = [fqdn]
         bootstrap.config[:chef_node_name] = config[:chef_node_name] || server.name
-        bootstrap.config[:encrypted_data_bag_secret] = config[:encrypted_data_bag_secret]
-        bootstrap.config[:encrypted_data_bag_secret_file] = config[:encrypted_data_bag_secret_file]
+        bootstrap.config[:encrypted_data_bag_secret] = locate_config_value(:encrypted_data_bag_secret)
+        bootstrap.config[:encrypted_data_bag_secret_file] = locate_config_value(:encrypted_data_bag_secret_file)
         bootstrap_common_params(bootstrap, server)
       end
 
@@ -413,6 +413,8 @@ class Chef
         bootstrap.config[:environment] = locate_config_value(:environment)
         # may be needed for vpc_mode
         bootstrap.config[:host_key_verify] = config[:host_key_verify]
+        bootstrap.config[:secret] = locate_config_value(:secret)
+        bootstrap.config[:secret_file] = locate_config_value(:secret_file)
 
         # Load cloud attributes.
         load_cloud_attributes_in_hints(server)
