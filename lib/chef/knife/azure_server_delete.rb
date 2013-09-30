@@ -38,6 +38,12 @@ class Chef
         :default => false,
         :description => "Preserve corresponding OS Disk"
 
+      option :preserve_azure_vhd,
+       :long => "--preserve-azure-vhd",
+       :boolean => true,
+       :default => false,
+       :description => "Preserve underlying VHD"
+
       option :purge,
         :short => "-P",
         :long => "--purge",
@@ -118,6 +124,7 @@ class Chef
             end
 
             connection.roles.delete(name, params = { :preserve_azure_os_disk => locate_config_value(:preserve_azure_os_disk),
+                                                     :preserve_azure_vhd => locate_config_value(:preserve_azure_vhd),
                                                      :preserve_azure_dns_name => locate_config_value(:preserve_azure_dns_name),
                                                      :azure_dns_name => server.hostedservicename,
                                                      :delete_azure_storage_account => locate_config_value(:delete_azure_storage_account) })
