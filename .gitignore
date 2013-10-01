@@ -13,3 +13,9 @@ Gemfile.lock
 
 pkg/
 tmp/
+
+# Ignore gem files
+*.gem
+
+# Ignore IDEA project files
+.idea/
