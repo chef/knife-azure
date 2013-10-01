@@ -57,7 +57,7 @@ class Azure
       @label = image.at_css('Label').content
       @name = image.at_css('Name').content
       @os = image.at_css('OS').content
-      @location = image.at_css('Location').content.gsub(";", ", ")
+      @location = image.at_css('Location').content.gsub(";", ", ") if image.at_css('Location')
       @eula = image.at_css('Eula').content if image.at_css('Eula')
       @description = image.at_css('Description').content if image.at_css('Description')
     end

@@ -124,8 +124,13 @@ class Chef
       option :azure_service_location,
         :short => "-m LOCATION",
         :long => "--azure-service-location LOCATION",
-        :description => "Required. Specifies the geographic location - the name of the data center location that is valid for your subscription.
+        :description => "Required if not using an Affinity Group. Specifies the geographic location - the name of the data center location that is valid for your subscription.
                                       Eg: West US, East US, East Asia, Southeast Asia, North Europe, West Europe"
+
+      option :azure_affinity_group,
+        :short => "-a GROUP",
+        :long => "--azure-affinity-group GROUP",
+        :description => "Required if not using a Service Location. Specifies Affinity Group the VM should belong to."
 
       option :azure_dns_name,
         :short => "-d DNS_NAME",
@@ -174,6 +179,15 @@ class Chef
         :default => false,
         :description => "Set this flag to add the new VM to an existing deployment/service. Must give the name of the existing
                                         DNS correctly in the --dns-name option"
+
+      option :azure_network_name,
+        :long => "--azure-network-name NETWORK_NAME",
+        :description => "Optional. Specifies the network of virtual machine"
+
+      option :azure_subnet_name,
+        :long => "--azure-subnet-name SUBNET_NAME",
+        :description => "Optional. Specifies the subnet of virtual machine"
+
       option :identity_file,
         :long => "--identity-file FILENAME",
         :description => "SSH identity file for authentication, optional. It is the RSA private key path. Specify either ssh-password or identity-file"
@@ -426,12 +440,18 @@ class Chef
               :azure_mgmt_cert,
               :azure_api_host_name,
               :azure_dns_name,
-              :azure_service_location,
               :azure_source_image,
               :azure_vm_size,
         ])
         if locate_config_value(:azure_connect_to_existing_dns) && locate_config_value(:azure_vm_name).nil?
           ui.error("Specify the VM name using --azure-vm-name option, since you are connecting to existing dns")
+          exit 1
+        end
+        if locate_config_value(:azure_service_location) && locate_config_value(:azure_affinity_group)
+          ui.error("Cannot specify both --azure_service_location and --azure_affinity_group, use one or the other.")
+          exit 1
+        elsif locate_config_value(:azure_service_location).nil? && locate_config_value(:azure_affinity_group).nil?
+          ui.error("Must specify either --azure_service_location or --azure_affinity_group.")
           exit 1
         end
       end
@@ -450,7 +470,10 @@ class Chef
           :bootstrap_proto => locate_config_value(:bootstrap_protocol),
           :azure_connect_to_existing_dns => locate_config_value(:azure_connect_to_existing_dns),
           :winrm_user => locate_config_value(:winrm_user),
-          :azure_availability_set => locate_config_value(:azure_availability_set)
+          :azure_availability_set => locate_config_value(:azure_availability_set),
+          :azure_affinity_group => locate_config_value(:azure_affinity_group),
+          :azure_network_name => locate_config_value(:azure_network_name),
+          :azure_subnet_name => locate_config_value(:azure_subnet_name)
         }
         # If user is connecting a new VM to an existing dns, then
         # the VM needs to have a unique public port. Logic below takes care of this.

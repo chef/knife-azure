@@ -41,4 +41,19 @@ describe "storageaccounts" do
       Nokogiri::XML(@postbody).should be_equivalent_to(Nokogiri::XML readFile('create_storageservice_for_service003.xml'))
     end
   end
+
+  context 'create a new storage account with affinity group' do
+    it 'using explicity parameters it should pass in expected body' do
+      params = {
+        :azure_dns_name => 'service004',
+        :azure_storage_account => 'ka001testeurope',
+        :azure_affinity_group => 'test-affinity-group'
+      }
+      storageaccount = @connection.storageaccounts.create(params)
+      @postname.should == 'storageservices'
+      @postverb.should == 'post'
+      Nokogiri::XML(@postbody).should be_equivalent_to(Nokogiri::XML readFile('create_storageservice_for_service004.xml'))
+    end
+  end
+
 end
