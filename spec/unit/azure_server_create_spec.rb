@@ -406,14 +406,24 @@ describe Chef::Knife::AzureServerCreate do
         expect(@server_params[:port]).to be == '24'
       end
 
-      it "port should be be different if ssh-port = 22" do
+      it "port should be 22 if user specified --ssh-port 22" do
         Chef::Config[:knife][:ssh_user] = 'azureuser'
         Chef::Config[:knife][:ssh_password] = 'Jetstream123!'
         Chef::Config[:knife][:ssh_port] = '22'
         expect(@server_instance).to receive(:is_image_windows?).exactly(3).times.and_return(false)
         @server_params = @server_instance.create_server_def
-        expect(@server_params[:port]).to_not be == '22'
+        expect(@server_params[:port]).to be == '22'
       end
+
+      it "port should be 5985 if user specified --winrm-port 5985" do
+        Chef::Config[:knife][:winrm_user] = 'azureuser'
+        Chef::Config[:knife][:winrm_password] = 'Jetstream123!'
+        Chef::Config[:knife][:winrm_port] = '5985'
+        Chef::Config[:knife][:bootstrap_protocol] = 'winrm'
+        expect(@server_instance).to receive(:is_image_windows?).exactly(3).times.and_return(true)
+        @server_params = @server_instance.create_server_def
+        expect(@server_params[:port]).to be == '5985'
+      end      
     end
   end
 
