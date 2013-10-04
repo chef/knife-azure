@@ -248,14 +248,23 @@ describe "parameter test:" do
 			@server_params = @server_instance.create_server_def
 			@server_params[:port].should == '24'
 		end
-		it "port should be be different if ssh-port = 22" do
+		it "port should be 22 if user specified --ssh-port 22" do
 			Chef::Config[:knife][:ssh_user] = 'azureuser'
 			Chef::Config[:knife][:ssh_password] = 'Jetstream123!'
 			Chef::Config[:knife][:ssh_port] = '22'
 			@server_instance.should_receive(:is_image_windows?).twice.and_return(false)
 			@server_params = @server_instance.create_server_def
-			@server_params[:port].should_not == '22'
+			@server_params[:port].should == '22'
 		end
+
+		it "port should be 5985 if user specified --ssh-port 5985" do
+			Chef::Config[:knife][:ssh_user] = 'azureuser'
+			Chef::Config[:knife][:ssh_password] = 'Jetstream123!'
+			Chef::Config[:knife][:ssh_port] = '5985'
+			@server_instance.should_receive(:is_image_windows?).twice.and_return(false)
+			@server_params = @server_instance.create_server_def
+			@server_params[:port].should == '5985'
+		end		
 	end
 
 end
