@@ -358,6 +358,7 @@ describe "for bootstrap protocol winrm:" do
 
 		it "successful bootstrap of windows instance" do
 			@server_instance.should_receive(:is_image_windows?).exactly(3).times.and_return(true)
+            @server_instance.should_receive(:check_if_virtual_machine_ready).exactly(1).times.and_return(true)
 			@server_instance.run
 		end
 	end
@@ -374,6 +375,7 @@ describe "for bootstrap protocol ssh:" do
 			@server_instance.should_receive(:is_image_windows?).exactly(3).times.and_return(true)
 			@bootstrap = Chef::Knife::BootstrapWindowsSsh.new
 		   	Chef::Knife::BootstrapWindowsSsh.stub(:new).and_return(@bootstrap)
+            @server_instance.should_receive(:check_if_virtual_machine_ready).exactly(1).times.and_return(true)
 		   	@bootstrap.should_receive(:run)
 		   	@server_instance.run
 		end
@@ -400,6 +402,7 @@ describe "for bootstrap protocol ssh:" do
 			@server_instance.should_receive(:is_image_windows?).exactly(3).times.and_return(false)
 			@bootstrap = Chef::Knife::Bootstrap.new
 	      	Chef::Knife::Bootstrap.stub(:new).and_return(@bootstrap)
+            @server_instance.should_receive(:check_if_virtual_machine_ready).exactly(1).times.and_return(true)
 	      	@bootstrap.should_receive(:run)
 			@server_instance.run
 		end
