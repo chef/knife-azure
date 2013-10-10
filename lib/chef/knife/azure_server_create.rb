@@ -121,7 +121,7 @@ class Chef
       option :azure_vm_name,
         :long => "--azure-vm-name NAME",
         :description => "Required for advanced server-create option.
-                                      Specifies the name for the virtual machine. The name must be unique within the deployment."
+                                      Specifies the name for the virtual machine. The name must be unique within the deployment. The azure vm name cannot be more than 15 characters long"
 
       option :azure_service_location,
         :short => "-m LOCATION",
@@ -275,7 +275,8 @@ class Chef
 
         config[:azure_dns_name] = get_dns_name(locate_config_value(:azure_dns_name))
         if not locate_config_value(:azure_vm_name)
-          config[:azure_vm_name] = locate_config_value(:azure_dns_name)
+          # The computer name cannot be more than 15 characters long.
+          config[:azure_vm_name] = locate_config_value(:azure_dns_name)[0..14]
         end
 
         remove_hosted_service_on_failure = locate_config_value(:azure_dns_name)
