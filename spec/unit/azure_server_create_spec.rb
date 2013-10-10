@@ -80,11 +80,7 @@ describe "parameter test:" do
 			@server_instance.ui.should_receive(:error)
 			expect {@server_instance.run}.to raise_error
 		end
-		it "azure_dns_name" do
-			Chef::Config[:knife].delete(:azure_dns_name)
-			@server_instance.ui.should_receive(:error)
-			expect {@server_instance.run}.to raise_error
-		end
+
     it "azure_service_location and azure_affinity_group not allowed" do
       Chef::Config[:knife][:azure_affinity_group] = 'test-affinity'
       @server_instance.ui.should_receive(:error)
@@ -112,6 +108,7 @@ describe "parameter test:" do
 		it "quick create" do
 			@server_instance.should_receive(:is_image_windows?).at_least(:twice).and_return(false)
 			Chef::Config[:knife][:azure_dns_name] = 'vmname' # service name to be used as vm name
+			@server_instance.should_receive(:get_dns_name)
 			@server_instance.run
 			@server_instance.config[:azure_vm_name].should == "vmname"
 			testxml = Nokogiri::XML(@receivedXML)
@@ -184,6 +181,29 @@ describe "parameter test:" do
       xml_content(testxml, 'SubnetName').should == 'test-subnet'
     end
   end
+
+	context "when --azure-dns-name is not specified" do
+		before(:each) do
+			Chef::Config[:knife][:azure_dns_name] = nil
+			Chef::Config[:knife][:azure_vm_name] = nil	
+		end
+
+		it "generate unique dns name" do
+			dns_name = []
+			5.times do
+				# send() to access private get_dns_name method of @server_instance
+				dns = @server_instance.send(:get_dns_name, Chef::Config[:knife][:azure_dns_name])
+				dns_name.should_not include(dns)
+				dns_name.push(dns)
+			end
+		end
+	
+		it "include vmname in dnsname if --azure-vm-name specified" do
+			Chef::Config[:knife][:azure_vm_name] = "vmname"
+			dns = @server_instance.send(:get_dns_name, Chef::Config[:knife][:azure_dns_name])
+			dns.should include("vmname")
+		end
+	end
 
 	context "#cleanup_and_exit" do
 		it "service leak cleanup" do
