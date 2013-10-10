@@ -36,13 +36,11 @@ class Chef
           end
 
           option :azure_subscription_id,
-            :short => "-S ID",
             :long => "--azure-subscription-id ID",
             :description => "Your Azure subscription ID",
             :proc => Proc.new { |key| Chef::Config[:knife][:azure_subscription_id] = key }
 
           option :azure_mgmt_cert,
-            :short => "-p FILENAME",
             :long => "--azure-mgmt-cert FILENAME",
             :description => "Your Azure PEM file name",
             :proc => Proc.new { |key| Chef::Config[:knife][:azure_mgmt_cert] = key }

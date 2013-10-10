@@ -69,6 +69,7 @@ class Chef
         :description => "Delete corresponding storage account. If the option is set, it deletes the storage account not used by any VMs."
 
       option :azure_dns_name,
+        :short => "-D DNS_NAME",
         :long => "--azure-dns-name NAME",
         :description => "specifies the DNS name (also known as hosted service name)"
 

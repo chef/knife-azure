@@ -58,12 +58,10 @@ class Chef
         :description => "The Chef node name for your new node"
 
       option :ssh_user,
-        :short => "-x USERNAME",
         :long => "--ssh-user USERNAME",
         :description => "The ssh username"
 
       option :ssh_password,
-        :short => "-P PASSWORD",
         :long => "--ssh-password PASSWORD",
         :description => "The ssh password"
 
@@ -108,7 +106,6 @@ class Chef
         :default => true
 
       option :azure_storage_account,
-        :short => "-a NAME",
         :long => "--azure-storage-account NAME",
         :description => "Required for advanced server-create option.
                                       A name for the storage account that is unique within Windows Azure. Storage account names must be
@@ -128,12 +125,11 @@ class Chef
                                       Eg: West US, East US, East Asia, Southeast Asia, North Europe, West Europe"
 
       option :azure_affinity_group,
-        :short => "-a GROUP",
         :long => "--azure-affinity-group GROUP",
         :description => "Required if not using a Service Location. Specifies Affinity Group the VM should belong to."
 
       option :azure_dns_name,
-        :short => "-d DNS_NAME",
+        :short => "-D DNS_NAME",
         :long => "--azure-dns-name DNS_NAME",
         :description => "Required. The DNS prefix name that can be used to access the cloud service which is unique within Windows Azure.
                                       If you want to add new VM to an existing service/deployment, specify an exiting dns-name,
@@ -163,7 +159,7 @@ class Chef
              :description => "Optional. Name of availability set to add virtual machine into."
 
       option :tcp_endpoints,
-        :short => "-t PORT_LIST",
+        :short => "-T PORT_LIST",
         :long => "--tcp-endpoints PORT_LIST",
         :description => "Comma separated list of TCP local and public ports to open i.e. '80:80,433:5000'"
 
@@ -173,7 +169,7 @@ class Chef
         :description => "Comma separated list of UDP local and public ports to open i.e. '80:80,433:5000'"
 
       option :azure_connect_to_existing_dns,
-        :short => "-c",
+        :short => "-C",
         :long => "--azure-connect-to-existing-dns",
         :boolean => true,
         :default => false,
