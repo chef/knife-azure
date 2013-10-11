@@ -375,6 +375,20 @@ describe "for bootstrap protocol winrm:" do
 			@server_instance.should_receive(:is_image_windows?).exactly(3).times.and_return(true)
 			@server_instance.run
 		end
+
+    it "sets encrypted data bag secret parameter" do
+      Chef::Config[:knife][:encrypted_data_bag_secret] = 'test_encrypted_data_bag_secret'
+      @server_instance.should_receive(:is_image_windows?).exactly(3).times.and_return(true)
+      @server_instance.run
+      @bootstrap.config[:encrypted_data_bag_secret].should == 'test_encrypted_data_bag_secret'
+    end
+
+    it "sets encrypted data bag secret file parameter" do
+      Chef::Config[:knife][:encrypted_data_bag_secret_file] = 'test_encrypted_data_bag_secret_file'
+      @server_instance.should_receive(:is_image_windows?).exactly(3).times.and_return(true)
+      @server_instance.run
+      @bootstrap.config[:encrypted_data_bag_secret_file].should == 'test_encrypted_data_bag_secret_file'
+    end
 	end
 end
 
@@ -463,6 +477,20 @@ describe "for bootstrap protocol ssh:" do
 				@server_instance.run
 				@bootstrap.config[:use_sudo_password].should_not == true
 			end
+
+      it "sets secret parameter" do
+        @bootstrap.should_receive(:run)
+        Chef::Config[:knife][:secret] = 'test_secret'
+        @server_instance.run
+        @bootstrap.config[:secret].should == 'test_secret'
+      end
+
+      it "sets secret file parameter" do
+        @bootstrap.should_receive(:run)
+        Chef::Config[:knife][:secret_file] = 'test_secret_file'
+        @server_instance.run
+        @bootstrap.config[:secret_file].should == 'test_secret_file'
+      end
 
 	end
 
