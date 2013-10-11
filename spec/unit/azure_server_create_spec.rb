@@ -381,16 +381,29 @@ end
 describe "for bootstrap protocol ssh:" do
 	before do
 		Chef::Config[:knife][:bootstrap_protocol] = 'ssh'
+		Chef::Config[:knife][:ssh_user] = "testuser"
+		Chef::Config[:knife][:ssh_password] = "testpass"
 	end
 
 	context "windows instance:" do
 		it "successful bootstrap" do
-			#pending "OC-8384-support ssh for windows vm's in knife-azure"
 			@server_instance.should_receive(:is_image_windows?).exactly(3).times.and_return(true)
 			@bootstrap = Chef::Knife::BootstrapWindowsSsh.new
 		   	Chef::Knife::BootstrapWindowsSsh.stub(:new).and_return(@bootstrap)
 		   	@bootstrap.should_receive(:run)
 		   	@server_instance.run
+		end
+		it "raise error if ssh user is missing" do
+			Chef::Config[:knife][:ssh_user] = nil
+			@server_instance.stub(:is_image_windows?).and_return(true)
+			@server_instance.ui.should_receive(:error).with("SSH User is compulsory parameter and it cannot be named 'admin*'")
+		   	expect { @server_instance.run }.to raise_error
+		end
+		it "raise error if ssh password is missing" do
+			Chef::Config[:knife][:ssh_password] = nil
+			@server_instance.stub(:is_image_windows?).and_return(true)
+			@server_instance.ui.should_receive(:error).with("SSH Password is compulsory parameter for windows image")
+		   	expect { @server_instance.run }.to raise_error
 		end
 	end
 

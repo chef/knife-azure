@@ -384,11 +384,9 @@ class Chef
             end
 
             bootstrap = Chef::Knife::BootstrapWindowsWinrm.new
-
-            bootstrap.config[:winrm_user] = locate_config_value(:winrm_user) || 'Administrator'
+            bootstrap.config[:winrm_user] = locate_config_value(:winrm_user)
             bootstrap.config[:winrm_password] = locate_config_value(:winrm_password)
             bootstrap.config[:winrm_transport] = locate_config_value(:winrm_transport)
-
             bootstrap.config[:winrm_port] = port
 
         elsif locate_config_value(:bootstrap_protocol) == 'ssh'
@@ -467,9 +465,7 @@ class Chef
           :azure_vm_size => locate_config_value(:azure_vm_size),
           :tcp_endpoints => locate_config_value(:tcp_endpoints),
           :udp_endpoints => locate_config_value(:udp_endpoints),
-          :bootstrap_proto => locate_config_value(:bootstrap_protocol),
           :azure_connect_to_existing_dns => locate_config_value(:azure_connect_to_existing_dns),
-          :winrm_user => locate_config_value(:winrm_user),
           :azure_availability_set => locate_config_value(:azure_availability_set),
           :azure_affinity_group => locate_config_value(:azure_affinity_group),
           :azure_network_name => locate_config_value(:azure_network_name),
@@ -492,26 +488,32 @@ class Chef
 
         if is_image_windows?
           server_def[:os_type] = 'Windows'
-          # We can specify the AdminUsername after API version 2013-03-01. However, in this API version,
-          # the AdminUsername is a required parameter.
-          # Also, the user name cannot be Administrator, Admin, Admin1 etc, for enhanced security (provided by Azure)
-          if locate_config_value(:winrm_user).nil? || locate_config_value(:winrm_user).downcase =~ /admin*/
-            ui.error("WinRM User is compulsory parameter and it cannot be named 'admin*'")
-            exit
-          end
-          server_def[:admin_password] = locate_config_value(:winrm_password)
-          server_def[:bootstrap_proto] = locate_config_value(:bootstrap_protocol)
           if locate_config_value(:bootstrap_protocol) == 'winrm'
+            # We can specify the AdminUsername after API version 2013-03-01. However, in this API version,
+            # the AdminUsername is a required parameter.
+            # Also, the user name cannot be Administrator, Admin, Admin1 etc, for enhanced security (provided by Azure)
+            if locate_config_value(:winrm_user).nil? || locate_config_value(:winrm_user).downcase =~ /admin*/
+              ui.error("WinRM User is compulsory parameter and it cannot be named 'admin*'")
+              exit
+            end
             unless locate_config_value(:winrm_password)
               ui.error("WinRM Password is compulsory parameter")
               exit 1
             end
+            server_def[:bootstrap_proto] = locate_config_value(:bootstrap_protocol)
+            server_def[:winrm_user] = locate_config_value(:winrm_user)
             server_def[:admin_password] = locate_config_value(:winrm_password)
           else
+            if locate_config_value(:ssh_user).nil? || locate_config_value(:ssh_user).downcase =~ /admin*/
+              ui.error("SSH User is compulsory parameter and it cannot be named 'admin*'")
+              exit
+            end
             unless locate_config_value(:ssh_password)
               ui.error("SSH Password is compulsory parameter for windows image")
               exit 1
             end
+            server_def[:bootstrap_proto] = 'ssh'
+            server_def[:ssh_user] = locate_config_value(:ssh_user)
             server_def[:admin_password] = locate_config_value(:ssh_password)
           end
         else

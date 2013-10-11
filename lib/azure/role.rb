@@ -227,7 +227,11 @@ class Azure
               xml.AdminPassword params[:admin_password]
               xml.ResetPasswordOnFirstLogon 'false'
               xml.EnableAutomaticUpdates 'false'
-              xml.AdminUsername params[:winrm_user]
+              if params[:bootstrap_proto] == "winrm"
+                xml.AdminUsername params[:winrm_user]
+              else
+                xml.AdminUsername params[:ssh_user]
+              end
               }
             end
 
