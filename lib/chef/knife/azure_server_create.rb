@@ -494,7 +494,7 @@ class Chef
             # Also, the user name cannot be Administrator, Admin, Admin1 etc, for enhanced security (provided by Azure)
             if locate_config_value(:winrm_user).nil? || locate_config_value(:winrm_user).downcase =~ /admin*/
               ui.error("WinRM User is compulsory parameter and it cannot be named 'admin*'")
-              exit
+              exit 1
             end
             unless locate_config_value(:winrm_password)
               ui.error("WinRM Password is compulsory parameter")
@@ -506,7 +506,7 @@ class Chef
           else
             if locate_config_value(:ssh_user).nil? || locate_config_value(:ssh_user).downcase =~ /admin*/
               ui.error("SSH User is compulsory parameter and it cannot be named 'admin*'")
-              exit
+              exit 1
             end
             unless locate_config_value(:ssh_password)
               ui.error("SSH Password is compulsory parameter for windows image")
