@@ -275,8 +275,7 @@ class Chef
 
         config[:azure_dns_name] = get_dns_name(locate_config_value(:azure_dns_name))
         if not locate_config_value(:azure_vm_name)
-          # The computer name cannot be more than 15 characters long.
-          config[:azure_vm_name] = locate_config_value(:azure_dns_name)[0..14]
+          config[:azure_vm_name] = locate_config_value(:azure_dns_name)
         end
 
         remove_hosted_service_on_failure = locate_config_value(:azure_dns_name)
@@ -542,12 +541,12 @@ class Chef
       
       private
       # generate a random dns_name if azure_dns_name is empty
-      def get_dns_name(azure_dns_name)
+      def get_dns_name(azure_dns_name, prefix = "azure-dns-")
         return azure_dns_name unless azure_dns_name.nil?
         if locate_config_value(:azure_vm_name).nil?
-          azure_dns_name = "azure-dns-" + SecureRandom.uuid
+          azure_dns_name = prefix + SecureRandom.hex((15 - prefix.length)/2)
         else
-          azure_dns_name = "azure-dns-#{locate_config_value(:azure_vm_name)}"
+          azure_dns_name = prefix + locate_config_value(:azure_vm_name)
         end
       end
 
