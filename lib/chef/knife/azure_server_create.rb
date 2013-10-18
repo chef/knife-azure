@@ -20,6 +20,8 @@
 
 require 'chef/knife/azure_base'
 require 'chef/knife/winrm_base'
+require 'securerandom'
+
 class Chef
   class Knife
     class AzureServerCreate < Knife
@@ -119,7 +121,7 @@ class Chef
       option :azure_vm_name,
         :long => "--azure-vm-name NAME",
         :description => "Required for advanced server-create option.
-                                      Specifies the name for the virtual machine. The name must be unique within the deployment."
+                                      Specifies the name for the virtual machine. The name must be unique within the deployment. The azure vm name cannot be more than 15 characters long"
 
       option :azure_service_location,
         :short => "-m LOCATION",
@@ -135,7 +137,7 @@ class Chef
       option :azure_dns_name,
         :short => "-d DNS_NAME",
         :long => "--azure-dns-name DNS_NAME",
-        :description => "Required. The DNS prefix name that can be used to access the cloud service which is unique within Windows Azure.
+        :description => "The DNS prefix name that can be used to access the cloud service which is unique within Windows Azure. Default is 'azure-dns-any_random_text'(e.g: azure-dns-be9b0f6f-7dda-456f-b2bf-4e28a3bc0add).
                                       If you want to add new VM to an existing service/deployment, specify an exiting dns-name,
                                       along with --azure-connect-to-existing-dns option.
                                       Otherwise a new deployment is created. For example, if the DNS of cloud service is MyService you could access the cloud service
@@ -271,6 +273,7 @@ class Chef
 
         Chef::Log.info("creating...")
 
+        config[:azure_dns_name] = get_dns_name(locate_config_value(:azure_dns_name))
         if not locate_config_value(:azure_vm_name)
           config[:azure_vm_name] = locate_config_value(:azure_dns_name)
         end
@@ -441,7 +444,6 @@ class Chef
               :azure_subscription_id,
               :azure_mgmt_cert,
               :azure_api_host_name,
-              :azure_dns_name,
               :azure_source_image,
               :azure_vm_size,
         ])
@@ -537,7 +539,17 @@ class Chef
         exit 1
       end
       
+      private
+      # generate a random dns_name if azure_dns_name is empty
+      def get_dns_name(azure_dns_name, prefix = "azure-dns-")
+        return azure_dns_name unless azure_dns_name.nil?
+        if locate_config_value(:azure_vm_name).nil?
+          azure_dns_name = prefix + SecureRandom.hex((15 - prefix.length)/2)
+        else
+          azure_dns_name = prefix + locate_config_value(:azure_vm_name)
+        end
+      end
+
     end
   end
 end
-
