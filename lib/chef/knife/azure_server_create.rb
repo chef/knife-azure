@@ -215,19 +215,22 @@ class Chef
         (0...len).map{65.+(rand(25)).chr}.join
       end
 
-      def wait_until_virtual_machine_ready()
-          print "\n#{ui.color("Waiting for virtual machine to be ready.", :magenta)}"
-          vm_ready = false
-          for i in 0..29
+      def wait_until_virtual_machine_ready(total_wait_time_in_minutes = 15, retry_interval_in_seconds = 30)
+          print "\n#{ui.color('Waiting for virtual machine to be ready.', :magenta)}"
+          total_wait_time_in_seconds = total_wait_time_in_minutes * 60
+          max_polling_attempts = total_wait_time_in_seconds / retry_interval_in_seconds
+          vm_ready = check_if_virtual_machine_ready()
+          polling_attempts = 1
+          until vm_ready || polling_attempts >= max_polling_attempts
+            print '.'
+            sleep retry_interval_in_seconds
             vm_ready = check_if_virtual_machine_ready()
-            break if vm_ready
-            print "."
-            sleep 30 
+            polling_attempts += 1
           end
           if vm_ready
-            puts("vm ready.")
+            puts('vm ready.')
           else
-            raise "Virtual machine not ready after 15 minutes."
+            raise "Virtual machine not ready after #{total_wait_time_in_minutes} minutes."
           end
       end
 
@@ -332,7 +335,7 @@ class Chef
           fqdn = server.publicipaddress
           wait_until_virtual_machine_ready()
         rescue Exception => e
-          Chef::Log.Error("Exception being rescued: #{e.to_s}")
+          Chef::Log.error("Exception being rescued: #{e.to_s}")
           cleanup_and_exit(remove_hosted_service_on_failure, remove_storage_service_on_failure)
         end
 
