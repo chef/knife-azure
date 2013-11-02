@@ -219,6 +219,9 @@ class Chef
           print "\n#{ui.color('Waiting for virtual machine to be ready.', :magenta)}"
           total_wait_time_in_seconds = total_wait_time_in_minutes * 60
           max_polling_attempts = total_wait_time_in_seconds / retry_interval_in_seconds
+
+          wait_start_time = Time.now
+
           vm_ready = check_if_virtual_machine_ready()
           polling_attempts = 1
           until vm_ready || polling_attempts >= max_polling_attempts
@@ -228,7 +231,8 @@ class Chef
             polling_attempts += 1
           end
           if vm_ready
-            puts('vm ready.')
+            elapsed_time_in_minutes = ((Time.now - wait_start_time) / 60).round(2)
+            puts("vm ready after #{elapsed_time_in_minutes} minutes.")
           else
             raise "Virtual machine not ready after #{total_wait_time_in_minutes} minutes."
           end
