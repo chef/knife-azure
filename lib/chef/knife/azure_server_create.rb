@@ -215,39 +215,6 @@ class Chef
         (0...len).map{65.+(rand(25)).chr}.join
       end
 
-      def wait_until_virtual_machine_ready(total_wait_time_in_minutes = 15, retry_interval_in_seconds = 30)
-          print "\n#{ui.color('Waiting for virtual machine to be ready.', :magenta)}"
-          total_wait_time_in_seconds = total_wait_time_in_minutes * 60
-          max_polling_attempts = total_wait_time_in_seconds / retry_interval_in_seconds
-          vm_ready = check_if_virtual_machine_ready()
-          polling_attempts = 1
-          until vm_ready || polling_attempts >= max_polling_attempts
-            print '.'
-            sleep retry_interval_in_seconds
-            vm_ready = check_if_virtual_machine_ready()
-            polling_attempts += 1
-          end
-          if vm_ready
-            puts('vm ready.')
-          else
-            raise "Virtual machine not ready after #{total_wait_time_in_minutes} minutes."
-          end
-      end
-
-      def check_if_virtual_machine_ready()
-        deploy = connection.deploys.queryDeploy(locate_config_value(:azure_dns_name))
-        role = deploy.find_role(locate_config_value(:azure_vm_name))
-        if role.nil?
-          raise "Could not find role - status unknown."
-        end
-        Chef::Log.debug("Role status is #{role.status.to_s}")
-        if  "ReadyRole".eql? role.status.to_s
-          return true
-        else
-          return false
-        end
-      end
-
       def tcp_test_winrm(ip_addr, port)
 	    hostname = ip_addr
         socket = TCPSocket.new(hostname, port)
@@ -333,54 +300,53 @@ class Chef
         begin
           server = connection.deploys.create(create_server_def)
           fqdn = server.publicipaddress
-          wait_until_virtual_machine_ready()
         rescue Exception => e
-          Chef::Log.error("Exception being rescued: #{e.to_s}")
           cleanup_and_exit(remove_hosted_service_on_failure, remove_storage_service_on_failure)
         end
 
+        puts("\n")
         if is_image_windows?
           # Set distro to windows-chef-client-msi
           config[:distro] = "windows-chef-client-msi" if (config[:distro].nil? || config[:distro] == "chef-full")
 
           if locate_config_value(:bootstrap_protocol) == 'ssh'
             port = server.sshport
-            print "#{ui.color("Waiting for sshd on #{fqdn}:#{port}", :magenta)}"
+            print "\n#{ui.color("Waiting for sshd on #{fqdn}:#{port}", :magenta)}"
 
             print(".") until tcp_test_ssh(fqdn,port) {
               sleep @initial_sleep_delay ||= 10
               puts("done")
-            }
+           }
 
           elsif locate_config_value(:bootstrap_protocol) == 'winrm'
             port = server.winrmport
 
-            print "#{ui.color("Waiting for winrm on #{fqdn}:#{port}", :magenta)}"
+            print "\n#{ui.color("Waiting for winrm on #{fqdn}:#{port}", :magenta)}"
 
             print(".") until tcp_test_winrm(fqdn,port) {
               sleep @initial_sleep_delay ||= 10
               puts("done")
-            }
+           }
+
           end
-        
-          puts("\n")
+          sleep 15
           bootstrap_for_windows_node(server,fqdn, port).run
         else
           unless server && server.publicipaddress && server.sshport
             Chef::Log.fatal("server not created")
-            exit 1
-          end
+          exit 1
+        end
 
-          port = server.sshport
+        port = server.sshport
 
-          print "#{ui.color("Waiting for sshd on #{fqdn}:#{port}", :magenta)}"
+        print "\n#{ui.color("Waiting for sshd on #{fqdn}:#{port}", :magenta)}"
 
-          print(".") until tcp_test_ssh(fqdn,port) {
-            sleep @initial_sleep_delay ||= 10
-            puts("done")
-          }
+        print(".") until tcp_test_ssh(fqdn,port) {
+          sleep @initial_sleep_delay ||= 10
+          puts("done")
+        }
 
-          puts("\n")
+        sleep 15
           bootstrap_for_node(server,fqdn,port).run
         end
       end

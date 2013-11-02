@@ -95,12 +95,6 @@ class Azure
     end
     def delete(rolename)
     end
-    
-    def queryDeploy(hostedservicename)
-        deploy = Deploy.new(@connection)
-        deploy.retrieve(hostedservicename)
-        deploy
-    end
   end
 
   class Deploy
