@@ -343,6 +343,8 @@ class Chef
           cleanup_and_exit(remove_hosted_service_on_failure, remove_storage_service_on_failure)
         end
 
+        msg_server_summary(server)
+
         if is_image_windows?
           # Set distro to windows-chef-client-msi
           config[:distro] = "windows-chef-client-msi" if (config[:distro].nil? || config[:distro] == "chef-full")
@@ -387,6 +389,8 @@ class Chef
           puts("\n")
           bootstrap_for_node(server,fqdn,port).run
         end
+
+        msg_server_summary(server)
       end
 
       def load_cloud_attributes_in_hints(server)
@@ -578,11 +582,15 @@ class Chef
       end
       
       private
+      # This is related to Windows VM's specifically and computer name
+      # length limits for legacy computer accounts
+      MAX_VM_NAME_CHARACTERS = 15
+
       # generate a random dns_name if azure_dns_name is empty
-      def get_dns_name(azure_dns_name, prefix = "azure-dns-")
+      def get_dns_name(azure_dns_name, prefix = "az-")
         return azure_dns_name unless azure_dns_name.nil?
         if locate_config_value(:azure_vm_name).nil?
-          azure_dns_name = prefix + SecureRandom.hex((15 - prefix.length)/2)
+          azure_dns_name = prefix + SecureRandom.hex(( MAX_VM_NAME_CHARACTERS - prefix.length)/2)
         else
           azure_dns_name = prefix + locate_config_value(:azure_vm_name)
         end

@@ -98,6 +98,15 @@ class Chef
         end
       end
 
+      def msg_server_summary(server)
+        puts "\n"
+        msg_pair('DNS Name', server.hostedservicename + ".cloudapp.net")
+        msg_pair('VM Name', server.name)
+        msg_pair('Size', server.size)
+        msg_pair('Public Ip Address', server.publicipaddress)
+        puts "\n"
+      end
+
       def validate!(keys=[:azure_subscription_id, :azure_mgmt_cert, :azure_api_host_name])
         errors = []
         if(locate_config_value(:azure_mgmt_cert) != nil)
