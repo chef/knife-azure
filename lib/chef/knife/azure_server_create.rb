@@ -339,7 +339,7 @@ class Chef
           fqdn = server.publicipaddress
           wait_until_virtual_machine_ready()
         rescue Exception => e
-          Chef::Log.error("Exception being rescued: #{e.to_s}")
+          Chef::Log.error("Failed to create the server -- exception being rescued: #{e.to_s}")
           cleanup_and_exit(remove_hosted_service_on_failure, remove_storage_service_on_failure)
         end
 
