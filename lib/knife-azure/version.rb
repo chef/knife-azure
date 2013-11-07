@@ -1,6 +1,6 @@
 module Knife
   module Azure
-    VERSION = "1.1.4.rc.0"
+    VERSION = "1.1.4"
     MAJOR, MINOR, TINY = VERSION.split('.')
   end
 end
