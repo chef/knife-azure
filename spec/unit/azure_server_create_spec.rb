@@ -103,6 +103,7 @@ describe "parameter test:" do
 			@bootstrap = Chef::Knife::Bootstrap.new
 	      	Chef::Knife::Bootstrap.stub(:new).and_return(@bootstrap)
 	      	@bootstrap.should_receive(:run)
+	      	@server_instance.stub(:msg_server_summary)
 		end
 
 		it "quick create" do
@@ -180,6 +181,12 @@ describe "parameter test:" do
       testxml = Nokogiri::XML(@receivedXML)
       xml_content(testxml, 'SubnetName').should == 'test-subnet'
     end
+
+	it "server create display server summary" do
+		Chef::Config[:knife][:azure_dns_name] = 'vmname'
+		@server_instance.should_receive(:msg_server_summary)
+		@server_instance.run
+	end
   end
 
 	context "when --azure-dns-name is not specified" do
@@ -293,6 +300,7 @@ describe "cloud attributes" do
 			Chef::Config[:knife][:azure_dns_name] = 'service004'
 			Chef::Config[:knife][:azure_vm_name] = 'winrm-vm'
 			Chef::Config[:knife][:hints] = nil # reset as this is loaded only once for app(test here)
+			@server_instance.stub(:msg_server_summary)
 			@server_instance.run
 		end
 
@@ -317,6 +325,7 @@ describe "cloud attributes" do
 			Chef::Config[:knife][:azure_dns_name] = 'service004'
 			Chef::Config[:knife][:azure_vm_name] = 'ssh-vm'
 			Chef::Config[:knife][:hints] = nil # reset as this is loaded only once for app(test here)
+			@server_instance.stub(:msg_server_summary)
 			@server_instance.run
 		end
 
@@ -337,6 +346,7 @@ describe "for bootstrap protocol winrm:" do
 		Chef::Config[:knife][:winrm_user] = 'testuser'
 		Chef::Config[:knife][:winrm_password] = 'winrm_password'
 		@server_instance.ui.stub(:error)
+		@server_instance.stub(:msg_server_summary)
 	end
 
 	it "check if all server params are set correctly" do
@@ -416,6 +426,7 @@ end
 describe "for bootstrap protocol ssh:" do
 	before do
 		Chef::Config[:knife][:bootstrap_protocol] = 'ssh'
+		@server_instance.stub(:msg_server_summary)
 	end
 
 	context "windows instance:" do
