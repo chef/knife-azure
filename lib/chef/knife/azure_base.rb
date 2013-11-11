@@ -109,8 +109,8 @@ class Chef
         msg_pair('Private Ip Address', server.ipaddress)
         msg_pair('SSH Port', server.sshport) unless server.sshport.nil?
         msg_pair('WinRM Port', server.winrmport) unless server.winrmport.nil?
-        msg_pair('TCP Ports', server.tcpports) unless server.tcpports.empty?
-        msg_pair('UDP Ports', server.udpports) unless server.udpports.empty?
+        msg_pair('TCP Ports', server.tcpports) unless server.tcpports.nil? or server.tcpports.empty?
+        msg_pair('UDP Ports', server.udpports) unless server.udpports.nil? or server.udpports.empty?
         msg_pair('Environment', locate_config_value(:environment) || '_default')
         msg_pair('Runlist', locate_config_value(:run_list)) unless locate_config_value(:run_list).empty?
         puts "\n"
