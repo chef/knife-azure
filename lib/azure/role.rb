@@ -228,6 +228,15 @@ class Azure
               xml.ResetPasswordOnFirstLogon 'false'
               xml.EnableAutomaticUpdates 'false'
               xml.AdminUsername params[:winrm_user]
+              if params[:bootstrap_proto].downcase == 'winrm'
+                xml.WinRM {
+                  xml.Listeners {
+                    xml.Listener {
+                      xml.Protocol 'Http'
+                    }
+                  }
+                }
+              end
               }
             end
 
