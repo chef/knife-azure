@@ -118,6 +118,22 @@ describe "parameter test:" do
 										Chef::Config[:knife][:azure_dns_name])
 		end
 
+		it "quick create with wirm - API check" do
+			@server_instance.should_receive(:is_image_windows?).at_least(:twice).and_return(true)
+			Chef::Config[:knife][:azure_dns_name] = 'vmname' # service name to be used as vm name
+			Chef::Config[:knife][:winrm_user] = 'opscodechef'
+			Chef::Config[:knife][:winrm_password] = 'Opscode123'
+			Chef::Config[:knife][:bootstrap_protocol] = 'winrm'
+			@server_instance.should_receive(:get_dns_name)
+			@server_instance.run
+			@server_instance.config[:azure_vm_name].should == "vmname"
+			testxml = Nokogiri::XML(@receivedXML)
+			xml_content(testxml, 'WinRM').should_not == nil
+			xml_content(testxml, 'Listeners').should_not == nil
+			xml_content(testxml, 'Listener').should_not == nil
+			xml_content(testxml, 'Protocol').should == "Http"
+		end
+
         it "generate unique OS DiskName" do
           os_disks = []
           @bootstrap.stub(:run)
