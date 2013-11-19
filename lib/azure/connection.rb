@@ -24,11 +24,12 @@ require File.expand_path('../role', __FILE__)
 require File.expand_path('../disk', __FILE__)
 require File.expand_path('../image', __FILE__)
 require File.expand_path('../certificate', __FILE__)
+require File.expand_path('../ag', __FILE__)
 
 class Azure
   class Connection
     include AzureAPI
-    attr_accessor :hosts, :rest, :images, :deploys, :roles, :disks, :storageaccounts, :certificates
+    attr_accessor :hosts, :rest, :images, :deploys, :roles, :disks, :storageaccounts, :certificates, :ags
     def initialize(params={})
       @rest = Rest.new(params)
       @hosts = Hosts.new(self)
@@ -38,6 +39,7 @@ class Azure
       @roles = Roles.new(self)
       @disks = Disks.new(self)
       @certificates = Certificates.new(self)
+      @ags = AGs.new(self)
     end
     def query_azure(service_name, verb = 'get', body = '', params = '', wait= true)
       Chef::Log.info 'calling ' + verb + ' ' + service_name
