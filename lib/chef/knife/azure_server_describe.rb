@@ -50,8 +50,16 @@ class Chef
             details << role.deployname
             details << ui.color('Host name', :bold, :blue)
             details << role.hostname
-            details << ui.color('SSH', :bold, :blue)
-            details << role.sshipaddress + ':' + role.sshport
+            unless role.sshport.nil?
+              details << ui.color('SSH port', :bold, :blue)
+              details << role.sshport
+            end
+            unless role.winrmport.nil?
+              details << ui.color('WinRM port', :bold, :blue)
+              details << role.winrmport
+            end
+            details << ui.color('Public IP', :bold, :blue)
+            details << role.publicipaddress
             puts ui.list(details, :columns_across, 2)
             if role.tcpports.length > 0 || role.udpports.length > 0
               details.clear
