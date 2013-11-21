@@ -10,6 +10,7 @@ require 'azure/role'
 require 'azure/disk'
 require 'azure/utility'
 
+require 'chef/knife/azure_ag_create'
 require 'chef/knife/azure_ag_list'
 require 'chef/knife/azure_image_list'
 require 'chef/knife/azure_server_create'

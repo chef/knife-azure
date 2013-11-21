@@ -25,7 +25,7 @@ describe Chef::Knife::AzureAgList do
     @server_instance.stub(:puts)
   end
 
-    it 'should display only Name and Location columns.' do
+    it 'should display Name, Location, and Description columns.' do
       @server_instance.hl.should_receive(:list).with(
         ['Name', 'Location', 'Description',
          'agname', 'West US', 'agdesc',

@@ -41,10 +41,16 @@ class Azure
       @certificates = Certificates.new(self)
       @ags = AGs.new(self)
     end
-    def query_azure(service_name, verb = 'get', body = '', params = '', wait= true)
+
+    def query_azure(service_name,
+                    verb = 'get',
+                    body = '',
+                    params = '',
+                    wait = true,
+                    services = true)
       Chef::Log.info 'calling ' + verb + ' ' + service_name
       Chef::Log.debug body unless body == ''
-      response = @rest.query_azure(service_name, verb, body, params)
+      response = @rest.query_azure(service_name, verb, body, params, services)
       if response.code.to_i == 200
         ret_val = Nokogiri::XML response.body
       elsif !wait && response.code.to_i == 202

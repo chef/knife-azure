@@ -25,9 +25,13 @@ class Azure
     def load
       @ags ||= begin
         @ags = {}
-        response = @connection.query_azure('ags')
+        response = @connection.query_azure('affinitygroups',
+                                           'get',
+                                           '',
+                                           '',
+                                           false)
         response.css('AffinityGroup').each do |ag|
-          item = AG.new(ag)
+          item = AG.new(@connection).parse(ag)
           @ags[item.name] = item
         end
         @ags
@@ -45,18 +49,49 @@ class Azure
     def find(name)
       load[name]
     end
+
+    def create(params)
+      ag = AG.new(@connection)
+      ag.create(params)
+    end
   end
 end
 
 class Azure
   class AG
     attr_accessor :name, :label, :description, :location
-    def initialize(image)
+
+    def initialize(connection)
+      @connection = connection
+    end
+
+    def parse(image)
       @name = image.at_css('Name').content
       @label = image.at_css('Label').content
       @description = image.at_css('Description').content if
         image.at_css('Description')
       @location = image.at_css('Location').content if image.at_css('Location')
+      self
+    end
+
+    def create(params)
+      builder = Nokogiri::XML::Builder.new(encoding: 'utf-8') do |xml|
+        xml.CreateAffinityGroup(
+          xmlns: 'http://schemas.microsoft.com/windowsazure'
+        ) do
+          xml.Name params[:azure_ag_name]
+          xml.Label Base64.strict_encode64(params[:azure_ag_name])
+          unless params[:azure_ag_desc].nil?
+            xml.Description params[:azure_ag_desc]
+          end
+          xml.Location params[:azure_location]
+        end
+      end
+      @connection.query_azure('affinitygroups',
+                              'post',
+                              builder.to_xml,
+                              '',
+                              false)
     end
   end
 end
