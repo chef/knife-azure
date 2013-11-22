@@ -240,6 +240,43 @@ Outputs a list of all servers in the currently configured Azure account. PLEASE 
 
     knife azure server list
 
+### Azure AG List Subcommand
+Outputs a list of defined affinity groups in the azure subscription.
+
+    knife azure ag list
+
+### Azure AG Create Subcommand
+Creates a new affinity group in the specified service location.
+
+    knife azure ag create -a 'mynewag' -m 'West US' --azure-ag-desc 'Optional Description'
+
+Knife options:
+
+    :azure_affinity_group       Specifies new affinity group name.
+    :azure_service_location     Specifies the geographic location.
+    :azure_ag_desc              Optional. Description for new affinity group.
+
+### Azure Vnet List Subcommand
+Outputs a list of defined virtual networks in the azure subscription.
+
+    knife azure vnet list
+
+### Azure Vnet Create Subcommand
+Creates a new or modifies an existing virtual network. If an existing virtual network is named, the
+affinity group and address space are replaced with the new values.
+
+    knife azure vnet create -n 'mynewvn' -a 'existingag' --azure_address_space '10.0.0.0/24'
+
+Knife options:
+
+    :azure_network_name         Specifies the name of the virtual network to create.
+    :azure_affinity_group       Specifies the affinity group to associate with the vnet.
+    :azure_address_space        Specifies the address space of the vnet using CIDR notation.
+    
+For CIDR notation, see here: http://en.wikipedia.org/wiki/Classless_Inter-Domain_Routing
+Address available are defined in RFC 1918: http://en.wikipedia.org/wiki/Private_network
+
+
 ## Alternative Management Certificate Specification
 In addition to specifying the management certificate using the publishsettings
 file, you can also specify it in PEM format. Follow these steps to generate the certificate in the PEM format:
