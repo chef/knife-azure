@@ -17,6 +17,8 @@ require 'chef/knife/azure_server_create'
 require 'chef/knife/azure_server_delete'
 require 'chef/knife/azure_server_describe'
 require 'chef/knife/azure_server_list'
+require 'chef/knife/azure_vnet_create'
+require 'chef/knife/azure_vnet_list'
 
 require 'fileutils'
 require "securerandom"

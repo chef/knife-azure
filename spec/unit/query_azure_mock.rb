@@ -49,6 +49,10 @@ module QueryAzureMock
         retval = ''
         if name == 'affinitygroups'
           retval = Nokogiri::XML readFile('list_affinitygroups.xml')
+        elsif name == 'networking/virtualnetwork'
+          retval = Nokogiri::XML readFile('list_vnets.xml')
+        elsif name == 'networking/media'
+          retval = Nokogiri::XML readFile('get_network.xml')
         elsif name == 'images'
           retval = Nokogiri::XML readFile('list_images.xml')
         elsif name == 'disks'
@@ -122,6 +126,14 @@ module QueryAzureMock
         @deletebody = body
         @deleteparams = params
         @deletecount += 1
+      elsif verb == 'put'
+        if name == 'networking/media'
+          retval = Nokogiri::XML readFile('post_success.xml')
+          @receivedXML = body
+        end
+        @postname = name
+        @postverb = verb
+        @postbody = body
       else
         Chef::Log.warn 'unknown verb:' + verb
       end

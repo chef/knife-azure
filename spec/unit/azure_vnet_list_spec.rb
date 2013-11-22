@@ -1,0 +1,32 @@
+require File.expand_path(File.dirname(__FILE__) + '/../spec_helper')
+require File.expand_path(File.dirname(__FILE__) + '/../unit/query_azure_mock')
+
+describe Chef::Knife::AzureAgList do
+  include AzureSpecHelper
+  include QueryAzureMock
+  before do
+    @server_instance = Chef::Knife::AzureVnetList.new
+      {
+        :azure_subscription_id => 'azure_subscription_id',
+        :azure_mgmt_cert => @cert_file,
+        :azure_api_host_name => 'preview.core.windows-int.net',
+        }.each do |key, value|
+      Chef::Config[:knife][key] = value
+    end
+    stub_query_azure(@server_instance.connection)
+    @server_instance.stub(:puts)
+  end
+
+  it 'should display Name, Affinity Group, and State columns.' do
+    @server_instance.hl.should_receive(:list).with(
+      ['Name', 'Affinity Group', 'State',
+       'jm-vnet-test', 'jm-affinity-group', 'Created',
+       'vnet-test-2', 'test', 'Created',
+       'vnname', 'agname', 'Created'],
+      :uneven_columns_across,
+      3
+    )
+    @server_instance.run
+  end
+
+end

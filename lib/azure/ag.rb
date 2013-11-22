@@ -43,7 +43,7 @@ class Azure
     end
 
     def exists?(name)
-      all.key?(name)
+      load.key?(name)
     end
 
     def find(name)

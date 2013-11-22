@@ -79,9 +79,12 @@ module AzureAPI
         request = Net::HTTP::Post.new(uri.request_uri)
       elsif verb == 'delete'
         request = Net::HTTP::Delete.new(uri.request_uri)
+      elsif verb == 'put'
+        request = Net::HTTP::Put.new(uri.request_uri)
       end
+      text = verb == 'put'
       request["x-ms-version"] = "2013-08-01"
-      request["content-type"] = "application/xml"
+      request["content-type"] = text ? "text/plain" : "application/xml"
       request["accept"] = "application/xml"
       request["accept-charset"] = "utf-8"
       request.body = body

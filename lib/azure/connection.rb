@@ -25,11 +25,13 @@ require File.expand_path('../disk', __FILE__)
 require File.expand_path('../image', __FILE__)
 require File.expand_path('../certificate', __FILE__)
 require File.expand_path('../ag', __FILE__)
+require File.expand_path('../vnet', __FILE__)
 
 class Azure
   class Connection
     include AzureAPI
-    attr_accessor :hosts, :rest, :images, :deploys, :roles, :disks, :storageaccounts, :certificates, :ags
+    attr_accessor :hosts, :rest, :images, :deploys, :roles,
+                  :disks, :storageaccounts, :certificates, :ags, :vnets
     def initialize(params={})
       @rest = Rest.new(params)
       @hosts = Hosts.new(self)
@@ -40,6 +42,7 @@ class Azure
       @disks = Disks.new(self)
       @certificates = Certificates.new(self)
       @ags = AGs.new(self)
+      @vnets = Vnets.new(self)
     end
 
     def query_azure(service_name,
@@ -61,6 +64,7 @@ class Azure
       else
         if response.body
           ret_val = Nokogiri::XML response.body
+          Chef::Log.debug ret_val.to_xml
           Chef::Log.warn ret_val.at_css('Error Code').content + ' : ' + ret_val.at_css('Error Message').content
         else
           Chef::Log.warn 'http error: ' + response.code
