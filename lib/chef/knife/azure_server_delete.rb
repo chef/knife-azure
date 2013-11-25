@@ -23,6 +23,8 @@ require File.expand_path('../azure_base', __FILE__)
 # These two are needed for the '--purge' deletion case
 require 'chef/node'
 require 'chef/api_client'
+require 'mixlib/shellout'
+require 'tmpdir'
 
 class Chef
   class Knife
@@ -78,6 +80,12 @@ class Chef
         :default => false,        
         :description => "Wait for server deletion. Default is false"
 
+      option :wait,
+        :long => "--wait",
+        :boolean => true,
+        :default => false,        
+        :description => "Wait for server deletion. Default is false"
+
       # Extracted from Chef::Knife.delete_object, because it has a
       # confirmation step built in... By specifying the '--purge'
       # flag (and also explicitly confirming the server destruction!)
@@ -106,8 +114,50 @@ class Chef
 
         validate!
         validate_disk_and_storage
-        @name_args.each do |name|
+ 
+        if ! locate_config_value("wait")
+          begin
+            confirm("Do you really want to delete #{@name_args.join("")} this server")
+          rescue SystemExit   # Need to handle this as confirming with N/n raises SystemExit exception
+            server = nil      # Cleanup is implicitly performed in other cloud plugins
+            exit!
+          end
 
+          config[:yes] = true
+          config[:wait] = true
+
+          # delete command options
+          cmd_opts = ""
+          options.each_key do |key|
+            if !Chef::Config[:knife][key] && locate_config_value(key)
+              if options[key][:boolean] || locate_config_value(key).class.eql?(TrueClass)
+                cmd_opts += "#{options[key][:long].split("[no-]").join.split(" ").first} "
+              else
+                cmd_opts += "#{options[key][:long].split(" ").first} #{locate_config_value(key)} "
+              end
+            end
+          end
+
+          # Redirect server delete logs to temp dir
+          _temp_dir ||= Dir.mktmpdir
+          _log_file = "knife_azure_server_delete.log"
+
+          # check workstation platform
+          if ( (ENV["OS"] || ENV["_system_type"]).downcase.include?("linux") )
+            cmd = "knife azure server delete #{@name_args.join(" ")} #{cmd_opts} > #{_temp_dir}/#{_log_file} 2>&1 &"
+          elsif( (ENV["OS"] || ENV["_system_type"]).downcase.include?("windows") )
+            cmd = "START /B CMD /C CALL knife azure server delete #{@name_args.join(" ")} #{cmd_opts} > #{_temp_dir}/#{_log_file} 2>&1"
+          end
+         
+          ui.info("Server deletion running in background. Please refer '#{_temp_dir}/#{_log_file}' file for server deletion log.")
+          delete_cmd = Mixlib::ShellOut.new(cmd)
+          delete_cmd.timeout = 3000
+          delete_cmd.run_command
+          ui.info("Some resources may not yet be deleted. Please refer Azure Web Interface for more information.")
+          exit!
+        end
+
+        @name_args.each do |name|
           begin
             server = connection.roles.find(name, params = { :azure_dns_name => locate_config_value(:azure_dns_name) })
 
