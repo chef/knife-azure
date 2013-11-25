@@ -1,6 +1,6 @@
 require File.expand_path(File.dirname(__FILE__) + '/../spec_helper')
 require File.expand_path(File.dirname(__FILE__) + '/../unit/query_azure_mock')
-
+require 'mixlib/shellout'
 describe Chef::Knife::AzureServerDelete do
 include AzureSpecHelper
 include QueryAzureMock
@@ -30,6 +30,7 @@ before do
     @server_instance.stub(:print)
     @server_instance.ui.stub(:warn)
     @server_instance.ui.should_not_receive(:error).and_call_original
+    Chef::Config[:knife][:wait] = true
 end
 
 	it "server delete test" do
@@ -208,6 +209,28 @@ end
 		@server_instance.ui.should_receive(:warn).with("Cannot delete storage account while keeping OS Disk. Please set any one option.")
 		lambda { @server_instance.validate_disk_and_storage }.should raise_error(SystemExit)
 	end
+
+	context "asynchronous server delete" do
+		before(:each) do
+			Chef::Config[:knife][:wait]=false
+			Dir.stub(:mktmpdir)
+			@server_instance.ui.should_receive(:info).twice
+			@server_instance.stub(:exit!)
+			@shell_out = Object.new 
+			@shell_out.class.class_eval{attr_accessor :timeout}
+			@shell_out.define_singleton_method(:run_command){}
+			Mixlib::ShellOut.stub(:new).and_return(@shell_out)
+		end
+		it "successfull delete server" do
+			@server_instance.name_args = ['role001']
+			@server_instance.ui.should_receive(:warn).twice
+			@server_instance.connection.roles.should_receive(:delete).and_call_original
+			@shell_out.should_receive(:run_command)
+			@server_instance.run
+			@shell_out.timeout.should == 3000
+		end
+	end
+	
 
 	after(:each) do
 		Chef::Config[:knife][:preserve_azure_os_disk] = false if Chef::Config[:knife][:preserve_azure_os_disk] #cleanup config for each run
