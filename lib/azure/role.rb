@@ -77,74 +77,101 @@ class Azure
     def delete(name, params)
       role = find(name)
       if role != nil
+        roleXML = nil
+
         if alone_on_hostedservice(role)
-          servicecall = "hostedservices/#{role.hostedservicename}/deployments" +
-          "/#{role.deployname}"
+          if !params[:preserve_azure_dns_name] && !params[:preserve_azure_os_disk] && !params[:preserve_azure_vhd] && !params[:wait]
+            servicecall = "hostedservices/#{role.hostedservicename}"
+            roleXML = @connection.query_azure(servicecall, "get", "", "embed-detail=true") if params[:delete_azure_storage_account]
+          else 
+            servicecall = "hostedservices/#{role.hostedservicename}/deployments" +
+            "/#{role.deployname}"
+          end
         else
           servicecall = "hostedservices/#{role.hostedservicename}/deployments" +
           "/#{role.deployname}/roles/#{role.name}"
         end
-
-        roleXML = nil
-
         unless params[:preserve_azure_os_disk]
-            roleXML = @connection.query_azure(servicecall, "get")
+          roleXML ||= @connection.query_azure(servicecall, "get")
         end
 
-        @connection.query_azure(servicecall, "delete")
-        # delete role from local cache as well.
-        @connection.hosts.find(role.hostedservicename).delete_role(role)
-        @roles.delete(role) if @roles
+        if params[:preserve_azure_os_disk] || params[:preserve_azure_vhd] || params[:wait]
+          # delete role or deployment or cloudservice
+          @connection.query_azure(servicecall, "delete")
+          unless params[:preserve_azure_os_disk]
+            osdisk = roleXML.css(roleXML, 'OSVirtualHardDisk')
+            disk_name = xml_content(osdisk, 'DiskName')
+            servicecall = "disks/#{disk_name}"
+            storage_account = @connection.query_azure(servicecall, "get")
+            
+            # OS Disk can only be deleted if it is detached from the VM.
+            # So Iteratively check for disk detachment from the VM while waiting for 5 minutes ,
+            # exit otherwise after 12 attempts.
+            for attempt in 0..12
+               break if @connection.query_azure(servicecall, "get").search("AttachedTo").text == ""
+               if attempt == 12 then puts "The associated disk could not be deleted due to time out." else sleep 25 end
+            end
 
-        unless params[:preserve_azure_dns_name]
-          unless params[:azure_dns_name].nil?
-            roles_using_same_service = find_roles_within_hostedservice(params[:azure_dns_name])
-            if roles_using_same_service.size <= 1
-              servicecall = "hostedservices/" + params[:azure_dns_name]
-              @connection.query_azure(servicecall, "delete")
+            # delete disk
+            unless params[:preserve_azure_vhd]
+             @connection.query_azure(servicecall, 'delete', '', 'comp=media')
+            else
+              @connection.query_azure(servicecall, 'delete')
+            end
+            
+            if params[:delete_azure_storage_account]
+              storage_account_name = xml_content(storage_account, "MediaLink")
+              storage_account_name = storage_account_name.gsub("http://", "").gsub(/.blob(.*)$/, "")
+              begin
+                @connection.query_azure("storageservices/#{storage_account_name}", "delete")
+              rescue Exception => ex
+                ui.warn("#{ex.message}")
+                ui.warn("#{ex.backtrace.join("\n")}")
+              end
             end
           end
-        end
-
-        unless params[:preserve_azure_os_disk]
-          osdisk = roleXML.css(roleXML, 'OSVirtualHardDisk')
-          disk_name = xml_content(osdisk, 'DiskName')
-          servicecall = "disks/#{disk_name}"
-          storage_account = @connection.query_azure(servicecall, "get")
-
-          # OS Disk can only be deleted if it is detached from the VM.
-          # So Iteratively check for disk detachment from the VM while waiting for 5 minutes ,
-          # exit otherwise after 12 attempts.
-          for attempt in 0..12
-             break if @connection.query_azure(servicecall, "get").search("AttachedTo").text == ""
-             if attempt == 12 then puts "The associated disk could not be deleted due to time out." else sleep 25 end
-          end
-
-          unless params[:preserve_azure_vhd]
-           @connection.query_azure(servicecall, 'delete', '', 'comp=media')
-          else
-            @connection.query_azure(servicecall, 'delete')
-          end
+        else
+          # comp=media deletes operating system disk, attached data disks, and the source blobs for the disks from storage account
+          @connection.query_azure(servicecall, "delete", "", "comp=media")
 
           if params[:delete_azure_storage_account]
-            storage_account_name = xml_content(storage_account, "MediaLink")
-            storage_account_name = storage_account_name.gsub("http://", "").gsub(/.blob(.*)$/, "")
+            osdisk = roleXML.css(roleXML, 'OSVirtualHardDisk')
+            disk_name = xml_content(osdisk, 'DiskName')
+            # Iteratively check for disk deletion
+            for attempt in 0..12
+               break unless @connection.query_azure("disks").search("Name").text.include?(disk_name)
+               if attempt == 12 then puts "The associated disk could not be deleted due to time out." else sleep 25 end
+            end
 
+            osdisk = roleXML.css(roleXML, 'OSVirtualHardDisk')
+            storage_account_name = xml_content(osdisk, 'MediaLink').gsub("http://", "").gsub(/.blob(.*)$/, "")
             begin
               @connection.query_azure("storageservices/#{storage_account_name}", "delete")
             rescue Exception => ex
               ui.warn("#{ex.message}")
               ui.warn("#{ex.backtrace.join("\n")}")
             end
-
           end
-
         end
 
+        # delete role from local cache as well.
+        @connection.hosts.find(role.hostedservicename).delete_role(role)
+        @roles.delete(role) if @roles
+        
+        if params[:preserve_azure_os_disk] || params[:preserve_azure_vhd] || params[:wait]
+          unless params[:preserve_azure_dns_name]
+            unless params[:azure_dns_name].nil?
+              roles_using_same_service = find_roles_within_hostedservice(params[:azure_dns_name])
+              if roles_using_same_service.size <= 1
+                servicecall = "hostedservices/" + params[:azure_dns_name]
+                @connection.query_azure(servicecall, "delete")
+              end
+            end
+          end
+        end
 
       end
     end
-
   end
 
   class Role
