@@ -142,7 +142,7 @@ class Azure
           roles_using_same_service = find_roles_within_hostedservice(params[:azure_dns_name])
           if roles_using_same_service.size <= 1
             servicecall = "hostedservices/" + params[:azure_dns_name]
-            @connection.query_azure(servicecall, "delete")
+            @connection.query_azure(servicecall, "delete")        
           end
         end
       end
