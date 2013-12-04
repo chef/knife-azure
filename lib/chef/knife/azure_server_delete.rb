@@ -71,6 +71,12 @@ class Chef
       option :azure_dns_name,
         :long => "--azure-dns-name NAME",
         :description => "specifies the DNS name (also known as hosted service name)"
+ 
+      option :wait,
+        :long => "--wait",
+        :boolean => true,
+        :default => false,        
+        :description => "Wait for server deletion. Default is false"
 
       # Extracted from Chef::Knife.delete_object, because it has a
       # confirmation step built in... By specifying the '--purge'
@@ -127,7 +133,8 @@ class Chef
                                                      :preserve_azure_vhd => locate_config_value(:preserve_azure_vhd),
                                                      :preserve_azure_dns_name => locate_config_value(:preserve_azure_dns_name),
                                                      :azure_dns_name => server.hostedservicename,
-                                                     :delete_azure_storage_account => locate_config_value(:delete_azure_storage_account) })
+                                                     :delete_azure_storage_account => locate_config_value(:delete_azure_storage_account),
+                                                     :wait => locate_config_value(:wait) })
 
             puts "\n"
             ui.warn("Deleted server #{server.name}")

@@ -39,6 +39,53 @@ end
 		@server_instance.run
 	end
 
+	it "wait for server delete" do
+		Chef::Config[:knife][:wait] = true
+		@server_instance.name_args = ['role001']
+		@server_instance.ui.should_receive(:warn).twice
+		@server_instance.connection.roles.should_receive(:delete).and_call_original
+		@server_instance.connection.should_receive(:query_azure).with("hostedservices/service001/deployments/deployment001/roles/role001", "delete")
+		# comp=media deletes associated vhd 
+		@server_instance.connection.should_receive(:query_azure).with("disks/deployment001-role002-0-201241722728", "delete", "", "comp=media", true)
+		@server_instance.run
+	end
+
+	it "wait for server delete and preserve_azure_vhd" do
+		Chef::Config[:knife][:wait] = true
+		Chef::Config[:knife][:preserve_azure_vhd] = true
+		@server_instance.name_args = ['role001']
+		@server_instance.ui.should_receive(:warn).twice
+		@server_instance.connection.roles.should_receive(:delete).and_call_original
+		@server_instance.connection.should_receive(:query_azure).with("hostedservices/service001/deployments/deployment001/roles/role001", "delete")
+		@server_instance.connection.should_receive(:query_azure).with("disks/deployment001-role002-0-201241722728", "get")
+		# absent comp=media param preserve vhd disk and delete os disk
+		@server_instance.connection.should_receive(:query_azure).with("disks/deployment001-role002-0-201241722728", "delete")
+		@server_instance.run
+	end
+
+	it "delete everything if cloud service contains only one role and no wait and no preserve option set" do
+		Chef::Config[:knife][:wait] = false
+		Chef::Config[:knife][:azure_dns_name] = "service002"
+		@server_instance.name_args = ['vm01']
+		@server_instance.ui.should_receive(:warn).twice
+		@server_instance.connection.roles.should_receive(:delete).and_call_original
+		# comp=media deletes cloud service, role and associated disks
+		@server_instance.connection.should_receive(:query_azure).with("hostedservices/service002", "delete", "", "comp=media", false)
+		@server_instance.run
+	end
+
+	it "delete everything if cloud service contains only one role and preserve-azure-dns true set and no wait and no other preserve option set" do
+		Chef::Config[:knife][:wait] = false
+		Chef::Config[:knife][:azure_dns_name] = "service002"
+		Chef::Config[:knife][:preserve_azure_dns_name] = true
+		@server_instance.name_args = ['vm01']
+		@server_instance.ui.should_receive(:warn).twice
+		@server_instance.connection.roles.should_receive(:delete).and_call_original
+		# comp=media deletes role and associated disks
+		@server_instance.connection.should_receive(:query_azure).with("hostedservices/service002/deployments/testrequest", "delete", "", "comp=media", false)
+		@server_instance.run
+	end
+
 	it "display valid nomenclature in delete output" do
 		@server_instance.name_args = ['role001']
 		@server_instance.ui.should_receive(:warn).twice
@@ -110,12 +157,13 @@ end
 		@server_instance.run
 	end
 
-	it "should delete OS Disk and VHD when --preserve-azure-os-disk and --preserve-azure-vhd are not set." do
+	it "should delete OS Disk and VHD when --wait set and --preserve-azure-os-disk, --preserve-azure-vhd are not set." do
+		Chef::Config[:knife][:wait] = true
 		test_hostname = 'role001'
 		test_diskname = 'deployment001-role002-0-201241722728'
 		@server_instance.name_args = [test_hostname]
 		@server_instance.connection.roles.should_receive(:delete).exactly(1).and_call_original
-		@server_instance.connection.should_receive(:query_azure).with("disks/#{test_diskname}", "delete", "", "comp=media")
+		@server_instance.connection.should_receive(:query_azure).with("disks/#{test_diskname}", "delete", "", "comp=media", true)
 		@server_instance.run
 	end
 
