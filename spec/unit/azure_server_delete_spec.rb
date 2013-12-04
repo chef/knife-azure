@@ -1,6 +1,6 @@
 require File.expand_path(File.dirname(__FILE__) + '/../spec_helper')
 require File.expand_path(File.dirname(__FILE__) + '/../unit/query_azure_mock')
-require 'mixlib/shellout'
+
 describe Chef::Knife::AzureServerDelete do
 include AzureSpecHelper
 include QueryAzureMock
@@ -30,13 +30,59 @@ before do
     @server_instance.stub(:print)
     @server_instance.ui.stub(:warn)
     @server_instance.ui.should_not_receive(:error).and_call_original
-    Chef::Config[:knife][:wait] = true
 end
 
 	it "server delete test" do
 		@server_instance.name_args = ['role001']
 		@server_instance.ui.should_receive(:warn).twice
 		@server_instance.connection.roles.should_receive(:delete).and_call_original
+		@server_instance.run
+	end
+
+	it "wait for server delete" do
+		Chef::Config[:knife][:wait] = true
+		@server_instance.name_args = ['role001']
+		@server_instance.ui.should_receive(:warn).twice
+		@server_instance.connection.roles.should_receive(:delete).and_call_original
+		@server_instance.connection.should_receive(:query_azure).with("hostedservices/service001/deployments/deployment001/roles/role001", "delete")
+		# comp=media deletes associated vhd 
+		@server_instance.connection.should_receive(:query_azure).with("disks/deployment001-role002-0-201241722728", "delete", "", "comp=media", true)
+		@server_instance.run
+	end
+
+	it "wait for server delete and preserve_azure_vhd" do
+		Chef::Config[:knife][:wait] = true
+		Chef::Config[:knife][:preserve_azure_vhd] = true
+		@server_instance.name_args = ['role001']
+		@server_instance.ui.should_receive(:warn).twice
+		@server_instance.connection.roles.should_receive(:delete).and_call_original
+		@server_instance.connection.should_receive(:query_azure).with("hostedservices/service001/deployments/deployment001/roles/role001", "delete")
+		@server_instance.connection.should_receive(:query_azure).with("disks/deployment001-role002-0-201241722728", "get")
+		# absent comp=media param preserve vhd disk and delete os disk
+		@server_instance.connection.should_receive(:query_azure).with("disks/deployment001-role002-0-201241722728", "delete")
+		@server_instance.run
+	end
+
+	it "delete everything if cloud service contains only one role and no wait and no preserve option set" do
+		Chef::Config[:knife][:wait] = false
+		Chef::Config[:knife][:azure_dns_name] = "service002"
+		@server_instance.name_args = ['vm01']
+		@server_instance.ui.should_receive(:warn).twice
+		@server_instance.connection.roles.should_receive(:delete).and_call_original
+		# comp=media deletes cloud service, role and associated disks
+		@server_instance.connection.should_receive(:query_azure).with("hostedservices/service002", "delete", "", "comp=media", false)
+		@server_instance.run
+	end
+
+	it "delete everything if cloud service contains only one role and preserve-azure-dns true set and no wait and no other preserve option set" do
+		Chef::Config[:knife][:wait] = false
+		Chef::Config[:knife][:azure_dns_name] = "service002"
+		Chef::Config[:knife][:preserve_azure_dns_name] = true
+		@server_instance.name_args = ['vm01']
+		@server_instance.ui.should_receive(:warn).twice
+		@server_instance.connection.roles.should_receive(:delete).and_call_original
+		# comp=media deletes role and associated disks
+		@server_instance.connection.should_receive(:query_azure).with("hostedservices/service002/deployments/testrequest", "delete", "", "comp=media", false)
 		@server_instance.run
 	end
 
@@ -111,12 +157,13 @@ end
 		@server_instance.run
 	end
 
-	it "should delete OS Disk and VHD when --preserve-azure-os-disk and --preserve-azure-vhd are not set." do
+	it "should delete OS Disk and VHD when --wait set and --preserve-azure-os-disk, --preserve-azure-vhd are not set." do
+		Chef::Config[:knife][:wait] = true
 		test_hostname = 'role001'
 		test_diskname = 'deployment001-role002-0-201241722728'
 		@server_instance.name_args = [test_hostname]
 		@server_instance.connection.roles.should_receive(:delete).exactly(1).and_call_original
-		@server_instance.connection.should_receive(:query_azure).with("disks/#{test_diskname}", "delete", "", "comp=media")
+		@server_instance.connection.should_receive(:query_azure).with("disks/#{test_diskname}", "delete", "", "comp=media", true)
 		@server_instance.run
 	end
 
@@ -161,28 +208,6 @@ end
 		@server_instance.ui.should_receive(:warn).with("Cannot delete storage account while keeping OS Disk. Please set any one option.")
 		lambda { @server_instance.validate_disk_and_storage }.should raise_error(SystemExit)
 	end
-
-	context "asynchronous server delete" do
-		before(:each) do
-			Chef::Config[:knife][:wait]=false
-			Dir.stub(:mktmpdir)
-			@server_instance.ui.should_receive(:info).twice
-			@server_instance.stub(:exit!)
-			@shell_out = Object.new 
-			@shell_out.class.class_eval{attr_accessor :timeout}
-			@shell_out.define_singleton_method(:run_command){}
-			Mixlib::ShellOut.stub(:new).and_return(@shell_out)
-		end
-		it "successfull delete server" do
-			@server_instance.name_args = ['role001']
-			@server_instance.ui.should_receive(:warn).twice
-			@server_instance.connection.roles.should_receive(:delete).and_call_original
-			@shell_out.should_receive(:run_command)
-			@server_instance.run
-			@shell_out.timeout.should == 3000
-		end
-	end
-	
 
 	after(:each) do
 		Chef::Config[:knife][:preserve_azure_os_disk] = false if Chef::Config[:knife][:preserve_azure_os_disk] #cleanup config for each run

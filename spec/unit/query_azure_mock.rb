@@ -39,10 +39,11 @@ module QueryAzureMock
     @deletename = ''
     @deleteverb = ''
     @deletebody = ''
+    @deleteparams= ''
     @deletecount = 0
 
     @receivedXML = Nokogiri::XML ''
-    connection.stub(:query_azure) do |name, verb, body|
+    connection.stub(:query_azure) do |name, verb, body, params|
       Chef::Log.info 'calling web service:' + name
       if verb == 'get' || verb == nil
         retval = ''
@@ -54,6 +55,8 @@ module QueryAzureMock
           retval = Nokogiri::XML readFile('list_disks_for_role002.xml')
         elsif name == 'hostedservices'
           retval = Nokogiri::XML readFile('list_hosts.xml')
+        elsif name =~ /hostedservices\/([-\w]*)$/ && params == "embed-detail=true"
+          retval = Nokogiri::XML readFile('list_deployments_for_service001.xml')
         elsif name =~ /hostedservices\/([-\w]*)$/
           service_name = /hostedservices\/([-\w]*)/.match(name)[1]
           retval = lookup_resource_in_test_xml(service_name, 'ServiceName', 'HostedServices HostedService', 'list_hosts.xml')
@@ -112,6 +115,7 @@ module QueryAzureMock
         @deletename = name
         @deleteverb = verb
         @deletebody = body
+        @deleteparams = params
         @deletecount += 1
       else
         Chef::Log.warn 'unknown verb:' + verb
