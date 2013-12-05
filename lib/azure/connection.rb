@@ -39,11 +39,14 @@ class Azure
       @disks = Disks.new(self)
       @certificates = Certificates.new(self)
     end
-    def query_azure(service_name, verb = 'get', body = '', params = '')
+    def query_azure(service_name, verb = 'get', body = '', params = '', wait= true)
       Chef::Log.info 'calling ' + verb + ' ' + service_name
       Chef::Log.debug body unless body == ''
       response = @rest.query_azure(service_name, verb, body, params)
       if response.code.to_i == 200
+        ret_val = Nokogiri::XML response.body
+      elsif !wait && response.code.to_i == 202
+        Chef::Log.debug 'Request accepted in asynchronous mode'
         ret_val = Nokogiri::XML response.body
       elsif response.code.to_i >= 201 && response.code.to_i <= 299
         ret_val = wait_for_completion()
