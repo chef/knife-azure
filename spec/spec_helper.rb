@@ -29,9 +29,10 @@ def tmpFile filename
 end
 
 RSpec.configure do |c|
-  c.before(:each) do
-    Chef::Config.reset
-  end
+  #c.before(:each) do
+  #  Chef::Config.reset
+  #end
+  c.before(:each) { Chef::Config[:knife].each do |key, value| Chef::Config[:knife].delete(key) end }
   
   c.before(:all) do
     #Create an empty mock certificate file
