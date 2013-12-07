@@ -22,7 +22,7 @@ Gem::Specification.new do |s|
   s.add_dependency(%q<rubygems-bundler>, ["~> 1.0.3"])
   s.add_dependency(%q<equivalent-xml>, ["~> 0.2.9"])
   s.add_dependency(%q<nokogiri>,[">= 1.5.5"])
-  s.add_dependency(%q<knife-windows>,[">= 0"])
+  s.add_dependency(%q<knife-windows>,[">= 0.5.14"])
 
   s.add_development_dependency(%q<chef>, [">= 11.8.2"])  
   s.add_development_dependency "mixlib-config", "~> 2.0"
