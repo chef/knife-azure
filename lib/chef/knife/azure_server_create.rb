@@ -206,6 +206,12 @@ class Chef
            name, path = h.split("=")
            Chef::Config[:knife][:hints][name] = path ? JSON.parse(::File.read(path)) : Hash.new
         }
+        
+        option :azure_vpn,
+        :long => "--[no-]azure-vpn",
+        :description => "Use the Azure private IP address, disabled by default.",
+        :boolean => true,
+        :default => false
 
       def strip_non_ascii(string)
         string.gsub(/[^0-9a-z ]/i, '')
@@ -336,7 +342,12 @@ class Chef
 
         begin
           server = connection.deploys.create(create_server_def)
-          fqdn = server.publicipaddress
+          if (:azure_vpn)
+            fqdn = server.ipaddress
+          else
+            fqdn = server.publicipaddress
+          end
+
           wait_until_virtual_machine_ready()
         rescue Exception => e
           Chef::Log.error("Failed to create the server -- exception being rescued: #{e.to_s}")
