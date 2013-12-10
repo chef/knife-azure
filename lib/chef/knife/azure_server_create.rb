@@ -206,6 +206,13 @@ class Chef
            name, path = h.split("=")
            Chef::Config[:knife][:hints][name] = path ? JSON.parse(::File.read(path)) : Hash.new
         }
+        
+      option :private_bootstrap,
+        :long => "--[no-]private-bootstrap",
+        :description => "Bootstrap using the node's private IP address, disabled by default.",
+        :boolean => true,
+        :default => false
+        
 
       def strip_non_ascii(string)
         string.gsub(/[^0-9a-z ]/i, '')
@@ -336,7 +343,11 @@ class Chef
 
         begin
           server = connection.deploys.create(create_server_def)
-          fqdn = server.publicipaddress
+          if :private_bootstrap
+            fqdn = server.ipaddress
+          else
+            fqdn = server.publicipaddress
+          end
           wait_until_virtual_machine_ready()
         rescue Exception => e
           Chef::Log.error("Failed to create the server -- exception being rescued: #{e.to_s}")
