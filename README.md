@@ -272,7 +272,7 @@ Knife options:
     :azure_network_name         Specifies the name of the virtual network to create.
     :azure_affinity_group       Specifies the affinity group to associate with the vnet.
     :azure_address_space        Specifies the address space of the vnet using CIDR notation.
-    
+
 For CIDR notation, see here: http://en.wikipedia.org/wiki/Classless_Inter-Domain_Routing
 Address available are defined in RFC 1918: http://en.wikipedia.org/wiki/Private_network
 
