@@ -250,11 +250,25 @@ class Azure
               xml.EnableAutomaticUpdates 'false'
               xml.AdminUsername params[:winrm_user]
               if params[:bootstrap_proto].downcase == 'winrm'
+                xml.StoredCertificateSettings {
+                  xml.CertificateSetting {
+                    xml.StoreLocation "LocalMachine"
+                    xml.StoreName "My"
+                    xml.Thumbprint "9C7AA931A31AE36068F886DF4CA331399F4A978E"
+                  }
+                }
                 xml.WinRM {
                   xml.Listeners {
-                    xml.Listener {
-                      xml.Protocol 'Http'
-                    }
+                    if true
+                      xml.Listener {
+                        xml.CertificateThumbprint '9C7AA931A31AE36068F886DF4CA331399F4A978E'
+                        xml.Protocol 'Https'
+                      }
+                    else
+                      xml.Listener {
+                        xml.Protocol 'Http'
+                      }
+                    end
                   }
                 }
               end
