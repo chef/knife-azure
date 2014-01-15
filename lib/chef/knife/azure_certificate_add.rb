@@ -28,12 +28,16 @@ class Chef
       banner "knife azure certificate add (options)"
 
       option :cert_password,
-        :long => "--cert_password PASSWORD",
+        :long => "--cert-password PASSWORD",
         :description => "Certificate Password"
 
-      option :path,
-      :long => "--path PATH",
-        :description => "Certificate Path"
+      option :cert_path,
+      :long => "--cert-path PATH",
+      :description => "Certificate Path"
+
+      option :cloud_service,
+        :long => "--cloud-service DNS-NAME",
+        :description => "Name of cloud service/DNS name"
 
       def h
         @highline ||= HighLine.new
@@ -43,9 +47,9 @@ class Chef
         $stdout.sync = true
 
         validate!
-        cert_data = File.read ('/home/mukta/ruby_progs/winrmcert_encoded.der')
+        cert_data = File.read (config[:cert_path])
 
-        connection.certificates.add cert_data, 'winrmcertgen', 'pfx', 'muktatest'
+        connection.certificates.add cert_data, config[:cert_password], 'pfx', config[:cloud_service]
       end
     end
   end
