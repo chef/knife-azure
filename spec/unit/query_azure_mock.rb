@@ -47,7 +47,13 @@ module QueryAzureMock
       Chef::Log.info 'calling web service:' + name
       if verb == 'get' || verb == nil
         retval = ''
-        if name == 'images'
+        if name == 'affinitygroups'
+          retval = Nokogiri::XML readFile('list_affinitygroups.xml')
+        elsif name == 'networking/virtualnetwork'
+          retval = Nokogiri::XML readFile('list_vnets.xml')
+        elsif name == 'networking/media'
+          retval = Nokogiri::XML readFile('get_network.xml')
+        elsif name == 'images'
           retval = Nokogiri::XML readFile('list_images.xml')
         elsif name == 'disks'
           retval = Nokogiri::XML readFile('list_disks.xml')
@@ -86,7 +92,10 @@ module QueryAzureMock
         @getverb = verb
         @getbody = body
       elsif verb == 'post'
-        if name == 'hostedservices'
+        if name == 'affinitygroups'
+          retval = Nokogiri::XML readFile('post_success.xml')
+          @receivedXML = body
+        elsif name == 'hostedservices'
           retval = Nokogiri::XML readFile('post_success.xml')
           @receivedXML = body
         elsif name == 'hostedservices/unknown_yet/deployments'
@@ -117,6 +126,14 @@ module QueryAzureMock
         @deletebody = body
         @deleteparams = params
         @deletecount += 1
+      elsif verb == 'put'
+        if name == 'networking/media'
+          retval = Nokogiri::XML readFile('post_success.xml')
+          @receivedXML = body
+        end
+        @postname = name
+        @postverb = verb
+        @postbody = body
       else
         Chef::Log.warn 'unknown verb:' + verb
       end

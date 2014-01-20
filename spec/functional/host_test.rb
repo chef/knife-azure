@@ -7,9 +7,9 @@ describe "Connection" do
     @items = @connection.hosts.all
   end
 
-  specify {@items.length.should be > 0}
-  specify {@connection.hosts.exists("thisServiceShouldNotBeThere").should == false}
-  specify{@connection.hosts.exists("service002").should == true}
+  specify { @items.length.should be > 0 }
+  specify { @connection.hosts.exists?('thisServiceShouldNotBeThere').should == false }
+  specify { @connection.hosts.exists?('service002').should == true }
   it "looking for a specific host" do
     foundNamedHost = false
     @items.each do |host|
