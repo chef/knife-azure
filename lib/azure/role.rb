@@ -231,7 +231,7 @@ class Azure
                 xml.SSH {
                    xml.PublicKeys {
                      xml.PublicKey {
-                       xml.Fingerprint params[:fingerprint]
+                       xml.Fingerprint params[:fingerprint].to_s.upcase
                        xml.Path '/home/' + params[:ssh_user] + '/.ssh/authorized_keys'
                      }
                    }
