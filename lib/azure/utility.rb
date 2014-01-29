@@ -25,5 +25,17 @@ module AzureUtility
     end
     content
   end
+
+  def error_from_response_xml(response_xml)
+    error_code_and_message = ['','']
+    error_node = response_xml.at_css('Error')
+
+    if error_node
+      error_code_and_message[0] = xml_content(error_node, 'Code')
+      error_code_and_message[1] = xml_content(error_node, 'Message')
+    end
+
+    error_code_and_message
+  end
 end
 
