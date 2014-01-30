@@ -248,20 +248,20 @@ class Azure
               xml.AdminPassword params[:admin_password]
               xml.ResetPasswordOnFirstLogon 'false'
               xml.EnableAutomaticUpdates 'false'
-              xml.AdminUsername params[:winrm_user]
+              
               if params[:bootstrap_proto].downcase == 'winrm'
                 xml.StoredCertificateSettings {
                   xml.CertificateSetting {
                     xml.StoreLocation "LocalMachine"
                     xml.StoreName "My"
-                    xml.Thumbprint "9C7AA931A31AE36068F886DF4CA331399F4A978E"
+                    xml.Thumbprint params[:fingerprint]
                   }
                 }
                 xml.WinRM {
                   xml.Listeners {
                     if true
                       xml.Listener {
-                        xml.CertificateThumbprint '9C7AA931A31AE36068F886DF4CA331399F4A978E'
+                        xml.CertificateThumbprint params[:fingerprint]
                         xml.Protocol 'Https'
                       }
                     else
@@ -272,6 +272,8 @@ class Azure
                   }
                 }
               end
+              xml.AdminUsername params[:winrm_user]
+              xml.CustomData "ZWNobyBjdXN0b20gZGF0YSBydW4gJWRhdGUlICV0aW1lJSA+PiB0ZXN0ZmlsZS50eHQ="
               }
             end
 
