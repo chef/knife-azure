@@ -28,6 +28,7 @@ class Azure
     def add(certificate_data, certificate_password, certificate_format, dns_name)
       certificate = Certificate.new(@connection)
       certificate.add_certificate certificate_data, certificate_password, certificate_format, dns_name
+      
     end
   end
 end
