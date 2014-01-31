@@ -18,6 +18,7 @@
 
 class Azure
   class StorageAccounts
+    include AzureUtility
     def initialize(connection)
       @connection=connection
     end
@@ -52,8 +53,9 @@ class Azure
     # Look up on cloud and not local cache
     def exists_on_cloud?(name)
       ret_val = @connection.query_azure("storageservices/#{name}")
-      if ret_val.nil? || ret_val.css('Error Code').length > 0
-        Chef::Log.warn 'Unable to find storage account:' + ret_val.at_css('Error Code').content + ' : ' + ret_val.at_css('Error Message').content if ret_val
+      error_code, error_message = error_from_response_xml(ret_val) if ret_val
+      if ret_val.nil? || error_code.length > 0
+        Chef::Log.warn 'Unable to find storage account:' + error_message + ' : ' + error_message if ret_val
         false
       else
         true

@@ -242,7 +242,8 @@ class Chef
         deploy = connection.deploys.queryDeploy(locate_config_value(:azure_dns_name))
         role = deploy.find_role(locate_config_value(:azure_vm_name))
         if role.nil?
-          raise "Could not find role - status unknown."
+          Chef::Log.debug("Role status is unknown.")
+          return false
         end
         Chef::Log.debug("Role status is #{role.status.to_s}")
         if  "ReadyRole".eql? role.status.to_s
@@ -340,6 +341,8 @@ class Chef
           wait_until_virtual_machine_ready()
         rescue Exception => e
           Chef::Log.error("Failed to create the server -- exception being rescued: #{e.to_s}")
+          backtrace_message = "#{e.class}: #{e}\n#{e.backtrace.join("\n")}"
+          Chef::Log.debug("#{backtrace_message}")
           cleanup_and_exit(remove_hosted_service_on_failure, remove_storage_service_on_failure)
         end
 
