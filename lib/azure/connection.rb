@@ -65,11 +65,7 @@ class Azure
         if response.body
           ret_val = Nokogiri::XML response.body
           Chef::Log.debug ret_val.to_xml
-          begin
-            Chef::Log.warn ret_val.at_css('Error Code').content + ' : ' + ret_val.at_css('Error Message').content
-          rescue NoMethodError
-            Chef::Log.warn 'http error: ' + response.code
-          end
+          Chef::Log.warn ret_val.at_css('Error Code').content + ' : ' + ret_val.at_css('Error Message').content
         else
           Chef::Log.warn 'http error: ' + response.code
         end
