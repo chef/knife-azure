@@ -38,6 +38,16 @@ module AzureAPI
       request_url =
         "https://#{@host_name}/#{@subscription_id}#{svc_str}/#{service_name}"
       print '.'
+      response = http_query(request_url, verb, body, params)
+      if response.code.to_i == 307
+        Chef::Log.debug "Redirect to #{response['Location']}"
+        response = http_query(response['Location'], verb, body, params)
+      end
+      @last_request_id = response['x-ms-request-id']
+      response
+    end
+
+    def http_query(request_url, verb, body, params)
       uri = URI.parse(request_url)
       uri.query = params
       http = http_setup(uri)
@@ -46,13 +56,17 @@ module AzureAPI
       @last_request_id = response['x-ms-request-id']
       response
     end
+
     def query_for_completion()
       request_url = "https://#{@host_name}/#{@subscription_id}/operations/#{@last_request_id}"
-      uri = URI.parse(request_url)
-      http = http_setup(uri)
-      request = request_setup(uri, 'get', '')
-      response = http.request(request)
+      response = http_query(request_url, 'get', '', '')
+      if response.code.to_i == 307
+        Chef::Log.debug "Redirect to #{response['Location']}"
+        response = http_query(response['Location'], 'get', '', '')
+      end
+      response
     end
+
     def http_setup(uri)
       http = Net::HTTP.new(uri.host, uri.port)
       store = OpenSSL::X509::Store.new
