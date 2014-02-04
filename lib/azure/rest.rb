@@ -53,8 +53,6 @@ module AzureAPI
       http = http_setup(uri)
       request = request_setup(uri, verb, body)
       response = http.request(request)
-      @last_request_id = response['x-ms-request-id']
-      response
     end
 
     def query_for_completion()
