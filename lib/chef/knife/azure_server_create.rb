@@ -221,13 +221,12 @@ class Chef
 
         begin
           vm_status = wait_for_virtual_machine_state(:vm_status_provisioning, 5, retry_interval_in_seconds)
+          if vm_status != :vm_status_ready
+            wait_for_virtual_machine_state(:vm_status_ready, 15, retry_interval_in_seconds)
+          end
         rescue Exception => e
           Chef::Log.error("#{e.to_s}")
           raise 'Verify connectivity to Azure and subscription resource limit compliance (e.g. maximum CPU core limits) and try again.'
-        end
-
-        if vm_status != :vm_status_ready
-          wait_for_virtual_machine_state(:vm_status_ready, 15, retry_interval_in_seconds)
         end
       end
 
@@ -247,7 +246,7 @@ class Chef
           vm_status = get_virtual_machine_status()
           vm_ready = vm_status_ordering[vm_status] >= vm_status_ordering[vm_status_goal]
           print '.'
-          sleep retry_interval_in_seconds if polling_attempts > 0
+          sleep retry_interval_in_seconds if !vm_ready
           polling_attempts += 1
         end until vm_ready || polling_attempts >= max_polling_attempts
 
@@ -256,22 +255,23 @@ class Chef
         end
 
         elapsed_time_in_minutes = ((Time.now - wait_start_time) / 60).round(2)
-        puts("vm state '#{vm_status_description[vm_status_goal]}' reached after #{elapsed_time_in_minutes} minutes.")
+        print ui.color("vm state '#{vm_status_description[vm_status_goal]}' reached after #{elapsed_time_in_minutes} minutes.\n", :cyan)
         vm_status
       end
 
       def get_virtual_machine_status()
         role = get_role_server()
-        if role.nil?
-          Chef::Log.debug("Role status is unknown.")
-          return :vm_status_not_detected
+        unless role.nil?
+          Chef::Log.debug("Role status is #{role.status.to_s}")
+          if  "ReadyRole".eql? role.status.to_s
+            return :vm_status_ready
+          elsif "Provisioning".eql? role.status.to_s
+            return :vm_status_provisioning
+          else
+            return :vm_status_not_detected
+          end
         end
-        Chef::Log.debug("Role status is #{role.status.to_s}")
-        if  "ReadyRole".eql? role.status.to_s
-          return :vm_status_ready
-        else
-          return :vm_status_provisioning
-        end
+        return :vm_status_not_detected
       end
 
       def get_role_server()
