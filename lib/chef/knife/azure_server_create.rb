@@ -215,41 +215,68 @@ class Chef
         (0...len).map{65.+(rand(25)).chr}.join
       end
 
-      def wait_until_virtual_machine_ready(total_wait_time_in_minutes = 15, retry_interval_in_seconds = 30)
-          print "\n#{ui.color('Waiting for virtual machine to be ready.', :magenta)}"
-          total_wait_time_in_seconds = total_wait_time_in_minutes * 60
-          max_polling_attempts = total_wait_time_in_seconds / retry_interval_in_seconds
+      def wait_until_virtual_machine_ready(retry_interval_in_seconds = 30)
+        vm_status = nil
+        puts
 
-          wait_start_time = Time.now
-
-          vm_ready = check_if_virtual_machine_ready()
-          polling_attempts = 1
-          until vm_ready || polling_attempts >= max_polling_attempts
-            print '.'
-            sleep retry_interval_in_seconds
-            vm_ready = check_if_virtual_machine_ready()
-            polling_attempts += 1
+        begin
+          vm_status = wait_for_virtual_machine_state(:vm_status_provisioning, 5, retry_interval_in_seconds)
+          if vm_status != :vm_status_ready
+            wait_for_virtual_machine_state(:vm_status_ready, 15, retry_interval_in_seconds)
           end
-          if vm_ready
-            elapsed_time_in_minutes = ((Time.now - wait_start_time) / 60).round(2)
-            puts("vm ready after #{elapsed_time_in_minutes} minutes.")
-          else
-            raise "Virtual machine not ready after #{total_wait_time_in_minutes} minutes."
-          end
+        rescue Exception => e
+          Chef::Log.error("#{e.to_s}")
+          raise 'Verify connectivity to Azure and subscription resource limit compliance (e.g. maximum CPU core limits) and try again.'
+        end
       end
 
-      def check_if_virtual_machine_ready()
+      def wait_for_virtual_machine_state(vm_status_goal, total_wait_time_in_minutes, retry_interval_in_seconds)
+        vm_status_ordering = {:vm_status_not_detected => 0, :vm_status_provisioning => 1, :vm_status_ready => 2}
+        vm_status_description = {:vm_status_not_detected => 'any', :vm_status_provisioning => 'provisioning', :vm_status_ready => 'ready'}
+
+        print ui.color("Waiting for virtual machine to reach status '#{vm_status_description[vm_status_goal]}'", :magenta)
+
+        total_wait_time_in_seconds = total_wait_time_in_minutes * 60
+        max_polling_attempts = total_wait_time_in_seconds / retry_interval_in_seconds
+        polling_attempts = 0
+
+        wait_start_time = Time.now
+
+        begin
+          vm_status = get_virtual_machine_status()
+          vm_ready = vm_status_ordering[vm_status] >= vm_status_ordering[vm_status_goal]
+          print '.'
+          sleep retry_interval_in_seconds if !vm_ready
+          polling_attempts += 1
+        end until vm_ready || polling_attempts >= max_polling_attempts
+
+        if ! vm_ready
+          raise Chef::Exceptions::CommandTimeout, "Virtual machine state '#{vm_status_description[vm_status_goal]}' not reached after #{total_wait_time_in_minutes} minutes."
+        end
+
+        elapsed_time_in_minutes = ((Time.now - wait_start_time) / 60).round(2)
+        print ui.color("vm state '#{vm_status_description[vm_status_goal]}' reached after #{elapsed_time_in_minutes} minutes.\n", :cyan)
+        vm_status
+      end
+
+      def get_virtual_machine_status()
+        role = get_role_server()
+        unless role.nil?
+          Chef::Log.debug("Role status is #{role.status.to_s}")
+          if  "ReadyRole".eql? role.status.to_s
+            return :vm_status_ready
+          elsif "Provisioning".eql? role.status.to_s
+            return :vm_status_provisioning
+          else
+            return :vm_status_not_detected
+          end
+        end
+        return :vm_status_not_detected
+      end
+
+      def get_role_server()
         deploy = connection.deploys.queryDeploy(locate_config_value(:azure_dns_name))
-        role = deploy.find_role(locate_config_value(:azure_vm_name))
-        if role.nil?
-          raise "Could not find role - status unknown."
-        end
-        Chef::Log.debug("Role status is #{role.status.to_s}")
-        if  "ReadyRole".eql? role.status.to_s
-          return true
-        else
-          return false
-        end
+        deploy.find_role(locate_config_value(:azure_vm_name))
       end
 
       def tcp_test_winrm(ip_addr, port)
@@ -335,11 +362,14 @@ class Chef
         end
 
         begin
-          server = connection.deploys.create(create_server_def)
-          fqdn = server.publicipaddress
+          connection.deploys.create(create_server_def)
           wait_until_virtual_machine_ready()
+          server = get_role_server()
+          fqdn = server.publicipaddress
         rescue Exception => e
           Chef::Log.error("Failed to create the server -- exception being rescued: #{e.to_s}")
+          backtrace_message = "#{e.class}: #{e}\n#{e.backtrace.join("\n")}"
+          Chef::Log.debug("#{backtrace_message}")
           cleanup_and_exit(remove_hosted_service_on_failure, remove_storage_service_on_failure)
         end
 
