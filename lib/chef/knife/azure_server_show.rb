@@ -22,11 +22,11 @@ require File.expand_path('../azure_base', __FILE__)
 
 class Chef
   class Knife
-    class AzureServerDescribe < Knife
+    class AzureServerShow < Knife
 
       include Knife::AzureBase
 
-      banner "knife azure server describe ROLE [ROLE]"
+      banner "knife azure server show SERVER [SERVER]"
 
       def run
         $stdout.sync = true

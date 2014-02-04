@@ -5,7 +5,7 @@ describe Chef::Knife::AzureAgList do
   include AzureSpecHelper
   include QueryAzureMock
   before do
-    @server_instance = Chef::Knife::AzureServerDescribe.new
+    @server_instance = Chef::Knife::AzureServerShow.new
       {
         :azure_subscription_id => 'azure_subscription_id',
         :azure_mgmt_cert => @cert_file,
