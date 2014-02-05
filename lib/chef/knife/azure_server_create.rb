@@ -346,8 +346,7 @@ class Chef
         if connection.hosts.exists?(locate_config_value(:azure_dns_name))
           remove_hosted_service_on_failure = nil
         end
-        remove_storage_service_on_failure = locate_config_value(:azure_storage_account)
-
+        
         #If Storage Account is not specified, check if the geographic location has one to re-use
         if not locate_config_value(:azure_storage_account)
           storage_accts = connection.storageaccounts.all
@@ -359,6 +358,12 @@ class Chef
             remove_storage_service_on_failure = nil
             config[:azure_storage_account] = storage.name.to_s
           end
+        else
+          if connection.storageaccounts.exists?(locate_config_value(:azure_storage_account))
+            remove_storage_service_on_failure = nil
+          else
+            remove_storage_service_on_failure = locate_config_value(:azure_storage_account)
+          end   
         end
 
         begin
@@ -602,11 +607,16 @@ class Chef
       end
 
       def cleanup_and_exit(remove_hosted_service_on_failure, remove_storage_service_on_failure)
+        ui.warn("Cleaning up resources...")
+
         if remove_hosted_service_on_failure
-          connection.hosts.delete(remove_hosted_service_on_failure)
+          ret_val = connection.hosts.delete(remove_hosted_service_on_failure)
+          ret_val.content.empty? ? ui.warn("Deleted created DNS: #{remove_hosted_service_on_failure}.") : ui.warn("Deletion failed for created DNS:#{remove_hosted_service_on_failure}. " + ret_val.text)
         end
+
         if remove_storage_service_on_failure
-          connection.storageaccounts.delete(remove_storage_service_on_failure)
+          ret_val = connection.storageaccounts.delete(remove_storage_service_on_failure)
+          ret_val.content.empty? ? ui.warn("Deleted created Storage Account: #{remove_storage_service_on_failure}.") : ui.warn("Deletion failed for created Storage Account: #{remove_storage_service_on_failure}. " + ret_val.text)
         end
         exit 1
       end
