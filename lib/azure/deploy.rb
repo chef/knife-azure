@@ -18,6 +18,7 @@
 
 class Azure
   class Deploys
+    include AzureUtility
     def initialize(connection)
       @connection=connection
     end
@@ -65,8 +66,9 @@ class Azure
         end
       else
         ret_val = @connection.hosts.create(params)
-        if ret_val.css('Error Code').length > 0
-          Chef::Log.fatal 'Unable to create DNS:' + ret_val.at_css('Error Code').content + ' : ' + ret_val.at_css('Error Message').content
+        error_code, error_message = error_from_response_xml(ret_val)
+        if error_code.length > 0
+          Chef::Log.fatal 'Unable to create DNS:' + error_code + ' : ' + error_message
           exit 1
         end
       end
@@ -88,8 +90,10 @@ class Azure
         deployXML = deploy.setup(params)
         ret_val = deploy.create(params, deployXML)
       end
-      if ret_val.css('Error Code').length > 0
-        raise Chef::Log.fatal 'Unable to create role:' + ret_val.at_css('Error Code').content + ' : ' + ret_val.at_css('Error Message').content
+      error_code, error_message = error_from_response_xml(ret_val)
+      if error_code.length > 0
+        Chef::Log.debug(ret_val.to_s)
+        raise Chef::Log.fatal 'Unable to create role:' + error_code + ' : ' + error_message
       end
       @connection.roles.find_in_hosted_service(params[:azure_vm_name], params[:azure_dns_name])
     end

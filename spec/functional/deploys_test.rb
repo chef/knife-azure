@@ -25,14 +25,12 @@ describe "deploys" do
         role.size.should_not be_nil
         role.ipaddress.should_not be_nil
         role.sshport.should_not be_nil
-        role.sshipaddress.should_not be_nil
         Chef::Log.info '============================='
         Chef::Log.info 'role: ' + role.name
         Chef::Log.info 'status: ' + role.status
         Chef::Log.info 'size: ' + role.size
         Chef::Log.info 'ip address: ' + role.ipaddress
         Chef::Log.info 'ssh port: ' + role.sshport
-        Chef::Log.info 'ssh ip address: ' + role.sshipaddress
       end
     end
   end

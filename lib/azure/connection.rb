@@ -24,11 +24,15 @@ require File.expand_path('../role', __FILE__)
 require File.expand_path('../disk', __FILE__)
 require File.expand_path('../image', __FILE__)
 require File.expand_path('../certificate', __FILE__)
+require File.expand_path('../ag', __FILE__)
+require File.expand_path('../vnet', __FILE__)
 
 class Azure
   class Connection
     include AzureAPI
-    attr_accessor :hosts, :rest, :images, :deploys, :roles, :disks, :storageaccounts, :certificates
+    include AzureUtility
+    attr_accessor :hosts, :rest, :images, :deploys, :roles,
+                  :disks, :storageaccounts, :certificates, :ags, :vnets
     def initialize(params={})
       @rest = Rest.new(params)
       @hosts = Hosts.new(self)
@@ -38,11 +42,19 @@ class Azure
       @roles = Roles.new(self)
       @disks = Disks.new(self)
       @certificates = Certificates.new(self)
+      @ags = AGs.new(self)
+      @vnets = Vnets.new(self)
     end
-    def query_azure(service_name, verb = 'get', body = '', params = '', wait= true)
-      Chef::Log.info 'calling ' + verb + ' ' + service_name
+
+    def query_azure(service_name,
+                    verb = 'get',
+                    body = '',
+                    params = '',
+                    wait = true,
+                    services = true)
+      Chef::Log.info 'calling ' + verb + ' ' + service_name + (wait ? " synchronously" : " asynchronously")
       Chef::Log.debug body unless body == ''
-      response = @rest.query_azure(service_name, verb, body, params)
+      response = @rest.query_azure(service_name, verb, body, params, services)
       if response.code.to_i == 200
         ret_val = Nokogiri::XML response.body
       elsif !wait && response.code.to_i == 202
@@ -53,7 +65,9 @@ class Azure
       else
         if response.body
           ret_val = Nokogiri::XML response.body
-          Chef::Log.warn ret_val.at_css('Error Code').content + ' : ' + ret_val.at_css('Error Message').content
+          Chef::Log.debug ret_val.to_xml
+          error_code, error_message = error_from_response_xml(ret_val)
+          Chef::Log.warn error_code + ' : ' + error_message if error_code.length > 0
         else
           Chef::Log.warn 'http error: ' + response.code
         end
@@ -66,14 +80,15 @@ class Azure
       while status == 'InProgress'
         response = @rest.query_for_completion()       
         ret_val = Nokogiri::XML response.body
-        status = ret_val.at_css('Status').content
+        status = xml_content(ret_val,'Status')
         if status == 'InProgress'
           print '.'
           sleep(0.5)
         elsif status == 'Succeeded'
           Chef::Log.debug 'not InProgress : ' + ret_val.to_xml
         else
-          Chef::Log.warn status + ret_val.at_css('Error Code').content + ' : ' + ret_val.at_css('Error Message').content
+          error_code, error_message = error_from_response_xml(ret_val)
+          Chef::Log.warn status + error_code + ' : ' + error_message if error_code.length > 0
         end
       end
       ret_val
