@@ -28,9 +28,26 @@ module AzureAPI
       @host_name = params[:azure_api_host_name]
       @verify_ssl = params[:verify_ssl_cert]
     end
-    def query_azure(service_name, verb = 'get', body = '', params = '')
-      request_url = "https://#{@host_name}/#{@subscription_id}/services/#{service_name}"
+
+    def query_azure(service_name,
+                    verb = 'get',
+                    body = '',
+                    params = '',
+                    services = true)
+      svc_str = services ? '/services' : ''
+      request_url =
+        "https://#{@host_name}/#{@subscription_id}#{svc_str}/#{service_name}"
       print '.'
+      response = http_query(request_url, verb, body, params)
+      if response.code.to_i == 307
+        Chef::Log.debug "Redirect to #{response['Location']}"
+        response = http_query(response['Location'], verb, body, params)
+      end
+      @last_request_id = response['x-ms-request-id']
+      response
+    end
+
+    def http_query(request_url, verb, body, params)
       uri = URI.parse(request_url)
       uri.query = params
       http = http_setup(uri)
@@ -39,13 +56,17 @@ module AzureAPI
       @last_request_id = response['x-ms-request-id']
       response
     end
+
     def query_for_completion()
       request_url = "https://#{@host_name}/#{@subscription_id}/operations/#{@last_request_id}"
-      uri = URI.parse(request_url)
-      http = http_setup(uri)
-      request = request_setup(uri, 'get', '')
-      response = http.request(request)
+      response = http_query(request_url, 'get', '', '')
+      if response.code.to_i == 307
+        Chef::Log.debug "Redirect to #{response['Location']}"
+        response = http_query(response['Location'], 'get', '', '')
+      end
+      response
     end
+
     def http_setup(uri)
       http = Net::HTTP.new(uri.host, uri.port)
       store = OpenSSL::X509::Store.new
@@ -72,9 +93,12 @@ module AzureAPI
         request = Net::HTTP::Post.new(uri.request_uri)
       elsif verb == 'delete'
         request = Net::HTTP::Delete.new(uri.request_uri)
+      elsif verb == 'put'
+        request = Net::HTTP::Put.new(uri.request_uri)
       end
-      request["x-ms-version"] = "2013-10-01"
-      request["content-type"] = "application/xml"
+      text = verb == 'put'
+      request["x-ms-version"] = "2013-08-01"
+      request["content-type"] = text ? "text/plain" : "application/xml"
       request["accept"] = "application/xml"
       request["accept-charset"] = "utf-8"
       request.body = body
