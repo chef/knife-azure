@@ -43,11 +43,11 @@ module QueryAzureMock
     @deletecount = 0
 
     @receivedXML = Nokogiri::XML ''
-    connection.stub(:query_azure) do |name, verb, body, params|
+    connection.stub(:query_azure) do |name, verb, body, params, wait, services|
       Chef::Log.info 'calling web service:' + name
       if verb == 'get' || verb == nil
         retval = ''
-        if name == 'affinitygroups'
+        if name == 'affinitygroups' && services == false
           retval = Nokogiri::XML readFile('list_affinitygroups.xml')
         elsif name == 'networking/virtualnetwork'
           retval = Nokogiri::XML readFile('list_vnets.xml')
@@ -92,7 +92,7 @@ module QueryAzureMock
         @getverb = verb
         @getbody = body
       elsif verb == 'post'
-        if name == 'affinitygroups'
+        if name == 'affinitygroups' && services == false
           retval = Nokogiri::XML readFile('post_success.xml')
           @receivedXML = body
         elsif name == 'hostedservices'

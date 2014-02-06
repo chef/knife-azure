@@ -29,6 +29,7 @@ class Azure
                                            'get',
                                            '',
                                            '',
+                                           true,
                                            false)
         response.css('AffinityGroup').each do |ag|
           item = AG.new(@connection).parse(ag)
@@ -91,6 +92,7 @@ class Azure
                               'post',
                               builder.to_xml,
                               '',
+                              true,
                               false)
     end
   end
