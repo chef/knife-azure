@@ -524,10 +524,10 @@ class Chef
           exit 1
         end
         if locate_config_value(:azure_service_location) && locate_config_value(:azure_affinity_group)
-          ui.error("Cannot specify both --azure_service_location and --azure_affinity_group, use one or the other.")
+          ui.error("Cannot specify both --azure-service-location and --azure-affinity-group, use one or the other.")
           exit 1
         elsif locate_config_value(:azure_service_location).nil? && locate_config_value(:azure_affinity_group).nil?
-          ui.error("Must specify either --azure_service_location or --azure_affinity_group.")
+          ui.error("Must specify either --azure-service-location or --azure-affinity-group.")
           exit 1
         end
       end

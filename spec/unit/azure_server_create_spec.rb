@@ -83,12 +83,12 @@ describe "parameter test:" do
 
     it "azure_service_location and azure_affinity_group not allowed" do
       Chef::Config[:knife][:azure_affinity_group] = 'test-affinity'
-      @server_instance.ui.should_receive(:error)
+      @server_instance.ui.should_receive(:error).with("Cannot specify both --azure-service-location and --azure-affinity-group, use one or the other.")
       expect {@server_instance.run}.to raise_error
     end
     it "azure_service_location or azure_affinity_group must be provided" do
       Chef::Config[:knife].delete(:azure_service_location)
-      @server_instance.ui.should_receive(:error)
+      @server_instance.ui.should_receive(:error).with("Must specify either --azure-service-location or --azure-affinity-group.")
       expect {@server_instance.run}.to raise_error
     end
 	end
