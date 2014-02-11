@@ -207,6 +207,18 @@ class Chef
            Chef::Config[:knife][:hints][name] = path ? JSON.parse(::File.read(path)) : Hash.new
         }
 
+      option :azure_domain_name,
+        :long => "--azure-domain-name DOMAIN_NAME",
+        :description => "Optional. Specifies the domain name to join."
+
+      option :azure_domain_user,
+        :long => "--azure-domain-user DOMAIN_USER_NAME",
+        :description => "Optional. Specifies the domain user."
+
+      option :azure_domain_passwd,
+        :long => "--azure-domain-passwd DOMAIN_PASSWD",
+        :description => "Optional. Specifies the password for domain user."
+
       def strip_non_ascii(string)
         string.gsub(/[^0-9a-z ]/i, '')
       end
@@ -598,6 +610,13 @@ class Chef
           server_def[:identity_file] = locate_config_value(:identity_file)
           server_def[:identity_file_passphrase] = locate_config_value(:identity_file_passphrase)
         end
+
+        if locate_config_value(:azure_domain_name)
+          server_def[:azure_domain_name] = locate_config_value(:azure_domain_name)
+          server_def[:azure_domain_user] = locate_config_value(:azure_domain_user)
+          server_def[:azure_domain_passwd] = locate_config_value(:azure_domain_passwd)
+        end
+
         server_def
       end
 
