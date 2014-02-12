@@ -203,6 +203,25 @@ describe "parameter test:" do
 		@server_instance.should_receive(:msg_server_summary)
 		@server_instance.run
 	end
+
+  it "server create with domain join options" do
+    Chef::Config[:knife][:azure_dns_name] = 'vmname'
+    @server_instance.stub(:is_image_windows?).and_return(true)
+    Chef::Config[:knife][:bootstrap_protocol] = 'winrm'
+    Chef::Config[:knife][:winrm_user] = 'testuser'
+    Chef::Config[:knife][:winrm_password] = 'winrm_password'
+
+    Chef::Config[:knife][:azure_domain_name] = 'testad.com'
+    Chef::Config[:knife][:azure_domain_user] = 'domainuser'
+    Chef::Config[:knife][:azure_domain_passwd] = 'domainuserpass'
+    @server_instance.run
+    testxml = Nokogiri::XML(@receivedXML)
+    xml_content(testxml, 'DomainJoin Credentials Domain').should == 'testad.com'
+    xml_content(testxml, 'DomainJoin Credentials Username').should == 'domainuser'
+    xml_content(testxml, 'DomainJoin Credentials Password').should == 'domainuserpass'
+    xml_content(testxml, 'JoinDomain').should == 'testad.com'
+  end
+
   end
 
 	context "when --azure-dns-name is not specified" do
