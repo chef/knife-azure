@@ -224,6 +224,36 @@ describe "parameter test:" do
 
   end
 
+  context "missing create options" do
+    before do
+      Chef::Config[:knife][:bootstrap_protocol] = 'winrm'
+      Chef::Config[:knife][:winrm_user] = 'testuser'
+      Chef::Config[:knife][:winrm_password] = 'winrm_password'
+      Chef::Config[:knife].delete(:azure_vm_name)
+      Chef::Config[:knife].delete(:azure_storage_account)
+    end
+
+    it "should error if domain user is not specified for domain join" do
+      Chef::Config[:knife][:azure_dns_name] = 'vmname'
+      @server_instance.stub(:is_image_windows?).and_return(true)
+
+      Chef::Config[:knife][:azure_domain_name] = 'testad.com'
+      Chef::Config[:knife][:azure_domain_passwd] = 'domainuserpass'
+      @server_instance.ui.should_receive(:error).with('Must specify both --azure-domain-user and --azure-domain-passwd.')
+      expect {@server_instance.run}.to raise_error(SystemExit)
+    end
+
+    it "should error if password for domain user is not specified for domain join" do
+      Chef::Config[:knife][:azure_dns_name] = 'vmname'
+      @server_instance.stub(:is_image_windows?).and_return(true)
+
+      Chef::Config[:knife][:azure_domain_name] = 'testad.com'
+      Chef::Config[:knife][:azure_domain_user] = 'domainuser'
+      @server_instance.ui.should_receive(:error).with('Must specify both --azure-domain-user and --azure-domain-passwd.')
+      expect {@server_instance.run}.to raise_error(SystemExit)
+    end
+  end
+
 	context "when --azure-dns-name is not specified" do
 		before(:each) do
 			Chef::Config[:knife][:azure_dns_name] = nil
