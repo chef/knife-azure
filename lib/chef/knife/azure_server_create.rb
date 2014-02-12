@@ -542,6 +542,14 @@ class Chef
           ui.error("Must specify either --azure_service_location or --azure_affinity_group.")
           exit 1
         end
+
+        # Validate join domain requirements.
+        if locate_config_value(:azure_domain_name)
+          if locate_config_value(:azure_domain_user).nil? or locate_config_value(:azure_domain_passwd).nil?
+            ui.error("Must specify both --azure-domain-user and --azure-domain-passwd.")
+            exit 1
+          end
+        end
       end
 
       def create_server_def
