@@ -257,6 +257,7 @@ class Azure
                     xml.Password params[:azure_domain_passwd]
                   }
                   xml.JoinDomain params[:azure_domain_name]
+                  xml.MachineObjectOU params[:azure_domain_ou_dn] if params[:azure_domain_ou_dn]
                 }
               end
 
