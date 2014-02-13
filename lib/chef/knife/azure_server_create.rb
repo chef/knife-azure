@@ -633,11 +633,9 @@ class Chef
           when /(\S+)\\(.+)/  # format - fully-qualified-DNS-domain\username
             server_def[:azure_domain_name] = $1
             server_def[:azure_domain_user] = $2
-            puts "Here 1 - [#{server_def[:azure_domain_user]}] - [#{server_def[:azure_domain_name]}]"
           when /(.+)@(\S+)/  # format - user@fully-qualified-DNS-domain
             server_def[:azure_domain_name] = $2
             server_def[:azure_domain_user] = $1
-            puts "Here 2 - [#{server_def[:azure_domain_user]}] - [#{server_def[:azure_domain_name]}]"
           else
             # Format error.
             ui.error("Format error for --azure-domain-user option. Supported format are user principal name (UPN) format (user@fully-qualified-DNS-domain) or the fully-qualified-DNS-domain\\username format")
