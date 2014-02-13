@@ -211,6 +211,10 @@ class Chef
         :long => "--azure-domain-name DOMAIN_NAME",
         :description => "Optional. Specifies the domain name to join. If the domains name is not specified, --azure-domain-user must specify the user principal name (UPN) format (user@fully-qualified-DNS-domain) or the fully-qualified-DNS-domain\\username format"
 
+      option :azure_domain_ou_dn,
+        :long => "--azure-domain-ou-dn DOMAIN_OU_DN",
+        :description => "Optional. Specifies the (LDAP) X 500-distinguished name of the organizational unit (OU) in which the computer account is created. This account is in Active Directory on a domain controller in the domain to which the computer is being joined. Example: OU=HR,dc=opscode,dc=com"
+
       option :azure_domain_user,
         :long => "--azure-domain-user DOMAIN_USER_NAME",
         :description => "Optional. Specifies the domain user."
@@ -638,6 +642,7 @@ class Chef
           end
         end
         server_def[:azure_domain_passwd] = locate_config_value(:azure_domain_passwd)
+        server_def[:azure_domain_ou_dn] = locate_config_value(:azure_domain_ou_dn)
         server_def
       end
 
