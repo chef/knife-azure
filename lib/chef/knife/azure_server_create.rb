@@ -209,7 +209,7 @@ class Chef
 
       option :azure_domain_name,
         :long => "--azure-domain-name DOMAIN_NAME",
-        :description => "Optional. Specifies the domain name to join."
+        :description => "Optional. Specifies the domain name to join. If the domains name is not specified, --azure-domain-user must specify the user principal name (UPN) format (user@fully-qualified-DNS-domain) or the fully-qualified-DNS-domain\\username format"
 
       option :azure_domain_user,
         :long => "--azure-domain-user DOMAIN_USER_NAME",
@@ -549,7 +549,7 @@ class Chef
         end
 
         # Validate join domain requirements.
-        if locate_config_value(:azure_domain_name)
+        if locate_config_value(:azure_domain_name) or locate_config_value(:azure_domain_user)
           if locate_config_value(:azure_domain_user).nil? or locate_config_value(:azure_domain_passwd).nil?
             ui.error("Must specify both --azure-domain-user and --azure-domain-passwd.")
             exit 1
@@ -627,9 +627,24 @@ class Chef
         if locate_config_value(:azure_domain_name)
           server_def[:azure_domain_name] = locate_config_value(:azure_domain_name)
           server_def[:azure_domain_user] = locate_config_value(:azure_domain_user)
-          server_def[:azure_domain_passwd] = locate_config_value(:azure_domain_passwd)
+        elsif locate_config_value(:azure_domain_user)
+          # extract domain name since it should be part of username
+          case locate_config_value(:azure_domain_user)
+          when /(\S+)\\(.+)/  # format - fully-qualified-DNS-domain\username
+            server_def[:azure_domain_name] = $1
+            server_def[:azure_domain_user] = $2
+            puts "Here 1 - [#{server_def[:azure_domain_user]}] - [#{server_def[:azure_domain_name]}]"
+          when /(.+)@(\S+)/  # format - user@fully-qualified-DNS-domain
+            server_def[:azure_domain_name] = $2
+            server_def[:azure_domain_user] = $1
+            puts "Here 2 - [#{server_def[:azure_domain_user]}] - [#{server_def[:azure_domain_name]}]"
+          else
+            # Format error.
+            ui.error("Format error for --azure-domain-user option. Supported format are user principal name (UPN) format (user@fully-qualified-DNS-domain) or the fully-qualified-DNS-domain\\username format")
+            exit 1
+          end
         end
-
+        server_def[:azure_domain_passwd] = locate_config_value(:azure_domain_passwd)
         server_def
       end
 
