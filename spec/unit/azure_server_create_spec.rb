@@ -204,22 +204,61 @@ describe "parameter test:" do
 		@server_instance.run
 	end
 
-  it "server create with domain join options" do
-    Chef::Config[:knife][:azure_dns_name] = 'vmname'
-    @server_instance.stub(:is_image_windows?).and_return(true)
-    Chef::Config[:knife][:bootstrap_protocol] = 'winrm'
-    Chef::Config[:knife][:winrm_user] = 'testuser'
-    Chef::Config[:knife][:winrm_password] = 'winrm_password'
+  context "Domain join:" do
+    before do
+      Chef::Config[:knife][:azure_dns_name] = 'vmname'
+      @server_instance.stub(:is_image_windows?).and_return(true)
+      Chef::Config[:knife][:bootstrap_protocol] = 'winrm'
+      Chef::Config[:knife][:winrm_user] = 'testuser'
+      Chef::Config[:knife][:winrm_password] = 'winrm_password'
+    end
 
-    Chef::Config[:knife][:azure_domain_name] = 'testad.com'
-    Chef::Config[:knife][:azure_domain_user] = 'domainuser'
-    Chef::Config[:knife][:azure_domain_passwd] = 'domainuserpass'
-    @server_instance.run
-    testxml = Nokogiri::XML(@receivedXML)
-    xml_content(testxml, 'DomainJoin Credentials Domain').should == 'testad.com'
-    xml_content(testxml, 'DomainJoin Credentials Username').should == 'domainuser'
-    xml_content(testxml, 'DomainJoin Credentials Password').should == 'domainuserpass'
-    xml_content(testxml, 'JoinDomain').should == 'testad.com'
+    it "server create with domain join options" do
+      Chef::Config[:knife][:azure_domain_name] = 'testad.com'
+      Chef::Config[:knife][:azure_domain_user] = 'domainuser'
+      Chef::Config[:knife][:azure_domain_passwd] = 'domainuserpass'
+      @server_instance.run
+      testxml = Nokogiri::XML(@receivedXML)
+      xml_content(testxml, 'DomainJoin Credentials Domain').should == 'testad.com'
+      xml_content(testxml, 'DomainJoin Credentials Username').should == 'domainuser'
+      xml_content(testxml, 'DomainJoin Credentials Password').should == 'domainuserpass'
+      xml_content(testxml, 'JoinDomain').should == 'testad.com'
+    end
+
+    it "server create with domain join options in user principal name (UPN) format (user@fully-qualified-DNS-domain)" do
+      Chef::Config[:knife][:azure_domain_user] = 'domainuser@testad.com'
+      Chef::Config[:knife][:azure_domain_passwd] = 'domainuserpass'
+      @server_instance.run
+      testxml = Nokogiri::XML(@receivedXML)
+      xml_content(testxml, 'DomainJoin Credentials Domain').should == 'testad.com'
+      xml_content(testxml, 'DomainJoin Credentials Username').should == 'domainuser'
+      xml_content(testxml, 'DomainJoin Credentials Password').should == 'domainuserpass'
+      xml_content(testxml, 'JoinDomain').should == 'testad.com'
+    end
+
+    it "server create with domain join options in fully-qualified-DNS-domain\\username format" do
+      Chef::Config[:knife][:azure_domain_user] = 'testad.com\\domainuser'
+      Chef::Config[:knife][:azure_domain_passwd] = 'domainuserpass'
+      @server_instance.run
+      testxml = Nokogiri::XML(@receivedXML)
+      xml_content(testxml, 'DomainJoin Credentials Domain').should == 'testad.com'
+      xml_content(testxml, 'DomainJoin Credentials Username').should == 'domainuser'
+      xml_content(testxml, 'DomainJoin Credentials Password').should == 'domainuserpass'
+      xml_content(testxml, 'JoinDomain').should == 'testad.com'
+    end
+
+    it "server create with domain join options including name of the organizational unit (OU) in which the computer account is created" do
+      Chef::Config[:knife][:azure_domain_user] = 'testad.com\\domainuser'
+      Chef::Config[:knife][:azure_domain_passwd] = 'domainuserpass'
+      Chef::Config[:knife][:azure_domain_ou_dn] = 'OU=HR,dc=opscode,dc=com'
+      @server_instance.run
+      testxml = Nokogiri::XML(@receivedXML)
+      xml_content(testxml, 'DomainJoin Credentials Domain').should == 'testad.com'
+      xml_content(testxml, 'DomainJoin Credentials Username').should == 'domainuser'
+      xml_content(testxml, 'DomainJoin Credentials Password').should == 'domainuserpass'
+      xml_content(testxml, 'DomainJoin MachineObjectOU').should == "OU=HR,dc=opscode,dc=com"
+      xml_content(testxml, 'JoinDomain').should == 'testad.com'
+    end
   end
 
   end
