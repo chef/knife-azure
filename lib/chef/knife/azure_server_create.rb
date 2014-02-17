@@ -217,11 +217,11 @@ class Chef
 
       option :azure_domain_user,
         :long => "--azure-domain-user DOMAIN_USER_NAME",
-        :description => "Optional. Specifies the domain user."
+        :description => "Optional. Specifies the username who has access to join the domain."
 
       option :azure_domain_passwd,
         :long => "--azure-domain-passwd DOMAIN_PASSWD",
-        :description => "Optional. Specifies the password for domain user."
+        :description => "Optional. Specifies the password for domain user who has access to join the domain."
 
       def strip_non_ascii(string)
         string.gsub(/[^0-9a-z ]/i, '')
