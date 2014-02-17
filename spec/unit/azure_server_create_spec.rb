@@ -230,20 +230,41 @@ describe "parameter test:" do
 
 	context "#cleanup_and_exit" do
 		it "service leak cleanup" do
+  		@server_instance.ui.should_receive(:warn).with("Cleaning up resources...")
 			expect {@server_instance.cleanup_and_exit("hosted_srvc", "storage_srvc")}.to raise_error
 		end
 
 		it "service leak cleanup with nil params" do
+			@server_instance.ui.should_receive(:warn).with("Cleaning up resources...")
 			@server_instance.connection.hosts.should_not_receive(:delete)
 			@server_instance.connection.storageaccounts.should_not_receive(:delete)
 			expect {@server_instance.cleanup_and_exit(nil, nil)}.to raise_error
 		end
 
 		it "service leak cleanup with valid params" do
-			@server_instance.connection.hosts.should_receive(:delete).with("hosted_srvc")
-			@server_instance.connection.storageaccounts.should_receive(:delete).with("storage_srvc")
+			ret_val = Object.new
+			ret_val.define_singleton_method(:content){""}
+			@server_instance.ui.should_receive(:warn).with("Cleaning up resources...")
+			@server_instance.ui.should_receive(:warn).with("Deleted created DNS: hosted_srvc.")
+			@server_instance.ui.should_receive(:warn).with("Deleted created Storage Account: storage_srvc.")
+			@server_instance.connection.hosts.should_receive(:delete).with("hosted_srvc").and_return(ret_val)
+			@server_instance.connection.storageaccounts.should_receive(:delete).with("storage_srvc").and_return(ret_val)
+
 			expect {@server_instance.cleanup_and_exit("hosted_srvc", "storage_srvc")}.to raise_error
 		end
+
+		it "display proper warn messages on cleanup fails" do
+			ret_val = Object.new
+			ret_val.define_singleton_method(:content){ "ConflictError" }
+			ret_val.define_singleton_method(:text){ "ConflictError" }
+			@server_instance.ui.should_receive(:warn).with("Cleaning up resources...")
+			@server_instance.ui.should_receive(:warn).with("Deletion failed for created DNS:hosted_srvc. ConflictError")
+			@server_instance.ui.should_receive(:warn).with("Deletion failed for created Storage Account: storage_srvc. ConflictError")
+			@server_instance.connection.hosts.should_receive(:delete).with("hosted_srvc").and_return(ret_val)
+			@server_instance.connection.storageaccounts.should_receive(:delete).with("storage_srvc").and_return(ret_val)
+
+			expect {@server_instance.cleanup_and_exit("hosted_srvc", "storage_srvc")}.to raise_error
+		end		
 	end
 
 	context "connect to existing DNS tests" do
