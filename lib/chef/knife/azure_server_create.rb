@@ -211,6 +211,14 @@ class Chef
         :long => "--ssl-cert-fingerprint FINGERPRINT",
         :description => "The fingerprint / thumprint of the ssl certificate"
 
+      option :cert_password,
+        :long => "--cert-password PASSWORD",
+        :description => "Certificate Password"
+
+      option :cert_path,
+      :long => "--cert-path PATH",
+      :description => "Certificate Path"
+
       def strip_non_ascii(string)
         string.gsub(/[^0-9a-z ]/i, '')
       end
@@ -554,7 +562,9 @@ class Chef
           :azure_affinity_group => locate_config_value(:azure_affinity_group),
           :azure_network_name => locate_config_value(:azure_network_name),
           :azure_subnet_name => locate_config_value(:azure_subnet_name),
-          :fingerprint => locate_config_value(:ssl_cert_fingerprint)
+          :fingerprint => locate_config_value(:ssl_cert_fingerprint),
+          :cert_path => locate_config_value(:cert_path),
+          :cert_password => locate_config_value(:cert_password)
         }
         # If user is connecting a new VM to an existing dns, then
         # the VM needs to have a unique public port. Logic below takes care of this.
