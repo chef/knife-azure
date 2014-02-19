@@ -809,7 +809,7 @@ class Chef
         if locate_config_value(:azure_vm_name).nil?
           azure_dns_name = prefix + SecureRandom.hex(( MAX_VM_NAME_CHARACTERS - prefix.length)/2)
         else
-          azure_dns_name = prefix + locate_config_value(:azure_vm_name)
+          azure_dns_name = locate_config_value(:azure_vm_name)
         end
       end
     end
