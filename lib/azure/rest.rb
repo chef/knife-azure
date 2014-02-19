@@ -97,7 +97,7 @@ module AzureAPI
         request = Net::HTTP::Put.new(uri.request_uri)
       end
       text = verb == 'put'
-      request["x-ms-version"] = "2013-08-01"
+      request["x-ms-version"] = "2013-10-01"
       request["content-type"] = text ? "text/plain" : "application/xml"
       request["accept"] = "application/xml"
       request["accept-charset"] = "utf-8"
