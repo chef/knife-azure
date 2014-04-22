@@ -1,4 +1,4 @@
-source "http://www.rubygems.org"
+source "https://www.rubygems.org"
 
 gemspec
 
@@ -8,5 +8,4 @@ group :development do
   gem 'rspec_junit_formatter'
   gem 'rake'
   gem 'mixlib-shellout'
-  gem 'active_support'
 end
