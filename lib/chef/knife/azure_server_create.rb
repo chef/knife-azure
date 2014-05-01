@@ -207,6 +207,12 @@ class Chef
            Chef::Config[:knife][:hints][name] = path ? JSON.parse(::File.read(path)) : Hash.new
         }
 
+       option :json_attributes,
+         :short => "-j JSON",
+         :long => "--json-attributes JSON",
+         :description => "A JSON string to be added to the first run of chef-client",
+         :proc => lambda { |o| JSON.parse(o) }
+
       def strip_non_ascii(string)
         string.gsub(/[^0-9a-z ]/i, '')
       end
@@ -450,6 +456,7 @@ class Chef
         bootstrap.config[:bootstrap_version] = locate_config_value(:bootstrap_version)
         bootstrap.config[:distro] = locate_config_value(:distro)
         bootstrap.config[:template_file] = locate_config_value(:template_file)
+        bootstrap.config[:first_boot_attributes] = locate_config_value(:json_attributes) || {}
         load_cloud_attributes_in_hints(server)
         bootstrap
       end
@@ -492,28 +499,20 @@ class Chef
       def bootstrap_for_node(server,fqdn,port)
         bootstrap = Chef::Knife::Bootstrap.new
         bootstrap.name_args = [fqdn]
-        bootstrap.config[:run_list] = config[:run_list]
         bootstrap.config[:ssh_user] = locate_config_value(:ssh_user)
         bootstrap.config[:ssh_password] = locate_config_value(:ssh_password)
         bootstrap.config[:ssh_port] = port
         bootstrap.config[:identity_file] = locate_config_value(:identity_file)
         bootstrap.config[:chef_node_name] = locate_config_value(:chef_node_name) || server.name
-        bootstrap.config[:prerelease] = locate_config_value(:prerelease)
-        bootstrap.config[:bootstrap_version] = locate_config_value(:bootstrap_version)
-        bootstrap.config[:distro] = locate_config_value(:distro)
         bootstrap.config[:use_sudo] = true unless locate_config_value(:ssh_user) == 'root'
         bootstrap.config[:use_sudo_password] = true if bootstrap.config[:use_sudo]
-        bootstrap.config[:template_file] = config[:template_file]
         bootstrap.config[:environment] = locate_config_value(:environment)
         # may be needed for vpc_mode
         bootstrap.config[:host_key_verify] = config[:host_key_verify]
         bootstrap.config[:secret] = locate_config_value(:secret)
         bootstrap.config[:secret_file] = locate_config_value(:secret_file)
 
-        # Load cloud attributes.
-        load_cloud_attributes_in_hints(server)
-
-        bootstrap
+        bootstrap_common_params(bootstrap, server)
       end
 
       def validate!
