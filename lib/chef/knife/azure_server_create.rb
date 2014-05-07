@@ -189,6 +189,11 @@ class Chef
         :long => "--azure-subnet-name SUBNET_NAME",
         :description => "Optional. Specifies the subnet of virtual machine"
 
+      option :azure_vm_startup_timeout,
+        :long => "--azure_startup_timeout TIMEOUT",
+        :description => "The number of minutes that knife-azure will wait for the virtual machine to be ready. Default is 5.",
+        :default => 5
+
       option :identity_file,
         :long => "--identity-file FILENAME",
         :description => "SSH identity file for authentication, optional. It is the RSA private key path. Specify either ssh-password or identity-file"
@@ -241,10 +246,12 @@ class Chef
       def wait_until_virtual_machine_ready(retry_interval_in_seconds = 30)
 
         vm_status = nil
+        timeout = locate_config_value(:azure_vm_startup_timeout) || 5
+
         puts
 
         begin
-          vm_status = wait_for_virtual_machine_state(:vm_status_provisioning, 5, retry_interval_in_seconds)
+          vm_status = wait_for_virtual_machine_state(:vm_status_provisioning, timeout, retry_interval_in_seconds)
           if vm_status != :vm_status_ready
             wait_for_virtual_machine_state(:vm_status_ready, 15, retry_interval_in_seconds)
           end
