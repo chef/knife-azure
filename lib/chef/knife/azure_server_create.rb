@@ -192,8 +192,13 @@ class Chef
 
       option :azure_vm_startup_timeout,
         :long => "--azure_startup_timeout TIMEOUT",
-        :description => "The number of minutes that knife-azure will wait for the virtual machine to be ready. Default is 5.",
-        :default => 5
+        :description => "The number of minutes that knife-azure will wait for the virtual machine to reach the 'provisioning' state. Default is 10.",
+        :default => 10
+
+      option :azure_vm_ready_timeout,
+        :long => "--azure_vm_ready TIMEOUT",
+        :description => "The number of minutes that knife-azure will wait for the virtual machine state to transition from 'provisioning' to 'ready'. Default is 15.",
+        :default => 15 
 
       option :identity_file,
         :long => "--identity-file FILENAME",
@@ -220,16 +225,23 @@ class Chef
         (0...len).map{65.+(rand(25)).chr}.join
       end
 
+      def azure_vm_startup_timeout
+        locate_config_value(:azure_vm_startup_timeout) || 10
+      end
+
+      def azure_vm_ready_timeout
+        locate_config_value(:azure_vm_ready_timeout) || 15
+      end
+
       def wait_until_virtual_machine_ready(retry_interval_in_seconds = 30)
         vm_status = nil
-        timeout = locate_config_value(:azure_vm_startup_timeout) || 5
 
         puts
 
         begin
-          vm_status = wait_for_virtual_machine_state(:vm_status_provisioning, timeout, retry_interval_in_seconds)
+          vm_status = wait_for_virtual_machine_state(:vm_status_provisioning, azure_vm_startup_timeout, retry_interval_in_seconds)
           if vm_status != :vm_status_ready
-            wait_for_virtual_machine_state(:vm_status_ready, 15, retry_interval_in_seconds)
+            wait_for_virtual_machine_state(:vm_status_ready, azure_vm_ready_timeout, retry_interval_in_seconds)
           end
         rescue Exception => e
           Chef::Log.error("#{e.to_s}")
