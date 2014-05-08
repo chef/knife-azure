@@ -140,73 +140,80 @@ describe Chef::Knife::AzureServerCreate do
       end
     end
 
-    context "server create options" do
-      before do
-        Chef::Config[:knife][:bootstrap_protocol] = 'ssh'
-        Chef::Config[:knife][:ssh_password] = 'ssh_password'
-        Chef::Config[:knife][:ssh_user] = 'ssh_user'
-        Chef::Config[:knife].delete(:azure_vm_name)
-        Chef::Config[:knife].delete(:azure_storage_account)
-        @bootstrap = Chef::Knife::Bootstrap.new
-        allow(Chef::Knife::Bootstrap).to receive(:new).and_return(@bootstrap)
-        expect(@bootstrap).to receive(:run)
-        allow(@server_instance).to receive(:msg_server_summary)
-      end
+	context "timeout parameters" do
+	
+		it "uses correct values when not specified" do
+			@server_instance.azure_vm_startup_timeout.should == 10
+			@server_instance.azure_vm_ready_timeout.should == 15
+		end		
 
-      it "quick create" do
-        expect(@server_instance).to receive(:is_image_windows?).at_least(:twice).and_return(false)
-        Chef::Config[:knife][:azure_dns_name] = 'vmname' # service name to be used as vm name
-        expect(@server_instance).to receive(:get_dns_name)
-        @server_instance.run
-        expect(@server_instance.config[:azure_vm_name]).to be == "vmname"
-        testxml = Nokogiri::XML(@receivedXML)
-        expect(xml_content(testxml, 'MediaLink')).to_not be nil
-        expect(xml_content(testxml, 'DiskName')).to_not be nil
-        test_params(testxml, Chef::Config[:knife], Chef::Config[:knife][:azure_dns_name],
-        Chef::Config[:knife][:azure_dns_name])
-      end
 
-      it "quick create with wirm - API check" do
-        expect(@server_instance).to receive(:is_image_windows?).at_least(:twice).and_return(true)
-        Chef::Config[:knife][:azure_dns_name] = 'vmname' # service name to be used as vm name
-        Chef::Config[:knife][:winrm_user] = 'opscodechef'
-        Chef::Config[:knife][:winrm_password] = 'Opscode123'
-        Chef::Config[:knife][:bootstrap_protocol] = 'winrm'
-        expect(@server_instance).to receive(:get_dns_name)
-        @server_instance.run
-        expect(@server_instance.config[:azure_vm_name]).to be == "vmname"
-        testxml = Nokogiri::XML(@receivedXML)
-        expect(xml_content(testxml, 'WinRM')).to_not be nil
-        expect(xml_content(testxml, 'Listeners')).to_not be nil
-        expect(xml_content(testxml, 'Listener')).to_not be nil
-        expect(xml_content(testxml, 'Protocol')).to be == "Http"
-      end
+		it "matches the CLI options" do
+			#Set params to non-default values
+			Chef::Config[:knife][:azure_vm_startup_timeout] = 5
+			Chef::Config[:knife][:azure_vm_ready_timeout] = 10
+			@server_instance.azure_vm_startup_timeout.should == Chef::Config[:knife][:azure_vm_startup_timeout] 
+			@server_instance.azure_vm_ready_timeout.should == Chef::Config[:knife][:azure_vm_ready_timeout]
+		end		
 
-      it "generate unique OS DiskName" do
-        os_disks = []
-        allow(@bootstrap).to receive(:run)
-        allow(@server_instance).to receive(:validate!)
-        Chef::Config[:knife][:azure_dns_name] = 'vmname'
+	end
 
-        5.times do
-          @server_instance.run
-          testxml = Nokogiri::XML(@receivedXML)
-          disklink = xml_content(testxml, 'MediaLink')
-          expect(os_disks).to_not include(disklink)
-          os_disks.push(disklink)
-        end
-      end
+	context "server create options" do
+		before do
+			Chef::Config[:knife][:bootstrap_protocol] = 'ssh'
+			Chef::Config[:knife][:ssh_password] = 'ssh_password'
+			Chef::Config[:knife][:ssh_user] = 'ssh_user'
+			Chef::Config[:knife].delete(:azure_vm_name)
+			Chef::Config[:knife].delete(:azure_storage_account)
+			@bootstrap = Chef::Knife::Bootstrap.new
+	      	Chef::Knife::Bootstrap.stub(:new).and_return(@bootstrap)
+	      	@bootstrap.should_receive(:run)
+	      	@server_instance.stub(:msg_server_summary)
+		end
 
-      it "skip user specified tcp-endpoints if its ports already use by ssh endpoint" do
-        # Default external port for ssh endpoint is 22.
-        @server_instance.config[:tcp_endpoints] = "12:22"
-        expect(@server_instance).to receive(:is_image_windows?).at_least(:twice).and_return(false)
-        Chef::Config[:knife][:azure_dns_name] = 'vmname' # service name to be used as vm name
-        @server_instance.run
-        testxml = Nokogiri::XML(@receivedXML)
-        testxml.css('InputEndpoint Protocol:contains("TCP")').each do | port |
-          # Test data in @server_instance.config[:tcp_endpoints]:=> "12:22" this endpoints external port 22 is already use by ssh endpoint. So it should skip endpoint "12:22".
-          expect(port.parent.css("LocalPort").text).to_not eq("12")
+		it "quick create" do
+			@server_instance.should_receive(:is_image_windows?).at_least(:twice).and_return(false)
+			Chef::Config[:knife][:azure_dns_name] = 'vmname' # service name to be used as vm name
+			@server_instance.should_receive(:get_dns_name)
+			@server_instance.run
+			@server_instance.config[:azure_vm_name].should == "vmname"
+			testxml = Nokogiri::XML(@receivedXML)
+			xml_content(testxml, 'MediaLink').should_not == nil
+			xml_content(testxml, 'DiskName').should_not == nil
+			test_params(testxml, Chef::Config[:knife], Chef::Config[:knife][:azure_dns_name],
+										Chef::Config[:knife][:azure_dns_name])
+		end
+
+		it "quick create with wirm - API check" do
+			@server_instance.should_receive(:is_image_windows?).at_least(:twice).and_return(true)
+			Chef::Config[:knife][:azure_dns_name] = 'vmname' # service name to be used as vm name
+			Chef::Config[:knife][:winrm_user] = 'opscodechef'
+			Chef::Config[:knife][:winrm_password] = 'Opscode123'
+			Chef::Config[:knife][:bootstrap_protocol] = 'winrm'
+			@server_instance.should_receive(:get_dns_name)
+			@server_instance.run
+			@server_instance.config[:azure_vm_name].should == "vmname"
+			testxml = Nokogiri::XML(@receivedXML)
+			xml_content(testxml, 'WinRM').should_not == nil
+			xml_content(testxml, 'Listeners').should_not == nil
+			xml_content(testxml, 'Listener').should_not == nil
+			xml_content(testxml, 'Protocol').should == "Http"
+		end
+
+        it "generate unique OS DiskName" do
+          os_disks = []
+          @bootstrap.stub(:run)
+          @server_instance.stub(:validate!)
+          Chef::Config[:knife][:azure_dns_name] = 'vmname'
+
+          5.times do
+            @server_instance.run
+            testxml = Nokogiri::XML(@receivedXML)
+            disklink = xml_content(testxml, 'MediaLink')
+            os_disks.should_not include(disklink)
+            os_disks.push(disklink)
+          end
+>>>>>>> test that the correct timeout values are used
         end
       end
 
