@@ -9,55 +9,55 @@ describe "hosts" do
   end
 
   context 'get all hosts' do
-    specify {@connection.hosts.all.length.should be > 1}
+    specify {expect(@connection.hosts.all.length).to be > 1}
     it "entry fields should not be nil" do
       items = @connection.hosts.all
       items.each do |host|
-        host.name.should_not be_nil
-        host.url.should_not be_nil
-        host.label.should_not be_nil
-        host.dateCreated.should_not be_nil
-        host.description.should_not be_nil
-        host.location.should_not be_nil
-        host.dateModified.should_not be_nil
-        host.status.should_not be_nil
+        expect(host.name).to_not be nil
+        expect(host.url).to_not be nil
+        expect(host.label).to_not be nil
+        expect(host.dateCreated).to_not be nil
+        expect(host.description).to_not be nil
+        expect(host.location).to_not be nil
+        expect(host.dateModified).to_not be nil
+        expect(host.status).to_not be nil
       end
     end
-    specify {@connection.hosts.exists?("notExpectedName").should == false}
-    specify {@connection.hosts.exists?("service001").should == true}
+    specify {expect(@connection.hosts.exists?("notExpectedName")).to be == false}
+    specify {expect(@connection.hosts.exists?("service001")).to be == true}
   end
 
   context 'create a new host with service location' do
     it 'using explicit parameters it should pass in expected body' do
       params = {:azure_dns_name=>'service003', :azure_service_location=>'West US', 'hosted_azure_service_location'=>'Windows Azure Preview'}
       host = @connection.hosts.create(params)
-      @postname.should == 'hostedservices'
-      @postverb.should == 'post'
-      Nokogiri::XML(@postbody).should be_equivalent_to(Nokogiri::XML readFile('create_host_location.xml'))
+      expect(@postname).to be == 'hostedservices'
+      expect(@postverb).to be == 'post'
+      expect(Nokogiri::XML(@postbody)).to match(Nokogiri::XML readFile('create_host_location.xml'))
     end
     it 'using default parameters it should pass in expected body' do
       params = {:azure_dns_name=>'service003', :azure_service_location=>'West US'}
       host = @connection.hosts.create(params)
-      @postname.should == 'hostedservices'
-      @postverb.should == 'post'
-      Nokogiri::XML(@postbody).should be_equivalent_to(Nokogiri::XML readFile('create_host_location.xml'))
+      expect(@postname).to be == 'hostedservices'
+      expect(@postverb).to be == 'post'
+      expect(Nokogiri::XML(@postbody)).to match(Nokogiri::XML readFile('create_host_location.xml'))
     end
   end
   context 'create a new host with affinity group' do
     it 'using explicit parameters it should pass in expected body' do
       params = {:azure_dns_name=>'service003', :azure_affinity_group=>'test-affinity' }
       host = @connection.hosts.create(params)
-      @postname.should == 'hostedservices'
-      @postverb.should == 'post'
-      Nokogiri::XML(@postbody).should be_equivalent_to(Nokogiri::XML readFile('create_host_affinity.xml'))
+      expect(@postname).to be == 'hostedservices'
+      expect(@postverb).to be == 'post'
+      expect(Nokogiri::XML(@postbody)).to match(Nokogiri::XML readFile('create_host_affinity.xml'))
     end
   end
   context 'delete a host' do
     it 'should pass in correct name, verb, and body' do
       @connection.hosts.delete('service001');
-      @deletename.should == 'hostedservices/service001'
-      @deleteverb.should == 'delete'
-      @deletebody.should == nil
+      expect(@deletename).to be == 'hostedservices/service001'
+      expect(@deleteverb).to be == 'delete'
+      expect(@deletebody).to be nil
     end
   end
 end

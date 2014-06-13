@@ -21,12 +21,12 @@ describe Chef::Knife::AzureAgList do
       Chef::Config[:knife][key] = value
     end
     stub_query_azure(@server_instance.connection)
-    @server_instance.stub(:items).and_return(:true)
-    @server_instance.stub(:puts)
+    allow(@server_instance).to receive(:items).and_return(:true)
+    allow(@server_instance).to receive(:puts)
   end
 
     it 'should display Name, Location, and Description columns.' do
-      @server_instance.hl.should_receive(:list).with(
+      expect(@server_instance.hl).to receive(:list).with(
         ['Name', 'Location', 'Description',
          'agname', 'West US', 'agdesc',
          'jm-affinity-group', 'West US', '',

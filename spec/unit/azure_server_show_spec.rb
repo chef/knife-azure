@@ -15,13 +15,13 @@ describe Chef::Knife::AzureAgList do
     end
     stub_query_azure(@server_instance.connection)
 
-    @server_instance.stub(:puts)
+    allow(@server_instance).to receive(:puts)
   end
 
   it 'should display server information.' do
     @server_instance.name_args = %w(role206 role001 role002 vm002 vm01 ssh-vm
                                     winrm-vm vmname)
-    @server_instance.ui.should_receive(:list).with(
+    expect(@server_instance.ui).to receive(:list).with(
       ['Role name', 'role001',
        'Status', 'ReadyRole',
        'Size', 'Small',
@@ -33,7 +33,7 @@ describe Chef::Knife::AzureAgList do
       :columns_across,
       2
     )
-    @server_instance.ui.should_receive(:list).with(
+    expect(@server_instance.ui).to receive(:list).with(
       ['Role name', 'role002',
        'Status', 'RoleStateUnknown',
        'Size', 'Small',
@@ -45,7 +45,7 @@ describe Chef::Knife::AzureAgList do
       :columns_across,
       2
     )
-    @server_instance.ui.should_receive(:list).with(
+    expect(@server_instance.ui).to receive(:list).with(
       ['Role name', 'vm002',
        'Status', 'ReadyRole',
        'Size', 'ExtraSmall',
@@ -57,13 +57,13 @@ describe Chef::Knife::AzureAgList do
       :columns_across,
       2
     )
-    @server_instance.ui.should_receive(:list).with(
+    expect(@server_instance.ui).to receive(:list).with(
       ['Ports open', 'Local port', 'IP', 'Public port',
        'tcp', '66', '65.52.251.57', '66'],
       :columns_across,
       4
     ).exactly(3).times
-    @server_instance.ui.should_receive(:list).with(
+    expect(@server_instance.ui).to receive(:list).with(
       ['Role name', 'vm01',
        'Status', 'ReadyRole',
        'Size', 'ExtraSmall',
@@ -75,7 +75,7 @@ describe Chef::Knife::AzureAgList do
       :columns_across,
       2
     )
-    @server_instance.ui.should_receive(:list).with(
+    expect(@server_instance.ui).to receive(:list).with(
       ['Role name', 'ssh-vm',
        'Status', 'ReadyRole',
        'Size', 'ExtraSmall',
@@ -87,7 +87,7 @@ describe Chef::Knife::AzureAgList do
       :columns_across,
       2
     )
-    @server_instance.ui.should_receive(:list).with(
+    expect(@server_instance.ui).to receive(:list).with(
       ['Role name', 'winrm-vm',
        'Status', 'ReadyRole',
        'Size', 'Small',
@@ -99,7 +99,7 @@ describe Chef::Knife::AzureAgList do
       :columns_across,
       2
     )
-    @server_instance.ui.should_receive(:list).with(
+    expect(@server_instance.ui).to receive(:list).with(
       ['Role name', 'vmname',
        'Status', 'ReadyRole',
        'Size', 'ExtraSmall',

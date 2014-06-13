@@ -12,11 +12,11 @@ describe 'ags' do
   context 'mock with actually retrieved values' do
     it 'should find strings' do
       items = @connection.ags.all
-      items.length.should be > 1
+      expect(items.length).to be > 1
       items.each do |ag|
-        ag.name.should_not be_nil
-        ag.label.should_not be_nil
-        ag.location.should_not be_nil
+        expect(ag.name).not_to be_nil
+        expect(ag.label).not_to be_nil
+        expect(ag.location).not_to be_nil
       end
     end
     it 'should contain West US ag' do
@@ -25,7 +25,8 @@ describe 'ags' do
       items.each do |item|
         found_us = true if item.location == 'West US'
       end
-      found_us.should == true
+      #found_us.should == true
+      expect(found_us).to be true
     end
   end
 
@@ -37,12 +38,11 @@ describe 'ags' do
         azure_location: 'West US'
       }
       @connection.ags.create(params)
-      @postname.should eq('affinitygroups')
-      @postverb.should eq('post')
-      Nokogiri::XML(@postbody).should be_equivalent_to(
+      expect(@postname).to eq('affinitygroups')
+      expect(@postverb).to eq('post')
+      expect(Nokogiri::XML(@postbody)).to match(
         Nokogiri::XML readFile('create_ag_for_new-ag.xml')
       )
     end
   end
-
 end

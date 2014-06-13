@@ -43,7 +43,7 @@ module QueryAzureMock
     @deletecount = 0
 
     @receivedXML = Nokogiri::XML ''
-    connection.stub(:query_azure) do |name, verb, body, params, wait, services|
+    allow(connection).to receive(:query_azure) do |name, verb, body, params, wait, services|
       Chef::Log.info 'calling web service:' + name
       if verb == 'get' || verb == nil
         retval = ''

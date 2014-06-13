@@ -15,13 +15,13 @@ describe Chef::Knife::AzureVnetCreate do
         Chef::Config[:knife][key] = value
       end
     stub_query_azure(@server_instance.connection)
-    @server_instance.stub(:puts)
-    @server_instance.stub(:print)
+    allow(@server_instance).to receive(:puts)
+    allow(@server_instance).to receive(:print)
   end
 
   it 'should fail missing args.' do
-    @server_instance.connection.vnets.should_not_receive(:create)
-    @server_instance.ui.should_receive(:error).exactly(3).times
+    expect(@server_instance.connection.vnets).to_not receive(:create)
+    expect(@server_instance.ui).to receive(:error).exactly(3).times
     expect { @server_instance.run }.to raise_error
   end
 
@@ -29,13 +29,13 @@ describe Chef::Knife::AzureVnetCreate do
     Chef::Config[:knife][:azure_network_name] = 'new-net'
     Chef::Config[:knife][:azure_affinity_group] = 'ag'
     Chef::Config[:knife][:azure_address_space] = '10.0.0.0/24'
-    @server_instance.connection.vnets.should_receive(:create).with(
+    expect(@server_instance.connection.vnets).to receive(:create).with(
       azure_vnet_name: 'new-net',
       azure_ag_name: 'ag',
       azure_address_space: '10.0.0.0/24',
     ).and_call_original
-    @server_instance.ui.should_not_receive(:warn)
-    @server_instance.ui.should_not_receive(:error)
+    expect(@server_instance.ui).to_not receive(:warn)
+    expect(@server_instance.ui).to_not receive(:error)
     @server_instance.run
   end
 end

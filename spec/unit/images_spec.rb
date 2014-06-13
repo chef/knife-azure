@@ -11,14 +11,14 @@ describe "images" do
   context 'mock with actually retrieved values' do
     it "should find strings" do
       items = @connection.images.all
-      items.length.should be > 1
+      expect(items.length).to be > 1
       items.each do |image|
-        image.category.should_not be_nil
-        image.label.should_not be_nil
-        image.name.should_not be_nil
-        image.os.should_not be_nil
-        image.eula.should_not be_nil
-        image.description.should_not be_nil
+        expect(image.category).to_not be nil
+        expect(image.label).to_not be nil
+        expect(image.name).to_not be nil
+        expect(image.os).to_not be nil
+        expect(image.eula).to_not be nil
+        expect(image.description).to_not be nil
       end
     end
     it "should contain a linux image" do
@@ -29,7 +29,7 @@ describe "images" do
           foundLinux = true
         end
       end
-      foundLinux.should == true
+      expect(foundLinux).to be true
     end
   end
 end

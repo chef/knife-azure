@@ -12,11 +12,11 @@ describe 'vnets' do
   context 'mock with actually retrieved values' do
     it 'should find strings' do
       items = @connection.vnets.all
-      items.length.should be > 1
+      expect(items.length).to be > 1
       items.each do |vnet|
-        vnet.name.should_not be_nil
-        vnet.affinity_group.should_not be_nil
-        vnet.state.should_not be_nil
+        expect(vnet.name).to_not be nil
+        expect(vnet.affinity_group).to_not be nil
+        expect(vnet.state).to_not be nil
       end
     end
 
@@ -27,7 +27,7 @@ describe 'vnets' do
 
     it 'should contain Created state' do
       @connection.vnets.all.each do |item|
-        item.state.should eq('Created')
+        expect(item.state).to eq('Created')
       end
     end
   end
@@ -40,9 +40,9 @@ describe 'vnets' do
         azure_address_space: '10.0.0.0/16',
       }
       @connection.vnets.create(params)
-      @postname.should eq('networking/media')
-      @postverb.should eq('put')
-      Nokogiri::XML(@postbody).should be_equivalent_to(
+      expect(@postname).to eq('networking/media')
+      expect(@postverb).to eq('put')
+      expect(Nokogiri::XML(@postbody)).to match(
         Nokogiri::XML readFile('set_network_new.xml')
       )
     end
@@ -53,12 +53,11 @@ describe 'vnets' do
         azure_address_space: '192.168.0.0/20',
       }
       @connection.vnets.create(params)
-      @postname.should eq('networking/media')
-      @postverb.should eq('put')
-      Nokogiri::XML(@postbody).should be_equivalent_to(
+      expect(@postname).to eq('networking/media')
+      expect(@postverb).to eq('put')
+      expect(Nokogiri::XML(@postbody)).to match(
         Nokogiri::XML readFile('set_network_existing.xml')
       )
     end
   end
-
 end

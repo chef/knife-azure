@@ -11,9 +11,9 @@ describe "disks" do
   context 'mock with actually retrieved values' do
     it "should find strings" do
       items = @connection.disks.all
-      items.length.should be > 1
+      expect(items.length).to be > 1
       items.each do |disk|
-        disk.name.should_not be_nil
+        expect(disk.name).to_not be nil
       end
     end
     it "should contain an attached disk" do
@@ -24,7 +24,7 @@ describe "disks" do
           count += 1
         end
       end
-      count.should == 1
+      expect(count).to be == 1
     end
     it "should contain unattached disks" do
       items = @connection.disks.all
@@ -34,11 +34,11 @@ describe "disks" do
           count += 1
         end
       end
-      count.should == 7
+      expect(count).to be == 7
     end
     it "should clear all unattached disks" do
       @connection.disks.clear_unattached
-      @deletecount.should == 7
+      expect(@deletecount).to be == 7
     end
   end
 end

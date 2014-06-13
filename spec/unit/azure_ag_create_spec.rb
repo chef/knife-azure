@@ -15,26 +15,26 @@ describe Chef::Knife::AzureAgCreate do
         Chef::Config[:knife][key] = value
       end
     stub_query_azure(@server_instance.connection)
-    @server_instance.stub(:puts)
-    @server_instance.stub(:print)
+    allow(@server_instance).to receive(:puts)
+    allow(@server_instance).to receive(:print)
   end
 
   it 'should fail missing args.' do
-    @server_instance.connection.ags.should_not_receive(:create)
-    @server_instance.ui.should_receive(:error).twice
+    expect(@server_instance.connection.ags).to_not receive(:create)
+    expect(@server_instance.ui).to receive(:error).twice
     expect { @server_instance.run }.to raise_error
   end
 
   it 'should succeed.' do
     Chef::Config[:knife][:azure_affinity_group] = 'new-ag'
     Chef::Config[:knife][:azure_service_location] = 'West US'
-    @server_instance.connection.ags.should_receive(:create).with(
+    expect(@server_instance.connection.ags).to receive(:create).with(
       azure_ag_name: 'new-ag',
       azure_ag_desc: nil,
       azure_location: 'West US',
     ).and_call_original
-    @server_instance.ui.should_not_receive(:warn)
-    @server_instance.ui.should_not_receive(:error)
+    expect(@server_instance.ui).to_not receive(:warn)
+    expect(@server_instance.ui).to_not receive(:error)
     @server_instance.run
   end
 end

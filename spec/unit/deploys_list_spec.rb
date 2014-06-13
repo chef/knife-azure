@@ -8,13 +8,13 @@ include AzureSpecHelper
     setup_query_azure_mock
   end
 
-  specify {@connection.deploys.all.length.should be > 0}
+  specify {expect(@connection.deploys.all.length).to be > 0}
   it 'each deployment should have values' do
     @connection.deploys.all.each do |deploy|
-      deploy.name.should_not be_nil
-      deploy.status.should_not be_nil
-      deploy.url.should_not be_nil
-      deploy.roles.length.should be > 0
+      expect(deploy.name).to_not be nil
+      expect(deploy.status).to_not be nil
+      expect(deploy.url).to_not be nil
+      expect(deploy.roles.length).to be > 0
     end
   end
   it 'each role should have values' do
@@ -22,14 +22,14 @@ include AzureSpecHelper
     #describe_deploy deploy
       deploy.roles.each do |role|
         #describe_role role
-        role.name.should_not be_nil
-        role.status.should_not be_nil
-        role.size.should_not be_nil
-        role.ipaddress.should_not be_nil
+        expect(role.name).to_not be nil
+        expect(role.status).to_not be nil
+        expect(role.size).to_not be nil
+        expect(role.ipaddress).to_not be nil
         # We either have ssh port or winrm port on a role
-        role.winrmport.should_not be_nil if role.sshport.nil?
-        role.sshport.should_not be_nil if role.winrmport.nil?
-        role.publicipaddress.should_not be_nil
+        expect(role.winrmport).to_not be nil if role.sshport.nil?
+        expect(role.sshport).to_not be nil if role.winrmport.nil?
+        expect(role.publicipaddress).to_not be nil
       end
     end
   end
