@@ -27,9 +27,9 @@ before do
 	allow(@server_instance).to receive(:confirm).and_return(:true)
 
 	allow(@server_instance).to receive(:puts)
-    allow(@server_instance).to receive(:print)
-    allow(@server_instance.ui).to receive(:warn)
-    expect(@server_instance.ui).to_not receive(:error).and_call_original
+  allow(@server_instance).to receive(:print)
+  allow(@server_instance.ui).to receive(:warn)
+  expect(@server_instance.ui).to_not receive(:error).and_call_original
 end
 
 	it "server delete test" do
@@ -45,7 +45,7 @@ end
 		expect(@server_instance.ui).to receive(:warn).twice
 		expect(@server_instance.connection.roles).to receive(:delete).and_call_original
 		expect(@server_instance.connection).to receive(:query_azure).with("hostedservices/service001/deployments/deployment001/roles/role001", "delete")
-		# comp=media deletes associated vhd 
+		# comp=media deletes associated vhd
 		expect(@server_instance.connection).to receive(:query_azure).with("disks/deployment001-role002-0-201241722728", "delete", "", "comp=media", true)
 		@server_instance.run
 	end

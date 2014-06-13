@@ -25,7 +25,6 @@ describe 'ags' do
       items.each do |item|
         found_us = true if item.location == 'West US'
       end
-      #found_us.should == true
       expect(found_us).to be true
     end
   end
