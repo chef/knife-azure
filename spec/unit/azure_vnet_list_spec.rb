@@ -14,11 +14,11 @@ describe Chef::Knife::AzureAgList do
       Chef::Config[:knife][key] = value
     end
     stub_query_azure(@server_instance.connection)
-    @server_instance.stub(:puts)
+    allow(@server_instance).to receive(:puts)
   end
 
   it 'should display Name, Affinity Group, and State columns.' do
-    @server_instance.hl.should_receive(:list).with(
+    expect(@server_instance.hl).to receive(:list).with(
       ['Name', 'Affinity Group', 'State',
        'jm-vnet-test', 'jm-affinity-group', 'Created',
        'vnet-test-2', 'test', 'Created',

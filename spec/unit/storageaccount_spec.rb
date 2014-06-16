@@ -10,21 +10,21 @@ describe "storageaccounts" do
   end
 
   context 'get all storage accounts' do
-    specify {@connection.storageaccounts.all.length.should be > 0}
+    specify {expect(@connection.storageaccounts.all.length).to be > 0}
     it "entry fields should not be null" do
       items = @connection.storageaccounts.all
       items.each do |storageaccount|
-        storageaccount.name.should_not be_nil
+        expect(storageaccount.name).to_not be nil
       end
     end
   end
 
   context 'check storage account existence' do
     it 'storage account should exist' do
-      expect(@connection.storageaccounts.exists?("storage-service-name")).to be_true
+      expect(@connection.storageaccounts.exists?("storage-service-name")).to be true
     end
     it 'storage account should not exist' do
-      expect(@connection.storageaccounts.exists?("invalid-storage-service-name")).to be_false
+      expect(@connection.storageaccounts.exists?("invalid-storage-service-name")).to be false
     end
   end
 
@@ -36,9 +36,9 @@ describe "storageaccounts" do
         :storage_location => 'North Europe'
       }
       storageaccount = @connection.storageaccounts.create(params)
-      @postname.should == 'storageservices'
-      @postverb.should == 'post'
-      Nokogiri::XML(@postbody).should be_equivalent_to(Nokogiri::XML readFile('create_storageservice_for_service003.xml'))
+      expect(@postname).to be == 'storageservices'
+      expect(@postverb).to be == 'post'
+      expect(Nokogiri::XML(@postbody)).to match(Nokogiri::XML readFile('create_storageservice_for_service003.xml'))
     end
   end
 
@@ -50,9 +50,9 @@ describe "storageaccounts" do
         :azure_affinity_group => 'test-affinity-group'
       }
       storageaccount = @connection.storageaccounts.create(params)
-      @postname.should == 'storageservices'
-      @postverb.should == 'post'
-      Nokogiri::XML(@postbody).should be_equivalent_to(Nokogiri::XML readFile('create_storageservice_for_service004.xml'))
+      expect(@postname).to be == 'storageservices'
+      expect(@postverb).to be == 'post'
+      expect(Nokogiri::XML(@postbody)).to match(Nokogiri::XML readFile('create_storageservice_for_service004.xml'))
     end
   end
 

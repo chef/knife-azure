@@ -34,21 +34,21 @@ before do
 
     stub_query_azure (@server_instance.connection)
 
-    @server_instance.stub(:tcp_test_ssh).and_return(true)
-    @server_instance.stub(:tcp_test_winrm).and_return(true)
+    allow(@server_instance).to receive(:tcp_test_ssh).and_return(true)
+    allow(@server_instance).to receive(:tcp_test_winrm).and_return(true)
     @server_instance.initial_sleep_delay = 0
-    @server_instance.stub(:sleep).and_return(0)
-    @server_instance.stub(:puts)
-    @server_instance.stub(:print)
+    allow(@server_instance).to receive(:sleep).and_return(0)
+    allow(@server_instance).to receive(:puts)
+    allow(@server_instance).to receive(:print)
 end
 
 def test_params(testxml, chef_config, role_name, host_name)
-	xml_content(testxml, 'UserName').should == chef_config[:ssh_user]
-	xml_content(testxml, 'UserPassword').should == chef_config[:ssh_password]
-	xml_content(testxml, 'SourceImageName').should == chef_config[:azure_source_image]
-	xml_content(testxml, 'RoleSize').should == chef_config[:azure_vm_size]
-	xml_content(testxml, 'HostName').should == host_name
-	xml_content(testxml, 'RoleName').should == role_name
+	expect(xml_content(testxml, 'UserName')).to be == chef_config[:ssh_user]
+	expect(xml_content(testxml, 'UserPassword')).to be == chef_config[:ssh_password]
+	expect(xml_content(testxml, 'SourceImageName')).to be == chef_config[:azure_source_image]
+	expect(xml_content(testxml, 'RoleSize')).to be == chef_config[:azure_vm_size]
+	expect(xml_content(testxml, 'HostName')).to be == host_name
+	expect(xml_content(testxml, 'RoleName')).to be == role_name
 end
 
 describe "parameter test:" do
@@ -57,38 +57,38 @@ describe "parameter test:" do
 
 		it "azure_subscription_id" do
 			Chef::Config[:knife].delete(:azure_subscription_id)
-			@server_instance.ui.should_receive(:error)
+			expect(@server_instance.ui).to receive(:error)
 			expect {@server_instance.run}.to raise_error
 		end
 		it "azure_mgmt_cert" do
 			Chef::Config[:knife].delete(:azure_mgmt_cert)
-			@server_instance.ui.should_receive(:error)
+			expect(@server_instance.ui).to receive(:error)
 			expect {@server_instance.run}.to raise_error
 		end
 		it "azure_api_host_name" do
 			Chef::Config[:knife].delete(:azure_api_host_name)
-			@server_instance.ui.should_receive(:error)
+			expect(@server_instance.ui).to receive(:error)
 			expect {@server_instance.run}.to raise_error
 		end
 		it "azure_source_image" do
 			Chef::Config[:knife].delete(:azure_source_image)
-			@server_instance.ui.should_receive(:error)
+			expect(@server_instance.ui).to receive(:error)
 			expect {@server_instance.run}.to raise_error
 		end
 		it "azure_vm_size" do
 			Chef::Config[:knife].delete(:azure_vm_size)
-			@server_instance.ui.should_receive(:error)
+			expect(@server_instance.ui).to receive(:error)
 			expect {@server_instance.run}.to raise_error
 		end
 
     it "azure_service_location and azure_affinity_group not allowed" do
       Chef::Config[:knife][:azure_affinity_group] = 'test-affinity'
-      @server_instance.ui.should_receive(:error)
+      expect(@server_instance.ui).to receive(:error)
       expect {@server_instance.run}.to raise_error
     end
     it "azure_service_location or azure_affinity_group must be provided" do
       Chef::Config[:knife].delete(:azure_service_location)
-      @server_instance.ui.should_receive(:error)
+      expect(@server_instance.ui).to receive(:error)
       expect {@server_instance.run}.to raise_error
     end
 	end
@@ -101,51 +101,51 @@ describe "parameter test:" do
 			Chef::Config[:knife].delete(:azure_vm_name)
 			Chef::Config[:knife].delete(:azure_storage_account)
 			@bootstrap = Chef::Knife::Bootstrap.new
-	      	Chef::Knife::Bootstrap.stub(:new).and_return(@bootstrap)
-	      	@bootstrap.should_receive(:run)
-	      	@server_instance.stub(:msg_server_summary)
+	      	allow(Chef::Knife::Bootstrap).to receive(:new).and_return(@bootstrap)
+	      	expect(@bootstrap).to receive(:run)
+	      	allow(@server_instance).to receive(:msg_server_summary)
 		end
 
 		it "quick create" do
-			@server_instance.should_receive(:is_image_windows?).at_least(:twice).and_return(false)
+			expect(@server_instance).to receive(:is_image_windows?).at_least(:twice).and_return(false)
 			Chef::Config[:knife][:azure_dns_name] = 'vmname' # service name to be used as vm name
-			@server_instance.should_receive(:get_dns_name)
+			expect(@server_instance).to receive(:get_dns_name)
 			@server_instance.run
-			@server_instance.config[:azure_vm_name].should == "vmname"
+			expect(@server_instance.config[:azure_vm_name]).to be == "vmname"
 			testxml = Nokogiri::XML(@receivedXML)
-			xml_content(testxml, 'MediaLink').should_not == nil
-			xml_content(testxml, 'DiskName').should_not == nil
+			expect(xml_content(testxml, 'MediaLink')).to_not be nil
+			expect(xml_content(testxml, 'DiskName')).to_not be nil
 			test_params(testxml, Chef::Config[:knife], Chef::Config[:knife][:azure_dns_name],
 										Chef::Config[:knife][:azure_dns_name])
 		end
 
 		it "quick create with wirm - API check" do
-			@server_instance.should_receive(:is_image_windows?).at_least(:twice).and_return(true)
+			expect(@server_instance).to receive(:is_image_windows?).at_least(:twice).and_return(true)
 			Chef::Config[:knife][:azure_dns_name] = 'vmname' # service name to be used as vm name
 			Chef::Config[:knife][:winrm_user] = 'opscodechef'
 			Chef::Config[:knife][:winrm_password] = 'Opscode123'
 			Chef::Config[:knife][:bootstrap_protocol] = 'winrm'
-			@server_instance.should_receive(:get_dns_name)
+			expect(@server_instance).to receive(:get_dns_name)
 			@server_instance.run
-			@server_instance.config[:azure_vm_name].should == "vmname"
+			expect(@server_instance.config[:azure_vm_name]).to be == "vmname"
 			testxml = Nokogiri::XML(@receivedXML)
-			xml_content(testxml, 'WinRM').should_not == nil
-			xml_content(testxml, 'Listeners').should_not == nil
-			xml_content(testxml, 'Listener').should_not == nil
-			xml_content(testxml, 'Protocol').should == "Http"
+			expect(xml_content(testxml, 'WinRM')).to_not be nil
+			expect(xml_content(testxml, 'Listeners')).to_not be nil
+			expect(xml_content(testxml, 'Listener')).to_not be nil
+			expect(xml_content(testxml, 'Protocol')).to be == "Http"
 		end
 
         it "generate unique OS DiskName" do
           os_disks = []
-          @bootstrap.stub(:run)
-          @server_instance.stub(:validate!)
+          allow(@bootstrap).to receive(:run)
+          allow(@server_instance).to receive(:validate!)
           Chef::Config[:knife][:azure_dns_name] = 'vmname'
 
           5.times do
             @server_instance.run
             testxml = Nokogiri::XML(@receivedXML)
             disklink = xml_content(testxml, 'MediaLink')
-            os_disks.should_not include(disklink)
+            expect(os_disks).to_not include(disklink)
             os_disks.push(disklink)
           end
         end
@@ -153,13 +153,13 @@ describe "parameter test:" do
 		it "skip user specified tcp-endpoints if its ports already use by ssh endpoint" do
 			# Default external port for ssh endpoint is 22.
 			@server_instance.config[:tcp_endpoints] = "12:22"
-			@server_instance.should_receive(:is_image_windows?).at_least(:twice).and_return(false)
+			expect(@server_instance).to receive(:is_image_windows?).at_least(:twice).and_return(false)
 			Chef::Config[:knife][:azure_dns_name] = 'vmname' # service name to be used as vm name
 			@server_instance.run
 			testxml = Nokogiri::XML(@receivedXML)
 			testxml.css('InputEndpoint Protocol:contains("TCP")').each do | port |
 			  # Test data in @server_instance.config[:tcp_endpoints]:=> "12:22" this endpoints external port 22 is already use by ssh endpoint. So it should skip endpoint "12:22".
-			  port.parent.css("LocalPort").text.should_not eq("12")
+			  expect(port.parent.css("LocalPort").text).to_not eq("12")
 			end
 		end
 
@@ -171,8 +171,8 @@ describe "parameter test:" do
 			Chef::Config[:knife][:azure_os_disk_name] = 'os-disk'
 			@server_instance.run
 			testxml = Nokogiri::XML(@receivedXML)
-			xml_content(testxml, 'MediaLink').should == 'http://ka001testeurope.blob.core.windows.net/vhds/os-disk.vhd'
-			xml_content(testxml, 'DiskName').should == Chef::Config[:knife][:azure_os_disk_name]
+			expect(xml_content(testxml, 'MediaLink')).to be == 'http://ka001testeurope.blob.core.windows.net/vhds/os-disk.vhd'
+			expect(xml_content(testxml, 'DiskName')).to be == Chef::Config[:knife][:azure_os_disk_name]
 			test_params(testxml, Chef::Config[:knife], Chef::Config[:knife][:azure_vm_name],
 										Chef::Config[:knife][:azure_vm_name])
 		end
@@ -186,7 +186,7 @@ describe "parameter test:" do
       Chef::Config[:knife][:azure_availability_set] = 'test-availability-set'
       @server_instance.run
       testxml = Nokogiri::XML(@receivedXML)
-      xml_content(testxml, 'AvailabilitySetName').should == 'test-availability-set'
+      expect(xml_content(testxml, 'AvailabilitySetName')).to be == 'test-availability-set'
     end
 
     it "server create with virtual network and subnet" do
@@ -195,12 +195,12 @@ describe "parameter test:" do
       Chef::Config[:knife][:azure_subnet_name] = 'test-subnet'
       @server_instance.run
       testxml = Nokogiri::XML(@receivedXML)
-      xml_content(testxml, 'SubnetName').should == 'test-subnet'
+      expect(xml_content(testxml, 'SubnetName')).to be == 'test-subnet'
     end
 
 	it "server create display server summary" do
 		Chef::Config[:knife][:azure_dns_name] = 'vmname'
-		@server_instance.should_receive(:msg_server_summary)
+		expect(@server_instance).to receive(:msg_server_summary)
 		@server_instance.run
 	end
   end
@@ -216,7 +216,7 @@ describe "parameter test:" do
 			5.times do
 				# send() to access private get_dns_name method of @server_instance
 				dns = @server_instance.send(:get_dns_name, Chef::Config[:knife][:azure_dns_name])
-				dns_name.should_not include(dns)
+				expect(dns_name).to_not include(dns)
 				dns_name.push(dns)
 			end
 		end
@@ -224,31 +224,31 @@ describe "parameter test:" do
 		it "include vmname in dnsname if --azure-vm-name specified" do
 			Chef::Config[:knife][:azure_vm_name] = "vmname"
 			dns = @server_instance.send(:get_dns_name, Chef::Config[:knife][:azure_dns_name])
-			dns.should include("vmname")
+			expect(dns).to include("vmname")
 		end
 	end
 
 	context "#cleanup_and_exit" do
 		it "service leak cleanup" do
-  		@server_instance.ui.should_receive(:warn).with("Cleaning up resources...")
+  		expect(@server_instance.ui).to receive(:warn).with("Cleaning up resources...")
 			expect {@server_instance.cleanup_and_exit("hosted_srvc", "storage_srvc")}.to raise_error
 		end
 
 		it "service leak cleanup with nil params" do
-			@server_instance.ui.should_receive(:warn).with("Cleaning up resources...")
-			@server_instance.connection.hosts.should_not_receive(:delete)
-			@server_instance.connection.storageaccounts.should_not_receive(:delete)
+			expect(@server_instance.ui).to receive(:warn).with("Cleaning up resources...")
+			expect(@server_instance.connection.hosts).to_not receive(:delete)
+			expect(@server_instance.connection.storageaccounts).to_not receive(:delete)
 			expect {@server_instance.cleanup_and_exit(nil, nil)}.to raise_error
 		end
 
 		it "service leak cleanup with valid params" do
 			ret_val = Object.new
 			ret_val.define_singleton_method(:content){""}
-			@server_instance.ui.should_receive(:warn).with("Cleaning up resources...")
-			@server_instance.ui.should_receive(:warn).with("Deleted created DNS: hosted_srvc.")
-			@server_instance.ui.should_receive(:warn).with("Deleted created Storage Account: storage_srvc.")
-			@server_instance.connection.hosts.should_receive(:delete).with("hosted_srvc").and_return(ret_val)
-			@server_instance.connection.storageaccounts.should_receive(:delete).with("storage_srvc").and_return(ret_val)
+			expect(@server_instance.ui).to receive(:warn).with("Cleaning up resources...")
+			expect(@server_instance.ui).to receive(:warn).with("Deleted created DNS: hosted_srvc.")
+			expect(@server_instance.ui).to receive(:warn).with("Deleted created Storage Account: storage_srvc.")
+			expect(@server_instance.connection.hosts).to receive(:delete).with("hosted_srvc").and_return(ret_val)
+			expect(@server_instance.connection.storageaccounts).to receive(:delete).with("storage_srvc").and_return(ret_val)
 
 			expect {@server_instance.cleanup_and_exit("hosted_srvc", "storage_srvc")}.to raise_error
 		end
@@ -257,11 +257,11 @@ describe "parameter test:" do
 			ret_val = Object.new
 			ret_val.define_singleton_method(:content){ "ConflictError" }
 			ret_val.define_singleton_method(:text){ "ConflictError" }
-			@server_instance.ui.should_receive(:warn).with("Cleaning up resources...")
-			@server_instance.ui.should_receive(:warn).with("Deletion failed for created DNS:hosted_srvc. ConflictError")
-			@server_instance.ui.should_receive(:warn).with("Deletion failed for created Storage Account: storage_srvc. ConflictError")
-			@server_instance.connection.hosts.should_receive(:delete).with("hosted_srvc").and_return(ret_val)
-			@server_instance.connection.storageaccounts.should_receive(:delete).with("storage_srvc").and_return(ret_val)
+			expect(@server_instance.ui).to receive(:warn).with("Cleaning up resources...")
+			expect(@server_instance.ui).to receive(:warn).with("Deletion failed for created DNS:hosted_srvc. ConflictError")
+			expect(@server_instance.ui).to receive(:warn).with("Deletion failed for created Storage Account: storage_srvc. ConflictError")
+			expect(@server_instance.connection.hosts).to receive(:delete).with("hosted_srvc").and_return(ret_val)
+			expect(@server_instance.connection.storageaccounts).to receive(:delete).with("storage_srvc").and_return(ret_val)
 
 			expect {@server_instance.cleanup_and_exit("hosted_srvc", "storage_srvc")}.to raise_error
 		end		
@@ -283,42 +283,42 @@ describe "parameter test:" do
 			Chef::Config[:knife][:bootstrap_protocol] = 'winrm'
 			Chef::Config[:knife][:winrm_user] = 'testuser'
 			Chef::Config[:knife][:winrm_password] = 'Jetstream123!'
-			@server_instance.should_receive(:is_image_windows?).twice.and_return(true)
+			expect(@server_instance).to receive(:is_image_windows?).twice.and_return(true)
 			@server_params = @server_instance.create_server_def
-			@server_params[:port].should_not == '5985'
+			expect(@server_params[:port]).to_not be == '5985'
 		end
 		it "port should be winrm-port value specified in the option" do
             Chef::Config[:knife][:bootstrap_protocol] = 'winrm'
             Chef::Config[:knife][:winrm_user] = 'testuser'
             Chef::Config[:knife][:winrm_password] = 'Jetstream123!'
             Chef::Config[:knife][:winrm_port] = '5990'
-			@server_instance.should_receive(:is_image_windows?).twice.and_return(true)
+			expect(@server_instance).to receive(:is_image_windows?).twice.and_return(true)
 			@server_params = @server_instance.create_server_def
-			@server_params[:port].should == '5990'
+			expect(@server_params[:port]).to be == '5990'
 		end
 		it "port should be unique number when ssh-port not specified for linux image" do
 			Chef::Config[:knife][:ssh_user] = 'azureuser'
 			Chef::Config[:knife][:ssh_password] = 'Jetstream123!'
 			Chef::Config[:knife][:bootstrap_protocol] = 'ssh'
-			@server_instance.should_receive(:is_image_windows?).twice.and_return(false)
+			expect(@server_instance).to receive(:is_image_windows?).twice.and_return(false)
 			@server_params = @server_instance.create_server_def
-			@server_params[:port].should_not == '22'
+			expect(@server_params[:port]).to_not be == '22'
 		end
 		it "port should be ssh-port value specified in the option" do
 			Chef::Config[:knife][:ssh_user] = 'azureuser'
 			Chef::Config[:knife][:ssh_password] = 'Jetstream123!'
 			Chef::Config[:knife][:ssh_port] = '24'
-			@server_instance.should_receive(:is_image_windows?).twice.and_return(false)
+			expect(@server_instance).to receive(:is_image_windows?).twice.and_return(false)
 			@server_params = @server_instance.create_server_def
-			@server_params[:port].should == '24'
+			expect(@server_params[:port]).to be == '24'
 		end
 		it "port should be be different if ssh-port = 22" do
 			Chef::Config[:knife][:ssh_user] = 'azureuser'
 			Chef::Config[:knife][:ssh_password] = 'Jetstream123!'
 			Chef::Config[:knife][:ssh_port] = '22'
-			@server_instance.should_receive(:is_image_windows?).twice.and_return(false)
+			expect(@server_instance).to receive(:is_image_windows?).twice.and_return(false)
 			@server_params = @server_instance.create_server_def
-			@server_params[:port].should_not == '22'
+			expect(@server_params[:port]).to_not be == '22'
 		end
 	end
 
@@ -328,51 +328,51 @@ describe "cloud attributes" do
 	context "WinRM protocol:" do
 		before do
 			@bootstrap = Chef::Knife::BootstrapWindowsWinrm.new
-			Chef::Knife::BootstrapWindowsWinrm.stub(:new).and_return(@bootstrap)
-			@bootstrap.should_receive(:run)
-			@server_instance.stub(:is_image_windows?).and_return(true)
+			allow(Chef::Knife::BootstrapWindowsWinrm).to receive(:new).and_return(@bootstrap)
+			expect(@bootstrap).to receive(:run)
+			allow(@server_instance).to receive(:is_image_windows?).and_return(true)
 			Chef::Config[:knife][:bootstrap_protocol] = 'winrm'
 			Chef::Config[:knife][:winrm_user] = 'testuser'
 			Chef::Config[:knife][:winrm_password] = 'winrm_password'
 			Chef::Config[:knife][:azure_dns_name] = 'service004'
 			Chef::Config[:knife][:azure_vm_name] = 'winrm-vm'
 			Chef::Config[:knife][:hints] = nil # reset as this is loaded only once for app(test here)
-			@server_instance.stub(:msg_server_summary)
+			allow(@server_instance).to receive(:msg_server_summary)
 			@server_instance.run
 		end
 
 		it "should set the cloud attributes in hints" do
 			cloud_attributes = Chef::Config[:knife][:hints]["azure"]
-			cloud_attributes["public_ip"].should == "65.52.249.191"
-			cloud_attributes["vm_name"].should == "winrm-vm"
-			cloud_attributes["public_fqdn"].should == "service004.cloudapp.net"
-			cloud_attributes["public_ssh_port"].should be_nil
-			cloud_attributes["public_winrm_port"].should == "5985"
+			expect(cloud_attributes["public_ip"]).to be == "65.52.249.191"
+			expect(cloud_attributes["vm_name"]).to be == "winrm-vm"
+			expect(cloud_attributes["public_fqdn"]).to be == "service004.cloudapp.net"
+			expect(cloud_attributes["public_ssh_port"]).to be_nil
+			expect(cloud_attributes["public_winrm_port"]).to be == "5985"
 		end
 	end
 	context "SSH protocol:" do
 		before do
 			@bootstrap = Chef::Knife::Bootstrap.new
-			Chef::Knife::Bootstrap.stub(:new).and_return(@bootstrap)
-			@bootstrap.should_receive(:run)
-			@server_instance.stub(:is_image_windows?).and_return(false)
+			allow(Chef::Knife::Bootstrap).to receive(:new).and_return(@bootstrap)
+			expect(@bootstrap).to receive(:run)
+			allow(@server_instance).to receive(:is_image_windows?).and_return(false)
 			Chef::Config[:knife][:bootstrap_protocol] = 'ssh'
 			Chef::Config[:knife][:ssh_password] = 'ssh_password'
 			Chef::Config[:knife][:ssh_user] = 'ssh_user'
 			Chef::Config[:knife][:azure_dns_name] = 'service004'
 			Chef::Config[:knife][:azure_vm_name] = 'ssh-vm'
 			Chef::Config[:knife][:hints] = nil # reset as this is loaded only once for app(test here)
-			@server_instance.stub(:msg_server_summary)
+			allow(@server_instance).to receive(:msg_server_summary)
 			@server_instance.run
 		end
 
 		it "should set the cloud attributes in hints" do
 			cloud_attributes = Chef::Config[:knife][:hints]["azure"]
-			cloud_attributes["public_ip"].should == "65.52.251.57"
-			cloud_attributes["vm_name"].should == "ssh-vm"
-			cloud_attributes["public_fqdn"].should == "service004.cloudapp.net"
-			cloud_attributes["public_ssh_port"].should  == "22"
-			cloud_attributes["public_winrm_port"].should be_nil
+			expect(cloud_attributes["public_ip"]).to be == "65.52.251.57"
+			expect(cloud_attributes["vm_name"]).to be == "ssh-vm"
+			expect(cloud_attributes["public_fqdn"]).to be == "service004.cloudapp.net"
+			expect(cloud_attributes["public_ssh_port"]).to be  == "22"
+			expect(cloud_attributes["public_winrm_port"]).to be nil
 		end
 	end
 end
@@ -382,30 +382,30 @@ describe "for bootstrap protocol winrm:" do
 		Chef::Config[:knife][:bootstrap_protocol] = 'winrm'
 		Chef::Config[:knife][:winrm_user] = 'testuser'
 		Chef::Config[:knife][:winrm_password] = 'winrm_password'
-		@server_instance.ui.stub(:error)
-		@server_instance.stub(:msg_server_summary)
+		allow(@server_instance.ui).to receive(:error)
+		allow(@server_instance).to receive(:msg_server_summary)
 	end
 
 	it "check if all server params are set correctly" do
-		@server_instance.should_receive(:is_image_windows?).twice.and_return(true)
+		expect(@server_instance).to receive(:is_image_windows?).twice.and_return(true)
 		@server_params = @server_instance.create_server_def
-		@server_params[:os_type].should == 'Windows'
-		@server_params[:admin_password].should == 'winrm_password'
-		@server_params[:bootstrap_proto].should == 'winrm'
-		@server_params[:azure_dns_name].should == 'service001'
-		@server_params[:azure_vm_name].should == 'vm002'
-		@server_params[:winrm_user].should == 'testuser'
-		@server_params[:port].should == '5985'
+		expect(@server_params[:os_type]).to be == 'Windows'
+		expect(@server_params[:admin_password]).to be == 'winrm_password'
+		expect(@server_params[:bootstrap_proto]).to be == 'winrm'
+		expect(@server_params[:azure_dns_name]).to be == 'service001'
+		expect(@server_params[:azure_vm_name]).to be == 'vm002'
+		expect(@server_params[:winrm_user]).to be == 'testuser'
+		expect(@server_params[:port]).to be == '5985'
 	end
 
 	it "winrm_user cannot be 'administrator'" do
-		@server_instance.should_receive(:is_image_windows?).twice.and_return(true)
+		expect(@server_instance).to receive(:is_image_windows?).twice.and_return(true)
 		Chef::Config[:knife][:winrm_user] = 'administrator'
 		expect {@server_instance.create_server_def}.to raise_error
 	end
 
 	it "winrm_user cannot be 'admin*'" do
-		@server_instance.should_receive(:is_image_windows?).twice.and_return(true)
+		expect(@server_instance).to receive(:is_image_windows?).twice.and_return(true)
 		Chef::Config[:knife][:winrm_user] = 'Admin12'
 		expect {@server_instance.create_server_def}.to raise_error
 	end
@@ -413,49 +413,49 @@ describe "for bootstrap protocol winrm:" do
 	context "bootstrap node" do
 		before do
 			@bootstrap = Chef::Knife::BootstrapWindowsWinrm.new
-		   	Chef::Knife::BootstrapWindowsWinrm.stub(:new).and_return(@bootstrap)
-		   	@bootstrap.should_receive(:run)
+		   	allow(Chef::Knife::BootstrapWindowsWinrm).to receive(:new).and_return(@bootstrap)
+		   	expect(@bootstrap).to receive(:run)
 		end
 
 		it "sets valid distro for windows vm" do
-			@server_instance.should_receive(:is_image_windows?).at_least(:twice).and_return(true)
+			expect(@server_instance).to receive(:is_image_windows?).at_least(:twice).and_return(true)
 			@server_instance.run
-			@server_instance.config[:distro].should == 'windows-chef-client-msi'
+			expect(@server_instance.config[:distro]).to be == 'windows-chef-client-msi'
 		end
 
 		it "sets param <azure_storage_account> from azure_vm_name" do
 			Chef::Config[:knife].delete(:azure_storage_account)
-			@server_instance.should_receive(:is_image_windows?).at_least(:twice).and_return(true)
+			expect(@server_instance).to receive(:is_image_windows?).at_least(:twice).and_return(true)
 			@server_instance.run
-			@server_instance.config[:azure_storage_account].should match(/\Avm002/)
+			expect(@server_instance.config[:azure_storage_account]).to match(/\Avm002/)
 		end
 
 		it "sets param <azure_storage_account> from storage name" do
 			Chef::Config[:knife].delete(:azure_storage_account)
-			@server_instance.should_receive(:is_image_windows?).at_least(:twice).and_return(true)
+			expect(@server_instance).to receive(:is_image_windows?).at_least(:twice).and_return(true)
 			Chef::Config[:knife][:azure_service_location] = 'service-location'
 			@server_instance.run
-			@server_instance.config[:azure_storage_account].should match(/storage-service-name/)
+			expect(@server_instance.config[:azure_storage_account]).to match(/storage-service-name/)
 		end
 
 		it "successful bootstrap of windows instance" do
-			@server_instance.should_receive(:is_image_windows?).exactly(3).times.and_return(true)
-      @server_instance.should_receive(:wait_until_virtual_machine_ready).exactly(1).times.and_return(true)
+			expect(@server_instance).to receive(:is_image_windows?).exactly(3).times.and_return(true)
+      		expect(@server_instance).to receive(:wait_until_virtual_machine_ready).exactly(1).times.and_return(true)
 			@server_instance.run
 		end
 
     it "sets encrypted data bag secret parameter" do
       Chef::Config[:knife][:encrypted_data_bag_secret] = 'test_encrypted_data_bag_secret'
-      @server_instance.should_receive(:is_image_windows?).exactly(3).times.and_return(true)
+      expect(@server_instance).to receive(:is_image_windows?).exactly(3).times.and_return(true)
       @server_instance.run
-      @bootstrap.config[:encrypted_data_bag_secret].should == 'test_encrypted_data_bag_secret'
+      expect(@bootstrap.config[:encrypted_data_bag_secret]).to be == 'test_encrypted_data_bag_secret'
     end
 
     it "sets encrypted data bag secret file parameter" do
       Chef::Config[:knife][:encrypted_data_bag_secret_file] = 'test_encrypted_data_bag_secret_file'
-      @server_instance.should_receive(:is_image_windows?).exactly(3).times.and_return(true)
+      expect(@server_instance).to receive(:is_image_windows?).exactly(3).times.and_return(true)
       @server_instance.run
-      @bootstrap.config[:encrypted_data_bag_secret_file].should == 'test_encrypted_data_bag_secret_file'
+      expect(@bootstrap.config[:encrypted_data_bag_secret_file]).to be == 'test_encrypted_data_bag_secret_file'
     end
 	end
 end
@@ -463,18 +463,18 @@ end
 describe "for bootstrap protocol ssh:" do
 	before do
 		Chef::Config[:knife][:bootstrap_protocol] = 'ssh'
-		@server_instance.stub(:msg_server_summary)
+		allow(@server_instance).to receive(:msg_server_summary)
 	end
 
 	context "windows instance:" do
 		it "successful bootstrap" do
 			pending "OC-8384-support ssh for windows vm's in knife-azure"
-			@server_instance.should_receive(:is_image_windows?).exactly(3).times.and_return(true)
+			expect(@server_instance).to receive(:is_image_windows?).exactly(3).times.and_return(true)
 			@bootstrap = Chef::Knife::BootstrapWindowsSsh.new
-		  Chef::Knife::BootstrapWindowsSsh.stub(:new).and_return(@bootstrap)
-      @server_instance.should_receive(:wait_until_virtual_machine_ready).exactly(1).times.and_return(true)
-		  @bootstrap.should_receive(:run)
-		  @server_instance.run
+		    allow(Chef::Knife::BootstrapWindowsSsh).to receive(:new).and_return(@bootstrap)
+  			expect(@server_instance).to receive(:wait_until_virtual_machine_ready).exactly(1).times.and_return(true)
+		  	expect(@bootstrap).to receive(:run)
+		  	@server_instance.run
 		end
 	end
 
@@ -484,23 +484,23 @@ describe "for bootstrap protocol ssh:" do
 			Chef::Config[:knife][:ssh_user] = 'ssh_user'
 		end
 		it "check if all server params are set correctly" do
-			@server_instance.should_receive(:is_image_windows?).twice.and_return(false)
+			expect(@server_instance).to receive(:is_image_windows?).twice.and_return(false)
 			@server_params = @server_instance.create_server_def
-			@server_params[:os_type].should == 'Linux'
-			@server_params[:ssh_password].should == 'ssh_password'
-			@server_params[:ssh_user].should == 'ssh_user'
-			@server_params[:bootstrap_proto].should == 'ssh'
-			@server_params[:azure_dns_name].should == 'service001'
-			@server_params[:azure_vm_name].should == 'vm002'
-			@server_params[:port].should == '22'
+			expect(@server_params[:os_type]).to be == 'Linux'
+			expect(@server_params[:ssh_password]).to be == 'ssh_password'
+			expect(@server_params[:ssh_user]).to be == 'ssh_user'
+			expect(@server_params[:bootstrap_proto]).to be == 'ssh'
+			expect(@server_params[:azure_dns_name]).to be == 'service001'
+			expect(@server_params[:azure_vm_name]).to be == 'vm002'
+			expect(@server_params[:port]).to be == '22'
 		end
 
 		it "successful bootstrap" do
-			@server_instance.should_receive(:is_image_windows?).exactly(3).times.and_return(false)
+			expect(@server_instance).to receive(:is_image_windows?).exactly(3).times.and_return(false)
 			@bootstrap = Chef::Knife::Bootstrap.new
-	    Chef::Knife::Bootstrap.stub(:new).and_return(@bootstrap)
-      @server_instance.should_receive(:wait_until_virtual_machine_ready).exactly(1).times.and_return(true)
-	    @bootstrap.should_receive(:run)
+	    allow(Chef::Knife::Bootstrap).to receive(:new).and_return(@bootstrap)
+      	expect(@server_instance).to receive(:wait_until_virtual_machine_ready).exactly(1).times.and_return(true)
+	    expect(@bootstrap).to receive(:run)
 			@server_instance.run
 		end
 
@@ -510,21 +510,21 @@ describe "for bootstrap protocol ssh:" do
 				Chef::Config[:knife][:identity_file] = 'path_to_rsa_private_key'
 			end
 			it "check if ssh-key set correctly" do
-				@server_instance.should_receive(:is_image_windows?).twice.and_return(false)
+				expect(@server_instance).to receive(:is_image_windows?).twice.and_return(false)
 				@server_params = @server_instance.create_server_def
-				@server_params[:os_type].should == 'Linux'
-				@server_params[:identity_file].should == 'path_to_rsa_private_key'
-				@server_params[:ssh_user].should == 'ssh_user'
-				@server_params[:bootstrap_proto].should == 'ssh'
-				@server_params[:azure_dns_name].should == 'service001'
+				expect(@server_params[:os_type]).to be == 'Linux'
+				expect(@server_params[:identity_file]).to be == 'path_to_rsa_private_key'
+				expect(@server_params[:ssh_user]).to be == 'ssh_user'
+				expect(@server_params[:bootstrap_proto]).to be == 'ssh'
+				expect(@server_params[:azure_dns_name]).to be == 'service001'
 			end
 			it "successful bootstrap with ssh key" do
-				@server_instance.should_receive(:is_image_windows?).exactly(3).times.and_return(false)
+				expect(@server_instance).to receive(:is_image_windows?).exactly(3).times.and_return(false)
 				@bootstrap = Chef::Knife::Bootstrap.new
-		      	Chef::Knife::Bootstrap.stub(:new).and_return(@bootstrap)
-		      	@bootstrap.should_receive(:run)
-		      	@server_instance.connection.certificates.stub(:generate_public_key_certificate_data).and_return("cert_data")
-		      	@server_instance.connection.certificates.should_receive(:create)
+		      	allow(Chef::Knife::Bootstrap).to receive(:new).and_return(@bootstrap)
+		      	expect(@bootstrap).to receive(:run)
+		      	allow(@server_instance.connection.certificates).to receive(:generate_public_key_certificate_data).and_return("cert_data")
+		      	expect(@server_instance.connection.certificates).to receive(:create)
 				@server_instance.run
 			end
 		end
@@ -533,34 +533,34 @@ describe "for bootstrap protocol ssh:" do
 			before do
 				@server_params = @server_instance.create_server_def
 				@bootstrap = Chef::Knife::Bootstrap.new
-		      	Chef::Knife::Bootstrap.stub(:new).and_return(@bootstrap)
+		      	allow(Chef::Knife::Bootstrap).to receive(:new).and_return(@bootstrap)
 			end
 
 			it "enables sudo password when ssh_user is not root" do
-		      	@bootstrap.should_receive(:run)
+		      	expect(@bootstrap).to receive(:run)
 				@server_instance.run
-				@bootstrap.config[:use_sudo_password].should == true
+				expect(@bootstrap.config[:use_sudo_password]).to be true
 			end
 
 			it "does not enable sudo password when ssh_user is root" do
-		      	@bootstrap.should_receive(:run)
+		      	expect(@bootstrap).to receive(:run)
 		      	Chef::Config[:knife][:ssh_user] = 'root'
 				@server_instance.run
-				@bootstrap.config[:use_sudo_password].should_not == true
+				expect(@bootstrap.config[:use_sudo_password]).to_not be true
 			end
 
       it "sets secret parameter" do
-        @bootstrap.should_receive(:run)
+        expect(@bootstrap).to receive(:run)
         Chef::Config[:knife][:secret] = 'test_secret'
         @server_instance.run
-        @bootstrap.config[:secret].should == 'test_secret'
+        expect(@bootstrap.config[:secret]).to be == 'test_secret'
       end
 
       it "sets secret file parameter" do
-        @bootstrap.should_receive(:run)
+        expect(@bootstrap).to receive(:run)
         Chef::Config[:knife][:secret_file] = 'test_secret_file'
         @server_instance.run
-        @bootstrap.config[:secret_file].should == 'test_secret_file'
+        expect(@bootstrap.config[:secret_file]).to be == 'test_secret_file'
       end
 
 	end

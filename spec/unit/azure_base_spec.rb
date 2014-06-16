@@ -18,7 +18,7 @@ describe Chef::Knife::AzureBase do
 		Chef::Config[:knife][:azure_api_host_name] = 'preview.core.windows-int.net'
 		Chef::Config[:knife][:azure_subscription_id] = 'azure_subscription_id'
 		Chef::Config[:knife][:azure_mgmt_cert] = @cert_file
-		@dummy.ui.stub(:error)
+		allow(@dummy.ui).to receive(:error)
 	end
 	describe "azure base tests - " do
 		context "Tests for publish settings file" do
@@ -27,38 +27,38 @@ describe Chef::Knife::AzureBase do
 				Chef::Config[:knife][:azure_subscription_id] = nil
 			end
 			def validate_cert()
-				Chef::Config[:knife][:azure_mgmt_cert].should include("-----BEGIN CERTIFICATE-----")
-				Chef::Config[:knife][:azure_mgmt_cert].should include("-----END CERTIFICATE-----")
-				Chef::Config[:knife][:azure_mgmt_cert].should include("-----BEGIN RSA PRIVATE KEY-----")
-				Chef::Config[:knife][:azure_mgmt_cert].should include("-----END RSA PRIVATE KEY-----")
+				expect(Chef::Config[:knife][:azure_mgmt_cert]).to include("-----BEGIN CERTIFICATE-----")
+				expect(Chef::Config[:knife][:azure_mgmt_cert]).to include("-----END CERTIFICATE-----")
+				expect(Chef::Config[:knife][:azure_mgmt_cert]).to include("-----BEGIN RSA PRIVATE KEY-----")
+				expect(Chef::Config[:knife][:azure_mgmt_cert]).to include("-----END RSA PRIVATE KEY-----")
 			end
 			it "- should continue to regular flow if publish settings file not provided" do
 				Chef::Config[:knife][:azure_api_host_name] = "preview.core.windows-int.net"
 				Chef::Config[:knife][:azure_subscription_id] = "azure_subscription_id"
 				@dummy.validate!
-				Chef::Config[:knife][:azure_api_host_name].should == "preview.core.windows-int.net"
-				Chef::Config[:knife][:azure_subscription_id].should == "azure_subscription_id"
+				expect(Chef::Config[:knife][:azure_api_host_name]).to be == "preview.core.windows-int.net"
+				expect(Chef::Config[:knife][:azure_subscription_id]).to be == "azure_subscription_id"
 			end
 
 			it "- should validate extract parameters" do
 				Chef::Config[:knife][:azure_publish_settings_file] = get_publish_settings_file_path("azureValid.publishsettings")
 				@dummy.validate!
-				Chef::Config[:knife][:azure_api_host_name].should == 'management.core.windows.net'
-				Chef::Config[:knife][:azure_subscription_id].should == 'id1'
+				expect(Chef::Config[:knife][:azure_api_host_name]).to be == 'management.core.windows.net'
+				expect(Chef::Config[:knife][:azure_subscription_id]).to be == 'id1'
 				validate_cert()
 			end
 
 			it "- should validate parse method" do
 				@dummy.parse_publish_settings_file(get_publish_settings_file_path("azureValid.publishsettings"))
-				Chef::Config[:knife][:azure_api_host_name].should == 'management.core.windows.net'
-				Chef::Config[:knife][:azure_subscription_id].should == 'id1'
+				expect(Chef::Config[:knife][:azure_api_host_name]).to be == 'management.core.windows.net'
+				expect(Chef::Config[:knife][:azure_subscription_id]).to be == 'id1'
 				validate_cert()
 			end
 
 			it "- should validate parse method for SchemaVersion2-0 publishsettings file" do
 				@dummy.parse_publish_settings_file(get_publish_settings_file_path("azureValidSchemaVersion-2.0.publishsettings"))
-				Chef::Config[:knife][:azure_api_host_name].should == 'management.core.windows.net'
-				Chef::Config[:knife][:azure_subscription_id].should == 'id1'
+				expect(Chef::Config[:knife][:azure_api_host_name]).to be == 'management.core.windows.net'
+				expect(Chef::Config[:knife][:azure_subscription_id]).to be == 'id1'
 				validate_cert()
 			end
 
@@ -66,9 +66,9 @@ describe Chef::Knife::AzureBase do
 				@dummy.config[:azure_subscription_id] = "azure_subscription_id"
 				Chef::Config[:knife][:azure_publish_settings_file] = get_publish_settings_file_path("azureValid.publishsettings")
 				@dummy.validate!
-				Chef::Config[:knife][:azure_api_host_name].should == 'management.core.windows.net'
-				@dummy.config[:azure_subscription_id].should == 'azure_subscription_id'
-				Chef::Config[:knife][:azure_subscription_id].should == 'id1'
+				expect(Chef::Config[:knife][:azure_api_host_name]).to be == 'management.core.windows.net'
+				expect(@dummy.config[:azure_subscription_id]).to be == 'azure_subscription_id'
+				expect(Chef::Config[:knife][:azure_subscription_id]).to be == 'id1'
 				validate_cert()
 			end
 
