@@ -207,6 +207,22 @@ class Chef
            Chef::Config[:knife][:hints][name] = path ? JSON.parse(::File.read(path)) : Hash.new
         }
 
+      option :azure_domain_name,
+        :long => "--azure-domain-name DOMAIN_NAME",
+        :description => "Optional. Specifies the domain name to join. If the domains name is not specified, --azure-domain-user must specify the user principal name (UPN) format (user@fully-qualified-DNS-domain) or the fully-qualified-DNS-domain\\username format"
+
+      option :azure_domain_ou_dn,
+        :long => "--azure-domain-ou-dn DOMAIN_OU_DN",
+        :description => "Optional. Specifies the (LDAP) X 500-distinguished name of the organizational unit (OU) in which the computer account is created. This account is in Active Directory on a domain controller in the domain to which the computer is being joined. Example: OU=HR,dc=opscode,dc=com"
+
+      option :azure_domain_user,
+        :long => "--azure-domain-user DOMAIN_USER_NAME",
+        :description => "Optional. Specifies the username who has access to join the domain."
+
+      option :azure_domain_passwd,
+        :long => "--azure-domain-passwd DOMAIN_PASSWD",
+        :description => "Optional. Specifies the password for domain user who has access to join the domain."
+
       def strip_non_ascii(string)
         string.gsub(/[^0-9a-z ]/i, '')
       end
@@ -535,6 +551,14 @@ class Chef
           ui.error("Must specify either --azure_service_location or --azure_affinity_group.")
           exit 1
         end
+
+        # Validate join domain requirements.
+        if locate_config_value(:azure_domain_name) or locate_config_value(:azure_domain_user)
+          if locate_config_value(:azure_domain_user).nil? or locate_config_value(:azure_domain_passwd).nil?
+            ui.error("Must specify both --azure-domain-user and --azure-domain-passwd.")
+            exit 1
+          end
+        end
       end
 
       def create_server_def
@@ -603,6 +627,27 @@ class Chef
           server_def[:identity_file] = locate_config_value(:identity_file)
           server_def[:identity_file_passphrase] = locate_config_value(:identity_file_passphrase)
         end
+
+        if locate_config_value(:azure_domain_name)
+          server_def[:azure_domain_name] = locate_config_value(:azure_domain_name)
+          server_def[:azure_domain_user] = locate_config_value(:azure_domain_user)
+        elsif locate_config_value(:azure_domain_user)
+          # extract domain name since it should be part of username
+          case locate_config_value(:azure_domain_user)
+          when /(\S+)\\(.+)/  # format - fully-qualified-DNS-domain\username
+            server_def[:azure_domain_name] = $1
+            server_def[:azure_domain_user] = $2
+          when /(.+)@(\S+)/  # format - user@fully-qualified-DNS-domain
+            server_def[:azure_domain_name] = $2
+            server_def[:azure_domain_user] = $1
+          else
+            # Format error.
+            ui.error("Format error for --azure-domain-user option. Supported format are user principal name (UPN) format (user@fully-qualified-DNS-domain) or the fully-qualified-DNS-domain\\username format")
+            exit 1
+          end
+        end
+        server_def[:azure_domain_passwd] = locate_config_value(:azure_domain_passwd)
+        server_def[:azure_domain_ou_dn] = locate_config_value(:azure_domain_ou_dn)
         server_def
       end
 

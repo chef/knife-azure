@@ -123,5 +123,33 @@ describe "roles" do
       deploy = @connection.deploys.create(params)
       expect(Nokogiri::XML readFile('create_deployment_key.xml')).to match(Nokogiri::XML(@receivedXML))
     end
+
+    it 'with domain join options' do
+      submittedXML=Nokogiri::XML readFile('create_deployment_domain.xml')
+      params = {
+        :azure_dns_name=>'unknown_yet',
+        :azure_vm_name=>'vm-in-domain',
+        :winrm_user=>'user2',
+        :winrm_password=>'vm@123456',
+        :azure_os_disk_name=>'somediskname',
+        :azure_source_image=>'Windows-Server-2012-Datacenter-201310.01-en.us-127GB',
+        :azure_vm_size=>'Medium',
+        :azure_storage_account=>'storageaccount001',
+        :bootstrap_proto=>'winrm',
+        :os_type=>'Windows',
+        :azure_subnet_name=>'Subnet-1',
+        :azure_domain_name=>'vmtestad.com',
+        :azure_domain_user=>'user2',
+        :azure_domain_passwd=>'user2pass',
+      }
+      deploy = @connection.deploys.create(params)
+      #this is a cheesy workaround to make equivalent-xml happy
+      # write and then re-read the xml
+      File.open(tmpFile('newDeployRcvd.xml'), 'w') {|f| f.write(@receivedXML) }
+      File.open(tmpFile('newDeploySbmt.xml'), 'w') {|f| f.write(submittedXML.to_xml) }
+      rcvd = Nokogiri::XML File.open(tmpFile('newDeployRcvd.xml'))
+      sbmt = Nokogiri::XML File.open(tmpFile('newDeploySbmt.xml'))
+      rcvd.should be_equivalent_to(sbmt).respecting_element_order
+    end
   end
 end

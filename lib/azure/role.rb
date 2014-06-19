@@ -249,6 +249,18 @@ class Azure
               xml.ResetPasswordOnFirstLogon 'false'
               xml.EnableAutomaticUpdates 'false'
               xml.AdminUsername params[:winrm_user]
+              if params[:azure_domain_name]
+                xml.DomainJoin {
+                  xml.Credentials {
+                    xml.Domain params[:azure_domain_name]
+                    xml.Username params[:azure_domain_user]
+                    xml.Password params[:azure_domain_passwd]
+                  }
+                  xml.JoinDomain params[:azure_domain_name]
+                  xml.MachineObjectOU params[:azure_domain_ou_dn] if params[:azure_domain_ou_dn]
+                }
+              end
+
               if params[:bootstrap_proto].downcase == 'winrm'
                 xml.WinRM {
                   xml.Listeners {
