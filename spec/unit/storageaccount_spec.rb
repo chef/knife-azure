@@ -38,7 +38,7 @@ describe "storageaccounts" do
       storageaccount = @connection.storageaccounts.create(params)
       expect(@postname).to be == 'storageservices'
       expect(@postverb).to be == 'post'
-      expect(Nokogiri::XML(@postbody)).to match(Nokogiri::XML readFile('create_storageservice_for_service003.xml'))
+      expect(@postbody).to eq(readFile('create_storageservice_for_service003.xml'))
     end
   end
 
@@ -52,7 +52,7 @@ describe "storageaccounts" do
       storageaccount = @connection.storageaccounts.create(params)
       expect(@postname).to be == 'storageservices'
       expect(@postverb).to be == 'post'
-      expect(Nokogiri::XML(@postbody)).to match(Nokogiri::XML readFile('create_storageservice_for_service004.xml'))
+      expect(@postbody).to eq(readFile('create_storageservice_for_service004.xml'))
     end
   end
 

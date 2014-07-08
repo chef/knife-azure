@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <NetworkConfiguration xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://schemas.microsoft.com/ServiceHosting/2011/07/NetworkConfiguration">
   <VirtualNetworkConfiguration>
-    <Dns />
+    <Dns/>
     <VirtualNetworkSites>
       <VirtualNetworkSite name="jm-vnet-test" AffinityGroup="jm-affinity-group">
         <AddressSpace>
@@ -23,11 +23,7 @@
           </Subnet>
         </Subnets>
       </VirtualNetworkSite>
-      <VirtualNetworkSite name="vnname" AffinityGroup="new-agname">
-        <AddressSpace>
-          <AddressPrefix>192.168.0.0/20</AddressPrefix>
-        </AddressSpace>
-      </VirtualNetworkSite>
+      <VirtualNetworkSite name="vnname" AffinityGroup="new-agname"><AddressSpace><AddressPrefix>192.168.0.0/20</AddressPrefix></AddressSpace></VirtualNetworkSite>
     </VirtualNetworkSites>
   </VirtualNetworkConfiguration>
 </NetworkConfiguration>

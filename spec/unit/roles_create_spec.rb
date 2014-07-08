@@ -61,8 +61,9 @@ describe "roles" do
         :port=>'22'
 
       }
+
       deploy = @connection.deploys.create(params)
-      expect(Nokogiri::XML readFile('create_role.xml')).to match(Nokogiri::XML(@receivedXML))
+      expect(readFile('create_role.xml')).to eq(@receivedXML)
     end
   end
   context 'create a new deployment' do
@@ -81,8 +82,9 @@ describe "roles" do
         :os_type=>'Linux',
         :port=>'22'
       }
+
       deploy = @connection.deploys.create(params)
-      expect(Nokogiri::XML readFile('create_deployment.xml')).to match(Nokogiri::XML(@receivedXML))
+      expect(readFile('create_deployment.xml')).to eq(@receivedXML)
     end
     it 'create request with virtual network' do
       params = {
@@ -101,8 +103,9 @@ describe "roles" do
         :azure_network_name=>'test-network',
         :azure_subnet_name=>'test-subnet'
       }
+
       deploy = @connection.deploys.create(params)
-      expect(Nokogiri::XML readFile('create_deployment_virtual_network.xml')).to match(Nokogiri::XML(@receivedXML))
+      expect(readFile('create_deployment_virtual_network.xml')).to eq(@receivedXML)
     end
 
     it 'with ssh key' do
@@ -120,8 +123,9 @@ describe "roles" do
         :os_type=>'Linux',
         :port=>'22'
       }
+
       deploy = @connection.deploys.create(params)
-      expect(Nokogiri::XML readFile('create_deployment_key.xml')).to match(Nokogiri::XML(@receivedXML))
+      expect(readFile('create_deployment_key.xml')).to eq(@receivedXML)
     end
   end
 end

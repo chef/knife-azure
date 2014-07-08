@@ -42,9 +42,7 @@ describe 'vnets' do
       @connection.vnets.create(params)
       expect(@postname).to eq('networking/media')
       expect(@postverb).to eq('put')
-      expect(Nokogiri::XML(@postbody)).to match(
-        Nokogiri::XML readFile('set_network_new.xml')
-      )
+      expect(@postbody).to eq(readFile('set_network_new.xml'))
     end
     it 'modify an existing vnet' do
       params = {
@@ -55,9 +53,7 @@ describe 'vnets' do
       @connection.vnets.create(params)
       expect(@postname).to eq('networking/media')
       expect(@postverb).to eq('put')
-      expect(Nokogiri::XML(@postbody)).to match(
-        Nokogiri::XML readFile('set_network_existing.xml')
-      )
+      expect(@postbody).to eq(readFile('set_network_existing.xml'))
     end
   end
 end
