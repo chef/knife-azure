@@ -2,7 +2,7 @@
 <CreateHostedService xmlns="http://schemas.microsoft.com/windowsazure">
   <ServiceName>service003</ServiceName>
   <Label>c2VydmljZTAwMw==
-  </Label>
+</Label>
   <Description>Explicitly created hosted service</Description>
   <AffinityGroup>test-affinity</AffinityGroup>
 </CreateHostedService>

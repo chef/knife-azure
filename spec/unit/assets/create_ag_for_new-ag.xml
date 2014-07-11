@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <CreateAffinityGroup xmlns="http://schemas.microsoft.com/windowsazure">
-      <Name>new-ag</Name>
-      <Label>bmV3LWFn</Label>
-      <Description>ag description</Description>
-      <Location>West US</Location>
+  <Name>new-ag</Name>
+  <Label>bmV3LWFn</Label>
+  <Description>ag description</Description>
+  <Location>West US</Location>
 </CreateAffinityGroup>

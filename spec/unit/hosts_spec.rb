@@ -33,14 +33,14 @@ describe "hosts" do
       host = @connection.hosts.create(params)
       expect(@postname).to be == 'hostedservices'
       expect(@postverb).to be == 'post'
-      expect(Nokogiri::XML(@postbody)).to match(Nokogiri::XML readFile('create_host_location.xml'))
+      expect(@postbody).to eq(readFile('create_host_location.xml'))
     end
     it 'using default parameters it should pass in expected body' do
       params = {:azure_dns_name=>'service003', :azure_service_location=>'West US'}
       host = @connection.hosts.create(params)
       expect(@postname).to be == 'hostedservices'
       expect(@postverb).to be == 'post'
-      expect(Nokogiri::XML(@postbody)).to match(Nokogiri::XML readFile('create_host_location.xml'))
+      expect(@postbody).to eq(readFile('create_host_location.xml'))
     end
   end
   context 'create a new host with affinity group' do
@@ -49,7 +49,7 @@ describe "hosts" do
       host = @connection.hosts.create(params)
       expect(@postname).to be == 'hostedservices'
       expect(@postverb).to be == 'post'
-      expect(Nokogiri::XML(@postbody)).to match(Nokogiri::XML readFile('create_host_affinity.xml'))
+      expect(@postbody).to eq(readFile('create_host_affinity.xml'))
     end
   end
   context 'delete a host' do

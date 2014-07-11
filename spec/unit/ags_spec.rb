@@ -39,9 +39,7 @@ describe 'ags' do
       @connection.ags.create(params)
       expect(@postname).to eq('affinitygroups')
       expect(@postverb).to eq('post')
-      expect(Nokogiri::XML(@postbody)).to match(
-        Nokogiri::XML readFile('create_ag_for_new-ag.xml')
-      )
+      expect(@postbody).to eq(readFile('create_ag_for_new-ag.xml'))
     end
   end
 end
