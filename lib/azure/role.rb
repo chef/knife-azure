@@ -16,6 +16,7 @@
 # limitations under the License.
 #
 require 'securerandom'
+
 class Azure
   class Roles
     include AzureUtility
@@ -332,7 +333,7 @@ class Azure
             xml.ResourceExtensionReferences {
               xml.ResourceExtensionReference {
                 xml.ReferenceName params[:azure_resource_extension]
-                xml.Publisher params[:azure_resource_publisher]
+                xml.Publisher params[:azure_resource_extension_publisher]
                 xml.Name params[:azure_resource_extension]
                 xml.Version params[:azure_resource_extension_version]
                 xml.ResourceExtensionParameterValues {
@@ -364,6 +365,7 @@ class Azure
             xml.SourceImageName params[:azure_source_image]
           }
           xml.RoleSize params[:azure_vm_size]
+          xml.ProvisionGuestAgent true if params[:set_azure_resource_extension]
         }
       end
       builder.doc

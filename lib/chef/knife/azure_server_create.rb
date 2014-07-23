@@ -225,11 +225,11 @@ class Chef
 
       option :azure_resource_extension_publisher,
         :long => "--azure-resource-extension-publisher NAME",
-        :description => "Name of azure resource extension publisher name"
+        :description => "Publisher Name of azure resource extension"
 
       option :azure_resource_extension_version,
         :long => "--azure-resource-extension-version NUMBER",
-        :description => "Name of azure resource extension version number"
+        :description => "Version Number of azure resource extension"
 
       option :azure_resource_extension_public_param,
         :long => "--azure-resource-extension-public-param STRING",
@@ -585,7 +585,14 @@ class Chef
           :azure_availability_set => locate_config_value(:azure_availability_set),
           :azure_affinity_group => locate_config_value(:azure_affinity_group),
           :azure_network_name => locate_config_value(:azure_network_name),
-          :azure_subnet_name => locate_config_value(:azure_subnet_name)
+          :azure_subnet_name => locate_config_value(:azure_subnet_name),
+          :set_azure_resource_extension => locate_config_value(:set_azure_resource_extension),
+          :azure_resource_extension => locate_config_value(:azure_resource_extension),
+          :azure_resource_extension_publisher => locate_config_value(:azure_resource_extension_publisher),
+          :azure_resource_extension_version => locate_config_value(:azure_resource_extension_version),
+          :azure_resource_extension_public_param => locate_config_value(:azure_resource_extension_public_param),
+          :azure_resource_extension_private_param => locate_config_value(:azure_resource_extension_private_param)
+
         }
         # If user is connecting a new VM to an existing dns, then
         # the VM needs to have a unique public port. Logic below takes care of this.
