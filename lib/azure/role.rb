@@ -327,6 +327,35 @@ class Azure
           if params[:azure_availability_set]
             xml.AvailabilitySetName params[:azure_availability_set]
           end
+          # Azure resource extension support
+          if params[:set_azure_resource_extension]
+            xml.ResourceExtensionReferences {
+              xml.ResourceExtensionReference {
+                xml.ReferenceName params[:azure_resource_extension]
+                xml.Publisher params[:azure_resource_publisher]
+                xml.Name params[:azure_resource_extension]
+                xml.Version params[:azure_resource_extension_version]
+                xml.ResourceExtensionParameterValues {
+                  if params[:azure_resource_extension_public_param]
+                    xml.ResourceExtensionParameterValue {
+                      xml.Key "PublicParams"
+                      xml.Value params[:azure_resource_extension_public_param]
+                      xml.Type "Public"
+                    }
+                  end
+                  if params[:azure_resource_extension_private_param]
+                    xml.ResourceExtensionParameterValue {
+                      xml.Key "PrivateParams"
+                      xml.Value params[:azure_resource_extension_private_param]
+                      xml.Type "Private"
+                    }
+                  end
+                }
+                xml.State "Enable"
+              }
+            }
+          end
+
           xml.Label Base64.encode64(params[:azure_vm_name]).strip
           xml.OSVirtualHardDisk {
             disk_name = params[:azure_os_disk_name] || "disk_" + SecureRandom.uuid

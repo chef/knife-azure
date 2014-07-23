@@ -213,6 +213,32 @@ class Chef
         :description => "A JSON string to be added to the first run of chef-client",
         :proc => lambda { |o| JSON.parse(o) }
 
+      option :set_azure_resource_extension,
+        :long => "--set-azure-resource-extension",
+        :boolean => true,
+        :default => false,
+        :description => "Set azure resource extension"
+
+      option :azure_resource_extension,
+        :long => "--azure-resource-extension NAME",
+        :description => "Name of azure resource extension"
+
+      option :azure_resource_extension_publisher,
+        :long => "--azure-resource-extension-publisher NAME",
+        :description => "Name of azure resource extension publisher name"
+
+      option :azure_resource_extension_version,
+        :long => "--azure-resource-extension-version NUMBER",
+        :description => "Name of azure resource extension version number"
+
+      option :azure_resource_extension_public_param,
+        :long => "--azure-resource-extension-public-param STRING",
+        :description => "Base 64 encoded string"
+
+      option :azure_resource_extension_private_param,
+        :long => "--azure-resource-extension-private-param STRING",
+        :description => "Base 64 encoded string"
+
       def strip_non_ascii(string)
         string.gsub(/[^0-9a-z ]/i, '')
       end
@@ -533,6 +559,12 @@ class Chef
         elsif locate_config_value(:azure_service_location).nil? && locate_config_value(:azure_affinity_group).nil?
           ui.error("Must specify either --azure_service_location or --azure_affinity_group.")
           exit 1
+        end
+        if locate_config_value(:set_azure_resource_extension)
+          unless locate_config_value(:azure_resource_extension) && locate_config_value(:azure_resource_extension_version) && locate_config_value(:azure_resource_extension_publisher)
+            ui.error("Must specify --azure_resource_extension && --azure_resource_extension_version && --azure_resource_extension_publisher")
+            exit 1
+          end
         end
       end
 
