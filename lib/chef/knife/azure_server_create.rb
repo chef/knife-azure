@@ -51,7 +51,7 @@ class Chef
 
       option :bootstrap_protocol,
         :long => "--bootstrap-protocol protocol",
-        :description => "Protocol to bootstrap windows servers. options: winrm/ssh",
+        :description => "Protocol to bootstrap windows servers. options: 'winrm' or 'ssh' or 'cloud-api'.",
         :default => "winrm"
 
       option :chef_node_name,
@@ -212,32 +212,6 @@ class Chef
         :long => "--json-attributes JSON",
         :description => "A JSON string to be added to the first run of chef-client",
         :proc => lambda { |o| JSON.parse(o) }
-
-      option :set_azure_resource_extension,
-        :long => "--set-azure-resource-extension",
-        :boolean => true,
-        :default => false,
-        :description => "Set azure resource extension"
-
-      option :azure_resource_extension,
-        :long => "--azure-resource-extension NAME",
-        :description => "Name of azure resource extension"
-
-      option :azure_resource_extension_publisher,
-        :long => "--azure-resource-extension-publisher NAME",
-        :description => "Publisher Name of azure resource extension"
-
-      option :azure_resource_extension_version,
-        :long => "--azure-resource-extension-version NUMBER",
-        :description => "Version Number of azure resource extension"
-
-      option :azure_resource_extension_public_param,
-        :long => "--azure-resource-extension-public-param STRING",
-        :description => "Base 64 encoded string"
-
-      option :azure_resource_extension_private_param,
-        :long => "--azure-resource-extension-private-param STRING",
-        :description => "Base 64 encoded string"
 
       def strip_non_ascii(string)
         string.gsub(/[^0-9a-z ]/i, '')
@@ -402,7 +376,6 @@ class Chef
           connection.deploys.create(create_server_def)
           wait_until_virtual_machine_ready()
           server = get_role_server()
-          fqdn = server.publicipaddress
         rescue Exception => e
           Chef::Log.error("Failed to create the server -- exception being rescued: #{e.to_s}")
           backtrace_message = "#{e.class}: #{e}\n#{e.backtrace.join("\n")}"
@@ -411,6 +384,12 @@ class Chef
         end
 
         msg_server_summary(server)
+
+        bootstrap_exec(server) unless locate_config_value(:bootstrap_protocol) == 'cloud-api'
+      end
+
+      def bootstrap_exec(server)
+        fqdn = server.publicipaddress
 
         if is_image_windows?
           # Set distro to windows-chef-client-msi
@@ -457,7 +436,7 @@ class Chef
           bootstrap_for_node(server,fqdn,port).run
         end
 
-        msg_server_summary(server)
+        msg_server_summary(server)        
       end
 
       def load_cloud_attributes_in_hints(server)
@@ -486,7 +465,6 @@ class Chef
         load_cloud_attributes_in_hints(server)
         bootstrap
       end
-
 
       def bootstrap_for_windows_node(server, fqdn, port)
         if locate_config_value(:bootstrap_protocol) == 'winrm'
@@ -560,12 +538,6 @@ class Chef
           ui.error("Must specify either --azure_service_location or --azure_affinity_group.")
           exit 1
         end
-        if locate_config_value(:set_azure_resource_extension)
-          unless locate_config_value(:azure_resource_extension) && locate_config_value(:azure_resource_extension_version) && locate_config_value(:azure_resource_extension_publisher)
-            ui.error("Must specify --azure_resource_extension && --azure_resource_extension_version && --azure_resource_extension_publisher")
-            exit 1
-          end
-        end
       end
 
       def create_server_def
@@ -585,61 +557,59 @@ class Chef
           :azure_availability_set => locate_config_value(:azure_availability_set),
           :azure_affinity_group => locate_config_value(:azure_affinity_group),
           :azure_network_name => locate_config_value(:azure_network_name),
-          :azure_subnet_name => locate_config_value(:azure_subnet_name),
-          :set_azure_resource_extension => locate_config_value(:set_azure_resource_extension),
-          :azure_resource_extension => locate_config_value(:azure_resource_extension),
-          :azure_resource_extension_publisher => locate_config_value(:azure_resource_extension_publisher),
-          :azure_resource_extension_version => locate_config_value(:azure_resource_extension_version),
-          :azure_resource_extension_public_param => locate_config_value(:azure_resource_extension_public_param),
-          :azure_resource_extension_private_param => locate_config_value(:azure_resource_extension_private_param)
+          :azure_subnet_name => locate_config_value(:azure_subnet_name)
 
         }
-        # If user is connecting a new VM to an existing dns, then
-        # the VM needs to have a unique public port. Logic below takes care of this.
-        if !is_image_windows? or locate_config_value(:bootstrap_protocol) == 'ssh'
-          port = locate_config_value(:ssh_port) || '22'
-          if locate_config_value(:azure_connect_to_existing_dns) && (port == '22')
-             port = Random.rand(64000) + 1000
+        
+        unless locate_config_value(:bootstrap_protocol) == 'cloud-api'
+          # If user is connecting a new VM to an existing dns, then
+          # the VM needs to have a unique public port. Logic below takes care of this.
+          if !is_image_windows? or locate_config_value(:bootstrap_protocol) == 'ssh'
+            port = locate_config_value(:ssh_port) || '22'
+            if locate_config_value(:azure_connect_to_existing_dns) && (port == '22')
+               port = Random.rand(64000) + 1000
+            end
+          else
+            port = locate_config_value(:winrm_port) || '5985'
+            if locate_config_value(:azure_connect_to_existing_dns) && (port == '5985')
+                port = Random.rand(64000) + 1000
+            end
           end
-        else
-          port = locate_config_value(:winrm_port) || '5985'
-          if locate_config_value(:azure_connect_to_existing_dns) && (port == '5985')
-              port = Random.rand(64000) + 1000
-          end
-        end
-        server_def[:port] = port
 
-        if is_image_windows?
-          server_def[:os_type] = 'Windows'
-          if not locate_config_value(:winrm_password) or not locate_config_value(:bootstrap_protocol)
-            ui.error("WinRM Password and Bootstrapping Protocol are compulsory parameters")
-            exit 1
-          end
-          # We can specify the AdminUsername after API version 2013-03-01. However, in this API version,
-          # the AdminUsername is a required parameter.
-          # Also, the user name cannot be Administrator, Admin, Admin1 etc, for enhanced security (provided by Azure)
-          if locate_config_value(:winrm_user).nil? || locate_config_value(:winrm_user).downcase =~ /admin*/
-            ui.error("WinRM User is compulsory parameter and it cannot be named 'admin*'")
-            exit
-          end
-          server_def[:admin_password] = locate_config_value(:winrm_password)
-          server_def[:bootstrap_proto] = locate_config_value(:bootstrap_protocol)
-        else
-          server_def[:os_type] = 'Linux'
-          server_def[:bootstrap_proto] = 'ssh'
-          if not locate_config_value(:ssh_user)
-            ui.error("SSH User is compulsory parameter")
-            exit 1
-          end
-          unless locate_config_value(:ssh_password) or locate_config_value(:identity_file)
-              ui.error("Specify either SSH Key or SSH Password")
+          server_def[:port] = port          
+
+          if is_image_windows?
+            server_def[:os_type] = 'Windows'
+            if not locate_config_value(:winrm_password) or not locate_config_value(:bootstrap_protocol)
+              ui.error("WinRM Password and Bootstrapping Protocol are compulsory parameters")
               exit 1
-          end
+            end
+            # We can specify the AdminUsername after API version 2013-03-01. However, in this API version,
+            # the AdminUsername is a required parameter.
+            # Also, the user name cannot be Administrator, Admin, Admin1 etc, for enhanced security (provided by Azure)
+            if locate_config_value(:winrm_user).nil? || locate_config_value(:winrm_user).downcase =~ /admin*/
+              ui.error("WinRM User is compulsory parameter and it cannot be named 'admin*'")
+              exit
+            end
+            server_def[:admin_password] = locate_config_value(:winrm_password)
+            server_def[:bootstrap_proto] = locate_config_value(:bootstrap_protocol)
+          else
+            server_def[:os_type] = 'Linux'
+            server_def[:bootstrap_proto] = 'ssh'
+            if not locate_config_value(:ssh_user)
+              ui.error("SSH User is compulsory parameter")
+              exit 1
+            end
+            unless locate_config_value(:ssh_password) or locate_config_value(:identity_file)
+                ui.error("Specify either SSH Key or SSH Password")
+                exit 1
+            end
 
-          server_def[:ssh_user] = locate_config_value(:ssh_user)
-          server_def[:ssh_password] = locate_config_value(:ssh_password)
-          server_def[:identity_file] = locate_config_value(:identity_file)
-          server_def[:identity_file_passphrase] = locate_config_value(:identity_file_passphrase)
+            server_def[:ssh_user] = locate_config_value(:ssh_user)
+            server_def[:ssh_password] = locate_config_value(:ssh_password)
+            server_def[:identity_file] = locate_config_value(:identity_file)
+            server_def[:identity_file_passphrase] = locate_config_value(:identity_file_passphrase)
+          end
         end
         server_def
       end
