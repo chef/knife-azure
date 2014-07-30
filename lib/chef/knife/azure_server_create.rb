@@ -560,26 +560,31 @@ class Chef
           :azure_subnet_name => locate_config_value(:azure_subnet_name)
 
         }
-        
-        unless locate_config_value(:bootstrap_protocol) == 'cloud-api'
-          # If user is connecting a new VM to an existing dns, then
-          # the VM needs to have a unique public port. Logic below takes care of this.
-          if !is_image_windows? or locate_config_value(:bootstrap_protocol) == 'ssh'
-            port = locate_config_value(:ssh_port) || '22'
-            if locate_config_value(:azure_connect_to_existing_dns) && (port == '22')
-               port = Random.rand(64000) + 1000
-            end
-          else
-            port = locate_config_value(:winrm_port) || '5985'
-            if locate_config_value(:azure_connect_to_existing_dns) && (port == '5985')
-                port = Random.rand(64000) + 1000
-            end
+
+        # If user is connecting a new VM to an existing dns, then
+        # the VM needs to have a unique public port. Logic below takes care of this.
+        if !is_image_windows? or locate_config_value(:bootstrap_protocol) == 'ssh'
+          port = locate_config_value(:ssh_port) || '22'
+          if locate_config_value(:azure_connect_to_existing_dns) && (port == '22')
+            port = Random.rand(64000) + 1000
           end
+        else
+          port = locate_config_value(:winrm_port) || '5985'
+          if locate_config_value(:azure_connect_to_existing_dns) && (port == '5985')
+            port = Random.rand(64000) + 1000
+          end
+        end
 
-          server_def[:port] = port          
+        server_def[:port] = port
 
+        if locate_config_value(:bootstrap_protocol) == 'cloud-api'
+          server_def[:chef_extension] = get_chef_extension_name
+          server_def[:chef_extension_publisher] = get_chef_extension_publisher
+          server_def[:chef_extension_version] = get_chef_extension_version
+          server_def[:chef_extension_public_param] = get_chef_extension_public_params
+          server_def[:chef_extension_private_param] = get_chef_extension_private_params
+        else
           if is_image_windows?
-            server_def[:os_type] = 'Windows'
             if not locate_config_value(:winrm_password) or not locate_config_value(:bootstrap_protocol)
               ui.error("WinRM Password and Bootstrapping Protocol are compulsory parameters")
               exit 1
@@ -589,29 +594,55 @@ class Chef
             # Also, the user name cannot be Administrator, Admin, Admin1 etc, for enhanced security (provided by Azure)
             if locate_config_value(:winrm_user).nil? || locate_config_value(:winrm_user).downcase =~ /admin*/
               ui.error("WinRM User is compulsory parameter and it cannot be named 'admin*'")
-              exit
+              exit 1
             end
-            server_def[:admin_password] = locate_config_value(:winrm_password)
-            server_def[:bootstrap_proto] = locate_config_value(:bootstrap_protocol)
           else
-            server_def[:os_type] = 'Linux'
-            server_def[:bootstrap_proto] = 'ssh'
             if not locate_config_value(:ssh_user)
               ui.error("SSH User is compulsory parameter")
               exit 1
             end
             unless locate_config_value(:ssh_password) or locate_config_value(:identity_file)
-                ui.error("Specify either SSH Key or SSH Password")
-                exit 1
+              ui.error("Specify either SSH Key or SSH Password")
+              exit 1
             end
-
-            server_def[:ssh_user] = locate_config_value(:ssh_user)
-            server_def[:ssh_password] = locate_config_value(:ssh_password)
-            server_def[:identity_file] = locate_config_value(:identity_file)
-            server_def[:identity_file_passphrase] = locate_config_value(:identity_file_passphrase)
           end
         end
+
+        if is_image_windows?
+          server_def[:os_type] = 'Windows'
+          server_def[:admin_password] = locate_config_value(:winrm_password)
+          server_def[:bootstrap_proto] = locate_config_value(:bootstrap_protocol)
+        else
+          server_def[:os_type] = 'Linux'
+          server_def[:bootstrap_proto] =  locate_config_value(:bootstrap_protocol) || 'ssh'
+          server_def[:ssh_user] = locate_config_value(:ssh_user)
+          server_def[:ssh_password] = locate_config_value(:ssh_password)
+          server_def[:identity_file] = locate_config_value(:identity_file)
+          server_def[:identity_file_passphrase] = locate_config_value(:identity_file_passphrase)
+        end
         server_def
+      end
+
+      def get_chef_extension_name
+        extension_name = is_image_windows? ? "ChefClient" : "LinuxChefClient"
+      end
+
+      def get_chef_extension_publisher
+        publisher = "Chef.Bootstrap.WindowsAzure"
+      end
+
+      # get latest version
+      def get_chef_extension_version
+        extensions = @connection.query_azure("resourceextensions/#{get_chef_extension_publisher}/#{get_chef_extension_name}")
+        extensions.css("Version").max.text
+      end
+
+      # TODO
+      def get_chef_extension_public_params
+      end
+
+      # TODO
+      def get_chef_extension_private_params
       end
 
       def cleanup_and_exit(remove_hosted_service_on_failure, remove_storage_service_on_failure)
@@ -628,7 +659,7 @@ class Chef
         end
         exit 1
       end
-      
+
       private
       # This is related to Windows VM's specifically and computer name
       # length limits for legacy computer accounts
@@ -643,7 +674,6 @@ class Chef
           azure_dns_name = prefix + locate_config_value(:azure_vm_name)
         end
       end
-
     end
   end
 end

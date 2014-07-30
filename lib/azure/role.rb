@@ -220,134 +220,134 @@ class Azure
           xml.RoleName {xml.text params[:azure_vm_name]}
           xml.OsVersion('i:nil' => 'true')
           xml.RoleType 'PersistentVMRole'
+
           xml.ConfigurationSets {
             if params[:os_type] == 'Linux'
-
               xml.ConfigurationSet('i:type' => 'LinuxProvisioningConfigurationSet') {
-              xml.ConfigurationSetType 'LinuxProvisioningConfiguration'
-              xml.HostName params[:azure_vm_name]
-              xml.UserName params[:ssh_user]
-              unless params[:identity_file].nil?
-                xml.DisableSshPasswordAuthentication 'true'
-                xml.SSH {
-                   xml.PublicKeys {
-                     xml.PublicKey {
-                       xml.Fingerprint params[:fingerprint].to_s.upcase
-                       xml.Path '/home/' + params[:ssh_user] + '/.ssh/authorized_keys'
+                xml.ConfigurationSetType 'LinuxProvisioningConfiguration'
+                xml.HostName params[:azure_vm_name]
+                xml.UserName params[:ssh_user]
+                unless params[:identity_file].nil?
+                  xml.DisableSshPasswordAuthentication 'true'
+                  xml.SSH {
+                     xml.PublicKeys {
+                       xml.PublicKey {
+                         xml.Fingerprint params[:fingerprint].to_s.upcase
+                         xml.Path '/home/' + params[:ssh_user] + '/.ssh/authorized_keys'
+                       }
                      }
-                   }
-                }
-              else
-                xml.UserPassword params[:ssh_password]
-                xml.DisableSshPasswordAuthentication 'false'
-              end
+                  }
+                else
+                  xml.UserPassword params[:ssh_password]
+                  xml.DisableSshPasswordAuthentication 'false'
+                end
               }
             elsif params[:os_type] == 'Windows'
               xml.ConfigurationSet('i:type' => 'WindowsProvisioningConfigurationSet') {
-              xml.ConfigurationSetType 'WindowsProvisioningConfiguration'
-              xml.ComputerName params[:azure_vm_name]
-              xml.AdminPassword params[:admin_password]
-              xml.ResetPasswordOnFirstLogon 'false'
-              xml.EnableAutomaticUpdates 'false'
-              xml.AdminUsername params[:winrm_user]
-              if params[:bootstrap_proto].downcase == 'winrm'
-                xml.WinRM {
-                  xml.Listeners {
-                    xml.Listener {
-                      xml.Protocol 'Http'
+                xml.ConfigurationSetType 'WindowsProvisioningConfiguration'
+                xml.ComputerName params[:azure_vm_name]
+                xml.AdminPassword params[:admin_password]
+                xml.ResetPasswordOnFirstLogon 'false'
+                xml.EnableAutomaticUpdates 'false'
+                xml.AdminUsername params[:winrm_user]
+                if params[:bootstrap_proto].downcase == 'winrm'
+                  xml.WinRM {
+                    xml.Listeners {
+                      xml.Listener {
+                        xml.Protocol 'Http'
+                      }
                     }
                   }
-                }
-              end
+                end
               }
             end
 
-          xml.ConfigurationSet('i:type' => 'NetworkConfigurationSet') {
-            xml.ConfigurationSetType 'NetworkConfiguration'
-            xml.InputEndpoints {
-              if params[:bootstrap_proto].downcase == 'ssh'
-                xml.InputEndpoint {
-                xml.LocalPort '22'
-                xml.Name 'SSH'
-                xml.Port params[:port]
-                xml.Protocol 'TCP'
-              }
-              elsif params[:bootstrap_proto].downcase == 'winrm' and params[:os_type] == 'Windows'
-                xml.InputEndpoint {
-                  xml.LocalPort '5985'
-                  xml.Name 'WinRM'
+            xml.ConfigurationSet('i:type' => 'NetworkConfigurationSet') {
+              xml.ConfigurationSetType 'NetworkConfiguration'
+              xml.InputEndpoints {
+                if params[:bootstrap_proto].downcase == 'ssh'
+                  xml.InputEndpoint {
+                  xml.LocalPort '22'
+                  xml.Name 'SSH'
                   xml.Port params[:port]
                   xml.Protocol 'TCP'
                 }
-              end
-
-            if params[:tcp_endpoints]
-              params[:tcp_endpoints].split(',').each do |endpoint|
-                ports = endpoint.split(':')
-                if !(ports.length > 1 && ports[1] == params[:port] || ports.length == 1 && ports[0] == params[:port])
+                elsif params[:bootstrap_proto].downcase == 'winrm' and params[:os_type] == 'Windows'
                   xml.InputEndpoint {
-                    xml.LocalPort ports[0]
-                    xml.Name 'tcpport_' + ports[0] + '_' + params[:azure_vm_name]
-                    if ports.length > 1
-                      xml.Port ports[1]
-                    else
-                      xml.Port ports[0]
-                    end
+                    xml.LocalPort '5985'
+                    xml.Name 'WinRM'
+                    xml.Port params[:port]
                     xml.Protocol 'TCP'
                   }
-                else
-                  warn_message = ports.length > 1 ? "#{ports.join(':')} because this ports are" : "#{ports[0]} because this port is"
-                  puts("Skipping tcp-endpoints: #{warn_message} already in use by ssh/winrm endpoint in current VM.")
                 end
-              end
-            end
-
-            if params[:udp_endpoints]
-              params[:udp_endpoints].split(',').each do |endpoint|
-                ports = endpoint.split(':')
-                xml.InputEndpoint {
-                  xml.LocalPort ports[0]
-                  xml.Name 'udpport_' + ports[0] + '_' + params[:azure_vm_name]
-                  if ports.length > 1
-                    xml.Port ports[1]
-                  else
-                    xml.Port ports[0]
+                if params[:tcp_endpoints]
+                  params[:tcp_endpoints].split(',').each do |endpoint|
+                    ports = endpoint.split(':')
+                    if !(ports.length > 1 && ports[1] == params[:port] || ports.length == 1 && ports[0] == params[:port])
+                      xml.InputEndpoint {
+                        xml.LocalPort ports[0]
+                        xml.Name 'tcpport_' + ports[0] + '_' + params[:azure_vm_name]
+                        if ports.length > 1
+                          xml.Port ports[1]
+                        else
+                          xml.Port ports[0]
+                        end
+                        xml.Protocol 'TCP'
+                      }
+                    else
+                      warn_message = ports.length > 1 ? "#{ports.join(':')} because this ports are" : "#{ports[0]} because this port is"
+                      puts("Skipping tcp-endpoints: #{warn_message} already in use by ssh/winrm endpoint in current VM.")
+                    end
                   end
-                  xml.Protocol 'UDP'
+                end
+
+                if params[:udp_endpoints]
+                  params[:udp_endpoints].split(',').each do |endpoint|
+                    ports = endpoint.split(':')
+                    xml.InputEndpoint {
+                      xml.LocalPort ports[0]
+                      xml.Name 'udpport_' + ports[0] + '_' + params[:azure_vm_name]
+                      if ports.length > 1
+                        xml.Port ports[1]
+                      else
+                        xml.Port ports[0]
+                      end
+                      xml.Protocol 'UDP'
+                    }
+                  end
+                end
+              }
+              if params[:azure_subnet_name]
+                xml.SubnetNames {
+                  xml.SubnetName params[:azure_subnet_name]
                 }
               end
-            end
             }
-            if params[:azure_subnet_name]
-              xml.SubnetNames {
-                xml.SubnetName params[:azure_subnet_name]
-              }
-            end
           }
-          }
+
           if params[:azure_availability_set]
             xml.AvailabilitySetName params[:azure_availability_set]
           end
           # Azure resource extension support
-          if params[:set_azure_resource_extension]
+          if params[:bootstrap_proto] == 'cloud-api'
             xml.ResourceExtensionReferences {
               xml.ResourceExtensionReference {
-                xml.ReferenceName params[:azure_resource_extension]
-                xml.Publisher params[:azure_resource_extension_publisher]
-                xml.Name params[:azure_resource_extension]
-                xml.Version params[:azure_resource_extension_version]
+                xml.ReferenceName params[:chef_extension]
+                xml.Publisher params[:chef_extension_publisher]
+                xml.Name params[:chef_extension]
+                xml.Version params[:chef_extension_version]
                 xml.ResourceExtensionParameterValues {
-                  if params[:azure_resource_extension_public_param]
+                  if params[:chef_extension_public_param]
                     xml.ResourceExtensionParameterValue {
                       xml.Key "PublicParams"
-                      xml.Value params[:azure_resource_extension_public_param]
+                      xml.Value params[:chef_extension_public_param]
                       xml.Type "Public"
                     }
                   end
-                  if params[:azure_resource_extension_private_param]
+                  if params[:chef_extension_private_param]
                     xml.ResourceExtensionParameterValue {
                       xml.Key "PrivateParams"
-                      xml.Value params[:azure_resource_extension_private_param]
+                      xml.Value params[:chef_extension_private_param]
                       xml.Type "Private"
                     }
                   end
@@ -365,7 +365,7 @@ class Azure
             xml.SourceImageName params[:azure_source_image]
           }
           xml.RoleSize params[:azure_vm_size]
-          xml.ProvisionGuestAgent true if params[:set_azure_resource_extension]
+          xml.ProvisionGuestAgent true if params[:bootstrap_proto] == 'cloud-api'
         }
       end
       builder.doc
