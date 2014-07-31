@@ -634,15 +634,17 @@ class Chef
       # get latest version
       def get_chef_extension_version
         extensions = @connection.query_azure("resourceextensions/#{get_chef_extension_publisher}/#{get_chef_extension_name}")
-        extensions.css("Version").max.text
+        extensions.css("Version").max.text.to_f
       end
 
       # TODO
       def get_chef_extension_public_params
       end
 
-      # TODO
       def get_chef_extension_private_params
+        pri_config = Hash.new
+        pri_config[:validation_key] = File.read(Chef::Config[:validation_key])
+        Base64.encode64(pri_config.to_json)
       end
 
       def cleanup_and_exit(remove_hosted_service_on_failure, remove_storage_service_on_failure)
