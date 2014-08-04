@@ -641,4 +641,74 @@ describe Chef::Knife::AzureServerCreate do
       end
     end
   end
+
+  describe "for bootstrap protocol cloud-api:" do
+    before do
+      Chef::Config[:knife][:bootstrap_protocol] = 'cloud-api'
+      allow(@server_instance).to receive(:msg_server_summary)
+      Chef::Config[:knife][:run_list] = ["getting-started"]
+      Chef::Config[:knife][:validation_client_name] = "testorg-validator"
+      Chef::Config[:knife][:chef_server_url] = "https://api.opscode.com/organizations/testorg"
+    end
+
+    after do
+      Chef::Config[:knife].delete(:bootstrap_protocol)
+      Chef::Config[:knife].delete(:run_list)
+      Chef::Config[:knife].delete(:validation_client_name)
+      Chef::Config[:knife].delete(:chef_server_url)
+    end
+
+    context "windows instance:" do
+      it "successful create" do
+        expect(@server_instance).to_not receive(:bootstrap_exec)
+        expect(@server_instance).to receive(:get_chef_extension_version)
+        expect(@server_instance).to receive(:get_chef_extension_public_params)
+        expect(@server_instance).to receive(:get_chef_extension_private_params)
+        expect(@server_instance).to receive(:is_image_windows?).exactly(3).times.and_return(true)
+        expect(@server_instance).to receive(:wait_until_virtual_machine_ready).exactly(1).times.and_return(true)
+       @server_instance.run
+      end
+
+      it "check if all server params are set correctly" do
+        version = Nokogiri::XML::Builder.new do |xml|
+          xml.ResourceExtensionReferences {
+            xml.Version "11.12"
+          }
+        end
+        expect(@server_instance).to_not receive(:bootstrap_exec)
+
+        allow(@server_instance.connection).to receive(:query_azure).and_return(version.doc)
+        expect(@server_instance).to receive(:get_chef_extension_public_params)
+        expect(@server_instance).to receive(:get_chef_extension_private_params)
+        expect(@server_instance).to receive(:is_image_windows?).exactly(4).times.and_return(true)
+        server_config = @server_instance.create_server_def
+        expect(server_config[:chef_extension]).to eq("ChefClient")
+        expect(server_config[:chef_extension_publisher]).to eq("Chef.Bootstrap.WindowsAzure")
+        expect(server_config[:chef_extension_version]).to eq(11.12)
+        expect(server_config).to include(:chef_extension_public_param)
+        expect(server_config).to include(:chef_extension_private_param)
+      end
+    end
+
+    context "linux instance" do
+      it "check if all server params are set correctly" do
+        version = Nokogiri::XML::Builder.new do |xml|
+          xml.ResourceExtensionReferences {
+            xml.Version "11.12"
+          }
+        end
+        expect(@server_instance).to_not receive(:bootstrap_exec)
+        allow(@server_instance.connection).to receive(:query_azure).and_return(version.doc)
+        expect(@server_instance).to receive(:get_chef_extension_private_params)
+        expect(@server_instance).to receive(:is_image_windows?).exactly(4).times.and_return(false)
+        server_config = @server_instance.create_server_def
+        expect(server_config[:chef_extension]).to eq("LinuxChefClient")
+        expect(server_config[:chef_extension_publisher]).to eq("Chef.Bootstrap.WindowsAzure")
+        expect(server_config[:chef_extension_version]).to eq(11.12)
+        expect(server_config).to include(:chef_extension_public_param)
+        expect(JSON.parse(Base64.decode64(server_config[:chef_extension_public_param]))["runlist"]).to eq(Chef::Config[:knife][:run_list].first.to_json)
+        expect(server_config).to include(:chef_extension_private_param)
+      end
+    end
+  end  
 end
