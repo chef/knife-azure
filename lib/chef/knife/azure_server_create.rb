@@ -566,7 +566,7 @@ class Chef
           :azure_affinity_group => locate_config_value(:azure_affinity_group),
           :azure_network_name => locate_config_value(:azure_network_name),
           :azure_subnet_name => locate_config_value(:azure_subnet_name),
-          :fingerprint => locate_config_value(:ssl_cert_fingerprint),
+          :ssl_cert_fingerprint => locate_config_value(:ssl_cert_fingerprint),
           :cert_path => locate_config_value(:cert_path),
           :cert_password => locate_config_value(:cert_password)
         }

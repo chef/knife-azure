@@ -37,7 +37,7 @@ describe Chef::Knife::AzureServerCreate do
     @server_instance.initial_sleep_delay = 0
     allow(@server_instance).to receive(:sleep).and_return(0)
     allow(@server_instance).to receive(:puts)
-    allow(@server_instance).to receive(:print)    
+    allow(@server_instance).to receive(:print)
   end
 
   def test_params(testxml, chef_config, role_name, host_name)
@@ -267,7 +267,7 @@ describe Chef::Knife::AzureServerCreate do
           dns_name.push(dns)
         end
       end
-    
+
       it "include vmname in dnsname if --azure-vm-name specified" do
         Chef::Config[:knife][:azure_vm_name] = "vmname"
         dns = @server_instance.send(:get_dns_name, Chef::Config[:knife][:azure_dns_name])
