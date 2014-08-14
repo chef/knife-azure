@@ -250,13 +250,15 @@ class Azure
               xml.EnableAutomaticUpdates 'false'
 
               if params[:bootstrap_proto].downcase == 'winrm'
-                xml.StoredCertificateSettings {
-                  xml.CertificateSetting {
-                    xml.StoreLocation "LocalMachine"
-                    xml.StoreName "My"
-                    xml.Thumbprint params[:ssl_cert_fingerprint]
+                if params[:ssl_cert_fingerprint]
+                  xml.StoredCertificateSettings {
+                    xml.CertificateSetting {
+                      xml.StoreLocation "LocalMachine"
+                      xml.StoreName "My"
+                      xml.Thumbprint params[:ssl_cert_fingerprint]
+                    }
                   }
-                }
+                end
                 xml.WinRM {
                   xml.Listeners {
                     if params[:ssl_cert_fingerprint]
