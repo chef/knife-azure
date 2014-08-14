@@ -231,6 +231,8 @@ class Chef
             wait_for_virtual_machine_state(:vm_status_ready, 15, retry_interval_in_seconds)
           end
 
+          msg_server_summary(get_role_server())
+
           if locate_config_value(:bootstrap_protocol) == "cloud-api"
             extension_status = wait_for_resource_extension_state(:wagent_provisioning, 5, retry_interval_in_seconds)
             
@@ -726,7 +728,7 @@ class Chef
       def get_chef_extension_public_params
         pub_config = Hash.new
         pub_config[:client_rb] = "chef_server_url \t #{Chef::Config[:chef_server_url].to_json}\nvalidation_client_name\t#{Chef::Config[:validation_client_name].to_json}"
-        pub_config[:runlist] = locate_config_value(:run_list).join(",").to_json
+        pub_config[:runlist] = locate_config_value(:run_list).empty? ? "" : locate_config_value(:run_list).join(",").to_json
         Base64.encode64(pub_config.to_json)
       end
 
