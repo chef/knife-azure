@@ -213,6 +213,18 @@ class Chef
         :description => "A JSON string to be added to the first run of chef-client",
         :proc => lambda { |o| JSON.parse(o) }
 
+      option :ssl_cert_fingerprint,
+        :long => "--ssl-cert-fingerprint FINGERPRINT",
+        :description => "The fingerprint / thumprint of the ssl certificate"
+
+      option :cert_password,
+        :long => "--cert-password PASSWORD",
+        :description => "Certificate Password"
+
+      option :cert_path,
+      :long => "--cert-path PATH",
+      :description => "Certificate Path"
+
       def strip_non_ascii(string)
         string.gsub(/[^0-9a-z ]/i, '')
       end
@@ -352,7 +364,7 @@ class Chef
         if connection.hosts.exists?(locate_config_value(:azure_dns_name))
           remove_hosted_service_on_failure = nil
         end
-        
+
         #If Storage Account is not specified, check if the geographic location has one to re-use
         if not locate_config_value(:azure_storage_account)
           storage_accts = connection.storageaccounts.all
@@ -369,7 +381,7 @@ class Chef
             remove_storage_service_on_failure = nil
           else
             remove_storage_service_on_failure = locate_config_value(:azure_storage_account)
-          end   
+          end
         end
 
         begin
@@ -409,7 +421,7 @@ class Chef
               puts("done")
             }
           end
-        
+
           puts("\n")
           bootstrap_for_windows_node(server,fqdn, port).run
         else
@@ -553,7 +565,10 @@ class Chef
           :azure_availability_set => locate_config_value(:azure_availability_set),
           :azure_affinity_group => locate_config_value(:azure_affinity_group),
           :azure_network_name => locate_config_value(:azure_network_name),
-          :azure_subnet_name => locate_config_value(:azure_subnet_name)
+          :azure_subnet_name => locate_config_value(:azure_subnet_name),
+          :ssl_cert_fingerprint => locate_config_value(:ssl_cert_fingerprint),
+          :cert_path => locate_config_value(:cert_path),
+          :cert_password => locate_config_value(:cert_password)
         }
         # If user is connecting a new VM to an existing dns, then
         # the VM needs to have a unique public port. Logic below takes care of this.
@@ -619,7 +634,7 @@ class Chef
         end
         exit 1
       end
-      
+
       private
       # This is related to Windows VM's specifically and computer name
       # length limits for legacy computer accounts

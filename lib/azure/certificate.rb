@@ -25,6 +25,11 @@ class Azure
       certificate = Certificate.new(@connection)
       certificate.create(params)
     end
+    def add(certificate_data, certificate_password, certificate_format, dns_name)
+      certificate = Certificate.new(@connection)
+      certificate.add_certificate certificate_data, certificate_password, certificate_format, dns_name
+      
+    end
   end
 end
 
@@ -41,17 +46,7 @@ class Azure
       # public part of the key
       @cert_data = generate_public_key_certificate_data({:ssh_key => params[:identity_file],
                                              :ssh_key_passphrase => params[:identity_file_passphrase]})
-      # Generate XML to call the API
-      # Add certificate to the hosted service
-      builder = Nokogiri::XML::Builder.new do |xml|
-        xml.CertificateFile('xmlns'=>'http://schemas.microsoft.com/windowsazure') {
-          xml.Data @cert_data
-          xml.CertificateFormat 'pfx'
-          xml.Password 'knifeazure'
-        }
-      end
-      # Windows Azure API call
-      @connection.query_azure("hostedservices/#{params[:azure_dns_name]}/certificates", "post", builder.to_xml)
+      add_certificate @cert_data, 'knifeazure', 'pfx', params[:azure_dns_name]
       # Return the fingerprint to be used while adding role
       @fingerprint
     end
@@ -83,5 +78,21 @@ class Azure
       # Encode the pfx format - upload this certificate
       Base64.strict_encode64(pfx.to_der)
     end
+
+    def add_certificate certificate_data, certificate_password, certificate_format, dns_name
+      # Generate XML to call the API
+      # Add certificate to the hosted service
+      builder = Nokogiri::XML::Builder.new do |xml|
+        xml.CertificateFile('xmlns'=>'http://schemas.microsoft.com/windowsazure') {
+          xml.Data certificate_data
+          xml.CertificateFormat certificate_format
+          xml.Password certificate_password
+        }
+      end
+      # Windows Azure API call
+      @connection.query_azure("hostedservices/#{dns_name}/certificates", "post", builder.to_xml)
+     
+    end
+
   end
 end
