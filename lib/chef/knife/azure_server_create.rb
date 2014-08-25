@@ -51,7 +51,7 @@ class Chef
 
       option :bootstrap_protocol,
         :long => "--bootstrap-protocol protocol",
-        :description => "Protocol to bootstrap windows servers. options: winrm/ssh",
+        :description => "Protocol to bootstrap windows servers. options: 'winrm' or 'ssh' or 'cloud-api'.",
         :default => "winrm"
 
       option :chef_node_name,
@@ -230,6 +230,24 @@ class Chef
           if vm_status != :vm_status_ready
             wait_for_virtual_machine_state(:vm_status_ready, 15, retry_interval_in_seconds)
           end
+
+          msg_server_summary(get_role_server())
+
+          if locate_config_value(:bootstrap_protocol) == "cloud-api"
+            extension_status = wait_for_resource_extension_state(:wagent_provisioning, 5, retry_interval_in_seconds)
+            
+            if extension_status != :extension_installing
+              extension_status = wait_for_resource_extension_state(:extension_installing, 5, retry_interval_in_seconds)
+            end
+            
+            if extension_status != :extension_provisioning
+              extension_status = wait_for_resource_extension_state(:extension_provisioning, 10, retry_interval_in_seconds)
+            end
+
+            if extension_status != :extension_ready
+              wait_for_resource_extension_state(:extension_ready, 5, retry_interval_in_seconds)
+            end
+          end
         rescue Exception => e
           Chef::Log.error("#{e.to_s}")
           raise 'Verify connectivity to Azure and subscription resource limit compliance (e.g. maximum CPU core limits) and try again.'
@@ -265,6 +283,37 @@ class Chef
         vm_status
       end
 
+      def wait_for_resource_extension_state(extension_status_goal, total_wait_time_in_minutes, retry_interval_in_seconds)
+
+        extension_status_ordering = {:extension_status_not_detected => 0, :wagent_provisioning => 1, :extension_installing => 2, :extension_provisioning => 3, :extension_ready => 4}
+
+        status_description = {:extension_status_not_detected => 'any', :wagent_provisioning => 'wagent provisioning', :extension_installing => "installing", :extension_provisioning => "provisioning", :extension_ready => "ready" }
+
+        print ui.color("Waiting for Resource Extension to reach status '#{status_description[extension_status_goal]}'", :magenta)
+
+        max_polling_attempts = (total_wait_time_in_minutes * 60) / retry_interval_in_seconds
+        polling_attempts = 0
+
+        wait_start_time = Time.now
+
+        begin
+          extension_status = get_extension_status()
+          extension_ready = extension_status_ordering[extension_status[:status]] >= extension_status_ordering[extension_status_goal]
+          print '.'
+          sleep retry_interval_in_seconds if !extension_ready
+          polling_attempts += 1
+        end until extension_ready || polling_attempts >= max_polling_attempts
+
+        if ! extension_ready
+          raise Chef::Exceptions::CommandTimeout, "Resource extension state '#{status_description[extension_status_goal]}' not reached after #{total_wait_time_in_minutes} minutes. #{extension_status[:message]}"
+        end
+
+        elapsed_time_in_minutes = ((Time.now - wait_start_time) / 60).round(2)
+        print ui.color("Resource extension state '#{status_description[extension_status_goal]}' reached after #{elapsed_time_in_minutes} minutes.\n", :cyan)
+        
+        extension_status[:status]
+      end
+
       def get_virtual_machine_status()
         role = get_role_server()
         unless role.nil?
@@ -278,6 +327,47 @@ class Chef
           end
         end
         return :vm_status_not_detected
+      end
+
+      def get_extension_status()
+        deployment_name = connection.deploys.get_deploy_name_for_hostedservice(locate_config_value(:azure_dns_name))
+        deployment = connection.query_azure("hostedservices/#{locate_config_value(:azure_dns_name)}/deployments/#{deployment_name}")
+        extension_status = Hash.new
+        
+        if deployment.at_css('Deployment Name') != nil
+          role_list_xml =  deployment.css('RoleInstanceList RoleInstance')
+          role_list_xml.each do |role|
+            if role.at_css("RoleName").text == locate_config_value(:azure_vm_name)
+              if role.at_css("GuestAgentStatus Status").text == "Ready"
+                extn_status = role.at_css("ResourceExtensionStatusList Status").text
+
+                Chef::Log.debug("Resource extension status is #{extn_status}")
+
+                if extn_status == "Installing"
+                  extension_status[:status] = :extension_installing
+                  extension_status[:message] = role.at_css("ResourceExtensionStatusList FormattedMessage Message").text
+                elsif extn_status == "NotReady"
+                  extension_status[:status] = :extension_provisioning
+                  extension_status[:message] = role.at_css("ResourceExtensionStatusList FormattedMessage Message").text
+                elsif extn_status == "Ready"
+                  extension_status[:status] = :extension_ready
+                  extension_status[:message] = role.at_css("ResourceExtensionStatusList FormattedMessage Message").text
+                else
+                  extension_status[:status] = :extension_status_not_detected
+                end
+              else
+                extension_status[:status] = :wagent_provisioning
+                extension_status[:message] = role.at_css("GuestAgentStatus Message").text
+              end
+            else
+              extension_status[:status] = :extension_status_not_detected
+            end
+          end
+        else
+          extension_status[:status] = :extension_status_not_detected
+        end
+        
+        return extension_status
       end
 
       def get_role_server()
@@ -376,7 +466,6 @@ class Chef
           connection.deploys.create(create_server_def)
           wait_until_virtual_machine_ready()
           server = get_role_server()
-          fqdn = server.publicipaddress
         rescue Exception => e
           Chef::Log.error("Failed to create the server -- exception being rescued: #{e.to_s}")
           backtrace_message = "#{e.class}: #{e}\n#{e.backtrace.join("\n")}"
@@ -385,6 +474,12 @@ class Chef
         end
 
         msg_server_summary(server)
+
+        bootstrap_exec(server) unless locate_config_value(:bootstrap_protocol) == 'cloud-api'
+      end
+
+      def bootstrap_exec(server)
+        fqdn = server.publicipaddress
 
         if is_image_windows?
           # Set distro to windows-chef-client-msi
@@ -431,7 +526,7 @@ class Chef
           bootstrap_for_node(server,fqdn,port).run
         end
 
-        msg_server_summary(server)
+        msg_server_summary(server)        
       end
 
       def load_cloud_attributes_in_hints(server)
@@ -460,7 +555,6 @@ class Chef
         load_cloud_attributes_in_hints(server)
         bootstrap
       end
-
 
       def bootstrap_for_windows_node(server, fqdn, port)
         if locate_config_value(:bootstrap_protocol) == 'winrm'
@@ -554,55 +648,94 @@ class Chef
           :azure_affinity_group => locate_config_value(:azure_affinity_group),
           :azure_network_name => locate_config_value(:azure_network_name),
           :azure_subnet_name => locate_config_value(:azure_subnet_name)
+
         }
         # If user is connecting a new VM to an existing dns, then
         # the VM needs to have a unique public port. Logic below takes care of this.
         if !is_image_windows? or locate_config_value(:bootstrap_protocol) == 'ssh'
           port = locate_config_value(:ssh_port) || '22'
           if locate_config_value(:azure_connect_to_existing_dns) && (port == '22')
-             port = Random.rand(64000) + 1000
+            port = Random.rand(64000) + 1000
           end
         else
           port = locate_config_value(:winrm_port) || '5985'
           if locate_config_value(:azure_connect_to_existing_dns) && (port == '5985')
-              port = Random.rand(64000) + 1000
+            port = Random.rand(64000) + 1000
           end
         end
+
         server_def[:port] = port
 
+        if locate_config_value(:bootstrap_protocol) == 'cloud-api'
+          server_def[:chef_extension] = get_chef_extension_name
+          server_def[:chef_extension_publisher] = get_chef_extension_publisher
+          server_def[:chef_extension_version] = get_chef_extension_version
+          server_def[:chef_extension_public_param] = get_chef_extension_public_params
+          server_def[:chef_extension_private_param] = get_chef_extension_private_params
+        else
+          if is_image_windows?
+            if not locate_config_value(:winrm_password) or not locate_config_value(:bootstrap_protocol)
+              ui.error("WinRM Password and Bootstrapping Protocol are compulsory parameters")
+              exit 1
+            end
+            # We can specify the AdminUsername after API version 2013-03-01. However, in this API version,
+            # the AdminUsername is a required parameter.
+            # Also, the user name cannot be Administrator, Admin, Admin1 etc, for enhanced security (provided by Azure)
+            if locate_config_value(:winrm_user).nil? || locate_config_value(:winrm_user).downcase =~ /admin*/
+              ui.error("WinRM User is compulsory parameter and it cannot be named 'admin*'")
+              exit 1
+            end
+          else
+            if not locate_config_value(:ssh_user)
+              ui.error("SSH User is compulsory parameter")
+              exit 1
+            end
+            unless locate_config_value(:ssh_password) or locate_config_value(:identity_file)
+              ui.error("Specify either SSH Key or SSH Password")
+              exit 1
+            end
+          end
+        end
         if is_image_windows?
           server_def[:os_type] = 'Windows'
-          if not locate_config_value(:winrm_password) or not locate_config_value(:bootstrap_protocol)
-            ui.error("WinRM Password and Bootstrapping Protocol are compulsory parameters")
-            exit 1
-          end
-          # We can specify the AdminUsername after API version 2013-03-01. However, in this API version,
-          # the AdminUsername is a required parameter.
-          # Also, the user name cannot be Administrator, Admin, Admin1 etc, for enhanced security (provided by Azure)
-          if locate_config_value(:winrm_user).nil? || locate_config_value(:winrm_user).downcase =~ /admin*/
-            ui.error("WinRM User is compulsory parameter and it cannot be named 'admin*'")
-            exit
-          end
           server_def[:admin_password] = locate_config_value(:winrm_password)
           server_def[:bootstrap_proto] = locate_config_value(:bootstrap_protocol)
         else
           server_def[:os_type] = 'Linux'
-          server_def[:bootstrap_proto] = 'ssh'
-          if not locate_config_value(:ssh_user)
-            ui.error("SSH User is compulsory parameter")
-            exit 1
-          end
-          unless locate_config_value(:ssh_password) or locate_config_value(:identity_file)
-              ui.error("Specify either SSH Key or SSH Password")
-              exit 1
-          end
-
+          server_def[:bootstrap_proto] =  locate_config_value(:bootstrap_protocol) || 'ssh'
           server_def[:ssh_user] = locate_config_value(:ssh_user)
           server_def[:ssh_password] = locate_config_value(:ssh_password)
           server_def[:identity_file] = locate_config_value(:identity_file)
           server_def[:identity_file_passphrase] = locate_config_value(:identity_file_passphrase)
         end
         server_def
+      end
+
+      def get_chef_extension_name
+        extension_name = is_image_windows? ? "ChefClient" : "LinuxChefClient"
+      end
+
+      def get_chef_extension_publisher
+        publisher = "Chef.Bootstrap.WindowsAzure"
+      end
+
+      # get latest version
+      def get_chef_extension_version
+        extensions = @connection.query_azure("resourceextensions/#{get_chef_extension_publisher}/#{get_chef_extension_name}")
+        extensions.css("Version").max.text.to_f
+      end
+
+      def get_chef_extension_public_params
+        pub_config = Hash.new
+        pub_config[:client_rb] = "chef_server_url \t #{Chef::Config[:chef_server_url].to_json}\nvalidation_client_name\t#{Chef::Config[:validation_client_name].to_json}"
+        pub_config[:runlist] = locate_config_value(:run_list).empty? ? "" : locate_config_value(:run_list).join(",").to_json
+        Base64.encode64(pub_config.to_json)
+      end
+
+      def get_chef_extension_private_params
+        pri_config = Hash.new
+        pri_config[:validation_key] = File.read(Chef::Config[:validation_key])
+        Base64.encode64(pri_config.to_json)
       end
 
       def cleanup_and_exit(remove_hosted_service_on_failure, remove_storage_service_on_failure)
@@ -619,7 +752,7 @@ class Chef
         end
         exit 1
       end
-      
+
       private
       # This is related to Windows VM's specifically and computer name
       # length limits for legacy computer accounts
@@ -634,7 +767,6 @@ class Chef
           azure_dns_name = prefix + locate_config_value(:azure_vm_name)
         end
       end
-
     end
   end
 end
