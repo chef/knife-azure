@@ -110,7 +110,7 @@ def is_config_present
 end
 
 def get_gem_file_name
-  "knife-azure-" + Knife::OpenStack::VERSION + ".gem"
+  "knife-azure-" + Knife::Azure::VERSION + ".gem"
 end
 
 def find_instance_id(instance_name, file)
