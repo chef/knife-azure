@@ -17,181 +17,249 @@
 
 require File.expand_path(File.dirname(__FILE__) + '/../spec_helper')
 
-def get_gem_file_name
-  "knife-azure-" + Knife::Azure::VERSION + ".gem"
-end
+def append_azure_creds(*options)
+  is_publishsettings_file = options.include?(:publishsettings_file) ?  true : false
+  is_list_cmd = options.include?(:list_cmd) ? true : false
 
-def append_azure_creds(is_list_cmd = false, is_identity_file = false, is_publishsettings_file= false)
-  azure_config = YAML.load(File.read(File.expand_path("../config/environment.yml", __FILE__)))
-  
   if(is_publishsettings_file)
-    azure_creds_cmd = " --azure-publish-settings-file #{temp_dir}/azure.publishsettings"
+    azure_creds_cmd = " --azure-publish-settings-file '#{ENV['AZURE_PUBLISH_SETTINGS_FILE']}'"
   else
-    azure_creds_cmd = " --azure-subscription-id #{azure_config['development']['azure_subscription_id']} --azure-api-host-name #{azure_config['development']['azure_api_host_name']}"
-    azure_creds_cmd = azure_creds_cmd + " --azure-mgmt-cert #{temp_dir}/ManagementCertificate.pem"
+    azure_creds_cmd = " --azure-subscription-id '#{ENV['AZURE_SUBSCRIPTION_ID']}' --azure-api-host-name '#{ENV['AZURE_API_HOST_NAME']}' --azure-mgmt-cert '#{ENV['AZURE_MGMT_CERT']}'"
   end
 
   azure_creds_cmd = azure_creds_cmd + " --config #{temp_dir}/knife.rb"
-  
-  azure_creds_cmd = azure_creds_cmd + " --azure-service-location #{azure_config['development']['azure_service_location']}" if !is_list_cmd
-  
-  azure_creds_cmd = azure_creds_cmd + " --identity-file #{temp_dir}/id_rsa" if is_identity_file
-  
+
+  azure_creds_cmd = azure_creds_cmd + " --azure-service-location #{@azure_service_location}" if !is_list_cmd
+
   azure_creds_cmd
 end
 
-def append_azure_creds_for_linux(*options)
-
-  is_list_cmd = options.include?(:is_list_cmd) ? true : false
-  is_ssh_user = options.include?(:is_ssh_user) ? false : true
-  is_ssh_password = options.include?(:is_ssh_password) ? true : false
-  is_identity_file = options.include?(:is_identity_file) ?  false : true
-  is_publishsettings_file = options.include?(:is_publishsettings_file) ?  true : false
-  
-  azure_config = YAML.load(File.read(File.expand_path("../config/environment.yml", __FILE__)))
-  azure_creds_cmd = append_azure_creds(is_list_cmd, is_identity_file, is_publishsettings_file)
-  azure_creds_cmd = azure_creds_cmd + " --ssh-user #{azure_config['development']['ssh_user']}" if is_ssh_user
-  azure_creds_cmd = azure_creds_cmd + " --ssh-password #{azure_config['development']['ssh_password']}" if is_ssh_password
-  azure_creds_cmd
+def get_ssh_credentials
+  " --ssh-user #{@az_ssh_user} --ssh-password #{@az_ssh_password}"
 end
 
-def append_azure_creds_for_windows(*options)
-  
-  is_list_cmd = options.include?(:is_list_cmd) ? true : false
-  is_winrm_user = options.include?(:is_winrm_user) ? false : true
-  is_winrm_password = options.include?(:is_winrm_password) ? false : true
-  is_identity_file = options.include?(:is_identity_file) ?  true : false
-  is_publishsettings_file = options.include?(:is_publishsettings_file) ?  true : false
-  
-  azure_config = YAML.load(File.read(File.expand_path("../config/environment.yml", __FILE__)))
-  azure_creds_cmd = append_azure_creds(is_list_cmd, is_identity_file, is_publishsettings_file)
-  azure_creds_cmd = azure_creds_cmd + " --winrm-user #{azure_config['development']['winrm_user']}" if is_winrm_user
-  azure_creds_cmd = azure_creds_cmd + " --winrm-password #{azure_config['development']['winrm_password']}" if is_winrm_password
-  azure_creds_cmd
+def get_winrm_credentials
+  " --winrm-user #{@az_winrm_user} --winrm-password #{@az_winrm_password}"
 end
 
-def delete_instance_cmd(vm_name)
-  "knife azure server delete #{vm_name}" 
+def get_ssh_credentials_for_windows_image
+  " --ssh-user #{@az_windows_ssh_user} --ssh-password #{@az_windows_ssh_password}"
 end
 
-def create_node_name()
-  @name_node  = "azure-#{SecureRandom.hex(4)}"
+# get openstack active instance_id for knife openstack show command run
+def get_active_instance_id
+  server_list_output = run("knife azure server list " + append_azure_creds("is_list_cmd"))
+  # Check command exitstatus. Non zero exitstatus indicates command execution fails.
+  if server_list_output.exitstatus != 0
+    puts "Please check azure config is correct. Error: #{list_output.stderr}."
+    return false
+  else
+    servers = server_list_output.stdout
+  end
+  
+  servers.each_line do |line|
+    if line.include?("ready")
+      instance_id = line.split(" ")[1]
+      return instance_id
+    end
+  end
+  return false
 end
 
 def create_dns_name()
-  @dns_name  = "dns-#{SecureRandom.hex(4)}"
+  @dns_name  = "az-itestdns-#{SecureRandom.hex(4)}"
 end
 
-def create_vm_name()
-  @vm_name  = "vm-#{SecureRandom.hex(4)}"
+def create_vm_name(name)
+  @vm_name  = (name == "linux") ? "az-lnxtest#{SecureRandom.hex(4)}" :  "az-wintest-#{SecureRandom.hex(4)}"
 end
 
-def get_linux_image_name()
-  azure_config = YAML.load(File.read(File.expand_path("../config/environment.yml", __FILE__)))
-  @linux_img = azure_config['development']['azure_linux_image']
-end
-
-def get_windows_image_name()
-  azure_config = YAML.load(File.read(File.expand_path("../config/environment.yml", __FILE__)))
-  @windows_img = azure_config['development']['azure_windows_image']
-end
-
-def init_azure_test
-  require 'nokogiri'
-  require 'base64'
-  require 'openssl'
-  require 'uri'
-  
-  init_test
-  get_linux_image_name
-  get_windows_image_name
-
-  begin
-    data_to_write = File.read(File.expand_path("../config/azure.publishsettings", __FILE__))
-    File.open("#{temp_dir}/azure.publishsettings", 'w') {|f| f.write(data_to_write)}
-  rescue
-    puts "Error while creating file - Publishsettings file"
-  end
-
-  begin
-    data_to_write = File.read(File.expand_path("../config/id_rsa", __FILE__))
-    File.open("#{temp_dir}/id_rsa", 'w') {|f| f.write(data_to_write)}
-  rescue
-    puts "Error while creating file - identity_file"
-  end
-
-  begin
-    doc = Nokogiri::XML(File.open("#{temp_dir}/azure.publishsettings"))
-    profile = doc.at_css("PublishProfile")
-    subscription = profile.at_css("Subscription")
-    #check given PublishSettings XML file format.Currently PublishSettings file have two different XML format
-    if profile.attribute("SchemaVersion").nil?
-      management_cert = OpenSSL::PKCS12.new(Base64.decode64(profile.attribute("ManagementCertificate").value))
-    elsif profile.attribute("SchemaVersion").value == "2.0"
-      management_cert = OpenSSL::PKCS12.new(Base64.decode64(subscription.attribute("ManagementCertificate").value))
-    else
-      ui.error("Publish settings file Schema not supported - " + filename)
-    end
-
-    File.open("#{temp_dir}/ManagementCertificate.pem", 'w') {|f| f.write(management_cert.certificate.to_pem + management_cert.key.to_pem)}
-  rescue
-    ui.error("Incorrect publish settings file - " + filename)
-    exit 1
-  end
-end
-
-describe 'knife-azure' do
+describe 'knife-azure integration test' , :if => is_config_present do
   include KnifeTestBed
   include RSpec::KnifeTestUtils
-  before(:all) { init_azure_test }
-  after(:all) { cleanup_test_data }
+
+  before(:all) do
+    expect(run('gem build knife-azure.gemspec').exitstatus).to be(0)
+    expect(run("gem install #{get_gem_file_name}").exitstatus).to be(0)
+    init_azure_test 
+  end
+
+  after(:all) do
+    run("gem uninstall knife-azure -v '#{Knife::OpenStack::VERSION}'")
+    cleanup_test_data
+  end
+
+  describe 'display help for command' do
+    %w{server\ create server\ delete server\ list image\ list server\ show vnet\ create vnet\ list ag\ create ag\ list}.each do |command|
+      context "when --help option used with #{command} command" do
+        let(:command) { "knife azure #{command} --help" }
+        run_cmd_check_stdout("--help")
+      end
+    end
+  end
+
+  describe 'display server list' do
+    context 'when standard options specified' do
+      let(:command) { "knife azure server list" + append_azure_creds("is_list_cmd") }
+      run_cmd_check_status_and_output("succeed", "VM Name")
+    end
+  end
+
+  describe 'display image list' do
+    context 'when standard options specified' do
+      let(:command) { "knife azure image list" + append_azure_creds("is_list_cmd") }
+      run_cmd_check_status_and_output("succeed", "Name")
+    end
+  end
+
+  describe 'display vnet list' do
+    context 'when standard options specified' do
+      let(:command) { "knife azure vnet list" + append_azure_creds("is_list_cmd") }
+      run_cmd_check_status_and_output("succeed", "Name")
+    end
+  end
+
+  describe 'display ag list' do
+    context 'when standard options specified' do
+      let(:command) { "knife azure ag list" + append_azure_creds("is_list_cmd") }
+      run_cmd_check_status_and_output("succeed", "Name")
+    end
+  end
+
+  describe 'server show' do
+    context 'with valid instance_id' do
+      before(:each) do
+        @instance_id = get_active_instance_id
+      end
+      let(:command) { "knife azure server show #{@instance_id}" + append_azure_creds("is_list_cmd") }
+      run_cmd_check_status_and_output("succeed", "Role name")
+    end
+
+    context 'with invalid instance_id' do
+      let(:command) { "knife openstack server show invalid_instance_id" + append_azure_creds("is_list_cmd")}
+      
+      run_cmd_check_status_and_output("fail", "ERROR: Server doesn't exists for this invalid_instance_id instance id")
+    end
+  end
+
+  describe 'create and bootstrap Linux Server'  do
+    before(:each) {rm_known_host}
+    context 'when standard options specified and --azure-dns-name option' do
+      before(:all) { create_dns_name }
+      
+      let(:command) { "knife azure server create --azure-dns-name #{@dns_name}" + 
+       append_azure_creds + " --azure-source-image #{@az_linux_image}" + get_ssh_credentials
+       " --template-file " + get_linux_template_file_path + 
+       " --server-url http://localhost:8889" + " --yes" }
+      run_cmd_check_status_and_output("succeed", "#{@dns_name}")
+    end
+
+    context 'delete Linux server by using server name and standard option' do
+      let(:command) { delete_instance_cmd(@dns_name) + append_azure_creds("is_list_cmd")}
+      run_cmd_check_status_and_output("succeed", "#{@dns_name}")
+    end
+
+    context 'when publishsettings file specified and --azure-dns-name option' do
+      before(:all) { create_dns_name }
+
+      let(:command) { "knife azure server create --azure-dns-name #{@dns_name}" + 
+      append_azure_creds("is_publishsettings_file") + " --azure-source-image #{@az_linux_image}" +
+      " --template-file " + get_linux_template_file_path + get_ssh_credentials
+      " --server-url http://localhost:8889" + " --yes" }
+
+      run_cmd_check_status_and_output("succeed", "#{@dns_name}")
+    end
+
+    context 'delete Linux server by using server name and publishsettings file' do
+      let(:command) { delete_instance_cmd(@dns_name) + append_azure_creds("is_publishsettings_file","is_list_cmd")}
+      run_cmd_check_status_and_output("succeed", "#{@dns_name}")
+    end
+
+    context 'skip user specified --tcp-endpoints if its external port is same as ssh external port' do
+      before(:all) { create_dns_name }
+      after(:all) { run(delete_instance_cmd + append_azure_creds("is_list_cmd")) }
+      let(:command) { "knife azure server create --azure-dns-name #{@dns_name}" + 
+      append_azure_creds("is_publishsettings_file") + get_ssh_credentials +
+      " --azure-source-image #{@az_linux_image}" + " --template-file " +
+      get_linux_template_file_path + " --server-url http://localhost:8889" + 
+      " --tcp-endpoints 22:22,1234:1234" + " --yes" }
+      
+      run_cmd_check_status_and_output("succeed", "#{@dns_name}")
+    end
+
+    context 'when azure-connect-to-existing-dns option' do
+      before(:all) { create_dns_name; create_vm_name }
+      context 'create Linux VM for azure-connect-to-existing-dns' do
+        let(:command) { "knife azure server create --azure-dns-name #{@dns_name}" +
+        append_azure_creds + " --azure-source-image #{@az_linux_image}" + get_ssh_credentials
+        " --template-file " + get_linux_template_file_path +
+        " --server-url http://localhost:8889" + " --yes" }
+        run_cmd_check_status_and_output("succeed", "#{@dns_name}")
+      end
+
+      context 'create Linux VM by using standard option and connect-to-existing-dns' do
+        let(:command) { "knife azure server create --azure-vm-name #{@vm_name} --azure-dns-name #{@dns_name}" +
+        append_azure_creds + " --azure-source-image #{@az_linux_image}" + get_ssh_credentials +
+        " --template-file " + get_linux_template_file_path + " --server-url http://localhost:8889" +
+        " --yes --azure-connect-to-existing-dns" }
+        run_cmd_check_status_and_output("succeed", "#{@vm_name}")
+      end
+
+      context 'delete Linux server, Chef node, Chef client by using --purge' do
+        let(:command) { delete_instance_cmd(@dns_name) + 
+        append_azure_creds("is_list_cmd") + " --yes --purge" }
+        run_cmd_check_status_and_output("succeed", "#{@dns_name}")
+      end
+
+      context 'delete Linux server, Chef node, Chef client by using --purge and preserve dns' do
+        let(:command) { delete_instance_cmd(@vm_name) + 
+        append_azure_creds("is_list_cmd") + " --yes --purge --preserve-azure-dns-name"}
+        run_cmd_check_status_and_output("succeed", "#{@vm_name}")
+      end
+      
+      context 'when having duplicate ssh port ' do
+        before(:each) {run("knife azure server create --azure-vm-name #{@dns_name} --azure-dns-name #{@dns_name}" + append_azure_creds + " --azure-source-image #{@az_linux_image}" + get_ssh_credentials +
+          " --template-file " + get_linux_template_file_path + " --server-url http://localhost:8889" + 
+          " --ssh-port 245 --yes --azure-connect-to-existing-dns")}
+        
+        after(:each)  { run(delete_instance_cmd(@dns_name) + append_azure_creds("is_list_cmd") + " --yes --purge")}
+
+        let(:command) { "knife azure server create --azure-vm-name #{@vm_name} --azure-dns-name #{@dns_name}" +append_azure_creds + " --azure-source-image #{@az_linux_image}" + " --template-file " +  get_ssh_credentials +  get_linux_template_file_path + " --server-url http://localhost:8889" + 
+        " --ssh-port 245 --yes --azure-connect-to-existing-dns" }
+        run_cmd_check_status_and_output("fail", "")
+      end
+
+      context 'when having out of range ssh port' do
+        let(:command) { "knife azure server create --azure-dns-name #{@dns_name}" + 
+        append_azure_creds + " --azure-source-image #{@az_linux_image}" +
+        " --template-file " + get_linux_template_file_path + get_ssh_credentials +
+        " --server-url http://localhost:8889" + " --ssh-port 900000 --yes" }
+        run_cmd_check_status_and_output("fail", "")
+      end
+
+      context 'when having duplicate dns name option' do
+        let(:command) { "knife azure server create --azure-dns-name #{@dns_name}" + 
+        append_azure_creds("is_publishsettings_file") + " --azure-source-image #{@az_linux_image}" + 
+        " --template-file " + get_linux_template_file_path + get_ssh_credentials +
+        " --server-url http://localhost:8889" + " --yes" }
+        run_cmd_check_status_and_output("fail", "")
+      end
+
+      context 'when standard option and over write default ssh port ' do
+        after(:each)  { run(delete_instance_cmd(@vm_name) + append_azure_creds("is_list_cmd") + " --yes") }
+
+        let(:command) { "knife azure server create --azure-vm-name #{@vm_name} --azure-dns-name #{@dns_name}" +
+        append_azure_creds + " --azure-source-image #{@az_linux_image}" + 
+        " --template-file " + get_ssh_credentials +
+        get_linux_template_file_path + " --server-url http://localhost:8889" +
+        " --ssh-port 3245 --yes --azure-connect-to-existing-dns" }
+
+        run_cmd_check_status_and_output("succeed", "#{@vm_name}")
+      end
+    end
+  end
+
   context 'gem' do
-    context 'build' do
-      let(:command) { "gem build knife-azure.gemspec" }
-      it 'should succeed' do
-        match_status("should succeed")
-      end
-    end
-
-    context 'install ' do
-      let(:command) { "gem install " + get_gem_file_name  }
-      it 'should succeed' do
-        match_status("should succeed")
-      end
-    end
-
-    describe 'knife' do
-      context 'azure' do
-        context 'image list --help' do
-         let(:command) { "knife azure image list --help" }
-           it 'should succeed' do
-            match_stdout(/--help/)
-          end
-        end
-      end
-
-      context 'server create --help' do
-       let(:command) { "knife azure server create --help" }
-         it 'should list all the options available for server create command.' do
-          match_stdout(/--help/)
-        end
-      end
-
-      context 'server delete --help' do
-       let(:command) { "knife azure server delete --help" }
-         it 'should list all the options available for server delete command.' do
-          match_stdout(/--help/)
-        end
-      end
-
-      context 'server list --help' do
-       let(:command) { "knife azure server list --help" }
-         it 'should list all the options available for server list command.' do
-          match_stdout(/--help/)
-        end
-      end
-    end
-
     describe 'knife' , :if => is_config_present do
       context 'server' do
        before(:all) { create_dns_name }
@@ -212,24 +280,7 @@ describe 'knife-azure' do
 
       context 'server' do
         before(:all) { create_dns_name }
-        context 'create Linux VM by using standard and --azure-dns-name option' do
-          let(:command) { "knife azure server create --azure-dns-name #{@dns_name}" + append_azure_creds_for_linux + " --azure-source-image #{@linux_img}" + " --template-file " + get_linux_template_file_path + " --server-url http://localhost:8889" + " --yes" }
-          it 'should succeed' do
-            match_status("should succeed")
-          end
-        end
-
-        context 'delete Linux server by using server name and standard option' do
-          let(:command) { delete_instance_cmd(@dns_name) + append_azure_creds(is_list_cmd = true) + " --yes" }
-          it 'should succeed' do
-            match_status("should succeed")
-          end
-        end
-      end
-
-      context 'server' do
-        before(:all) { create_dns_name }
-        context 'create Windows VM by using publishsettings file and  --azure-dns-name option' do
+        context 'create Windows VM by using l file and  --azure-dns-name option' do
           let(:command) { "knife azure server create --azure-dns-name #{@dns_name}" + append_azure_creds_for_windows(:is_publishsettings_file) + " --azure-source-image #{@windows_img}" + " --template-file " + get_windows_msi_template_file_path + " --server-url http://localhost:8889" + " --yes" }
           it 'should succeed' do
             match_status("should succeed")
@@ -246,37 +297,9 @@ describe 'knife-azure' do
 
       context 'server' do
         before(:all) { create_dns_name }
-        context 'create Linux VM by using publishsettings file and  --azure-dns-name option' do
-          let(:command) { "knife azure server create --azure-dns-name #{@dns_name}" + append_azure_creds_for_linux(:is_publishsettings_file) + " --azure-source-image #{@linux_img}" + " --template-file " + get_linux_template_file_path + " --server-url http://localhost:8889" + " --yes" }
-          it 'should succeed' do
-            match_status("should succeed")
-          end
-        end
-
-        context 'delete Linux server by using server name and publishsettings file' do
-          let(:command) { delete_instance_cmd(@dns_name) + append_azure_creds(is_list_cmd = true, is_identity_file= false, is_publishsettings_file= true ) + " --yes" }
-          it 'should succeed' do
-            match_status("should succeed")
-          end
-        end
-      end
-
-      context 'server' do
-        before(:all) { create_dns_name }
         context 'create Windows VM by using publishsettings file and skip user specified --tcp-endpoints if its external port is same as winrm external port' do
           after(:each)  { run(delete_instance_cmd(@dns_name) + append_azure_creds(is_list_cmd = true, is_identity_file= false, is_publishsettings_file= true) + " --yes") }
           let(:command) { "knife azure server create --azure-dns-name #{@dns_name}" + append_azure_creds_for_windows(:is_publishsettings_file) + " --azure-source-image #{@windows_img}" + " --template-file " + get_windows_msi_template_file_path + " --server-url http://localhost:8889" + " --tcp-endpoints 5985:5985,1234:1234"  + " --yes" }
-          it 'should succeed' do
-            match_status("should succeed")
-          end
-        end
-      end
-
-      context 'server' do
-        before(:all) { create_dns_name }
-        context 'create Linux VM by using publishsettings file and skip user specified --tcp-endpoints if its external port is same as ssh external port' do
-          after(:each)  { run(delete_instance_cmd(@dns_name) + append_azure_creds(is_list_cmd = true, is_identity_file= false, is_publishsettings_file= true) + " --yes") }
-          let(:command) { "knife azure server create --azure-dns-name #{@dns_name}" + append_azure_creds_for_linux(:is_publishsettings_file) + " --azure-source-image #{@linux_img}" + " --template-file " + get_linux_template_file_path + " --server-url http://localhost:8889" + " --tcp-endpoints 22:22,1234:1234" + " --yes" }
           it 'should succeed' do
             match_status("should succeed")
           end
@@ -355,120 +378,6 @@ describe 'knife-azure' do
           it 'should fail' do
             match_status("should fail")
           end
-        end
-      end
-
-      context 'server' do
-        before(:all) { create_dns_name; create_vm_name }
-        context 'create Linux VM by using standard option for azure-connect-to-existing-dns' do
-          let(:command) { "knife azure server create --azure-dns-name #{@dns_name}" + append_azure_creds_for_linux + " --azure-source-image #{@linux_img}" + " --template-file " + get_linux_template_file_path + " --server-url http://localhost:8889" + " --yes" }
-          it 'should succeed' do
-            match_status("should succeed")
-          end
-        end
-
-        context 'create Linux VM by using standard option and connect-to-existing-dns' do
-          let(:command) { "knife azure server create --azure-vm-name #{@vm_name} --azure-dns-name #{@dns_name}" + append_azure_creds_for_linux + " --azure-source-image #{@linux_img}" + " --template-file " + get_linux_template_file_path + " --server-url http://localhost:8889" + " --yes --azure-connect-to-existing-dns" }
-          it 'should succeed' do
-            match_status("should succeed")
-          end
-        end
-
-        context 'delete Linux server, Chef node, Chef client by using --purge' do
-          let(:command) { delete_instance_cmd(@dns_name) + append_azure_creds(is_list_cmd = true) + " --yes --purge" }
-          it 'should succeed' do
-            match_status("should succeed")
-          end
-        end
-
-        context 'delete Linux server, Chef node, Chef client by using --purge and preserve dns' do
-          let(:command) { delete_instance_cmd(@vm_name) + append_azure_creds(is_list_cmd = true) + " --yes --purge --preserve-azure-dns-name"}
-          it 'should succeed' do
-            match_status("should succeed")
-          end
-        end
-
-        context 'create Linux VM by using standard option and connect-to-existing-dns and over write default ssh port ' do
-          after(:each)  { run(delete_instance_cmd(@vm_name) + append_azure_creds(is_list_cmd = true) + " --yes --purge --preserve-azure-dns-name") }
-          let(:command) { "knife azure server create --azure-vm-name #{@vm_name} --azure-dns-name #{@dns_name}" + append_azure_creds_for_linux + " --azure-source-image #{@linux_img}" + " --template-file " + get_linux_template_file_path + " --server-url http://localhost:8889" + " --ssh-port 3245 --yes --azure-connect-to-existing-dns" }
-          it 'should succeed' do
-            match_status("should succeed")
-          end
-        end
-
-        context 'create Linux VM by using Invalid identity file' do
-          before(:all) {  begin
-                            data_to_write = File.read(File.expand_path("../config/id_rsa", __FILE__));
-                            data_to_write = "this is invalid data for id_rsa file" + data_to_write;
-                            File.open("#{temp_dir}/invalid_id_rsa", 'w') {|f| f.write(data_to_write)};
-                          rescue
-                            puts "Error while creating file - invalid identity_file"
-                          end
-           }
-          let(:command) { "knife azure server create --azure-vm-name #{@dns_name} --azure-dns-name #{@dns_name}  --azure-source-image #{@linux_img} --azure-publish-settings-file #{temp_dir}/azure.publishsettings --config #{temp_dir}/knife.rb --azure-service-location 'West US'  --ssh-user azure --identity-file #{temp_dir}/invalid_id_rsa --template-file " + get_linux_template_file_path + " --server-url http://localhost:8889" + " --yes --azure-connect-to-existing-dns" }
-          it 'should fail' do
-            match_status("should fail")
-          end
-        end
-
-        context 'create Linux VM by using Invalid publishsettings file overrides standard options' do
-          before(:all) {  begin
-                            data_to_write = File.read(File.expand_path("../config/azure.publishsettings", __FILE__));
-                            data_to_write = "this is invalid data for publishsettings file" + data_to_write;
-                            File.open("#{temp_dir}/invalid.publishsettings", 'w') {|f| f.write(data_to_write)};
-                          rescue
-                            puts "Error while creating file - invalid publishsettings file"
-                          end
-           }
-
-          let(:command) { "knife azure server create --azure-vm-name #{@vm_name} --azure-dns-name #{@dns_name} --azure-publish-settings-file #{temp_dir}/invalid.publishsettings" + append_azure_creds_for_linux + " --azure-source-image #{@linux_img}" + " --template-file " + get_linux_template_file_path + " --server-url http://localhost:8889" + " --ssh-port 3245 --yes --azure-connect-to-existing-dns" }
-
-          it 'should fail' do
-            match_status("should fail")
-          end
-        end
-
-        context 'create Linux VM by using standard option and connect-to-existing-dns having duplicate ssh port ' do
-          before(:each) {run("knife azure server create --azure-vm-name #{@dns_name} --azure-dns-name #{@dns_name}" + append_azure_creds_for_linux + " --azure-source-image #{@linux_img}" + " --template-file " + get_linux_template_file_path + " --server-url http://localhost:8889" + " --ssh-port 245 --yes --azure-connect-to-existing-dns")}
-          after(:each)  { run(delete_instance_cmd(@dns_name) + append_azure_creds(is_list_cmd = true) + " --yes --purge")}
-
-          let(:command) { "knife azure server create --azure-vm-name #{@vm_name} --azure-dns-name #{@dns_name}" + append_azure_creds_for_linux + " --azure-source-image #{@linux_img}" + " --template-file " + get_linux_template_file_path + " --server-url http://localhost:8889" + " --ssh-port 245 --yes --azure-connect-to-existing-dns" }
-          it 'should fail' do
-            match_status("should fail")
-          end
-        end
-
-        context 'create Linux VM by using standard option and connect-to-existing-dns having out of range ssh port' do
-          let(:command) { "knife azure server create --azure-dns-name #{@dns_name}" + append_azure_creds_for_linux + " --azure-source-image #{@linux_img}" + " --template-file " + get_linux_template_file_path + " --server-url http://localhost:8889" + " --ssh-port 900000 --yes" }
-          it 'should fail' do
-            match_status("should fail")
-          end
-        end
-      end
-
-      context 'server' do
-        before(:all) { create_dns_name; }
-        before(:each) {run ("knife azure server create --azure-dns-name #{@dns_name}" + append_azure_creds_for_linux(:is_publishsettings_file) + " --azure-source-image #{@linux_img}" + " --template-file " + get_linux_template_file_path + " --server-url http://localhost:8889" + " --yes")}
-        after(:each) {run(delete_instance_cmd(@dns_name) + append_azure_creds(is_list_cmd = true, is_identity_file= false, is_publishsettings_file= true ) + " --yes --purge")}
-        context 'create Linux VM by using publishsettings file and having duplicate dns name option' do
-          let(:command) { "knife azure server create --azure-dns-name #{@dns_name}" + append_azure_creds_for_linux(:is_publishsettings_file) + " --azure-source-image #{@linux_img}" + " --template-file " + get_linux_template_file_path + " --server-url http://localhost:8889" + " --yes" }
-          it 'should fail' do
-            match_status("should fail")
-          end
-        end
-      end
-
-      context 'image list' do
-        let(:command) { "knife azure image list" + append_azure_creds(is_list_cmd = true) }
-        it 'should succeed' do
-          match_status("should succeed")
-        end
-      end 
-
-      context 'server list' do
-        let(:command) { "knife azure server list" + append_azure_creds(is_list_cmd = true) }
-        it 'should succeed' do
-          match_status("should succeed")
         end
       end
     end
