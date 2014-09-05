@@ -23,6 +23,9 @@ require 'chef/knife/azure_vnet_list'
 require 'fileutils'
 require "securerandom"
 require 'knife-azure/version'
+require 'test/knife-utils/test_bed'
+require 'resource_spec_helper'
+require 'server_command_common_spec_helper'
 
 def temp_dir
   @_temp_dir ||= Dir.mktmpdir
@@ -67,14 +70,81 @@ module AzureSpecHelper
   end
 end
 
-def is_config_present 
-  is_config_present = File.exist?(File.expand_path("../integration/config/environment.yml", __FILE__)) 
-  if(!is_config_present)
-    puts "\nSkipping the integration tests for knife azure commands"
-    puts "\nPlease make sure environment.yml is present and set with valid credentials."
-    puts "\nPlease look for a sample file at spec/integration/config/environment.yml.sample"
-    puts "\nPlease make sure azure.publishsettings file is present and set with valid key pair content."
-    puts "\nPlease make sure identity file id_rsa is present and set with valid key pair content."
+def is_config_present
+  if ! ENV['RUN_INTEGRATION_TESTS']
+    puts("\nPlease set RUN_INTEGRATION_TESTS environment variable to run integration tests")
+    return false
   end
-  is_config_present
+
+  unset_env_var = []
+  unset_config_options = []
+  is_config = true
+  config_file_exist = File.exist?(File.expand_path("../integration/config/environment.yml", __FILE__))
+  azure_config = YAML.load(File.read(File.expand_path("../integration/config/environment.yml", __FILE__))) if config_file_exist
+  
+  %w(AZURE_PUBLISH_SETTINGS_FILE AZURE_MGMT_CERT AZURE_SUBSCRIPTION_ID AZURE_API_HOST_NAME).each do |az_env_var|
+    if ENV[az_env_var].nil?
+      unset_env_var <<  az_env_var
+      is_config = false
+    end
+  end
+
+  err_msg = "\nPlease set #{unset_env_var.join(', ')} environment"
+  err_msg = err_msg + ( unset_env_var.length > 1 ? " variables " : " variable " ) + "for integration tests."
+  puts err_msg unless unset_env_var.empty?
+
+
+  %w(AZ_SSH_USER  AZ_SSH_PASSWORD AZ_WINDOWS_SSH_USER AZ_WINDOWS_SSH_PASSWORD AZ_WINRM_USER AZ_WINRM_PASSWORD AZ_LINUX_IMAGE AZ_LINUX_FLAVOR AZ_INVALID_FLAVOR AZ_WINDOWS_FLAVOR AZ_WINDOWS_IMAGE AZ_WINDOWS_SSH_IMAGE  AZURE_SERVICE_LOCATION).each do |os_config_opt|
+    option_value = ENV[os_config_opt] || (azure_config[os_config_opt] if azure_config)
+    if option_value.nil?
+      unset_config_options << os_config_opt
+      is_config = false
+    end
+  end
+
+  config_err_msg = "\nPlease set #{unset_config_options.join(', ')} config"
+  config_err_msg = config_err_msg + ( unset_config_options.length > 1 ? " options in ../spec/integration/config/environment.yml or as environment variables" : " option in ../spec/integration/config/environment.yml or as environment variable" ) + " for integration tests."
+  puts config_err_msg unless unset_config_options.empty?
+  
+  is_config
+end
+
+def get_gem_file_name
+  "knife-azure-" + Knife::OpenStack::VERSION + ".gem"
+end
+
+def find_instance_id(instance_name, file)
+  file.lines.each do |line|
+    if line.include?("#{instance_name}")
+      return "#{line}".split(" ")[2].strip
+    end
+  end
+end
+
+def delete_instance_cmd(vm_name)
+  "knife azure server delete #{vm_name}  --yes"
+end
+
+def create_node_name(name)
+  @name_node  = (name == "linux") ? "az-lnxtest#{SecureRandom.hex(4)}" :  "az-wintest-#{SecureRandom.hex(4)}"
+end
+
+def init_azure_test
+  init_test
+
+  begin
+    %w(azure_invalid.pem azure_invalid.publishsettings).each do |file_name| 
+      data_to_write = File.read(File.expand_path("../integration/config/#{file_name}", __FILE__))
+      File.open("#{temp_dir}/#{file_name}", 'w') {|f| f.write(data_to_write)}
+    end
+  rescue
+    puts "Error while creating file - azure invalid"
+  end
+
+  config_file_exist = File.exist?(File.expand_path("../integration/config/environment.yml", __FILE__))
+  azure_config = YAML.load(File.read(File.expand_path("../integration/config/environment.yml", __FILE__))) if config_file_exist
+
+  %w(AZ_SSH_USER AZ_SSH_PASSWORD AZ_WINDOWS_SSH_USER AZ_WINDOWS_SSH_PASSWORD AZ_WINRM_USER AZ_WINRM_PASSWORD AZ_LINUX_IMAGE AZ_LINUX_FLAVOR AZ_INVALID_FLAVOR AZ_WINDOWS_FLAVOR AZ_WINDOWS_IMAGE AZ_WINDOWS_SSH_IMAGE AZURE_SERVICE_LOCATION).each do |az_config_opt|
+    instance_variable_set("@#{az_config_opt.downcase}", (azure_config[az_config_opt] if azure_config) || ENV[az_config_opt])
+  end
 end
