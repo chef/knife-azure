@@ -310,7 +310,7 @@ describe 'knife-azure integration test' , :if => is_config_present do
       end
 
       context 'create Windows VM by using standard option and connect-to-existing-dns and over write default winrm port ' do
-        after(:each)  { run(delete_instance_cmd(@vm_name) + append_azure_creds("list_cmd") }
+        after(:each)  { run(delete_instance_cmd(@vm_name) + append_azure_creds("list_cmd")) }
         let(:command) { "knife azure server create --azure-vm-name #{@vm_name} --azure-dns-name #{@dns_name}" + append_azure_creds_for_windows + " --azure-source-image #{@az_windows_image}" + get_winrm_credentials +
          " --template-file " + get_windows_msi_template_file_path + " --server-url http://localhost:8889" + " --winrm-port 5682 --yes --azure-connect-to-existing-dns" }
         run_cmd_check_status_and_output("succeed", "#{@vm_name}")
