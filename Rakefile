@@ -23,15 +23,15 @@ end
 require 'rspec/core'
 require 'rspec/core/rake_task'
 RSpec::Core::RakeTask.new(:spec) do |spec|
-  spec.pattern = FileList['spec/unit/**/*_spec.rb']
+  spec.pattern = FileList['spec/unit/**/*_spec.rb'].to_a
 end
 
 RSpec::Core::RakeTask.new(:functional) do |spec|
-  spec.pattern = FileList['spec/functional/**/*_test.rb']
+  spec.pattern = FileList['spec/functional/**/*_test.rb'].to_a
 end
 
 RSpec::Core::RakeTask.new(:integration) do |spec|
-  spec.pattern = FileList['spec/integration/**/*_test.rb']
+  spec.pattern = FileList['spec/integration/**/*_test.rb'].to_a
 end
 
 RSpec::Core::RakeTask.new(:rcov) do |spec|
