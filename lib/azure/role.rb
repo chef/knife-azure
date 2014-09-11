@@ -265,21 +265,23 @@ class Azure
             xml.ConfigurationSet('i:type' => 'NetworkConfigurationSet') {
               xml.ConfigurationSetType 'NetworkConfiguration'
               xml.InputEndpoints {
-                if params[:bootstrap_proto].downcase == 'ssh'
+
+                if params[:os_type] == 'Windows' and (params[:bootstrap_proto].downcase == 'winrm' or params[:bootstrap_proto].downcase == 'cloud-api')
+                  xml.InputEndpoint {
+                  xml.LocalPort '5985'
+                  xml.Name 'WinRM'
+                  xml.Port params[:port]
+                  xml.Protocol 'TCP'
+                }
+                else 
                   xml.InputEndpoint {
                   xml.LocalPort '22'
                   xml.Name 'SSH'
                   xml.Port params[:port]
                   xml.Protocol 'TCP'
                 }
-                elsif params[:bootstrap_proto].downcase == 'winrm' and params[:os_type] == 'Windows'
-                  xml.InputEndpoint {
-                    xml.LocalPort '5985'
-                    xml.Name 'WinRM'
-                    xml.Port params[:port]
-                    xml.Protocol 'TCP'
-                  }
                 end
+
                 if params[:tcp_endpoints]
                   params[:tcp_endpoints].split(',').each do |endpoint|
                     ports = endpoint.split(':')
