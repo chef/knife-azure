@@ -335,11 +335,14 @@ class Chef
         deployment_name = connection.deploys.get_deploy_name_for_hostedservice(locate_config_value(:azure_dns_name))
         deployment = connection.query_azure("hostedservices/#{locate_config_value(:azure_dns_name)}/deployments/#{deployment_name}")
         extension_status = Hash.new
-        
+
         if deployment.at_css('Deployment Name') != nil
           role_list_xml =  deployment.css('RoleInstanceList RoleInstance')
           role_list_xml.each do |role|
             if role.at_css("RoleName").text == locate_config_value(:azure_vm_name)
+              lnx_waagent_fail_msg = "Failed to deserialize the status reported by the Guest Agent"
+              waagent_status_msg = role.at_css("GuestAgentStatus FormattedMessage Message").text
+              
               if role.at_css("GuestAgentStatus Status").text == "Ready"
                 extn_status = role.at_css("ResourceExtensionStatusList Status").text
 
@@ -357,6 +360,9 @@ class Chef
                 else
                   extension_status[:status] = :extension_status_not_detected
                 end
+              # This fix is for linux waagent issue: api unable to deserialize the waagent status.
+              elsif role.at_css("GuestAgentStatus Status").text == "NotReady" and waagent_status_msg == lnx_waagent_fail_msg
+                extension_status[:status] = :extension_ready
               else
                 extension_status[:status] = :wagent_provisioning
                 extension_status[:message] = role.at_css("GuestAgentStatus Message").text
@@ -368,7 +374,7 @@ class Chef
         else
           extension_status[:status] = :extension_status_not_detected
         end
-        
+
         return extension_status
       end
 
@@ -463,7 +469,7 @@ class Chef
             remove_storage_service_on_failure = nil
           else
             remove_storage_service_on_failure = locate_config_value(:azure_storage_account)
-          end   
+          end
         end
 
         begin
