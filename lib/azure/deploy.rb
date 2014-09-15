@@ -78,6 +78,10 @@ class Azure
       if params[:identity_file]
         params[:fingerprint] = @connection.certificates.create(params)
       end
+      if params[:cert_path]
+        cert_data = File.read (params[:cert_path])
+        @connection.certificates.add cert_data, params[:cert_password], 'pfx', params[:azure_dns_name]
+      end
       params['deploy_name'] = get_deploy_name_for_hostedservice(params[:azure_dns_name])
 
       if params['deploy_name'] != nil
@@ -99,7 +103,7 @@ class Azure
     end
     def delete(rolename)
     end
-    
+
     def queryDeploy(hostedservicename)
         deploy = Deploy.new(@connection)
         deploy.retrieve(hostedservicename)
