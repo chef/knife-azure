@@ -213,6 +213,18 @@ class Chef
         :description => "A JSON string to be added to the first run of chef-client",
         :proc => lambda { |o| JSON.parse(o) }
 
+      option :ssl_cert_fingerprint,
+        :long => "--ssl-cert-fingerprint FINGERPRINT",
+        :description => "The fingerprint (thumprint) of the ssl certificate"
+
+      option :cert_password,
+        :long => "--cert-password PASSWORD",
+        :description => "SSL Certificate Password"
+
+      option :cert_path,
+        :long => "--cert-path PATH",
+        :description => "SSL Certificate Path"
+
       def strip_non_ascii(string)
         string.gsub(/[^0-9a-z ]/i, '')
       end
@@ -235,11 +247,11 @@ class Chef
 
           if locate_config_value(:bootstrap_protocol) == "cloud-api"
             extension_status = wait_for_resource_extension_state(:wagent_provisioning, 5, retry_interval_in_seconds)
-            
+
             if extension_status != :extension_installing
               extension_status = wait_for_resource_extension_state(:extension_installing, 5, retry_interval_in_seconds)
             end
-            
+
             if extension_status != :extension_provisioning
               extension_status = wait_for_resource_extension_state(:extension_provisioning, 10, retry_interval_in_seconds)
             end
@@ -310,7 +322,7 @@ class Chef
 
         elapsed_time_in_minutes = ((Time.now - wait_start_time) / 60).round(2)
         print ui.color("Resource extension state '#{status_description[extension_status_goal]}' reached after #{elapsed_time_in_minutes} minutes.\n", :cyan)
-        
+
         extension_status[:status]
       end
 
@@ -333,7 +345,7 @@ class Chef
         deployment_name = connection.deploys.get_deploy_name_for_hostedservice(locate_config_value(:azure_dns_name))
         deployment = connection.query_azure("hostedservices/#{locate_config_value(:azure_dns_name)}/deployments/#{deployment_name}")
         extension_status = Hash.new
-        
+
         if deployment.at_css('Deployment Name') != nil
           role_list_xml =  deployment.css('RoleInstanceList RoleInstance')
           role_list_xml.each do |role|
@@ -366,7 +378,7 @@ class Chef
         else
           extension_status[:status] = :extension_status_not_detected
         end
-        
+
         return extension_status
       end
 
@@ -442,7 +454,7 @@ class Chef
         if connection.hosts.exists?(locate_config_value(:azure_dns_name))
           remove_hosted_service_on_failure = nil
         end
-        
+
         #If Storage Account is not specified, check if the geographic location has one to re-use
         if not locate_config_value(:azure_storage_account)
           storage_accts = connection.storageaccounts.all
@@ -459,7 +471,7 @@ class Chef
             remove_storage_service_on_failure = nil
           else
             remove_storage_service_on_failure = locate_config_value(:azure_storage_account)
-          end   
+          end
         end
 
         begin
@@ -504,7 +516,7 @@ class Chef
               puts("done")
             }
           end
-        
+
           puts("\n")
           bootstrap_for_windows_node(server,fqdn, port).run
         else
@@ -526,7 +538,7 @@ class Chef
           bootstrap_for_node(server,fqdn,port).run
         end
 
-        msg_server_summary(server)        
+        msg_server_summary(server)
       end
 
       def load_cloud_attributes_in_hints(server)
@@ -647,7 +659,10 @@ class Chef
           :azure_availability_set => locate_config_value(:azure_availability_set),
           :azure_affinity_group => locate_config_value(:azure_affinity_group),
           :azure_network_name => locate_config_value(:azure_network_name),
-          :azure_subnet_name => locate_config_value(:azure_subnet_name)
+          :azure_subnet_name => locate_config_value(:azure_subnet_name),
+          :ssl_cert_fingerprint => locate_config_value(:ssl_cert_fingerprint),
+          :cert_path => locate_config_value(:cert_path),
+          :cert_password => locate_config_value(:cert_password)
 
         }
         # If user is connecting a new VM to an existing dns, then
