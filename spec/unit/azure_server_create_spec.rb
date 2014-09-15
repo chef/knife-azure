@@ -550,7 +550,7 @@ describe Chef::Knife::AzureServerCreate do
       end
 
       it "successful bootstrap" do
-        expect(@server_instance).to receive(:is_image_windows?).exactly(4).times.and_return(false)
+        expect(@server_instance).to receive(:is_image_windows?).exactly(5).times.and_return(false)
         @bootstrap = Chef::Knife::Bootstrap.new
         allow(Chef::Knife::Bootstrap).to receive(:new).and_return(@bootstrap)
         expect(@server_instance).to receive(:wait_until_virtual_machine_ready).exactly(1).times.and_return(true)
@@ -575,7 +575,7 @@ describe Chef::Knife::AzureServerCreate do
         end
 
         it "successful bootstrap with ssh key" do
-          expect(@server_instance).to receive(:is_image_windows?).exactly(4).times.and_return(false)
+          expect(@server_instance).to receive(:is_image_windows?).exactly(5).times.and_return(false)
           @bootstrap = Chef::Knife::Bootstrap.new
           allow(Chef::Knife::Bootstrap).to receive(:new).and_return(@bootstrap)
           expect(@bootstrap).to receive(:run)
@@ -664,7 +664,7 @@ describe Chef::Knife::AzureServerCreate do
         expect(@server_instance).to receive(:get_chef_extension_version)
         expect(@server_instance).to receive(:get_chef_extension_public_params)
         expect(@server_instance).to receive(:get_chef_extension_private_params)
-        expect(@server_instance).to receive(:is_image_windows?).exactly(3).times.and_return(true)
+        expect(@server_instance).to receive(:is_image_windows?).exactly(4).times.and_return(true)
         expect(@server_instance).to receive(:wait_until_virtual_machine_ready).exactly(1).times.and_return(true)
        @server_instance.run
       end

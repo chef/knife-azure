@@ -62,7 +62,8 @@ class Chef
       option :ssh_user,
         :short => "-x USERNAME",
         :long => "--ssh-user USERNAME",
-        :description => "The ssh username"
+        :description => "The ssh username",
+        :default => "root"
 
       option :ssh_password,
         :short => "-P PASSWORD",
@@ -222,6 +223,7 @@ class Chef
       end
 
       def wait_until_virtual_machine_ready(retry_interval_in_seconds = 30)
+
         vm_status = nil
         puts
 
@@ -310,7 +312,7 @@ class Chef
 
         elapsed_time_in_minutes = ((Time.now - wait_start_time) / 60).round(2)
         print ui.color("Resource extension state '#{status_description[extension_status_goal]}' reached after #{elapsed_time_in_minutes} minutes.\n", :cyan)
-        
+
         extension_status[:status]
       end
 
@@ -333,11 +335,14 @@ class Chef
         deployment_name = connection.deploys.get_deploy_name_for_hostedservice(locate_config_value(:azure_dns_name))
         deployment = connection.query_azure("hostedservices/#{locate_config_value(:azure_dns_name)}/deployments/#{deployment_name}")
         extension_status = Hash.new
-        
+
         if deployment.at_css('Deployment Name') != nil
           role_list_xml =  deployment.css('RoleInstanceList RoleInstance')
           role_list_xml.each do |role|
             if role.at_css("RoleName").text == locate_config_value(:azure_vm_name)
+              lnx_waagent_fail_msg = "Failed to deserialize the status reported by the Guest Agent"
+              waagent_status_msg = role.at_css("GuestAgentStatus FormattedMessage Message").text
+              
               if role.at_css("GuestAgentStatus Status").text == "Ready"
                 extn_status = role.at_css("ResourceExtensionStatusList Status").text
 
@@ -355,6 +360,9 @@ class Chef
                 else
                   extension_status[:status] = :extension_status_not_detected
                 end
+              # This fix is for linux waagent issue: api unable to deserialize the waagent status.
+              elsif role.at_css("GuestAgentStatus Status").text == "NotReady" and waagent_status_msg == lnx_waagent_fail_msg
+                extension_status[:status] = :extension_ready
               else
                 extension_status[:status] = :wagent_provisioning
                 extension_status[:message] = role.at_css("GuestAgentStatus Message").text
@@ -366,7 +374,7 @@ class Chef
         else
           extension_status[:status] = :extension_status_not_detected
         end
-        
+
         return extension_status
       end
 
@@ -431,6 +439,8 @@ class Chef
         Chef::Log.info("validating...")
         validate!
 
+        ssh_override_winrm if %w(ssh cloud-api).include?(locate_config_value(:bootstrap_protocol)) and !is_image_windows?
+
         Chef::Log.info("creating...")
 
         config[:azure_dns_name] = get_dns_name(locate_config_value(:azure_dns_name))
@@ -459,7 +469,7 @@ class Chef
             remove_storage_service_on_failure = nil
           else
             remove_storage_service_on_failure = locate_config_value(:azure_storage_account)
-          end   
+          end
         end
 
         begin
@@ -617,15 +627,26 @@ class Chef
               :azure_source_image,
               :azure_vm_size,
         ])
+
+        if locate_config_value(:winrm_password) and (locate_config_value(:winrm_password).length <= 6 and locate_config_value(:winrm_password).length >= 72)
+          ui.error("The supplied password must be 6-72 characters long and meet password complexity requirements")
+          exit 1
+        end
+
+        if locate_config_value(:ssh_password) and (locate_config_value(:ssh_password).length <= 6 and locate_config_value(:ssh_password).length >= 72)
+          ui.error("The supplied password must be 6-72 characters long and meet password complexity requirements")
+          exit 1
+        end
+
         if locate_config_value(:azure_connect_to_existing_dns) && locate_config_value(:azure_vm_name).nil?
           ui.error("Specify the VM name using --azure-vm-name option, since you are connecting to existing dns")
           exit 1
         end
         if locate_config_value(:azure_service_location) && locate_config_value(:azure_affinity_group)
-          ui.error("Cannot specify both --azure_service_location and --azure_affinity_group, use one or the other.")
+          ui.error("Cannot specify both --azure-service-location and --azure-affinity-group, use one or the other.")
           exit 1
         elsif locate_config_value(:azure_service_location).nil? && locate_config_value(:azure_affinity_group).nil?
-          ui.error("Must specify either --azure_service_location or --azure_affinity_group.")
+          ui.error("Must specify either --azure-service-location or --azure-affinity-group.")
           exit 1
         end
       end
@@ -754,6 +775,30 @@ class Chef
       end
 
       private
+
+      def ssh_override_winrm
+        # unchanged ssh_user and changed winrm_user, override ssh_user
+        if locate_config_value(:ssh_user).eql?(options[:ssh_user][:default]) &&
+            !locate_config_value(:winrm_user).eql?(options[:winrm_user][:default])
+          config[:ssh_user] = locate_config_value(:winrm_user)
+        end
+        # unchanged ssh_port and changed winrm_port, override ssh_port
+        if locate_config_value(:ssh_port).eql?(options[:ssh_port][:default]) &&
+            !locate_config_value(:winrm_port).eql?(options[:winrm_port][:default])
+          config[:ssh_port] = locate_config_value(:winrm_port)
+        end
+        # unset ssh_password and set winrm_password, override ssh_password
+        if locate_config_value(:ssh_password).nil? &&
+            !locate_config_value(:winrm_password).nil?
+          config[:ssh_password] = locate_config_value(:winrm_password)
+        end
+        # unset identity_file and set kerberos_keytab_file, override identity_file
+        if locate_config_value(:identity_file).nil? &&
+            !locate_config_value(:kerberos_keytab_file).nil?
+          config[:identity_file] = locate_config_value(:kerberos_keytab_file)
+        end
+      end
+
       # This is related to Windows VM's specifically and computer name
       # length limits for legacy computer accounts
       MAX_VM_NAME_CHARACTERS = 15
