@@ -48,7 +48,7 @@ location in your knife.rb:
       $ knife azure server list
   
       # Create and bootstrap an Ubuntu VM over ssh
-      $ knife azure server create -N MyNewNode --azure-vm-size Medium --I 8fcc3d_Ubuntu-12_04-amd64-30GB -m 'West US' --ssh-user myuser --identity-file ~/.ssh/myprivatekey_rsa
+      $ knife azure server create -N MyNewNode --azure-vm-size Medium -I b39f27a8b8c64d52b05eac6a62ebad85__Ubuntu-14_04_1-LTS-amd64-server-20140927-en-us-30GB -m 'West US' --ssh-user myuser --identity-file ~/.ssh/myprivatekey_rsa
   
       # Create and bootstrap a Windows VM over winrm
       $ knife azure server create --azure-dns-name MyNewServerName --azure-vm-size Medium --azure-source-image 8fcc3d_Win2012-amd64-30GB --azure-service-location 'West US' --winrm-user myuser --winrm-password 'mypassword' --bootstrap-protocol winrm --distro 'windows-chef-client-msi'
