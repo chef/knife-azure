@@ -67,11 +67,11 @@ def get_active_instance_id
 end
 
 def create_dns_name()
-  @dns_name  = "az-itestdns-#{SecureRandom.hex(4)}"
+  @dns_name  = "az-testdns#{SecureRandom.hex(2)}"
 end
 
 def create_vm_name(name="linux")
-  @vm_name  = (name == "linux") ? "az-lnxtest#{SecureRandom.hex(4)}" :  "az-wintest-#{SecureRandom.hex(4)}"
+  @vm_name  = (name == "linux") ? "az-testlnx#{SecureRandom.hex(2)}" :  "az-testwin#{SecureRandom.hex(2)}"
 end
 
 describe 'knife-azure integration test' , :if => is_config_present do
