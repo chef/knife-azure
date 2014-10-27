@@ -142,7 +142,7 @@ describe 'knife-azure integration test' , :if => is_config_present do
       before(:all) { create_dns_name }
       
       let(:command) { "knife azure server create --azure-dns-name #{@dns_name}" + 
-       append_azure_creds + " --azure-source-image #{@az_linux_image}" + get_ssh_credentials
+       append_azure_creds + " --azure-source-image #{@az_linux_image}" + get_ssh_credentials +
        " --template-file " + get_linux_template_file_path + 
        " --server-url http://localhost:8889" + " --yes" }
       run_cmd_check_status_and_output("succeed", "#{@dns_name}")

@@ -94,7 +94,7 @@ def is_config_present
   puts err_msg unless unset_env_var.empty?
 
 
-  %w(AZ_SSH_USER  AZ_SSH_PASSWORD AZ_WINDOWS_SSH_USER AZ_WINDOWS_SSH_PASSWORD AZ_WINRM_USER AZ_WINRM_PASSWORD AZ_LINUX_IMAGE AZ_LINUX_FLAVOR AZ_INVALID_FLAVOR AZ_WINDOWS_FLAVOR AZ_WINDOWS_IMAGE AZ_WINDOWS_SSH_IMAGE  AZURE_SERVICE_LOCATION).each do |os_config_opt|
+  %w(AZ_SSH_USER  AZ_SSH_PASSWORD AZ_WINDOWS_SSH_USER AZ_WINDOWS_SSH_PASSWORD AZ_WINRM_USER AZ_WINRM_PASSWORD AZ_LINUX_IMAGE AZ_LINUX_VM_SIZE AZ_INVALID_VM_SIZE AZ_WINDOWS_VM_SIZE AZ_WINDOWS_IMAGE AZ_WINDOWS_SSH_IMAGE  AZURE_SERVICE_LOCATION).each do |os_config_opt|
     option_value = ENV[os_config_opt] || (azure_config[os_config_opt] if azure_config)
     if option_value.nil?
       unset_config_options << os_config_opt
@@ -144,7 +144,7 @@ def init_azure_test
   config_file_exist = File.exist?(File.expand_path("../integration/config/environment.yml", __FILE__))
   azure_config = YAML.load(File.read(File.expand_path("../integration/config/environment.yml", __FILE__))) if config_file_exist
 
-  %w(AZ_SSH_USER AZ_SSH_PASSWORD AZ_WINDOWS_SSH_USER AZ_WINDOWS_SSH_PASSWORD AZ_WINRM_USER AZ_WINRM_PASSWORD AZ_LINUX_IMAGE AZ_LINUX_FLAVOR AZ_INVALID_FLAVOR AZ_WINDOWS_FLAVOR AZ_WINDOWS_IMAGE AZ_WINDOWS_SSH_IMAGE AZURE_SERVICE_LOCATION).each do |az_config_opt|
+  %w(AZ_SSH_USER AZ_SSH_PASSWORD AZ_WINDOWS_SSH_USER AZ_WINDOWS_SSH_PASSWORD AZ_WINRM_USER AZ_WINRM_PASSWORD AZ_LINUX_IMAGE AZ_LINUX_VM_SIZE AZ_INVALID_VM_SIZE AZ_WINDOWS_VM_SIZE AZ_WINDOWS_IMAGE AZ_WINDOWS_SSH_IMAGE AZURE_SERVICE_LOCATION).each do |az_config_opt|
     instance_variable_set("@#{az_config_opt.downcase}", (azure_config[az_config_opt] if azure_config) || ENV[az_config_opt])
   end
 end
