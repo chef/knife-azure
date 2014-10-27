@@ -70,7 +70,7 @@ def create_dns_name()
   @dns_name  = "az-itestdns-#{SecureRandom.hex(4)}"
 end
 
-def create_vm_name(name)
+def create_vm_name(name="linux")
   @vm_name  = (name == "linux") ? "az-lnxtest#{SecureRandom.hex(4)}" :  "az-wintest-#{SecureRandom.hex(4)}"
 end
 
@@ -133,12 +133,6 @@ describe 'knife-azure integration test' , :if => is_config_present do
       end
       let(:command) { "knife azure server show #{@instance_id}" + append_azure_creds("list_cmd") }
       run_cmd_check_status_and_output("succeed", "Role name")
-    end
-
-    context 'with invalid instance_id' do
-      let(:command) { "knife azure server show invalid_instance_id" + append_azure_creds("list_cmd")}
-      
-      run_cmd_check_status_and_output("fail", "ERROR: Server doesn't exists for this invalid_instance_id instance id")
     end
   end
 
@@ -289,7 +283,7 @@ describe 'knife-azure integration test' , :if => is_config_present do
     end
 
     context 'when azure-connect-to-existing-dns' do
-      before(:all) { create_dns_name; create_vm_name }
+      before(:all) { create_dns_name; create_vm_name("windows") }
 
       context 'create Windows VM for azure-connect-to-existing-dns' do
         

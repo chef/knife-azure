@@ -133,7 +133,7 @@ def init_azure_test
   init_test
 
   begin
-    %w(azure_invalid.pem azure_invalid.publishsettings).each do |file_name| 
+    %w(azure_invalid.publishsettings).each do |file_name| 
       data_to_write = File.read(File.expand_path("../integration/config/#{file_name}", __FILE__))
       File.open("#{temp_dir}/#{file_name}", 'w') {|f| f.write(data_to_write)}
     end
