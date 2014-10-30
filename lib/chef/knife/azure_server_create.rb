@@ -168,12 +168,12 @@ class Chef
       option :tcp_endpoints,
         :short => "-t PORT_LIST",
         :long => "--tcp-endpoints PORT_LIST",
-        :description => "Comma separated list of TCP local and public ports to open i.e. '80:80,433:5000'"
+        :description => "Comma-separated list of TCP local and public ports to open e.g. '80:80,433:5000'"
 
       option :udp_endpoints,
         :short => "-u PORT_LIST",
         :long => "--udp-endpoints PORT_LIST",
-        :description => "Comma separated list of UDP local and public ports to open i.e. '80:80,433:5000'"
+        :description => "Comma-separated list of UDP local and public ports to open e.g. '80:80,433:5000'"
 
       option :azure_connect_to_existing_dns,
         :short => "-c",

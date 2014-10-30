@@ -182,8 +182,8 @@ These options may also be configured from knife.rb, as in this example:
     knife[:identity_file]='/path/to/RSA/private/key'
     knife[:azure_storage_account]='auxpreview104'
     knife[:azure_os_disk_name]='disk107'
-    knife[:tcp_endpoints]='66'
-    knife[:udp_endpoints]='77,88,99'
+    knife[:tcp-endpoints]='80:80,3389:5678'
+    knife[:udp-endpoints]='123:123'
 
 #### Options for Bootstrapping a Windows Node in Azure
 
