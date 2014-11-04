@@ -214,12 +214,12 @@ class Chef
         :description => "A JSON string to be added to the first run of chef-client",
         :proc => lambda { |o| JSON.parse(o) }
 
-      option :ssl_cert_fingerprint,
-        :long => "--ssl-cert-fingerprint FINGERPRINT",
-        :description => "The fingerprint (thumprint) of the ssl certificate"
+      option :thumbprint,
+        :long => "--thumbprint THUMBPRINT",
+        :description => "The thumprint of the ssl certificate"
 
-      option :cert_password,
-        :long => "--cert-password PASSWORD",
+      option :cert_passphrase,
+        :long => "--cert-passphrase PASSWORD",
         :description => "SSL Certificate Password"
 
       option :cert_path,
@@ -681,10 +681,9 @@ class Chef
           :azure_affinity_group => locate_config_value(:azure_affinity_group),
           :azure_network_name => locate_config_value(:azure_network_name),
           :azure_subnet_name => locate_config_value(:azure_subnet_name),
-          :ssl_cert_fingerprint => locate_config_value(:ssl_cert_fingerprint),
+          :ssl_cert_fingerprint => locate_config_value(:thumbprint),
           :cert_path => locate_config_value(:cert_path),
-          :cert_password => locate_config_value(:cert_password)
-
+          :cert_password => locate_config_value(:cert_passphrase)
         }
         # If user is connecting a new VM to an existing dns, then
         # the VM needs to have a unique public port. Logic below takes care of this.
