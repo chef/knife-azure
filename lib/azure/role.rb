@@ -101,7 +101,7 @@ class Azure
       if alone_on_hostedservice(role)
         if !params[:preserve_azure_dns_name] && compmedia
           servicecall = "hostedservices/#{role.hostedservicename}"
-        else 
+        else
           servicecall = "hostedservices/#{role.hostedservicename}/deployments/#{role.deployname}"
         end
       else
@@ -128,7 +128,7 @@ class Azure
         for attempt in 0..12
            break if @connection.query_azure(servicecall, "get").search("AttachedTo").text == ""
            if attempt == 12 then puts "The associated disk could not be deleted due to time out." else sleep 25 end
-        end    
+        end
         unless params[:preserve_azure_vhd]
           @connection.query_azure(servicecall, 'delete', '', 'comp=media', wait=params[:wait])
         else
@@ -143,7 +143,7 @@ class Azure
           roles_using_same_service = find_roles_within_hostedservice(params[:azure_dns_name])
           if roles_using_same_service.size <= 1
             servicecall = "hostedservices/" + params[:azure_dns_name]
-            @connection.query_azure(servicecall, "delete")        
+            @connection.query_azure(servicecall, "delete")
           end
         end
       end
@@ -249,16 +249,32 @@ class Azure
                 xml.AdminPassword params[:admin_password]
                 xml.ResetPasswordOnFirstLogon 'false'
                 xml.EnableAutomaticUpdates 'false'
-                xml.AdminUsername params[:winrm_user]
-                if params[:bootstrap_proto].downcase == 'winrm'
-                  xml.WinRM {
-                    xml.Listeners {
-                      xml.Listener {
-                        xml.Protocol 'Http'
+                  if params[:bootstrap_proto].downcase == 'winrm'
+                    if params[:ssl_cert_fingerprint]
+                      xml.StoredCertificateSettings {
+                        xml.CertificateSetting {
+                          xml.StoreLocation "LocalMachine"
+                          xml.StoreName "My"
+                          xml.Thumbprint params[:ssl_cert_fingerprint]
+                        }
+                      }
+                    end
+                    xml.WinRM {
+                      xml.Listeners {
+                       if params[:ssl_cert_fingerprint]
+                        xml.Listener {
+                          xml.CertificateThumbprint params[:ssl_cert_fingerprint]
+                          xml.Protocol 'Https'
+                        }
+                        else
+                        xml.Listener {
+                          xml.Protocol 'Http'
+                        }
+                        end
                       }
                     }
-                  }
-                end
+                  end
+                xml.AdminUsername params[:winrm_user]
               }
             end
 
