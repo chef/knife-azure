@@ -24,12 +24,23 @@ class Azure
     def load
       @images ||= begin
         images = Hash.new
+
+        #get OSImages
         response = @connection.query_azure('images')
         osimages = response.css('OSImage')
         osimages.each do |image|
           item = Image.new(image)
           images[item.name] = item
         end
+
+        #get VMImages
+        response = @connection.query_azure('vmimages')
+        vmimages = response.css('VMImage')
+        vmimages.each do |image|
+          item = Image.new(image)
+          images[item.name] = item
+        end
+
         images
       end
     end
