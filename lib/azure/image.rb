@@ -23,25 +23,10 @@ class Azure
     end
     def load
       @images ||= begin
-        images = Hash.new
+        osimages = self.os_images   #get OSImages
+        vmimages = self.vm_images   #get VMImages
 
-        #get OSImages
-        response = @connection.query_azure('images')
-        osimages = response.css('OSImage')
-        osimages.each do |image|
-          item = Image.new(image)
-          images[item.name] = item
-        end
-
-        #get VMImages
-        response = @connection.query_azure('vmimages')
-        vmimages = response.css('VMImage')
-        vmimages.each do |image|
-          item = Image.new(image)
-          images[item.name] = item
-        end
-
-        images
+        all_images = osimages.merge(vmimages)
       end
     end
 
@@ -49,8 +34,53 @@ class Azure
       self.load.values
     end
 
+    def os_images
+      images = Hash.new
+
+      #get OSImages
+      response = @connection.query_azure('images')
+
+      unless response.to_s.empty?
+        osimages = response.css('OSImage')
+
+        osimages.each do |image|
+          item = Image.new(image)
+          images[item.name] = item
+        end
+      end
+
+      images
+    end
+
+    def is_os_image(image_name)
+      os_images = self.os_images.values
+      os_images.detect {|img| img.name == image_name} ? true : false
+    end
+
+    def vm_images
+      images = Hash.new
+
+      #get VMImages
+      response = @connection.query_azure('vmimages')
+      unless response.to_s.empty?
+        vmimages = response.css('VMImage')
+
+        vmimages.each do |image|
+          item = Image.new(image)
+          images[item.name] = item
+        end
+      end
+
+      images
+    end
+
+    def is_vm_image(image_name)
+      vm_images = self.vm_images.values
+      vm_images.detect {|img| img.name == image_name} ? true : false
+    end
+
     def exists?(name)
-      self.all.key?(name)
+      self.all.detect {|img| img.name == name} ? true : false
     end
 
     def find(name)

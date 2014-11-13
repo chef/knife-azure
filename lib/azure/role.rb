@@ -220,6 +220,7 @@ class Azure
           xml.RoleName {xml.text params[:azure_vm_name]}
           xml.OsVersion('i:nil' => 'true')
           xml.RoleType 'PersistentVMRole'
+          xml.VMImageName params[:azure_source_image] if params[:is_vm_image]
 
           xml.ConfigurationSets {
             if params[:os_type] == 'Linux'
@@ -289,7 +290,7 @@ class Azure
                   xml.Port params[:port]
                   xml.Protocol 'TCP'
                 }
-                else 
+                else
                   xml.InputEndpoint {
                   xml.LocalPort '22'
                   xml.Name 'SSH'
@@ -376,12 +377,17 @@ class Azure
           end
 
           xml.Label Base64.encode64(params[:azure_vm_name]).strip
-          xml.OSVirtualHardDisk {
-            disk_name = params[:azure_os_disk_name] || "disk_" + SecureRandom.uuid
-            xml.DiskName disk_name
-            xml.MediaLink 'http://' + params[:azure_storage_account] + '.blob.core.windows.net/vhds/' + disk_name + '.vhd'
-            xml.SourceImageName params[:azure_source_image]
-          }
+
+          #OSVirtualHardDisk not required in case azure_source_image is a VMImage
+          unless(params[:is_vm_image])
+            xml.OSVirtualHardDisk {
+              disk_name = params[:azure_os_disk_name] || "disk_" + SecureRandom.uuid
+              xml.DiskName disk_name
+              xml.MediaLink 'http://' + params[:azure_storage_account] + '.blob.core.windows.net/vhds/' + disk_name + '.vhd'
+              xml.SourceImageName params[:azure_source_image]
+            }
+          end
+
           xml.RoleSize params[:azure_vm_size]
           xml.ProvisionGuestAgent true if params[:bootstrap_proto] == 'cloud-api'
         }

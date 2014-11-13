@@ -354,7 +354,7 @@ class Chef
             if role.at_css("RoleName").text == locate_config_value(:azure_vm_name)
               lnx_waagent_fail_msg = "Failed to deserialize the status reported by the Guest Agent"
               waagent_status_msg = role.at_css("GuestAgentStatus FormattedMessage Message").text
-              
+
               if role.at_css("GuestAgentStatus Status").text == "Ready"
                 extn_status = role.at_css("ResourceExtensionStatusList Status").text
 
@@ -661,6 +661,11 @@ class Chef
           ui.error("Must specify either --azure-service-location or --azure-affinity-group.")
           exit 1
         end
+
+        if !(connection.images.exists?(locate_config_value(:azure_source_image)))
+          ui.error("Image provided is invalid")
+          exit 1
+        end
       end
 
       def create_server_def
@@ -743,6 +748,8 @@ class Chef
           server_def[:identity_file] = locate_config_value(:identity_file)
           server_def[:identity_file_passphrase] = locate_config_value(:identity_file_passphrase)
         end
+
+        server_def[:is_vm_image] = connection.images.is_vm_image(locate_config_value(:azure_source_image))
         server_def
       end
 
