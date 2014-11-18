@@ -37,7 +37,7 @@ describe Chef::Knife::AzureServerCreate do
     @server_instance.initial_sleep_delay = 0
     allow(@server_instance).to receive(:sleep).and_return(0)
     allow(@server_instance).to receive(:puts)
-    allow(@server_instance).to receive(:print)    
+    allow(@server_instance).to receive(:print)
   end
 
   def test_params(testxml, chef_config, role_name, host_name)
@@ -267,7 +267,7 @@ describe Chef::Knife::AzureServerCreate do
           dns_name.push(dns)
         end
       end
-    
+
       it "include vmname in dnsname if --azure-vm-name specified" do
         Chef::Config[:knife][:azure_vm_name] = "vmname"
         dns = @server_instance.send(:get_dns_name, Chef::Config[:knife][:azure_dns_name])
@@ -461,6 +461,32 @@ describe Chef::Knife::AzureServerCreate do
       expect(@server_instance).to receive(:is_image_windows?).twice.and_return(true)
       Chef::Config[:knife][:winrm_user] = 'Admin12'
       expect {@server_instance.create_server_def}.to raise_error
+    end
+
+    context "bootstrap windows node" do
+      before do
+        @bootstrap = Chef::Knife::BootstrapWindowsWinrm.new
+        allow(Chef::Knife::BootstrapWindowsWinrm).to receive(:new).and_return(@bootstrap)
+        Chef::Config[:knife][:bootstrap_protocol] = 'winrm'
+        Chef::Config[:knife][:winrm_user] = 'testuser'
+        Chef::Config[:knife][:winrm_password] = 'winrm_password'
+        Chef::Config[:knife][:winrm_transport] = 'ssl'
+        Chef::Config[:knife][:winrm_allow_unencrypted] = 'true'
+
+        @server = double
+        expect(@server).to receive(:name)
+      end
+
+      it "sets winrm attributes to bootstrap windows node" do
+        expect(@server_instance).to receive(:bootstrap_common_params).with(@bootstrap, @server)
+        expect(@server_instance).to receive(:load_winrm_deps)
+        @server_instance.bootstrap_for_windows_node(@server, "https://localhost", 5985)
+
+        expect(@bootstrap.config[:winrm_user]).to eq('testuser')
+        expect(@bootstrap.config[:winrm_password]).to eq('winrm_password')
+        expect(@bootstrap.config[:winrm_transport]).to eq('ssl')
+        expect(@bootstrap.config[:winrm_allow_unencrypted]).to eq('true')
+      end
     end
 
     context "bootstrap node" do
@@ -710,5 +736,5 @@ describe Chef::Knife::AzureServerCreate do
         expect(server_config).to include(:chef_extension_private_param)
       end
     end
-  end  
+  end
 end

@@ -354,7 +354,7 @@ class Chef
             if role.at_css("RoleName").text == locate_config_value(:azure_vm_name)
               lnx_waagent_fail_msg = "Failed to deserialize the status reported by the Guest Agent"
               waagent_status_msg = role.at_css("GuestAgentStatus FormattedMessage Message").text
-              
+
               if role.at_css("GuestAgentStatus Status").text == "Ready"
                 extn_status = role.at_css("ResourceExtensionStatusList Status").text
 
@@ -591,6 +591,7 @@ class Chef
             bootstrap.config[:winrm_user] = locate_config_value(:winrm_user) || 'Administrator'
             bootstrap.config[:winrm_password] = locate_config_value(:winrm_password)
             bootstrap.config[:winrm_transport] = locate_config_value(:winrm_transport)
+            bootstrap.config[:winrm_allow_unencrypted] = locate_config_value(:winrm_allow_unencrypted)
 
             bootstrap.config[:winrm_port] = port
 
