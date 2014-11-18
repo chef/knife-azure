@@ -74,13 +74,13 @@ describe Chef::Knife::AzureImageList do
     end
 
     it "returns OSImage list." do
-      osimages = @server_instance.connection.images.os_images
+      osimages = @server_instance.connection.images.get_images("OSImage")
       expect(osimages).not_to be_empty
       expect(osimages.values).to be_kind_of(Array)
     end
 
     it "returns empty VMImage list." do
-      expect(@server_instance.connection.images.vm_images ).to be_empty
+      expect(@server_instance.connection.images.get_images("VMImage") ).to be_empty
     end
 
     it "checks if the image is OSImage or VMImage" do
