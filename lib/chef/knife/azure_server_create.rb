@@ -591,6 +591,7 @@ class Chef
             bootstrap.config[:winrm_user] = locate_config_value(:winrm_user) || 'Administrator'
             bootstrap.config[:winrm_password] = locate_config_value(:winrm_password)
             bootstrap.config[:winrm_transport] = locate_config_value(:winrm_transport)
+            bootstrap.config[:winrm_allow_unencrypted] = locate_config_value(:winrm_allow_unencrypted)
 
             bootstrap.config[:winrm_port] = port
 
