@@ -138,6 +138,14 @@ describe Chef::Knife::AzureServerCreate do
         expect(@server_instance.ui).to receive(:error)
         expect {@server_instance.run}.to raise_error
       end
+
+      context "when winrm authentication protocol invalid" do
+        it "raise error" do
+          Chef::Config[:knife][:winrm_authentication_protocol] = "invalide"
+          expect(@server_instance.ui).to receive(:error)
+          expect {@server_instance.run}.to raise_error
+        end
+      end
     end
 
     context "server create options" do
@@ -509,6 +517,13 @@ describe Chef::Knife::AzureServerCreate do
         expect(@server_instance).to receive(:is_image_windows?).exactly(4).times.and_return(true)
         @server_instance.run
         expect(@bootstrap.config[:encrypted_data_bag_secret_file]).to be == 'test_encrypted_data_bag_secret_file'
+      end
+
+      it "sets winrm authentication protocol for windows vm" do
+        Chef::Config[:knife][:winrm_authentication_protocol] = "negotiate"
+        expect(@server_instance).to receive(:is_image_windows?).at_least(:twice).and_return(true)
+        @server_instance.run
+        expect(@bootstrap.config[:winrm_authentication_protocol]).to be == 'negotiate'
       end
     end
   end
