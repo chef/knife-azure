@@ -596,7 +596,7 @@ class Chef
             bootstrap.config[:winrm_user] = locate_config_value(:winrm_user) || 'Administrator'
             bootstrap.config[:winrm_password] = locate_config_value(:winrm_password)
             bootstrap.config[:winrm_transport] = locate_config_value(:winrm_transport)
-
+            bootstrap.config[:winrm_authentication_protocol] = locate_config_value(:winrm_authentication_protocol)
             bootstrap.config[:winrm_port] = port
 
         elsif locate_config_value(:bootstrap_protocol) == 'ssh'
@@ -659,11 +659,17 @@ class Chef
           ui.error("Specify the VM name using --azure-vm-name option, since you are connecting to existing dns")
           exit 1
         end
+
         if locate_config_value(:azure_service_location) && locate_config_value(:azure_affinity_group)
           ui.error("Cannot specify both --azure-service-location and --azure-affinity-group, use one or the other.")
           exit 1
         elsif locate_config_value(:azure_service_location).nil? && locate_config_value(:azure_affinity_group).nil?
           ui.error("Must specify either --azure-service-location or --azure-affinity-group.")
+          exit 1
+        end
+
+        if locate_config_value(:winrm_authentication_protocol) && ! %w{basic negotiate kerberos}.include?(locate_config_value(:winrm_authentication_protocol))
+          ui.error("Invalid value for --winrm-authentication-protocol option. Use valid protocol values i.e [basic, negotiate, kerberos]")
           exit 1
         end
 
