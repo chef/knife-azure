@@ -226,6 +226,12 @@ class Chef
         :long => "--cert-path PATH",
         :description => "SSL Certificate Path"
 
+      option :auto_update_client,
+      :long => "--auto-update-client",
+      :boolean => true,
+      :default => false,
+      :description => "Set this flag to enable auto chef client update in azure chef extension. This flag should be used with cloud-api bootstrap protocol only"
+
       def strip_non_ascii(string)
         string.gsub(/[^0-9a-z ]/i, '')
       end
@@ -771,6 +777,7 @@ class Chef
         pub_config = Hash.new
         pub_config[:client_rb] = "chef_server_url \t #{Chef::Config[:chef_server_url].to_json}\nvalidation_client_name\t#{Chef::Config[:validation_client_name].to_json}"
         pub_config[:runlist] = locate_config_value(:run_list).empty? ? "" : locate_config_value(:run_list).join(",").to_json
+        pub_config[:autoUpdateClient] = locate_config_value(:auto_update_client) ? "true" : "false"
         Base64.encode64(pub_config.to_json)
       end
 

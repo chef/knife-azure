@@ -37,7 +37,7 @@ describe Chef::Knife::AzureServerCreate do
     @server_instance.initial_sleep_delay = 0
     allow(@server_instance).to receive(:sleep).and_return(0)
     allow(@server_instance).to receive(:puts)
-    allow(@server_instance).to receive(:print)    
+    allow(@server_instance).to receive(:print)
   end
 
   def test_params(testxml, chef_config, role_name, host_name)
@@ -267,7 +267,7 @@ describe Chef::Knife::AzureServerCreate do
           dns_name.push(dns)
         end
       end
-    
+
       it "include vmname in dnsname if --azure-vm-name specified" do
         Chef::Config[:knife][:azure_vm_name] = "vmname"
         dns = @server_instance.send(:get_dns_name, Chef::Config[:knife][:azure_dns_name])
@@ -658,6 +658,24 @@ describe Chef::Knife::AzureServerCreate do
       Chef::Config[:knife].delete(:chef_server_url)
     end
 
+    context "get_chef_extension_public_params" do
+      it "should set autoUpdateClient flag to true" do
+        @server_instance.config[:auto_update_client] = true
+        public_config = "{\"client_rb\":\"chef_server_url \\t \\\"https://localhost:443\\\"\\nvalidation_client_name\\t\\\"chef-validator\\\"\",\"runlist\":\"\\\"getting-started\\\"\",\"autoUpdateClient\":\"true\"}"
+
+        expect(Base64).to receive(:encode64).with(public_config)
+        @server_instance.get_chef_extension_public_params
+      end
+
+      it "should set autoUpdateClient flag to false" do
+        @server_instance.config[:auto_update_client] = false
+        public_config = "{\"client_rb\":\"chef_server_url \\t \\\"https://localhost:443\\\"\\nvalidation_client_name\\t\\\"chef-validator\\\"\",\"runlist\":\"\\\"getting-started\\\"\",\"autoUpdateClient\":\"false\"}"
+
+        expect(Base64).to receive(:encode64).with(public_config)
+        @server_instance.get_chef_extension_public_params
+      end
+    end
+
     context "windows instance:" do
       it "successful create" do
         expect(@server_instance).to_not receive(:bootstrap_exec)
@@ -710,5 +728,5 @@ describe Chef::Knife::AzureServerCreate do
         expect(server_config).to include(:chef_extension_private_param)
       end
     end
-  end  
+  end
 end
