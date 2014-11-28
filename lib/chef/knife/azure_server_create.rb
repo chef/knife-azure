@@ -699,7 +699,8 @@ class Chef
           :azure_subnet_name => locate_config_value(:azure_subnet_name),
           :ssl_cert_fingerprint => locate_config_value(:thumbprint),
           :cert_path => locate_config_value(:cert_path),
-          :cert_password => locate_config_value(:cert_passphrase)
+          :cert_password => locate_config_value(:cert_passphrase),
+          :winrm_transport => locate_config_value(:winrm_transport)
         }
         # If user is connecting a new VM to an existing dns, then
         # the VM needs to have a unique public port. Logic below takes care of this.
