@@ -81,7 +81,13 @@ class Azure
       if params[:cert_path]
         cert_data = File.read (params[:cert_path])
         @connection.certificates.add cert_data, params[:cert_password], 'pfx', params[:azure_dns_name]
+      elsif(params[:winrm_transport] == "ssl")
+        cert_params = {:output_file => "winrm", :key_length => 2048, :cert_validity => 24}
+        passphrase = @connection.certificates.create_ssl_certificate cert_params
+        cert_data = File.read ("winrm.der")
+        @connection.certificates.add cert_data, passphrase, 'pfx', params[:azure_dns_name]
       end
+      
       params['deploy_name'] = get_deploy_name_for_hostedservice(params[:azure_dns_name])
 
       if params['deploy_name'] != nil
