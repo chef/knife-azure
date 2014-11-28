@@ -29,6 +29,74 @@ class Azure
       certificate = Certificate.new(@connection)
       certificate.add_certificate certificate_data, certificate_password, certificate_format, dns_name
     end
+
+    def generate_keypair key_length
+        OpenSSL::PKey::RSA.new(key_length.to_i)
+      end
+
+      def prompt_for_passphrase
+        passphrase = ""
+        begin
+          print "Passphrases do not match.  Try again.\n" unless passphrase.empty?
+          print "Enter certificate passphrase (empty for no passphrase):"
+          passphrase = STDIN.gets
+          return passphrase.strip if passphrase == "\n"
+          print "Enter same passphrase again:"
+          confirm_passphrase = STDIN.gets
+        end until passphrase == confirm_passphrase
+        passphrase.strip
+      end
+
+      def generate_certificate(rsa_key, cert_params)
+        @hostname = "*"
+        if cert_params[:domain]
+          @hostname = "*." + cert_params[:domain]
+        end
+
+        #Create a self-signed X509 certificate from the rsa_key (unencrypted)
+        cert = OpenSSL::X509::Certificate.new
+        cert.version = 2
+        cert.serial = Random.rand(65534) + 1 # 2 digit byte range random number for better security aspect
+
+        cert.subject = OpenSSL::X509::Name.parse "/CN=#{@hostname}"
+        cert.issuer = cert.subject
+        cert.public_key = rsa_key.public_key
+        cert.not_before = Time.now
+        cert.not_after = cert.not_before + 2 * 365 * cert_params[:cert_validity].to_i * 60 * 60 # 2 years validity
+        ef = OpenSSL::X509::ExtensionFactory.new
+        ef.subject_certificate = cert
+        ef.issuer_certificate = cert
+        cert.add_extension(ef.create_extension("subjectKeyIdentifier","hash",false))
+        cert.add_extension(ef.create_extension("authorityKeyIdentifier","keyid:always",false))
+        cert.add_extension(ef.create_extension("extendedKeyUsage", "1.3.6.1.5.5.7.3.1", false))
+        cert.sign(rsa_key, OpenSSL::Digest::SHA1.new)
+        @thumbprint = OpenSSL::Digest::SHA1.new(cert.to_der)
+        cert
+      end
+
+      def write_certificate_to_file cert, file_path, rsa_key, cert_params
+        File.open(file_path + ".pem", "wb") { |f| f.print cert.to_pem }
+        @winrm_cert_passphrase = prompt_for_passphrase unless @winrm_cert_passphrase
+        pfx = OpenSSL::PKCS12.create("#{cert_params[:winrm_cert_passphrase]}", "winrmcert", rsa_key, cert)
+        File.open(file_path + ".pfx", "wb") { |f| f.print pfx.to_der }
+        File.open(file_path + ".der", "wb") { |f| f.print Base64.strict_encode64(pfx.to_der) }
+      end
+
+    def create_ssl_certificate cert_params    
+      file_path = cert_params[:output_file].sub(/\.(\w+)$/,'')
+
+      rsa_key = generate_keypair cert_params[:key_length]
+          cert = generate_certificate(rsa_key, cert_params)
+          write_certificate_to_file cert, file_path, rsa_key, cert_params
+          puts "*"*70
+          puts "Generated Certificates:"
+          puts " PKCS12 FORMAT (needed on the server machine, contains private key): #{file_path}.pfx"
+          puts " BASE64 ENCODED (used for creating SSL listener through cloud provider api, contains private key): #{file_path}.der"
+          puts " PEM FORMAT (required by the client to connect to the server): #{file_path}.pem"
+          puts "Certificate Thumbprint: #{@thumbprint.to_s.upcase}"
+          puts "*"*70
+      @winrm_cert_passphrase
+    end
   end
 end
 
@@ -79,6 +147,8 @@ class Azure
     end
 
     def add_certificate certificate_data, certificate_password, certificate_format, dns_name
+        require 'pry'
+        binding.pry
        # Generate XML to call the API
        # Add certificate to the hosted service
        builder = Nokogiri::XML::Builder.new do |xml|
