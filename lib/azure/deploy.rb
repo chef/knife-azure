@@ -82,10 +82,10 @@ class Azure
         cert_data = File.read (params[:cert_path])
         @connection.certificates.add cert_data, params[:cert_password], 'pfx', params[:azure_dns_name]
       elsif(params[:winrm_transport] == "ssl")
-        cert_params = {:output_file => "winrm", :key_length => 2048, :cert_validity => 24}
-        passphrase = @connection.certificates.create_ssl_certificate cert_params
-        cert_data = File.read ("winrm.der")
-        @connection.certificates.add cert_data, passphrase, 'pfx', params[:azure_dns_name]
+        cert_params = {:output_file => "winrm", :key_length => 2048, :cert_validity => 24, 
+          :azure_dns_name => params[:azure_dns_name], :domain => "cloudapp.net"}
+        thumbprint = @connection.certificates.create_ssl_certificate cert_params
+        params[:ssl_cert_fingerprint] = thumbprint.to_s.upcase
       end
       
       params['deploy_name'] = get_deploy_name_for_hostedservice(params[:azure_dns_name])
