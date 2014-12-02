@@ -21,7 +21,7 @@ require 'chef/knife/azure_vnet_create'
 require 'chef/knife/azure_vnet_list'
 
 require 'fileutils'
-require "securerandom"
+require 'securerandom'
 require 'knife-azure/version'
 require 'test/knife-utils/test_bed'
 require 'resource_spec_helper'
@@ -31,47 +31,47 @@ def temp_dir
   @_temp_dir ||= Dir.mktmpdir
 end
 
-def tmpFile filename
-  temp_dir + "/" + filename
+def tmpFile(filename)
+  temp_dir + '/' + filename
 end
 
 RSpec.configure do |c|
   c.before(:each) do
     Chef::Config.reset
   end
-  
+
   c.before(:all) do
-    #Create an empty mock certificate file
+    # Create an empty mock certificate file
     @cert_file = tmpFile('AzureLinuxCert.pem')
     FileUtils.touch(@cert_file)
     Chef::Log.init(tmpFile('debug.log'), 'daily')
-    Chef::Log.level=:debug
+    Chef::Log.level = :debug
   end
 
   c.after(:all) do
-    #Cleanup files and dirs
+    # Cleanup files and dirs
     FileUtils.rm_rf("#{temp_dir}")
   end
 end
 
 TEST_PARAMS = {
-  :azure_subscription_id => "YOUR_SUBSCRIPTION_ID_HERE",
-  :azure_mgmt_cert => @cert_file,
-  :azure_api_host_name => "management-preview.core.windows-int.net",
+  azure_subscription_id: 'YOUR_SUBSCRIPTION_ID_HERE',
+  azure_mgmt_cert: @cert_file,
+  azure_api_host_name: 'management-preview.core.windows-int.net'
 }
 
 module AzureSpecHelper
-  def readFile filename
+  def readFile(filename)
     File.read(File.dirname(__FILE__) + "/unit/assets/#{filename}")
   end
 
-  def get_publish_settings_file_path filename
+  def get_publish_settings_file_path(filename)
     File.dirname(__FILE__) + "/unit/assets/publish-settings-files/#{filename}"
   end
 end
 
 def is_config_present
-  if ! ENV['RUN_INTEGRATION_TESTS']
+  unless ENV['RUN_INTEGRATION_TESTS']
     puts("\nPlease set RUN_INTEGRATION_TESTS environment variable to run integration tests")
     return false
   end
@@ -79,9 +79,9 @@ def is_config_present
   unset_env_var = []
   unset_config_options = []
   is_config = true
-  config_file_exist = File.exist?(File.expand_path("../integration/config/environment.yml", __FILE__))
-  azure_config = YAML.load(File.read(File.expand_path("../integration/config/environment.yml", __FILE__))) if config_file_exist
-  
+  config_file_exist = File.exist?(File.expand_path('../integration/config/environment.yml', __FILE__))
+  azure_config = YAML.load(File.read(File.expand_path('../integration/config/environment.yml', __FILE__))) if config_file_exist
+
   %w(AZURE_PUBLISH_SETTINGS_FILE AZURE_MGMT_CERT AZURE_SUBSCRIPTION_ID AZURE_API_HOST_NAME).each do |az_env_var|
     if ENV[az_env_var].nil?
       unset_env_var <<  az_env_var
@@ -90,9 +90,8 @@ def is_config_present
   end
 
   err_msg = "\nPlease set #{unset_env_var.join(', ')} environment"
-  err_msg = err_msg + ( unset_env_var.length > 1 ? " variables " : " variable " ) + "for integration tests."
+  err_msg = err_msg + (unset_env_var.length > 1 ? ' variables ' : ' variable ') + 'for integration tests.'
   puts err_msg unless unset_env_var.empty?
-
 
   %w(AZ_SSH_USER  AZ_SSH_PASSWORD AZ_WINDOWS_SSH_USER AZ_WINDOWS_SSH_PASSWORD AZ_WINRM_USER AZ_WINRM_PASSWORD AZ_LINUX_IMAGE AZ_LINUX_VM_SIZE AZ_INVALID_VM_SIZE AZ_WINDOWS_VM_SIZE AZ_WINDOWS_IMAGE AZ_WINDOWS_SSH_IMAGE  AZURE_SERVICE_LOCATION).each do |os_config_opt|
     option_value = ENV[os_config_opt] || (azure_config[os_config_opt] if azure_config)
@@ -103,20 +102,20 @@ def is_config_present
   end
 
   config_err_msg = "\nPlease set #{unset_config_options.join(', ')} config"
-  config_err_msg = config_err_msg + ( unset_config_options.length > 1 ? " options in ../spec/integration/config/environment.yml or as environment variables" : " option in ../spec/integration/config/environment.yml or as environment variable" ) + " for integration tests."
+  config_err_msg = config_err_msg + (unset_config_options.length > 1 ? ' options in ../spec/integration/config/environment.yml or as environment variables' : ' option in ../spec/integration/config/environment.yml or as environment variable') + ' for integration tests.'
   puts config_err_msg unless unset_config_options.empty?
-  
+
   is_config
 end
 
 def get_gem_file_name
-  "knife-azure-" + Knife::Azure::VERSION + ".gem"
+  'knife-azure-' + Knife::Azure::VERSION + '.gem'
 end
 
 def find_instance_id(instance_name, file)
   file.lines.each do |line|
     if line.include?("#{instance_name}")
-      return "#{line}".split(" ")[2].strip
+      return "#{line}".split(' ')[2].strip
     end
   end
 end
@@ -126,23 +125,23 @@ def delete_instance_cmd(vm_name)
 end
 
 def create_node_name(name)
-  @name_node  = (name == "linux") ? "az-lnxtest#{SecureRandom.hex(4)}" :  "az-wintest-#{SecureRandom.hex(4)}"
+  @name_node  = (name == 'linux') ? "az-lnxtest#{SecureRandom.hex(4)}" :  "az-wintest-#{SecureRandom.hex(4)}"
 end
 
 def init_azure_test
   init_test
 
   begin
-    %w(azure_invalid.publishsettings).each do |file_name| 
+    %w(azure_invalid.publishsettings).each do |file_name|
       data_to_write = File.read(File.expand_path("../integration/config/#{file_name}", __FILE__))
-      File.open("#{temp_dir}/#{file_name}", 'w') {|f| f.write(data_to_write)}
+      File.open("#{temp_dir}/#{file_name}", 'w') { |f| f.write(data_to_write) }
     end
   rescue
-    puts "Error while creating file - azure invalid"
+    puts 'Error while creating file - azure invalid'
   end
 
-  config_file_exist = File.exist?(File.expand_path("../integration/config/environment.yml", __FILE__))
-  azure_config = YAML.load(File.read(File.expand_path("../integration/config/environment.yml", __FILE__))) if config_file_exist
+  config_file_exist = File.exist?(File.expand_path('../integration/config/environment.yml', __FILE__))
+  azure_config = YAML.load(File.read(File.expand_path('../integration/config/environment.yml', __FILE__))) if config_file_exist
 
   %w(AZ_SSH_USER AZ_SSH_PASSWORD AZ_WINDOWS_SSH_USER AZ_WINDOWS_SSH_PASSWORD AZ_WINRM_USER AZ_WINRM_PASSWORD AZ_LINUX_IMAGE AZ_LINUX_VM_SIZE AZ_INVALID_VM_SIZE AZ_WINDOWS_VM_SIZE AZ_WINDOWS_IMAGE AZ_WINDOWS_SSH_IMAGE AZURE_SERVICE_LOCATION).each do |az_config_opt|
     instance_variable_set("@#{az_config_opt.downcase}", (azure_config[az_config_opt] if azure_config) || ENV[az_config_opt])

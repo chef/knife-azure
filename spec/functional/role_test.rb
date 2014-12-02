@@ -1,6 +1,6 @@
 require File.expand_path(File.dirname(__FILE__) + '/../spec_helper')
 
-describe "roles" do
+describe 'roles' do
   before(:all) do
     @connection = Azure::Connection.new(TEST_PARAMS)
     @roles = @connection.roles.all

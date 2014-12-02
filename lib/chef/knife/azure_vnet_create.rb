@@ -26,21 +26,18 @@ class Chef
       banner 'knife azure vnet create (options)'
 
       option :azure_network_name,
-        :short => '-n NETWORK_NAME',
-        :long => '--azure-network-name NETWORK_NAME',
-        :description =>
-          'Specifies the name of the virtual network to create.'
+             short: '-n NETWORK_NAME',
+             long: '--azure-network-name NETWORK_NAME',
+             description:                'Specifies the name of the virtual network to create.'
 
       option :azure_affinity_group,
-        :short => '-a GROUP',
-        :long => '--azure-affinity-group GROUP',
-        :description =>
-          'Specifies the affinity group to associate with the vnet.'
+             short: '-a GROUP',
+             long: '--azure-affinity-group GROUP',
+             description:                'Specifies the affinity group to associate with the vnet.'
 
       option :azure_address_space,
-        :long => '--azure-address-space CIDR',
-        :description =>
-          'Specifies the address space of the vnet using CIDR notation.'
+             long: '--azure-address-space CIDR',
+             description:                'Specifies the address space of the vnet using CIDR notation.'
 
       def run
         $stdout.sync = true
@@ -56,7 +53,7 @@ class Chef
         params = {
           azure_vnet_name: locate_config_value(:azure_network_name),
           azure_ag_name: locate_config_value(:azure_affinity_group),
-          azure_address_space: locate_config_value(:azure_address_space),
+          azure_address_space: locate_config_value(:azure_address_space)
         }
 
         rsp = connection.vnets.create(params)

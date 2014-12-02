@@ -23,10 +23,9 @@ require File.expand_path('../azure_base', __FILE__)
 class Chef
   class Knife
     class AzureServerShow < Knife
-
       include Knife::AzureBase
 
-      banner "knife azure server show SERVER [SERVER]"
+      banner 'knife azure server show SERVER [SERVER]'
 
       def run
         $stdout.sync = true
@@ -36,7 +35,7 @@ class Chef
         @name_args.each do |name|
           role = connection.roles.find name
           puts ''
-          if (role)
+          if role
             details = Array.new
             details << ui.color('Role name', :bold, :cyan)
             details << role.name

@@ -20,15 +20,15 @@ class Azure
   class Hosts
     include AzureUtility
     def initialize(connection)
-      @connection=connection
+      @connection = connection
     end
 
     # force_load should be true when there is something in local cache and we want to reload
     # first call is always load.
     def load(force_load = false)
-      if not @hosted_services || force_load
+      unless @hosted_services || force_load
         @hosted_services = begin
-          hosted_services = Hash.new
+          hosted_services = {}
           responseXML = @connection.query_azure('hostedservices')
           servicesXML = responseXML.css('HostedServices HostedService')
           servicesXML.each do |serviceXML|
@@ -42,7 +42,7 @@ class Azure
     end
 
     def all
-      self.load.values
+      load.values
     end
 
     # first look up local cache if we have already loaded list.
@@ -66,7 +66,7 @@ class Azure
     # first look up local cache if we have already loaded list.
     def find(name)
       return @hosted_services[name] if @hosted_services && @hosted_services.key?(name)
-      self.fetch_from_cloud(name)
+      fetch_from_cloud(name)
     end
 
     # Look up hosted service on cloud and not local cache
@@ -85,10 +85,11 @@ class Azure
       host = Host.new(@connection)
       host.create(params)
     end
+
     def delete(name)
       if self.exists?(name)
-          servicecall = "hostedservices/" + name
-        @connection.query_azure(servicecall, "delete") 
+        servicecall = 'hostedservices/' + name
+        @connection.query_azure(servicecall, 'delete')
       end
     end
   end
@@ -104,8 +105,9 @@ class Azure
     def initialize(connection)
       @connection = connection
       @deploys_loaded = false
-      @deploys = Hash.new
+      @deploys = {}
     end
+
     def parse(serviceXML)
       @name = xml_content(serviceXML, 'ServiceName')
       @url = xml_content(serviceXML, 'Url')
@@ -117,9 +119,10 @@ class Azure
       @status = xml_content(serviceXML, 'HostedServiceProperties Status')
       self
     end
+
     def create(params)
       builder = Nokogiri::XML::Builder.new do |xml|
-        xml.CreateHostedService('xmlns'=>'http://schemas.microsoft.com/windowsazure') {
+        xml.CreateHostedService('xmlns' => 'http://schemas.microsoft.com/windowsazure') do
           xml.ServiceName params[:azure_dns_name]
           xml.Label Base64.encode64(params[:azure_dns_name])
           xml.Description 'Explicitly created hosted service'
@@ -129,10 +132,11 @@ class Azure
           unless params[:azure_affinity_group].nil?
             xml.AffinityGroup params[:azure_affinity_group]
           end
-        }
+        end
       end
-      @connection.query_azure("hostedservices", "post", builder.to_xml)
+      @connection.query_azure('hostedservices', 'post', builder.to_xml)
     end
+
     def details
       response = @connection.query_azure('hostedservices/' + @name + '?embed-detail=true')
     end

@@ -1,7 +1,7 @@
 require File.expand_path(File.dirname(__FILE__) + '/../spec_helper')
 require File.expand_path(File.dirname(__FILE__) + '/query_azure_mock')
 
-describe "images" do
+describe 'images' do
   include AzureSpecHelper
   include QueryAzureMock
   before 'setup connection' do
@@ -9,7 +9,7 @@ describe "images" do
   end
 
   context 'mock with actually retrieved values' do
-    it "should find strings" do
+    it 'should find strings' do
       items = @connection.images.all
       expect(items.length).to be > 1
       items.each do |image|
@@ -21,7 +21,7 @@ describe "images" do
         expect(image.description).to_not be nil
       end
     end
-    it "should contain a linux image" do
+    it 'should contain a linux image' do
       items = @connection.images.all
       foundLinux = false
       items.each do |item|

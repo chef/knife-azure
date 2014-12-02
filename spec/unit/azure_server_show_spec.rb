@@ -6,11 +6,11 @@ describe Chef::Knife::AzureAgList do
   include QueryAzureMock
   before do
     @server_instance = Chef::Knife::AzureServerShow.new
-      {
-        :azure_subscription_id => 'azure_subscription_id',
-        :azure_mgmt_cert => @cert_file,
-        :azure_api_host_name => 'preview.core.windows-int.net',
-        }.each do |key, value|
+    {
+      azure_subscription_id: 'azure_subscription_id',
+      azure_mgmt_cert: @cert_file,
+      azure_api_host_name: 'preview.core.windows-int.net'
+    }.each do |key, value|
       Chef::Config[:knife][key] = value
     end
     stub_query_azure(@server_instance.connection)

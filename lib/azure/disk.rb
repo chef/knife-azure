@@ -19,10 +19,11 @@
 class Azure
   class Disks
     def initialize(connection)
-      @connection=connection
+      @connection = connection
     end
+
     def all
-      disks = Array.new
+      disks = []
       response = @connection.query_azure('disks')
       founddisks = response.css('Disk')
       founddisks.each do |disk|
@@ -31,19 +32,22 @@ class Azure
       end
       disks
     end
+
     def find(name)
       founddisk = nil
-      self.all.each do |disk|
+      all.each do |disk|
         next unless disk.name == name
         founddisk = disk
       end
       founddisk
     end
+
     def exists(name)
-      find(name) != nil
+      !find(name).nil?
     end
+
     def clear_unattached
-      self.all.each do |disk|
+      all.each do |disk|
         next unless disk.attached == false
         @connection.query_azure('disks/' + disk.name, 'delete')
       end
@@ -56,7 +60,7 @@ class Azure
     attr_accessor :name, :attached
     def initialize(disk)
       @name = disk.at_css('Name').content
-      @attached = disk.at_css('AttachedTo') != nil
+      @attached = !disk.at_css('AttachedTo').nil?
     end
   end
 end
