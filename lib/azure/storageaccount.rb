@@ -20,14 +20,14 @@ class Azure
   class StorageAccounts
     include AzureUtility
     def initialize(connection)
-      @connection=connection
+      @connection = connection
     end
     # force_load should be true when there is something in local cache and we want to reload
     # first call is always load.
     def load(force_load = false)
-      if not @azure_storage_accounts || force_load
+      unless @azure_storage_accounts || force_load
         @azure_storage_accounts = begin
-          azure_storage_accounts = Hash.new
+          azure_storage_accounts = {}
           responseXML = @connection.query_azure('storageservices')
           servicesXML = responseXML.css('StorageServices StorageService')
           servicesXML.each do |serviceXML|
@@ -41,7 +41,7 @@ class Azure
     end
 
     def all
-      self.load.values
+      load.values
     end
 
     # first look up local cache if we have already loaded list.
@@ -66,8 +66,9 @@ class Azure
       storage = StorageAccount.new(@connection)
       storage.create(params)
     end
+
     def clear_unattached
-      self.all.each do |storage|
+      all.each do |storage|
         next unless storage.attached == false
         @connection.query_azure('storageaccounts/' + storage.name, 'delete')
       end
@@ -75,8 +76,8 @@ class Azure
 
     def delete(name)
       if self.exists?(name)
-          servicecall = "storageservices/" + name
-        @connection.query_azure(servicecall, "delete") 
+        servicecall = 'storageservices/' + name
+        @connection.query_azure(servicecall, 'delete')
       end
     end
   end
@@ -90,6 +91,7 @@ class Azure
     def initialize(connection)
       @connection = connection
     end
+
     def parse(serviceXML)
       @name = xml_content(serviceXML, 'ServiceName')
       @description = xml_content(serviceXML, 'Description')
@@ -101,21 +103,22 @@ class Azure
       @extendpropertyvalue = xml_content(serviceXML, 'ExtendedProperties ExtendedProperty Value')
       self
     end
+
     def create(params)
       builder = Nokogiri::XML::Builder.new do |xml|
-        xml.CreateStorageServiceInput('xmlns'=>'http://schemas.microsoft.com/windowsazure') {
+        xml.CreateStorageServiceInput('xmlns' => 'http://schemas.microsoft.com/windowsazure') do
           xml.ServiceName params[:azure_storage_account]
           xml.Label Base64.encode64(params[:azure_storage_account])
           xml.Description params[:azure_storage_account_description] || 'Explicitly created storage service'
           # Location defaults to 'West US'
           if params[:azure_affinity_group]
             xml.AffinityGroup params[:azure_affinity_group]
-          else 
+          else
             xml.Location params[:azure_service_location] || 'West US'
           end
-        }
+        end
       end
-      @connection.query_azure("storageservices", "post", builder.to_xml)
+      @connection.query_azure('storageservices', 'post', builder.to_xml)
     end
   end
 end

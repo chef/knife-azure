@@ -25,9 +25,9 @@ class Azure
     # force_load should be true when there is something in local cache and we want to reload
     # first call is always load.
     def load(force_load = false)
-      if not @deploys || force_load
+      unless @deploys || force_load
         @deploys = begin
-          deploys = Array.new
+          deploys = []
           hosts = @connection.hosts.all
           hosts.each do |host|
             deploy = Deploy.new(@connection)
@@ -81,16 +81,14 @@ class Azure
       if params[:cert_path]
         cert_data = File.read (params[:cert_path])
         @connection.certificates.add cert_data, params[:cert_password], 'pfx', params[:azure_dns_name]
-      elsif(params[:winrm_transport] == "ssl")
-        cert_params = {:output_file => "winrm", :key_length => 2048, :cert_validity => 24, 
-          :azure_dns_name => params[:azure_dns_name], :domain => "cloudapp.net"}
-        thumbprint = @connection.certificates.create_ssl_certificate cert_params
+      elsif(params[:winrm_transport] == "ssl")        
+        thumbprint = @connection.certificates.create_ssl_certificate params[:azure_dns_name]
         params[:ssl_cert_fingerprint] = thumbprint.to_s.upcase
       end
       
       params['deploy_name'] = get_deploy_name_for_hostedservice(params[:azure_dns_name])
 
-      if params['deploy_name'] != nil
+      if !params['deploy_name'].nil?
         role = Role.new(@connection)
         roleXML = role.setup(params)
         ret_val = role.create(params, roleXML)
@@ -107,13 +105,14 @@ class Azure
       end
       @connection.roles.find_in_hosted_service(params[:azure_vm_name], params[:azure_dns_name])
     end
-    def delete(rolename)
+
+    def delete(_rolename)
     end
 
     def queryDeploy(hostedservicename)
-        deploy = Deploy.new(@connection)
-        deploy.retrieve(hostedservicename)
-        deploy
+      deploy = Deploy.new(@connection)
+      deploy.retrieve(hostedservicename)
+      deploy
     end
   end
 
@@ -124,6 +123,7 @@ class Azure
     def initialize(connection)
       @connection = connection
     end
+
     def retrieve(hostedservicename)
       @hostedservicename = hostedservicename
       deployXML = @connection.query_azure("hostedservices/#{hostedservicename}/deploymentslots/Production")
@@ -131,7 +131,7 @@ class Azure
         @name = xml_content(deployXML, 'Deployment Name')
         @status = xml_content(deployXML,'Deployment Status')
         @url = xml_content(deployXML, 'Deployment Url')
-        @roles = Hash.new
+        @roles = {}
         rolesXML = deployXML.css('Deployment RoleInstanceList RoleInstance')
         rolesXML.each do |roleXML|
           role = Role.new(@connection)
@@ -140,15 +140,16 @@ class Azure
         end
       end
     end
+
     def setup(params)
       role = Role.new(@connection)
       roleXML = role.setup(params)
-      #roleXML = Nokogiri::XML role.setup(params)
+      # roleXML = Nokogiri::XML role.setup(params)
       builder = Nokogiri::XML::Builder.new do |xml|
         xml.Deployment(
           'xmlns'=>'http://schemas.microsoft.com/windowsazure',
           'xmlns:i'=>'http://www.w3.org/2001/XMLSchema-instance'
-        ) {
+        ) do
           xml.Name params['deploy_name']
           xml.DeploymentSlot 'Production'
           xml.Label Base64.encode64(params['deploy_name']).strip
@@ -156,11 +157,12 @@ class Azure
           if params[:azure_network_name]
             xml.VirtualNetworkName params[:azure_network_name]
           end
-        }
+        end
       end
       builder.doc.at_css('Role') << roleXML.at_css('PersistentVMRole').children.to_s
       builder.doc
     end
+
     def create(params, deployXML)
       servicecall = "hostedservices/#{params[:azure_dns_name]}/deployments"
       @connection.query_azure(servicecall, "post", deployXML.to_xml)
@@ -178,6 +180,5 @@ class Azure
     def find_role(name)
       @roles[name] if @roles
     end
-
   end
 end

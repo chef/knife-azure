@@ -4,4 +4,3 @@ module Knife
     MAJOR, MINOR, TINY = VERSION.split('.')
   end
 end
-

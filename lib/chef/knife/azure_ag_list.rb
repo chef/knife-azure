@@ -36,7 +36,7 @@ class Chef
 
         validate!
 
-        cols = %w{Name Location Description}
+        cols = %w(Name Location Description)
 
         the_list = cols.map { |col| ui.color(col, :bold) }
         connection.ags.all.each do |ag|

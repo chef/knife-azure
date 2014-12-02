@@ -26,21 +26,21 @@ class Chef
       banner 'knife azure ag create (options)'
 
       option :azure_affinity_group,
-        :short => '-a GROUP',
-        :long => '--azure-affinity-group GROUP',
-        :description => 'Specifies new affinity group name.'
+             short: '-a GROUP',
+             long: '--azure-affinity-group GROUP',
+             description: 'Specifies new affinity group name.'
 
       option :azure_ag_desc,
-        :long => '--azure-ag-desc DESC',
-        :description => 'Optional. Description for new affinity group.'
+             long: '--azure-ag-desc DESC',
+             description: 'Optional. Description for new affinity group.'
 
       option :azure_service_location,
-        :short => '-m LOCATION',
-        :long => '--azure-service-location LOCATION',
-        :description => 'Specifies the geographic location - the name of '\
-                        'the data center location that is valid for your '\
-                        'subscription. Eg: West US, East US, '\
-                        'East Asia, Southeast Asia, North Europe, West Europe'
+             short: '-m LOCATION',
+             long: '--azure-service-location LOCATION',
+             description: 'Specifies the geographic location - the name of '\
+                             'the data center location that is valid for your '\
+                             'subscription. Eg: West US, East US, '\
+                             'East Asia, Southeast Asia, North Europe, West Europe'
 
       def run
         $stdout.sync = true
@@ -55,7 +55,7 @@ class Chef
         params = {
           azure_ag_name: locate_config_value(:azure_affinity_group),
           azure_ag_desc: locate_config_value(:azure_ag_desc),
-          azure_location: locate_config_value(:azure_service_location),
+          azure_location: locate_config_value(:azure_service_location)
         }
 
         rsp = connection.ags.create(params)
