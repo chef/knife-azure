@@ -15,12 +15,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-require "net/https"
-require "uri"
-require "nokogiri"
+require 'net/https'
+require 'uri'
+require 'nokogiri'
 
 module AzureAPI
-
   class Rest
     def initialize(params)
       @subscription_id = params[:azure_subscription_id]
@@ -57,7 +56,7 @@ module AzureAPI
       response
     end
 
-    def query_for_completion()
+    def query_for_completion
       request_url = "https://#{@host_name}/#{@subscription_id}/operations/#{@last_request_id}"
       response = http_query(request_url, 'get', '', '')
       if response.code.to_i == 307
@@ -83,9 +82,10 @@ module AzureAPI
       rescue OpenSSL::X509::CertificateError => err
         raise "Invalid Azure Certificate pem file. Error: #{err}"
       end
-        http.key = OpenSSL::PKey::RSA.new(@pem_file)
+      http.key = OpenSSL::PKey::RSA.new(@pem_file)
       http
     end
+
     def request_setup(uri, verb, body)
       if verb == 'get'
         request = Net::HTTP::Get.new(uri.request_uri)
@@ -97,22 +97,23 @@ module AzureAPI
         request = Net::HTTP::Put.new(uri.request_uri)
       end
       text = verb == 'put'
-      request["x-ms-version"] = "2014-04-01"
-      request["content-type"] = text ? "text/plain" : "application/xml"
-      request["accept"] = "application/xml"
-      request["accept-charset"] = "utf-8"
+      request['x-ms-version'] = '2014-04-01'
+      request['content-type'] = text ? 'text/plain' : 'application/xml'
+      request['accept'] = 'application/xml'
+      request['accept-charset'] = 'utf-8'
       request.body = body
       request
     end
+
     def showResponse(response)
-      puts "=== response body ==="
+      puts '=== response body ==='
       puts response.body
-      puts "=== response.code ==="
+      puts '=== response.code ==='
       puts response.code
-      puts "=== response.inspect ==="
+      puts '=== response.inspect ==='
       puts response.inspect
-      puts "=== all of the headers ==="
-      puts response.each_header { |h, j| puts h.inspect + ' : ' + j.inspect}
+      puts '=== all of the headers ==='
+      puts response.each_header { |h, j| puts h.inspect + ' : ' + j.inspect }
     end
   end
 end
