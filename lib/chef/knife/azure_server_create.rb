@@ -200,11 +200,11 @@ class Chef
       option :hint,
              long: "--hint HINT_NAME[=HINT_FILE]",
              description: "Specify Ohai Hint to be set on the bootstrap target.  Use multiple --hint options to specify multiple hints.",
-             proc: Proc.new do |h|
+             proc: Proc.new { |h|
                Chef::Config[:knife][:hints] ||= {}
                name, path = h.split("=")
                Chef::Config[:knife][:hints][name] = path ? JSON.parse(::File.read(path)) : Hash.new
-             end
+             }
 
       option :json_attributes,
              short: "-j JSON",
