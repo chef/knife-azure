@@ -15,7 +15,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-require 'fileutils'
 
 class Azure
   class Certificates
@@ -107,14 +106,13 @@ class Azure
 
     def create_ssl_certificate(cert_params)
       file_path = cert_params[:output_file].sub(/\.(\w+)$/, '')
-      filename = file_path
       path = prompt_for_file_path
       file_path = File.join(path, file_path) unless path.empty?
       cert_params[:domain] = prompt_for_domain
 
       rsa_key = generate_keypair cert_params[:key_length]
       cert = generate_certificate(rsa_key, cert_params)
-      ca_trust_file = write_certificate_to_file cert, file_path, rsa_key, cert_params, filename
+      write_certificate_to_file cert, file_path, rsa_key, cert_params
       puts '*' * 70
       puts 'Generated Certificates:'
       puts " PKCS12 FORMAT (needed on the server machine, contains private key): #{file_path}.pfx"
@@ -123,7 +121,7 @@ class Azure
       puts "Certificate Thumbprint: #{@thumbprint.to_s.upcase}"
       puts '*' * 70
 
-      Chef::Config[:knife][:ca_trust_file] = ca_trust_file if Chef::Config[:knife][:ca_trust_file].nil?
+      Chef::Config[:knife][:ca_trust_file] = file_path + '.pem' if Chef::Config[:knife][:ca_trust_file].nil?
       cert_data = File.read (file_path + '.der')
       add_certificate cert_data, @winrm_cert_passphrase, 'pfx', cert_params[:azure_dns_name]
       @thumbprint
@@ -191,29 +189,14 @@ class Azure
       cert
     end
 
-    def write_certificate_to_file(cert, file_path, rsa_key, cert_params, filename)
-      #path of Chef's catrust directory
-      if is_windows?
-        catrust_dir = "C:/chef/trusted_certs/"
-      else
-        catrust_dir = "/etc/chef/trusted_certs/"
-      end
-      FileUtils.mkdir_p catrust_dir
-      catrust_path = catrust_dir + filename
-      File.open(catrust_path + '.pem', 'wb') { |f| f.print cert.to_pem }
-
+    def write_certificate_to_file(cert, file_path, rsa_key, cert_params)
+      File.open(file_path + '.pem', 'wb') { |f| f.print cert.to_pem }
       @winrm_cert_passphrase = prompt_for_passphrase unless @winrm_cert_passphrase
       pfx = OpenSSL::PKCS12.create("#{cert_params[:winrm_cert_passphrase]}", 'winrmcert', rsa_key, cert)
       File.open(file_path + '.pfx', 'wb') { |f| f.print pfx.to_der }
       File.open(file_path + '.der', 'wb') { |f| f.print Base64.strict_encode64(pfx.to_der) }
-
-      catrust_dir + '.pem'
     end
 
     ##########   SSL certificate generation ends ###########
-
-    def is_windows?
-      (/cygwin|mswin|mingw|bccwin|wince|emx/ =~ RUBY_PLATFORM) != nil
-    end
   end
 end
