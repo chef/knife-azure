@@ -1,6 +1,7 @@
 source "https://www.rubygems.org"
 
 gemspec
+gem "ffi-yajl", '1.2'
 
 group :development do
   gem 'rspec', '>= 2.7.0'
