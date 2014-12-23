@@ -769,7 +769,7 @@ class Chef
       # get latest version
       def get_chef_extension_version
         extensions = @connection.query_azure("resourceextensions/#{get_chef_extension_publisher}/#{get_chef_extension_name}")
-        extensions.css("Version").max.text.to_f
+        extensions.css("Version").max.text.split(".").first + ".*"
       end
 
       def get_chef_extension_public_params
