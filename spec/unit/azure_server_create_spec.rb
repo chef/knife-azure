@@ -258,6 +258,28 @@ describe Chef::Knife::AzureServerCreate do
         expect(@server_instance).to receive(:msg_server_summary)
         @server_instance.run
       end
+
+      it 'create with automatic certificates creation if winrm-transport=ssl' do
+        # set all params
+        Chef::Config[:knife][:azure_dns_name] = 'service001'
+        Chef::Config[:knife][:azure_vm_name] = 'vm002'
+        Chef::Config[:knife][:winrm_user] = 'opscodechef'
+        Chef::Config[:knife][:winrm_password] = 'Opscode123'
+        Chef::Config[:knife][:winrm_transport] = 'ssl'
+
+        #Temp directory for certificate path and \n for domain name and certificate passphrase
+        dir = Dir.mktmpdir
+        allow(STDIN).to receive(:gets).and_return(dir,"\n")
+        @server_instance.run
+
+        #check if certificates are created
+        expect(File).to exist(File.join(dir, "winrm.pfx"))
+        expect(File).to exist(File.join(dir, "winrm.der"))
+        expect(File).to exist(File.join(dir, "winrm.pem"))
+
+        #Delete temp directory
+        FileUtils.remove_entry_secure dir
+      end
     end
 
     context "when --azure-dns-name is not specified" do
