@@ -731,6 +731,11 @@ class Chef
               ui.error("WinRM User is compulsory parameter and it cannot be named 'admin*'")
               exit 1
             end
+            # take cares of when user name contains domain
+            # azure add role api doesn't support '\\' in user name
+            if locate_config_value(:winrm_user) && locate_config_value(:winrm_user).split("\\").length.eql?(2)
+              server_def[:winrm_user] = locate_config_value(:winrm_user).split("\\")[1]
+            end
           else
             if not locate_config_value(:ssh_user)
               ui.error("SSH User is compulsory parameter")
