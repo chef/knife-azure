@@ -269,6 +269,7 @@ describe Chef::Knife::AzureServerCreate do
 
         #Temp directory for certificate path and \n for domain name and certificate passphrase
         dir = Dir.mktmpdir
+        expect(@server_instance.connection.certificates).to receive(:create_ssl_certificate).with(Chef::Config[:knife][:azure_dns_name]).and_call_original
         allow(STDIN).to receive(:gets).and_return(dir,"\n")
         @server_instance.run
 
