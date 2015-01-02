@@ -224,11 +224,12 @@ class Chef
              long: "--cert-path PATH",
              description: "SSL Certificate Path"
 
+
       option :auto_update_client,
-      :long => "--auto-update-client",
-      :boolean => true,
-      :default => false,
-      :description => "Set this flag to enable auto chef client update in azure chef extension. This flag should be used with cloud-api bootstrap protocol only"
+            :long => "--auto-update-client",
+            :boolean => true,
+            :default => false,
+            :description => "Set this flag to enable auto chef client update in azure chef extension. This flag should be used with cloud-api bootstrap protocol only"
 
       def strip_non_ascii(string)
         string.gsub(/[^0-9a-z ]/i, '')
