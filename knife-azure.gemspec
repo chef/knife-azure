@@ -21,7 +21,7 @@ Gem::Specification.new do |s|
   s.add_dependency "nokogiri", ">= 1.5.5"
   s.add_dependency "knife-windows", ">= 0.8.2"
 
-  s.add_development_dependency "chef", ">= 11.8.2"
+  s.add_development_dependency "chef", ">= 11.8.2", '< 12'
   s.add_development_dependency "mixlib-config", "~> 2.0"
   s.add_development_dependency "equivalent-xml", "~> 0.2.9"
   s.add_development_dependency "knife-cloud", ">= 1.0.0"

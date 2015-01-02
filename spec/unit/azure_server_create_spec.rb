@@ -702,7 +702,7 @@ describe Chef::Knife::AzureServerCreate do
         server_config = @server_instance.create_server_def
         expect(server_config[:chef_extension]).to eq("ChefClient")
         expect(server_config[:chef_extension_publisher]).to eq("Chef.Bootstrap.WindowsAzure")
-        expect(server_config[:chef_extension_version]).to eq(11.12)
+        expect(server_config[:chef_extension_version]).to eq("11.*")
         expect(server_config).to include(:chef_extension_public_param)
         expect(server_config).to include(:chef_extension_private_param)
       end
@@ -722,7 +722,7 @@ describe Chef::Knife::AzureServerCreate do
         server_config = @server_instance.create_server_def
         expect(server_config[:chef_extension]).to eq("LinuxChefClient")
         expect(server_config[:chef_extension_publisher]).to eq("Chef.Bootstrap.WindowsAzure")
-        expect(server_config[:chef_extension_version]).to eq(11.12)
+        expect(server_config[:chef_extension_version]).to eq("11.*")
         expect(server_config).to include(:chef_extension_public_param)
         expect(JSON.parse(Base64.decode64(server_config[:chef_extension_public_param]))["runlist"]).to eq(Chef::Config[:knife][:run_list].first.to_json)
         expect(server_config).to include(:chef_extension_private_param)
