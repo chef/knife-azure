@@ -63,27 +63,31 @@ class Azure
 
     def parse(image)
       @name = image.at_css('Name').content
-      @affinity_group = image.at_css('AffinityGroup').content
+      @affinity_group = image.at_css('AffinityGroup') ? image.at_css('AffinityGroup').content : ""
       @state = image.at_css('State').content
       self
     end
 
     def create(params)
       response = @connection.query_azure('networking/media')
-      vnets = response.css('VirtualNetworkSite')
-      vnet = nil
-      vnets.each { |vn| vnet = vn if vn['name'] == params[:azure_vnet_name] }
-      add = vnet.nil?
-      vnet = Nokogiri::XML::Node.new('VirtualNetworkSite', response) if add
-      vnet['name'] = params[:azure_vnet_name]
-      vnet['AffinityGroup'] = params[:azure_ag_name]
-      addr_space = Nokogiri::XML::Node.new('AddressSpace', response)
-      addr_prefix = Nokogiri::XML::Node.new('AddressPrefix', response)
-      addr_prefix.content = params[:azure_address_space]
-      addr_space.children = addr_prefix
-      vnet.children = addr_space
-      vnets.last.add_next_sibling(vnet) if add
-      @connection.query_azure('networking/media', 'put', response.to_xml)
+      if response.at_css("Error")
+        puts response.at_css("Error Message").content
+      else
+        vnets = response.css('VirtualNetworkSite')
+        vnet = nil
+        vnets.each { |vn| vnet = vn if vn['name'] == params[:azure_vnet_name] }
+        add = vnet.nil?
+        vnet = Nokogiri::XML::Node.new('VirtualNetworkSite', response) if add
+        vnet['name'] = params[:azure_vnet_name]
+        vnet['AffinityGroup'] = params[:azure_ag_name]
+        addr_space = Nokogiri::XML::Node.new('AddressSpace', response)
+        addr_prefix = Nokogiri::XML::Node.new('AddressPrefix', response)
+        addr_prefix.content = params[:azure_address_space]
+        addr_space.children = addr_prefix
+        vnet.children = addr_space
+        vnets.last.add_next_sibling(vnet) if add
+        @connection.query_azure('networking/media', 'put', response.to_xml)
+      end
     end
   end
 end
