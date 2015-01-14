@@ -138,6 +138,14 @@ describe Chef::Knife::AzureServerCreate do
         expect(@server_instance.ui).to receive(:error)
         expect {@server_instance.run}.to raise_error
       end
+
+      context "when winrm authentication protocol invalid" do
+        it "raise error" do
+          Chef::Config[:knife][:winrm_authentication_protocol] = "invalide"
+          expect(@server_instance.ui).to receive(:error)
+          expect {@server_instance.run}.to raise_error
+        end
+      end
     end
 
     context "server create options" do
@@ -347,6 +355,16 @@ describe Chef::Knife::AzureServerCreate do
         expect(@server_params[:port]).to be == '5990'
       end
 
+      it "extract user name when winrm_user contains domain name" do
+        Chef::Config[:knife][:bootstrap_protocol] = 'winrm'
+        Chef::Config[:knife][:winrm_user] = 'domain\\testuser'
+        Chef::Config[:knife][:winrm_password] = 'Jetstream123!'
+        Chef::Config[:knife][:winrm_port] = '5990'
+        expect(@server_instance).to receive(:is_image_windows?).exactly(3).times.and_return(true)
+        @server_params = @server_instance.create_server_def
+        expect(@server_params[:winrm_user]).to be == 'testuser'
+      end
+
       it "port should be unique number when ssh-port not specified for linux image" do
         Chef::Config[:knife][:ssh_user] = 'azureuser'
         Chef::Config[:knife][:ssh_password] = 'Jetstream123!'
@@ -509,6 +527,13 @@ describe Chef::Knife::AzureServerCreate do
         expect(@server_instance).to receive(:is_image_windows?).exactly(4).times.and_return(true)
         @server_instance.run
         expect(@bootstrap.config[:encrypted_data_bag_secret_file]).to be == 'test_encrypted_data_bag_secret_file'
+      end
+
+      it "sets winrm authentication protocol for windows vm" do
+        Chef::Config[:knife][:winrm_authentication_protocol] = "negotiate"
+        expect(@server_instance).to receive(:is_image_windows?).at_least(:twice).and_return(true)
+        @server_instance.run
+        expect(@bootstrap.config[:winrm_authentication_protocol]).to be == 'negotiate'
       end
     end
   end
