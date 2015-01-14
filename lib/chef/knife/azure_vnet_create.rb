@@ -42,6 +42,11 @@ class Chef
         :description =>
           'Specifies the address space of the vnet using CIDR notation.'
 
+      option :azure_subnet_name,
+        :long => '--azure-subnet-name CIDR',
+        :description =>
+          'Specifies the Subnet Name.'
+
       def run
         $stdout.sync = true
 
@@ -57,6 +62,7 @@ class Chef
           azure_vnet_name: locate_config_value(:azure_network_name),
           azure_ag_name: locate_config_value(:azure_affinity_group),
           azure_address_space: locate_config_value(:azure_address_space),
+          azure_subnet_name: locate_config_value(:azure_subnet_name) || "Subnet-#{Random.rand(10)}"
         }
 
         rsp = connection.vnets.create(params)

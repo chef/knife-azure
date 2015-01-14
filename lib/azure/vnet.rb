@@ -63,26 +63,55 @@ class Azure
 
     def parse(image)
       @name = image.at_css('Name').content
-      @affinity_group = image.at_css('AffinityGroup').content
+      @affinity_group = image.at_css('AffinityGroup') ? image.at_css('AffinityGroup').content : ""
       @state = image.at_css('State').content
       self
     end
 
     def create(params)
       response = @connection.query_azure('networking/media')
-      vnets = response.css('VirtualNetworkSite')
-      vnet = nil
-      vnets.each { |vn| vnet = vn if vn['name'] == params[:azure_vnet_name] }
-      add = vnet.nil?
-      vnet = Nokogiri::XML::Node.new('VirtualNetworkSite', response) if add
-      vnet['name'] = params[:azure_vnet_name]
-      vnet['AffinityGroup'] = params[:azure_ag_name]
-      addr_space = Nokogiri::XML::Node.new('AddressSpace', response)
-      addr_prefix = Nokogiri::XML::Node.new('AddressPrefix', response)
-      addr_prefix.content = params[:azure_address_space]
-      addr_space.children = addr_prefix
-      vnet.children = addr_space
-      vnets.last.add_next_sibling(vnet) if add
+      if response.at_css("Error") && response.at_css('Code').text == "ResourceNotFound"
+        builder = Nokogiri::XML::Builder.new do |xml|
+          xml.NetworkConfiguration(
+            'xmlns'=>'http://schemas.microsoft.com/ServiceHosting/2011/07/NetworkConfiguration'
+          ) {
+
+            xml.VirtualNetworkConfiguration {
+              xml.VirtualNetworkSites {
+                xml.VirtualNetworkSite('name' => params[:azure_vnet_name], 'AffinityGroup' => params[:azure_ag_name]) {
+                  if params[:azure_address_space]
+                    xml.AddressSpace {
+                      xml.AddressPrefix params[:azure_address_space]
+                    }
+                  end
+                  xml.Subnets{
+                    xml.Subnet('name' => params[:azure_subnet_name]) {
+                      xml.AddressPrefix params[:azure_address_space]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        end
+        puts("Creating New Virtual Network: #{params[:azure_vnet_name]}...")
+        response = builder
+      else
+        vnets = response.css('VirtualNetworkSite')
+        vnet = nil
+        vnets.each { |vn| vnet = vn if vn['name'] == params[:azure_vnet_name] }
+        add = vnet.nil?
+        vnet = Nokogiri::XML::Node.new('VirtualNetworkSite', response) if add
+        vnet['name'] = params[:azure_vnet_name]
+        vnet['AffinityGroup'] = params[:azure_ag_name]
+        addr_space = Nokogiri::XML::Node.new('AddressSpace', response)
+        addr_prefix = Nokogiri::XML::Node.new('AddressPrefix', response)
+        addr_prefix.content = params[:azure_address_space]
+        addr_space.children = addr_prefix
+        vnet.children = addr_space
+        vnets.last.add_next_sibling(vnet) if add
+        puts("Updating existing Virtual Network: #{params[:azure_vnet_name]}...")
+      end
       @connection.query_azure('networking/media', 'put', response.to_xml)
     end
   end
