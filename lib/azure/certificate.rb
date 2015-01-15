@@ -142,21 +142,30 @@ class Azure
     end
 
     def prompt_for_file_path
-      file_path = ""
+      file_path = ''
+      counter = 0
       begin
         print "Invalid location! \n" unless file_path.empty?
         print 'Enter the file path for certificates e.g. C:\Windows (empty for current location):'
         file_path = STDIN.gets
         stripped_file_path = file_path.strip
         return stripped_file_path if file_path == "\n"
+        counter += 1
+        exit(1) if counter == 3
       end until File.directory?(stripped_file_path)
       stripped_file_path
     end
 
     def prompt_for_domain
-      print 'Enter the domain (empty for no domain):'
-      domain = STDIN.gets
-      domain.strip
+      counter = 0
+      begin
+        print 'Enter the domain (mandatory):'
+        domain = STDIN.gets
+        domain = domain.strip
+        counter += 1
+        exit(1) if counter == 3
+      end until !domain.empty?
+      domain
     end
 
     def generate_certificate(rsa_key, cert_params)
