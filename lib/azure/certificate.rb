@@ -30,10 +30,12 @@ class Azure
       certificate.add_certificate certificate_data, certificate_password, certificate_format, dns_name
     end
 
-    def create_ssl_certificate cert_params
+    def create_ssl_certificate(azure_dns_name)
+      cert_params = { output_file: 'winrm', key_length: 2048, cert_validity: 24,
+                      azure_dns_name: azure_dns_name }
       certificate = Certificate.new(@connection)
-      thumbprint = certificate.create_ssl_certificate(cert_params)      
-    end
+      thumbprint = certificate.create_ssl_certificate(cert_params)
+     end
   end
 end
 
@@ -83,7 +85,7 @@ class Azure
       Base64.strict_encode64(pfx.to_der)
     end
 
-    def add_certificate certificate_data, certificate_password, certificate_format, dns_name        
+    def add_certificate certificate_data, certificate_password, certificate_format, dns_name
        # Generate XML to call the API
        # Add certificate to the hosted service
        builder = Nokogiri::XML::Builder.new do |xml|
@@ -99,10 +101,11 @@ class Azure
 
     ########   SSL certificate generation for knife-azure ssl bootstrap ######
 
-    def create_ssl_certificate cert_params        
+    def create_ssl_certificate cert_params
       file_path = cert_params[:output_file].sub(/\.(\w+)$/,'')
       path = prompt_for_file_path
       file_path = File.join(path, file_path) unless path.empty?
+      cert_params[:domain] = prompt_for_domain
 
       rsa_key = generate_keypair cert_params[:key_length]
       cert = generate_certificate(rsa_key, cert_params)
@@ -115,10 +118,10 @@ class Azure
       puts "Certificate Thumbprint: #{@thumbprint.to_s.upcase}"
       puts "*"*70
 
-      Chef::Config[:knife][:ca_trust_file] = file_path + ".pem" if Chef::Config[:knife][:ca_trust_file].nil?      
+      Chef::Config[:knife][:ca_trust_file] = file_path + ".pem" if Chef::Config[:knife][:ca_trust_file].nil?
       cert_data = File.read (file_path + ".der")
       add_certificate cert_data, @winrm_cert_passphrase, 'pfx', cert_params[:azure_dns_name]
-      @thumbprint      
+      @thumbprint
     end
 
     def generate_keypair key_length
@@ -148,6 +151,12 @@ class Azure
         return stripped_file_path if file_path == "\n"
       end until File.directory?(stripped_file_path)
       stripped_file_path
+    end
+
+    def prompt_for_domain
+      print 'Enter the domain (empty for no domain):'
+      domain = STDIN.gets
+      domain.strip
     end
 
     def generate_certificate(rsa_key, cert_params)
