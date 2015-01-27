@@ -43,7 +43,7 @@ task :default => :spec
 
 task :install => :package do
   sh %{gem install pkg/#{GEM_NAME}-#{Knife::Azure::VERSION} --no-rdoc --no-ri}
-end 
+end
 
 task :uninstall do
   sh %{gem uninstall #{GEM_NAME} -x -v #{Knife::Azure::VERSION} }
@@ -58,3 +58,13 @@ Rake::RDocTask.new do |rdoc|
   rdoc.rdoc_files.include('README*')
   rdoc.rdoc_files.include('lib/**/*.rb')
 end
+
+require 'rubocop/rake_task'
+# Style tests. Rubocop and Foodcritic
+namespace :style do
+  desc 'Run Ruby style checks'
+  RuboCop::RakeTask.new(:ruby)
+end
+
+desc 'Run all style checks'
+task :style => ['style:ruby']
