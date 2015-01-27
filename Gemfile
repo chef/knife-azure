@@ -2,6 +2,10 @@ source "https://www.rubygems.org"
 
 gemspec
 
+group :lint do
+  gem 'rubocop', '~> 0.24'
+end
+
 group :development do
   gem 'rspec', '>= 2.7.0'
   gem 'guard-rspec'
