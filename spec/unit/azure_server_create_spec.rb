@@ -275,7 +275,7 @@ describe Chef::Knife::AzureServerCreate do
 
         #check if certificates are created
         expect(File).to exist(File.join(dir, "winrm.pfx"))
-        expect(File).to exist(File.join(dir, "winrm.der"))
+        expect(File).to exist(File.join(dir, "winrm.b64"))
         expect(File).to exist(File.join(dir, "winrm.pem"))
 
         #Delete temp directory
