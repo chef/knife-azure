@@ -113,13 +113,13 @@ class Azure
       puts "*"*70
       puts "Generated Certificates:"
       puts " PKCS12 FORMAT (needed on the server machine, contains private key): #{file_path}.pfx"
-      puts " BASE64 ENCODED (used for creating SSL listener through cloud provider api, contains private key): #{file_path}.der"
+      puts " BASE64 ENCODED (used for creating SSL listener through cloud provider api, contains private key): #{file_path}.b64"
       puts " PEM FORMAT (required by the client to connect to the server): #{file_path}.pem"
       puts "Certificate Thumbprint: #{@thumbprint.to_s.upcase}"
       puts "*"*70
 
       Chef::Config[:knife][:ca_trust_file] = file_path + ".pem" if Chef::Config[:knife][:ca_trust_file].nil?
-      cert_data = File.read (file_path + ".der")
+      cert_data = File.read (file_path + ".b64")
       add_certificate cert_data, @winrm_cert_passphrase, 'pfx', cert_params[:azure_dns_name]
       @thumbprint
     end
@@ -200,7 +200,7 @@ class Azure
       @winrm_cert_passphrase = prompt_for_passphrase unless @winrm_cert_passphrase
       pfx = OpenSSL::PKCS12.create("#{cert_params[:winrm_cert_passphrase]}", "winrmcert", rsa_key, cert)
       File.open(file_path + ".pfx", "wb") { |f| f.print pfx.to_der }
-      File.open(file_path + ".der", "wb") { |f| f.print Base64.strict_encode64(pfx.to_der) }
+      File.open(file_path + ".b64", "wb") { |f| f.print Base64.strict_encode64(pfx.to_der) }
     end
 
     ##########   SSL certificate generation ends ###########
