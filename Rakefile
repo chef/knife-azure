@@ -6,13 +6,13 @@ begin
   Bundler.setup(:default, :development)
 rescue Bundler::BundlerError => e
   $stderr.puts e.message
-  $stderr.puts "Run `bundle install` to install missing gems"
+  $stderr.puts 'Run `bundle install` to install missing gems'
   exit e.status_code
 end
 require 'rake'
-GEM_NAME = "knife-azure"
+GEM_NAME = 'knife-azure'
 
-spec = eval(File.read("knife-azure.gemspec"))
+spec = eval(File.read('knife-azure.gemspec'))
 
 require 'rubygems/package_task'
 
@@ -42,16 +42,16 @@ end
 task :default => :spec
 
 task :install => :package do
-  sh %{gem install pkg/#{GEM_NAME}-#{Knife::Azure::VERSION} --no-rdoc --no-ri}
+  sh %(gem install pkg/#{GEM_NAME}-#{Knife::Azure::VERSION} --no-rdoc --no-ri)
 end
 
 task :uninstall do
-  sh %{gem uninstall #{GEM_NAME} -x -v #{Knife::Azure::VERSION} }
+  sh %(gem uninstall #{GEM_NAME} -x -v #{Knife::Azure::VERSION} )
 end
 
 require 'rdoc/task'
 Rake::RDocTask.new do |rdoc|
-  version = File.exist?('VERSION') ? File.read('VERSION') : ""
+  version = File.exist?('VERSION') ? File.read('VERSION') : ''
 
   rdoc.rdoc_dir = 'rdoc'
   rdoc.title = "knife-azure #{version}"

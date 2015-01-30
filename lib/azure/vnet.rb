@@ -63,36 +63,35 @@ class Azure
 
     def parse(image)
       @name = image.at_css('Name').content
-      @affinity_group = image.at_css('AffinityGroup') ? image.at_css('AffinityGroup').content : ""
+      @affinity_group = image.at_css('AffinityGroup') ? image.at_css('AffinityGroup').content : ''
       @state = image.at_css('State').content
       self
     end
 
     def create(params)
       response = @connection.query_azure('networking/media')
-      if response.at_css("Error") && response.at_css('Code').text == "ResourceNotFound"
+      if response.at_css('Error') && response.at_css('Code').text == 'ResourceNotFound'
         builder = Nokogiri::XML::Builder.new do |xml|
           xml.NetworkConfiguration(
-            'xmlns'=>'http://schemas.microsoft.com/ServiceHosting/2011/07/NetworkConfiguration'
-          ) {
-
-            xml.VirtualNetworkConfiguration {
-              xml.VirtualNetworkSites {
-                xml.VirtualNetworkSite('name' => params[:azure_vnet_name], 'AffinityGroup' => params[:azure_ag_name]) {
+            'xmlns' => 'http://schemas.microsoft.com/ServiceHosting/2011/07/NetworkConfiguration'
+          ) do
+            xml.VirtualNetworkConfiguration do
+              xml.VirtualNetworkSites do
+                xml.VirtualNetworkSite('name' => params[:azure_vnet_name], 'AffinityGroup' => params[:azure_ag_name]) do
                   if params[:azure_address_space]
-                    xml.AddressSpace {
+                    xml.AddressSpace do
                       xml.AddressPrefix params[:azure_address_space]
-                    }
+                    end
                   end
-                  xml.Subnets{
-                    xml.Subnet('name' => params[:azure_subnet_name]) {
+                  xml.Subnets do
+                    xml.Subnet('name' => params[:azure_subnet_name]) do
                       xml.AddressPrefix params[:azure_address_space]
-                    }
-                  }
-                }
-              }
-            }
-          }
+                    end
+                  end
+                end
+              end
+            end
+          end
         end
         puts("Creating New Virtual Network: #{params[:azure_vnet_name]}...")
         response = builder

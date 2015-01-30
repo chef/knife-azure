@@ -1,6 +1,7 @@
 AllCops:
   Exclude:
-    - vendor/**
+    - Guardfile
+    - Rakefile
 
 AlignParameters:
   Enabled: false
@@ -20,3 +21,7 @@ Documentation:
   Enabled: false
 AbcSize:
   Enabled: false
+CyclomaticComplexity:
+  Enabled: false
+ClassLength:
+  Max: 1000

@@ -1,16 +1,15 @@
 require File.expand_path(File.dirname(__FILE__) + '/../spec_helper')
 
-describe "Connection" do
-
+describe 'Connection' do
   before(:all) do
     @connection = Azure::Connection.new(TEST_PARAMS)
     @items = @connection.images.all
   end
 
-  it "should be contain images" do
+  it 'should be contain images' do
     @items.length.should be > 1
   end
-  it "each image should have all fields valid" do
+  it 'each image should have all fields valid' do
     @items.each do |image|
       image.category.should_not be_nil
       image.label.should_not be_nil
@@ -18,7 +17,6 @@ describe "Connection" do
       image.os.should_not be_nil
     end
   end
-
 
   #  it "should get services" do
   #    @demo.DemoGet
@@ -39,4 +37,3 @@ describe "Connection" do
   #    expect{@demo.DemoGet}.to raise_error(RuntimeError, /ResourceNotFound/)
   #  end
 end
-

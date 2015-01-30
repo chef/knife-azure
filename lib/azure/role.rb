@@ -27,7 +27,7 @@ class Azure
     end
     # do not use this unless you want a list of all roles(vms) in your subscription
     def all
-      @roles = Array.new
+      @roles = []
       @connection.deploys.all.each do |deploy|
         deploy.roles.each do |role|
           @roles << role
@@ -47,16 +47,16 @@ class Azure
       host.find_role(role_name)
     end
 
-    def find(role_name, params= nil)
+    def find(role_name, params = nil)
       if params && params[:azure_dns_name]
         return find_in_hosted_service(role_name, params[:azure_dns_name])
       end
 
-      all if @roles == nil
+      all if @roles.nil?
 
       # TODO - optimize this lookup
       @roles.each do |role|
-        if(role.name == role_name)
+        if (role.name == role_name)
           return role
         end
       end
@@ -68,7 +68,7 @@ class Azure
       if roles && roles.length > 1
         return false
       end
-      return true
+      true
     end
 
     def exists?(name)
@@ -77,19 +77,19 @@ class Azure
 
     def delete(name, params)
       role = find(name)
-      if role != nil
+      unless role.nil?
         roleXML = nil
-        roleXML = @connection.query_azure("hostedservices/#{role.hostedservicename}", "get", "", "embed-detail=true")
+        roleXML = @connection.query_azure("hostedservices/#{role.hostedservicename}", 'get', '', 'embed-detail=true')
         osdisk = roleXML.css(roleXML, 'OSVirtualHardDisk')
         disk_name = xml_content(osdisk, 'DiskName')
-        storage_account_name = xml_content(osdisk, 'MediaLink').gsub("http://", "").gsub(/.blob(.*)$/, "")
+        storage_account_name = xml_content(osdisk, 'MediaLink').gsub('http://', '').gsub(/.blob(.*)$/, '')
 
         if !params[:preserve_azure_os_disk] && !params[:preserve_azure_vhd] && !params[:wait]
           # default compmedia = true. So, it deletes role and associated resources
           check_and_delete_role_and_resources(params, role)
         else
           # compmedia = false. So, it deletes only role and not associated resources
-          check_and_delete_role_and_resources(params, role, compmedia=false)
+          check_and_delete_role_and_resources(params, role, compmedia = false)
           check_and_delete_disks(params, disk_name)
           check_and_delete_service(params)
         end
@@ -97,7 +97,7 @@ class Azure
       end
     end
 
-    def check_and_delete_role_and_resources(params, role, compmedia=true)
+    def check_and_delete_role_and_resources(params, role, compmedia = true)
       if alone_on_hostedservice(role)
         if !params[:preserve_azure_dns_name] && compmedia
           servicecall = "hostedservices/#{role.hostedservicename}"
@@ -105,13 +105,13 @@ class Azure
           servicecall = "hostedservices/#{role.hostedservicename}/deployments/#{role.deployname}"
         end
       else
-        servicecall = "hostedservices/#{role.hostedservicename}/deployments" +
+        servicecall = "hostedservices/#{role.hostedservicename}/deployments" \
         "/#{role.deployname}/roles/#{role.name}"
       end
       if compmedia
-        @connection.query_azure(servicecall, "delete", "", "comp=media", wait=params[:wait])
+        @connection.query_azure(servicecall, 'delete', '', 'comp=media', wait = params[:wait])
       else
-        @connection.query_azure(servicecall, "delete")
+        @connection.query_azure(servicecall, 'delete')
       end
 
       # delete role from local cache as well.
@@ -126,11 +126,11 @@ class Azure
         # So Iteratively check for disk detachment from the VM while waiting for 5 minutes ,
         # exit otherwise after 12 attempts.
         for attempt in 0..12
-           break if @connection.query_azure(servicecall, "get").search("AttachedTo").text == ""
-           if attempt == 12 then puts "The associated disk could not be deleted due to time out." else sleep 25 end
+          break if @connection.query_azure(servicecall, 'get').search('AttachedTo').text == ''
+          if attempt == 12 then puts 'The associated disk could not be deleted due to time out.' else sleep 25 end
         end
         unless params[:preserve_azure_vhd]
-          @connection.query_azure(servicecall, 'delete', '', 'comp=media', wait=params[:wait])
+          @connection.query_azure(servicecall, 'delete', '', 'comp=media', wait = params[:wait])
         else
           @connection.query_azure(servicecall, 'delete')
         end
@@ -142,31 +142,30 @@ class Azure
         unless params[:azure_dns_name].nil?
           roles_using_same_service = find_roles_within_hostedservice(params[:azure_dns_name])
           if roles_using_same_service.size <= 1
-            servicecall = "hostedservices/" + params[:azure_dns_name]
-            @connection.query_azure(servicecall, "delete")
+            servicecall = 'hostedservices/' + params[:azure_dns_name]
+            @connection.query_azure(servicecall, 'delete')
           end
         end
       end
     end
 
     def check_and_delete_storage(params, disk_name, storage_account_name)
-     if params[:delete_azure_storage_account]
+      if params[:delete_azure_storage_account]
         # Iteratively check for disk deletion
         for attempt in 0..12
-           break unless @connection.query_azure("disks").search("Name").text.include?(disk_name)
-           if attempt == 12 then puts "The associated disk could not be deleted due to time out." else sleep 25 end
+          break unless @connection.query_azure('disks').search('Name').text.include?(disk_name)
+          if attempt == 12 then puts 'The associated disk could not be deleted due to time out.' else sleep 25 end
         end
         begin
-          @connection.query_azure("storageservices/#{storage_account_name}", "delete")
+          @connection.query_azure("storageservices/#{storage_account_name}", 'delete')
         rescue Exception => ex
           ui.warn("#{ex.message}")
           ui.warn("#{ex.backtrace.join("\n")}")
         end
-      end
+       end
     end
 
     private :check_and_delete_role_and_resources, :check_and_delete_disks, :check_and_delete_service, :check_and_delete_storage
-
   end
 
   class Role
@@ -179,6 +178,7 @@ class Azure
     def initialize(connection)
       @connection = connection
     end
+
     def parse(roleXML, hostedservicename, deployname)
       @name = xml_content(roleXML, 'RoleName')
       @status = xml_content(roleXML, 'InstanceStatus')
@@ -187,11 +187,11 @@ class Azure
       @hostname = xml_content(roleXML, 'HostName')
       @hostedservicename = hostedservicename
       @deployname = deployname
-      @tcpports = Array.new
-      @udpports = Array.new
+      @tcpports = []
+      @udpports = []
 
       endpoints = roleXML.css('InstanceEndpoint')
-      @publicipaddress = xml_content(endpoints[0], 'Vip') if !endpoints.empty?
+      @publicipaddress = xml_content(endpoints[0], 'Vip') unless endpoints.empty?
       endpoints.each do |endpoint|
         if xml_content(endpoint, 'Name').downcase == 'ssh'
           @sshport = xml_content(endpoint, 'PublicPort')
@@ -211,99 +211,99 @@ class Azure
         end
       end
     end
+
     def setup(params)
       builder = Nokogiri::XML::Builder.new do |xml|
         xml.PersistentVMRole(
-          'xmlns'=>'http://schemas.microsoft.com/windowsazure',
-          'xmlns:i'=>'http://www.w3.org/2001/XMLSchema-instance'
-        ) {
-          xml.RoleName {xml.text params[:azure_vm_name]}
+          'xmlns' => 'http://schemas.microsoft.com/windowsazure',
+          'xmlns:i' => 'http://www.w3.org/2001/XMLSchema-instance'
+        ) do
+          xml.RoleName { xml.text params[:azure_vm_name] }
           xml.OsVersion('i:nil' => 'true')
           xml.RoleType 'PersistentVMRole'
           xml.VMImageName params[:azure_source_image] if params[:is_vm_image]
 
-          xml.ConfigurationSets {
+          xml.ConfigurationSets do
             if params[:os_type] == 'Linux'
-              xml.ConfigurationSet('i:type' => 'LinuxProvisioningConfigurationSet') {
+              xml.ConfigurationSet('i:type' => 'LinuxProvisioningConfigurationSet') do
                 xml.ConfigurationSetType 'LinuxProvisioningConfiguration'
                 xml.HostName params[:azure_vm_name]
                 xml.UserName params[:ssh_user]
                 unless params[:identity_file].nil?
                   xml.DisableSshPasswordAuthentication 'true'
-                  xml.SSH {
-                     xml.PublicKeys {
-                       xml.PublicKey {
-                         xml.Fingerprint params[:fingerprint].to_s.upcase
-                         xml.Path '/home/' + params[:ssh_user] + '/.ssh/authorized_keys'
-                       }
-                     }
-                  }
+                  xml.SSH do
+                    xml.PublicKeys do
+                      xml.PublicKey do
+                        xml.Fingerprint params[:fingerprint].to_s.upcase
+                        xml.Path '/home/' + params[:ssh_user] + '/.ssh/authorized_keys'
+                      end
+                    end
+                  end
                 else
                   xml.UserPassword params[:ssh_password]
                   xml.DisableSshPasswordAuthentication 'false'
                 end
-              }
+              end
             elsif params[:os_type] == 'Windows'
-              xml.ConfigurationSet('i:type' => 'WindowsProvisioningConfigurationSet') {
+              xml.ConfigurationSet('i:type' => 'WindowsProvisioningConfigurationSet') do
                 xml.ConfigurationSetType 'WindowsProvisioningConfiguration'
                 xml.ComputerName params[:azure_vm_name]
                 xml.AdminPassword params[:admin_password]
                 xml.ResetPasswordOnFirstLogon 'false'
                 xml.EnableAutomaticUpdates 'false'
-                  if params[:bootstrap_proto].downcase == 'winrm'
-                    if params[:ssl_cert_fingerprint]
-                      xml.StoredCertificateSettings {
-                        xml.CertificateSetting {
-                          xml.StoreLocation "LocalMachine"
-                          xml.StoreName "My"
-                          xml.Thumbprint params[:ssl_cert_fingerprint]
-                        }
-                      }
+                if params[:bootstrap_proto].downcase == 'winrm'
+                  if params[:ssl_cert_fingerprint]
+                    xml.StoredCertificateSettings do
+                      xml.CertificateSetting do
+                        xml.StoreLocation 'LocalMachine'
+                        xml.StoreName 'My'
+                        xml.Thumbprint params[:ssl_cert_fingerprint]
+                      end
                     end
-                    xml.WinRM {
-                      xml.Listeners {
-                       if params[:ssl_cert_fingerprint]
-                        xml.Listener {
+                  end
+                  xml.WinRM do
+                    xml.Listeners do
+                      if params[:ssl_cert_fingerprint]
+                        xml.Listener do
                           xml.CertificateThumbprint params[:ssl_cert_fingerprint]
                           xml.Protocol 'Https'
-                        }
-                        else
-                        xml.Listener {
-                          xml.Protocol 'Http'
-                        }
                         end
-                      }
-                    }
+                      else
+                        xml.Listener do
+                          xml.Protocol 'Http'
+                        end
+                       end
+                    end
                   end
+                end
                 xml.AdminUsername params[:winrm_user]
-              }
+              end
             end
 
-            xml.ConfigurationSet('i:type' => 'NetworkConfigurationSet') {
+            xml.ConfigurationSet('i:type' => 'NetworkConfigurationSet') do
               xml.ConfigurationSetType 'NetworkConfiguration'
-              xml.InputEndpoints {
-
-                if params[:os_type] == 'Windows' and (params[:bootstrap_proto].downcase == 'winrm' or params[:bootstrap_proto].downcase == 'cloud-api')
-                  xml.InputEndpoint {
-                  xml.LocalPort '5985'
-                  xml.Name 'WinRM'
-                  xml.Port params[:port]
-                  xml.Protocol 'TCP'
-                }
+              xml.InputEndpoints do
+                if params[:os_type] == 'Windows' && (params[:bootstrap_proto].downcase == 'winrm' || params[:bootstrap_proto].downcase == 'cloud-api')
+                  xml.InputEndpoint do
+                    xml.LocalPort '5985'
+                    xml.Name 'WinRM'
+                    xml.Port params[:port]
+                    xml.Protocol 'TCP'
+                  end
                 else
-                  xml.InputEndpoint {
-                  xml.LocalPort '22'
-                  xml.Name 'SSH'
-                  xml.Port params[:port]
-                  xml.Protocol 'TCP'
-                }
+                  xml.InputEndpoint do
+                    xml.LocalPort '22'
+                    xml.Name 'SSH'
+                    xml.Port params[:port]
+                    xml.Protocol 'TCP'
+                  end
                 end
 
                 if params[:tcp_endpoints]
                   params[:tcp_endpoints].split(',').each do |endpoint|
                     ports = endpoint.split(':')
                     if !(ports.length > 1 && ports[1] == params[:port] || ports.length == 1 && ports[0] == params[:port])
-                      xml.InputEndpoint {
+                      xml.InputEndpoint do
                         xml.LocalPort ports[0]
                         xml.Name 'tcpport_' + ports[0] + '_' + params[:azure_vm_name]
                         if ports.length > 1
@@ -312,7 +312,7 @@ class Azure
                           xml.Port ports[0]
                         end
                         xml.Protocol 'TCP'
-                      }
+                      end
                     else
                       warn_message = ports.length > 1 ? "#{ports.join(':')} because this ports are" : "#{ports[0]} because this port is"
                       puts("Skipping tcp-endpoints: #{warn_message} already in use by ssh/winrm endpoint in current VM.")
@@ -323,7 +323,7 @@ class Azure
                 if params[:udp_endpoints]
                   params[:udp_endpoints].split(',').each do |endpoint|
                     ports = endpoint.split(':')
-                    xml.InputEndpoint {
+                    xml.InputEndpoint do
                       xml.LocalPort ports[0]
                       xml.Name 'udpport_' + ports[0] + '_' + params[:azure_vm_name]
                       if ports.length > 1
@@ -332,72 +332,73 @@ class Azure
                         xml.Port ports[0]
                       end
                       xml.Protocol 'UDP'
-                    }
+                    end
                   end
                 end
-              }
-              if params[:azure_subnet_name]
-                xml.SubnetNames {
-                  xml.SubnetName params[:azure_subnet_name]
-                }
               end
-            }
-          }
+              if params[:azure_subnet_name]
+                xml.SubnetNames do
+                  xml.SubnetName params[:azure_subnet_name]
+                end
+              end
+            end
+          end
 
           if params[:azure_availability_set]
             xml.AvailabilitySetName params[:azure_availability_set]
           end
           # Azure resource extension support
           if params[:bootstrap_proto] == 'cloud-api'
-            xml.ResourceExtensionReferences {
-              xml.ResourceExtensionReference {
+            xml.ResourceExtensionReferences do
+              xml.ResourceExtensionReference do
                 xml.ReferenceName params[:chef_extension]
                 xml.Publisher params[:chef_extension_publisher]
                 xml.Name params[:chef_extension]
                 xml.Version params[:chef_extension_version]
-                xml.ResourceExtensionParameterValues {
+                xml.ResourceExtensionParameterValues do
                   if params[:chef_extension_public_param]
-                    xml.ResourceExtensionParameterValue {
-                      xml.Key "PublicParams"
+                    xml.ResourceExtensionParameterValue do
+                      xml.Key 'PublicParams'
                       xml.Value params[:chef_extension_public_param]
-                      xml.Type "Public"
-                    }
+                      xml.Type 'Public'
+                    end
                   end
                   if params[:chef_extension_private_param]
-                    xml.ResourceExtensionParameterValue {
-                      xml.Key "PrivateParams"
+                    xml.ResourceExtensionParameterValue do
+                      xml.Key 'PrivateParams'
                       xml.Value params[:chef_extension_private_param]
-                      xml.Type "Private"
-                    }
+                      xml.Type 'Private'
+                    end
                   end
-                }
-                xml.State "Enable"
-              }
-            }
+                end
+                xml.State 'Enable'
+              end
+            end
           end
 
           xml.Label Base64.encode64(params[:azure_vm_name]).strip
 
-          #OSVirtualHardDisk not required in case azure_source_image is a VMImage
-          unless(params[:is_vm_image])
-            xml.OSVirtualHardDisk {
-              disk_name = params[:azure_os_disk_name] || "disk_" + SecureRandom.uuid
+          # OSVirtualHardDisk not required in case azure_source_image is a VMImage
+          unless params[:is_vm_image]
+            xml.OSVirtualHardDisk do
+              disk_name = params[:azure_os_disk_name] || 'disk_' + SecureRandom.uuid
               xml.DiskName disk_name
               xml.MediaLink 'http://' + params[:azure_storage_account] + '.blob.core.windows.net/vhds/' + disk_name + '.vhd'
               xml.SourceImageName params[:azure_source_image]
-            }
+            end
           end
 
           xml.RoleSize params[:azure_vm_size]
           xml.ProvisionGuestAgent true if params[:bootstrap_proto] == 'cloud-api'
-        }
+        end
       end
       builder.doc
     end
+
     def create(params, roleXML)
-      servicecall = "hostedservices/#{params[:azure_dns_name]}/deployments" +
+      servicecall = "hostedservices/#{params[:azure_dns_name]}/deployments" \
       "/#{params['deploy_name']}/roles"
-      @connection.query_azure(servicecall, "post", roleXML.to_xml)
+      @connection.query_azure(servicecall, 'post', roleXML.to_xml)
     end
   end
 end

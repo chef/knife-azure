@@ -27,7 +27,7 @@ module QueryAzureMock
     retval
   end
 
-  def stub_query_azure (connection)
+  def stub_query_azure(connection)
     @getname = ''
     @getverb = ''
     @getbody = ''
@@ -39,13 +39,13 @@ module QueryAzureMock
     @deletename = ''
     @deleteverb = ''
     @deletebody = ''
-    @deleteparams= ''
+    @deleteparams = ''
     @deletecount = 0
 
     @receivedXML = Nokogiri::XML ''
-    allow(connection).to receive(:query_azure) do |name, verb, body, params, wait, services|
+    allow(connection).to receive(:query_azure) do |name, verb, body, params, _wait, services|
       Chef::Log.info 'calling web service:' + name
-      if verb == 'get' || verb == nil
+      if verb == 'get' || verb.nil?
         retval = ''
         if name == 'affinitygroups' && services == false
           retval = Nokogiri::XML readFile('list_affinitygroups.xml')
@@ -61,7 +61,7 @@ module QueryAzureMock
           retval = Nokogiri::XML readFile('list_disks_for_role002.xml')
         elsif name == 'hostedservices'
           retval = Nokogiri::XML readFile('list_hosts.xml')
-        elsif name =~ /hostedservices\/([-\w]*)$/ && params == "embed-detail=true"
+        elsif name =~ /hostedservices\/([-\w]*)$/ && params == 'embed-detail=true'
           retval = Nokogiri::XML readFile('list_deployments_for_service001.xml')
         elsif name =~ /hostedservices\/([-\w]*)$/
           service_name = /hostedservices\/([-\w]*)/.match(name)[1]
@@ -139,6 +139,5 @@ module QueryAzureMock
       end
       retval
     end
-
   end
 end

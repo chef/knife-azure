@@ -7,13 +7,13 @@ describe Chef::Knife::AzureVnetCreate do
 
   before do
     @server_instance = Chef::Knife::AzureVnetCreate.new
-      {
-        azure_subscription_id: 'azure_subscription_id',
-        azure_mgmt_cert: @cert_file,
-        azure_api_host_name: 'preview.core.windows-int.net',
-      }.each do |key, value|
-        Chef::Config[:knife][key] = value
-      end
+    {
+      azure_subscription_id: 'azure_subscription_id',
+      azure_mgmt_cert: @cert_file,
+      azure_api_host_name: 'preview.core.windows-int.net'
+    }.each do |key, value|
+      Chef::Config[:knife][key] = value
+    end
     stub_query_azure(@server_instance.connection)
     allow(@server_instance).to receive(:puts)
     allow(@server_instance).to receive(:print)
@@ -34,7 +34,7 @@ describe Chef::Knife::AzureVnetCreate do
       azure_vnet_name: 'new-net',
       azure_ag_name: 'ag',
       azure_address_space: '10.0.0.0/24',
-      azure_subnet_name:"Subnet-7"
+      azure_subnet_name: 'Subnet-7'
     ).and_call_original
     expect(@server_instance.ui).to_not receive(:warn)
     expect(@server_instance.ui).to_not receive(:error)

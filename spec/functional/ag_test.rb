@@ -21,5 +21,4 @@ describe 'ags' do
       ag.location.should_not be_nil
     end
   end
-
 end

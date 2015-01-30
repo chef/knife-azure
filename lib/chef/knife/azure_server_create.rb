@@ -25,7 +25,6 @@ require 'securerandom'
 class Chef
   class Knife
     class AzureServerCreate < Knife
-
       include Knife::AzureBase
       include Knife::WinrmBase
 
@@ -202,9 +201,9 @@ class Chef
         :long => "--hint HINT_NAME[=HINT_FILE]",
         :description => "Specify Ohai Hint to be set on the bootstrap target.  Use multiple --hint options to specify multiple hints.",
         :proc => Proc.new { |h|
-           Chef::Config[:knife][:hints] ||= {}
-           name, path = h.split("=")
-           Chef::Config[:knife][:hints][name] = path ? JSON.parse(::File.read(path)) : Hash.new
+          Chef::Config[:knife][:hints] ||= {}
+          name, path = h.split("=")
+          Chef::Config[:knife][:hints][name] = path ? JSON.parse(::File.read(path)) : Hash.new
         }
 
       option :json_attributes,
@@ -240,7 +239,6 @@ class Chef
       end
 
       def wait_until_virtual_machine_ready(retry_interval_in_seconds = 30)
-
         vm_status = nil
         puts
 
@@ -250,7 +248,7 @@ class Chef
             wait_for_virtual_machine_state(:vm_status_ready, 15, retry_interval_in_seconds)
           end
 
-          msg_server_summary(get_role_server())
+          msg_server_summary(get_role_server)
 
           if locate_config_value(:bootstrap_protocol) == "cloud-api"
             extension_status = wait_for_resource_extension_state(:wagent_provisioning, 5, retry_interval_in_seconds)
@@ -268,7 +266,7 @@ class Chef
             end
           end
         rescue Exception => e
-          Chef::Log.error("#{e.to_s}")
+          Chef::Log.error("#{e}")
           raise 'Verify connectivity to Azure and subscription resource limit compliance (e.g. maximum CPU core limits) and try again.'
         end
       end
@@ -286,14 +284,14 @@ class Chef
         wait_start_time = Time.now
 
         begin
-          vm_status = get_virtual_machine_status()
+          vm_status = get_virtual_machine_status
           vm_ready = vm_status_ordering[vm_status] >= vm_status_ordering[vm_status_goal]
           print '.'
-          sleep retry_interval_in_seconds if !vm_ready
+          sleep retry_interval_in_seconds unless vm_ready
           polling_attempts += 1
         end until vm_ready || polling_attempts >= max_polling_attempts
 
-        if ! vm_ready
+        unless vm_ready
           raise Chef::Exceptions::CommandTimeout, "Virtual machine state '#{vm_status_description[vm_status_goal]}' not reached after #{total_wait_time_in_minutes} minutes."
         end
 
@@ -303,7 +301,6 @@ class Chef
       end
 
       def wait_for_resource_extension_state(extension_status_goal, total_wait_time_in_minutes, retry_interval_in_seconds)
-
         extension_status_ordering = {:extension_status_not_detected => 0, :wagent_provisioning => 1, :extension_installing => 2, :extension_provisioning => 3, :extension_ready => 4}
 
         status_description = {:extension_status_not_detected => 'any', :wagent_provisioning => 'wagent provisioning', :extension_installing => "installing", :extension_provisioning => "provisioning", :extension_ready => "ready" }
@@ -316,14 +313,14 @@ class Chef
         wait_start_time = Time.now
 
         begin
-          extension_status = get_extension_status()
+          extension_status = get_extension_status
           extension_ready = extension_status_ordering[extension_status[:status]] >= extension_status_ordering[extension_status_goal]
           print '.'
-          sleep retry_interval_in_seconds if !extension_ready
+          sleep retry_interval_in_seconds unless extension_ready
           polling_attempts += 1
         end until extension_ready || polling_attempts >= max_polling_attempts
 
-        if ! extension_ready
+        unless extension_ready
           raise Chef::Exceptions::CommandTimeout, "Resource extension state '#{status_description[extension_status_goal]}' not reached after #{total_wait_time_in_minutes} minutes. #{extension_status[:message]}"
         end
 
@@ -333,10 +330,10 @@ class Chef
         extension_status[:status]
       end
 
-      def get_virtual_machine_status()
-        role = get_role_server()
+      def get_virtual_machine_status
+        role = get_role_server
         unless role.nil?
-          Chef::Log.debug("Role status is #{role.status.to_s}")
+          Chef::Log.debug("Role status is #{role.status}")
           if  "ReadyRole".eql? role.status.to_s
             return :vm_status_ready
           elsif "Provisioning".eql? role.status.to_s
@@ -348,10 +345,10 @@ class Chef
         return :vm_status_not_detected
       end
 
-      def get_extension_status()
+      def get_extension_status
         deployment_name = connection.deploys.get_deploy_name_for_hostedservice(locate_config_value(:azure_dns_name))
         deployment = connection.query_azure("hostedservices/#{locate_config_value(:azure_dns_name)}/deployments/#{deployment_name}")
-        extension_status = Hash.new
+        extension_status = {}
 
         if deployment.at_css('Deployment Name') != nil
           role_list_xml =  deployment.css('RoleInstanceList RoleInstance')
@@ -378,7 +375,7 @@ class Chef
                   extension_status[:status] = :extension_status_not_detected
                 end
               # This fix is for linux waagent issue: api unable to deserialize the waagent status.
-              elsif role.at_css("GuestAgentStatus Status").text == "NotReady" and waagent_status_msg == lnx_waagent_fail_msg
+              elsif role.at_css("GuestAgentStatus Status").text == "NotReady" && waagent_status_msg == lnx_waagent_fail_msg
                 extension_status[:status] = :extension_ready
               else
                 extension_status[:status] = :wagent_provisioning
@@ -395,31 +392,31 @@ class Chef
         return extension_status
       end
 
-      def get_role_server()
+      def get_role_server
         deploy = connection.deploys.queryDeploy(locate_config_value(:azure_dns_name))
         deploy.find_role(locate_config_value(:azure_vm_name))
       end
 
       def tcp_test_winrm(ip_addr, port)
-	    hostname = ip_addr
+	       hostname = ip_addr
         socket = TCPSocket.new(hostname, port)
-	    return true
-      rescue SocketError
-        sleep 2
-        false
-      rescue Errno::ETIMEDOUT
-        false
-      rescue Errno::EPERM
-        false
-      rescue Errno::ECONNREFUSED
-        sleep 2
-        false
-      rescue Errno::EHOSTUNREACH
-        sleep 2
-        false
-      rescue Errno::ENETUNREACH
-        sleep 2
-        false
+   	    return true
+         rescue SocketError
+           sleep 2
+           false
+         rescue Errno::ETIMEDOUT
+           false
+         rescue Errno::EPERM
+           false
+         rescue Errno::ECONNREFUSED
+           sleep 2
+           false
+         rescue Errno::EHOSTUNREACH
+           sleep 2
+           false
+         rescue Errno::ENETUNREACH
+           sleep 2
+           false
       end
 
       def tcp_test_ssh(fqdn, sshport)
@@ -456,12 +453,12 @@ class Chef
         Chef::Log.info("validating...")
         validate!
 
-        ssh_override_winrm if %w(ssh cloud-api).include?(locate_config_value(:bootstrap_protocol)) and !is_image_windows?
+        ssh_override_winrm if %w(ssh cloud-api).include?(locate_config_value(:bootstrap_protocol)) && !is_image_windows?
 
         Chef::Log.info("creating...")
 
         config[:azure_dns_name] = get_dns_name(locate_config_value(:azure_dns_name))
-        if not locate_config_value(:azure_vm_name)
+        unless locate_config_value(:azure_vm_name)
           config[:azure_vm_name] = locate_config_value(:azure_dns_name)
         end
 
@@ -470,7 +467,7 @@ class Chef
           remove_hosted_service_on_failure = nil
         end
 
-        #If Storage Account is not specified, check if the geographic location has one to re-use
+        # If Storage Account is not specified, check if the geographic location has one to re-use
         if not locate_config_value(:azure_storage_account)
           storage_accts = connection.storageaccounts.all
           storage = storage_accts.find { |storage_acct| storage_acct.location.to_s == locate_config_value(:azure_service_location) }
@@ -491,10 +488,10 @@ class Chef
 
         begin
           connection.deploys.create(create_server_def)
-          wait_until_virtual_machine_ready()
-          server = get_role_server()
+          wait_until_virtual_machine_ready
+          server = get_role_server
         rescue Exception => e
-          Chef::Log.error("Failed to create the server -- exception being rescued: #{e.to_s}")
+          Chef::Log.error("Failed to create the server -- exception being rescued: #{e}")
           backtrace_message = "#{e.class}: #{e}\n#{e.backtrace.join("\n")}"
           Chef::Log.debug("#{backtrace_message}")
           cleanup_and_exit(remove_hosted_service_on_failure, remove_storage_service_on_failure)
@@ -516,20 +513,20 @@ class Chef
             port = server.sshport
             print "#{ui.color("Waiting for sshd on #{fqdn}:#{port}", :magenta)}"
 
-            print(".") until tcp_test_ssh(fqdn,port) {
+            print(".") until tcp_test_ssh(fqdn,port) do
               sleep @initial_sleep_delay ||= 10
               puts("done")
-            }
+            end
 
           elsif locate_config_value(:bootstrap_protocol) == 'winrm'
             port = server.winrmport
 
             print "#{ui.color("Waiting for winrm on #{fqdn}:#{port}", :magenta)}"
 
-            print(".") until tcp_test_winrm(fqdn,port) {
+            print(".") until tcp_test_winrm(fqdn,port) do
               sleep @initial_sleep_delay ||= 10
               puts("done")
-            }
+            end
           end
 
           puts("\n")
@@ -544,10 +541,10 @@ class Chef
 
           print "#{ui.color("Waiting for sshd on #{fqdn}:#{port}", :magenta)}"
 
-          print(".") until tcp_test_ssh(fqdn,port) {
+          print(".") until tcp_test_ssh(fqdn,port) do
             sleep @initial_sleep_delay ||= 10
             puts("done")
-          }
+          end
 
           puts("\n")
           bootstrap_for_node(server,fqdn,port).run
@@ -568,11 +565,9 @@ class Chef
 
         Chef::Config[:knife][:hints] ||= {}
         Chef::Config[:knife][:hints]["azure"] ||= cloud_attributes
-
       end
 
       def bootstrap_common_params(bootstrap, server)
-
         bootstrap.config[:run_list] = config[:run_list]
         bootstrap.config[:prerelease] = config[:prerelease]
         bootstrap.config[:first_boot_attributes] = locate_config_value(:json_attributes) || {}
@@ -586,29 +581,29 @@ class Chef
       def bootstrap_for_windows_node(server, fqdn, port)
         if locate_config_value(:bootstrap_protocol) == 'winrm'
 
-            load_winrm_deps
-            if not Chef::Platform.windows?
-              require 'gssapi'
-            end
+          load_winrm_deps
+          unless Chef::Platform.windows?
+            require 'gssapi'
+          end
 
-            bootstrap = Chef::Knife::BootstrapWindowsWinrm.new
+          bootstrap = Chef::Knife::BootstrapWindowsWinrm.new
 
-            bootstrap.config[:winrm_user] = locate_config_value(:winrm_user) || 'Administrator'
-            bootstrap.config[:winrm_password] = locate_config_value(:winrm_password)
-            bootstrap.config[:winrm_transport] = locate_config_value(:winrm_transport)
-            bootstrap.config[:winrm_authentication_protocol] = locate_config_value(:winrm_authentication_protocol)
-            bootstrap.config[:winrm_port] = port
+          bootstrap.config[:winrm_user] = locate_config_value(:winrm_user) || 'Administrator'
+          bootstrap.config[:winrm_password] = locate_config_value(:winrm_password)
+          bootstrap.config[:winrm_transport] = locate_config_value(:winrm_transport)
+          bootstrap.config[:winrm_authentication_protocol] = locate_config_value(:winrm_authentication_protocol)
+          bootstrap.config[:winrm_port] = port
 
         elsif locate_config_value(:bootstrap_protocol) == 'ssh'
-            bootstrap = Chef::Knife::BootstrapWindowsSsh.new
-            bootstrap.config[:ssh_user] = locate_config_value(:ssh_user)
-            bootstrap.config[:ssh_password] = locate_config_value(:ssh_password)
-            bootstrap.config[:ssh_port] = port
-            bootstrap.config[:identity_file] = locate_config_value(:identity_file)
-            bootstrap.config[:host_key_verify] = locate_config_value(:host_key_verify)
+          bootstrap = Chef::Knife::BootstrapWindowsSsh.new
+          bootstrap.config[:ssh_user] = locate_config_value(:ssh_user)
+          bootstrap.config[:ssh_password] = locate_config_value(:ssh_password)
+          bootstrap.config[:ssh_port] = port
+          bootstrap.config[:identity_file] = locate_config_value(:identity_file)
+          bootstrap.config[:host_key_verify] = locate_config_value(:host_key_verify)
         else
-            ui.error("Unsupported Bootstrapping Protocol. Supported : winrm, ssh")
-            exit 1
+          ui.error("Unsupported Bootstrapping Protocol. Supported : winrm, ssh")
+          exit 1
         end
         bootstrap.name_args = [fqdn]
         bootstrap.config[:chef_node_name] = config[:chef_node_name] || server.name
@@ -638,19 +633,19 @@ class Chef
 
       def validate!
         super([
-              :azure_subscription_id,
-              :azure_mgmt_cert,
-              :azure_api_host_name,
-              :azure_source_image,
-              :azure_vm_size,
+          :azure_subscription_id,
+          :azure_mgmt_cert,
+          :azure_api_host_name,
+          :azure_source_image,
+          :azure_vm_size,
         ])
 
-        if locate_config_value(:winrm_password) and (locate_config_value(:winrm_password).length <= 6 and locate_config_value(:winrm_password).length >= 72)
+        if locate_config_value(:winrm_password) && (locate_config_value(:winrm_password).length <= 6 && locate_config_value(:winrm_password).length >= 72)
           ui.error("The supplied password must be 6-72 characters long and meet password complexity requirements")
           exit 1
         end
 
-        if locate_config_value(:ssh_password) and (locate_config_value(:ssh_password).length <= 6 and locate_config_value(:ssh_password).length >= 72)
+        if locate_config_value(:ssh_password) && (locate_config_value(:ssh_password).length <= 6 && locate_config_value(:ssh_password).length >= 72)
           ui.error("The supplied password must be 6-72 characters long and meet password complexity requirements")
           exit 1
         end
@@ -673,7 +668,7 @@ class Chef
           exit 1
         end
 
-        if !(connection.images.exists?(locate_config_value(:azure_source_image)))
+        unless (connection.images.exists?(locate_config_value(:azure_source_image)))
           ui.error("Image provided is invalid")
           exit 1
         end
@@ -704,7 +699,7 @@ class Chef
         }
         # If user is connecting a new VM to an existing dns, then
         # the VM needs to have a unique public port. Logic below takes care of this.
-        if !is_image_windows? or locate_config_value(:bootstrap_protocol) == 'ssh'
+        if !is_image_windows? || locate_config_value(:bootstrap_protocol) == 'ssh'
           port = locate_config_value(:ssh_port) || '22'
           if locate_config_value(:azure_connect_to_existing_dns) && (port == '22')
             port = Random.rand(64000) + 1000
@@ -743,11 +738,11 @@ class Chef
               server_def[:winrm_user] = locate_config_value(:winrm_user).split("\\")[1]
             end
           else
-            if not locate_config_value(:ssh_user)
+            unless locate_config_value(:ssh_user)
               ui.error("SSH User is compulsory parameter")
               exit 1
             end
-            unless locate_config_value(:ssh_password) or locate_config_value(:identity_file)
+            unless locate_config_value(:ssh_password) || locate_config_value(:identity_file)
               ui.error("Specify either SSH Key or SSH Password")
               exit 1
             end
@@ -785,7 +780,7 @@ class Chef
       end
 
       def get_chef_extension_public_params
-        pub_config = Hash.new
+        pub_config = {}
         pub_config[:client_rb] = "chef_server_url \t #{Chef::Config[:chef_server_url].to_json}\nvalidation_client_name\t#{Chef::Config[:validation_client_name].to_json}"
         pub_config[:runlist] = locate_config_value(:run_list).empty? ? "" : locate_config_value(:run_list).join(",").to_json
         pub_config[:autoUpdateClient] = locate_config_value(:auto_update_client) ? "true" : "false"
@@ -793,7 +788,7 @@ class Chef
       end
 
       def get_chef_extension_private_params
-        pri_config = Hash.new
+        pri_config = {}
         pri_config[:validation_key] = File.read(Chef::Config[:validation_key])
         Base64.encode64(pri_config.to_json)
       end
@@ -818,22 +813,22 @@ class Chef
       def ssh_override_winrm
         # unchanged ssh_user and changed winrm_user, override ssh_user
         if locate_config_value(:ssh_user).eql?(options[:ssh_user][:default]) &&
-            !locate_config_value(:winrm_user).eql?(options[:winrm_user][:default])
+           !locate_config_value(:winrm_user).eql?(options[:winrm_user][:default])
           config[:ssh_user] = locate_config_value(:winrm_user)
         end
         # unchanged ssh_port and changed winrm_port, override ssh_port
         if locate_config_value(:ssh_port).eql?(options[:ssh_port][:default]) &&
-            !locate_config_value(:winrm_port).eql?(options[:winrm_port][:default])
+           !locate_config_value(:winrm_port).eql?(options[:winrm_port][:default])
           config[:ssh_port] = locate_config_value(:winrm_port)
         end
         # unset ssh_password and set winrm_password, override ssh_password
         if locate_config_value(:ssh_password).nil? &&
-            !locate_config_value(:winrm_password).nil?
+           !locate_config_value(:winrm_password).nil?
           config[:ssh_password] = locate_config_value(:winrm_password)
         end
         # unset identity_file and set kerberos_keytab_file, override identity_file
         if locate_config_value(:identity_file).nil? &&
-            !locate_config_value(:kerberos_keytab_file).nil?
+           !locate_config_value(:kerberos_keytab_file).nil?
           config[:identity_file] = locate_config_value(:kerberos_keytab_file)
         end
       end

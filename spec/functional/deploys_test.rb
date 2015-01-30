@@ -1,12 +1,12 @@
 require File.expand_path(File.dirname(__FILE__) + '/../spec_helper')
 
-describe "deploys" do
+describe 'deploys' do
   before(:all) do
     @connection = Azure::Connection.new(TEST_PARAMS)
     @deploys = @connection.deploys.all
   end
 
-  specify {@deploys.length.should be > 0}
+  specify { @deploys.length.should be > 0 }
   it 'each deployment should have values' do
     @deploys.each do |deploy|
       deploy.name.should_not be_nil
@@ -17,7 +17,7 @@ describe "deploys" do
   end
   it 'each role should have values' do
     @deploys.each do |deploy|
-        Chef::Log.info '============================='
+      Chef::Log.info '============================='
       Chef::Log.info 'hosted service: ' + deploy.hostedservicename + '  deployment: ' + deploy.name
       deploy.roles.each do |role|
         role.name.should_not be_nil
