@@ -112,9 +112,9 @@ class Azure
       write_certificate_to_file cert, file_path, rsa_key, cert_params
       puts "*"*70
       puts "Generated Certificates:"
-      puts " PKCS12 FORMAT (needed on the server machine, contains private key): #{file_path}.pfx"
-      puts " BASE64 ENCODED (used for creating SSL listener through cloud provider api, contains private key): #{file_path}.b64"
-      puts " PEM FORMAT (required by the client to connect to the server): #{file_path}.pem"
+      puts "- #{file_path}.pfx - PKCS12 format keypair. Contains both the public and private keys, usually used on the server."
+      puts "- #{file_path}.b64 - Base64 encoded PKCS12 keypair. Contains both the public and private keys, for upload to the Azure REST API."
+      puts "- #{file_path}.pem - Base64 encoded public certificate only. Required by the client to connect to the server."
       puts "Certificate Thumbprint: #{@thumbprint.to_s.upcase}"
       puts "*"*70
 
