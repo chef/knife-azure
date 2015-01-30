@@ -259,6 +259,8 @@ describe Chef::Knife::AzureServerCreate do
         @server_instance.run
       end
 
+##########  Uncomment the code below to test automatic certificate generation for ssl communication
+=begin
       it 'create with automatic certificates creation if winrm-transport=ssl' do
         # set all params
         Chef::Config[:knife][:azure_dns_name] = 'service001'
@@ -281,6 +283,7 @@ describe Chef::Knife::AzureServerCreate do
         #Delete temp directory
         FileUtils.remove_entry_secure dir
       end
+=end
     end
 
     context "when --azure-dns-name is not specified" do
