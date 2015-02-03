@@ -149,7 +149,8 @@ class Azure
     def prompt_for_file_path
       file_path = ''
       counter = 0
-      begin
+      stripped_file_path = ''
+      loop do
         print "Invalid location! \n" unless file_path.empty?
         print 'Enter the file path for certificates e.g. C:\Windows (empty for current location):'
         file_path = STDIN.gets
@@ -157,27 +158,28 @@ class Azure
         return stripped_file_path if file_path == "\n"
         counter += 1
         exit(1) if counter == 3
-      end until File.directory?(stripped_file_path)
+        break if File.directory?(stripped_file_path)
+      end
       stripped_file_path
     end
 
     def prompt_for_domain
       counter = 0
-      begin
+      domain = ''
+      loop do
         print 'Enter the domain (mandatory):'
         domain = STDIN.gets
         domain = domain.strip
         counter += 1
         exit(1) if counter == 3
-      end until !domain.empty?
+        break unless domain.empty?
+      end
       domain
     end
 
     def generate_certificate(rsa_key, cert_params)
       @hostname = '*'
-      if cert_params[:domain]
-        @hostname = '*.' + cert_params[:domain]
-      end
+      @hostname = '*.' + cert_params[:domain] if cert_params[:domain]
 
       # Create a self-signed X509 certificate from the rsa_key (unencrypted)
       cert = OpenSSL::X509::Certificate.new

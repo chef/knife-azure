@@ -20,7 +20,7 @@ class Azure
   class Deploys
     include AzureUtility
     def initialize(connection)
-      @connection=connection
+      @connection = connection
     end
     # force_load should be true when there is something in local cache and we want to reload
     # first call is always load.
@@ -44,18 +44,15 @@ class Azure
     end
 
     def all
-      self.load
+      load
     end
 
-    # TODO - Current knife-azure plug-in seems to have assumption that single hostedservice
+    # TODO: Current knife-azure plug-in seems to have assumption that single hostedservice
     # will always have one deployment (production). see Deploy#retrieve below
     def get_deploy_name_for_hostedservice(hostedservicename)
       host = @connection.hosts.find(hostedservicename)
-      if host && host.deploys.length > 0
-        host.deploys[0].name
-      else
-        nil
-      end
+      name = host.deploys[0].name if host && host.deploys.length > 0
+      name
     end
 
     def create(params)
@@ -79,9 +76,9 @@ class Azure
         params[:fingerprint] = @connection.certificates.create(params)
       end
       if params[:cert_path]
-        cert_data = File.read (params[:cert_path])
+        cert_data = File.read(params[:cert_path])
         @connection.certificates.add cert_data, params[:cert_password], 'pfx', params[:azure_dns_name]
-      elsif(params[:winrm_transport] == "ssl")
+      elsif (params[:winrm_transport] == 'ssl')
         thumbprint = @connection.certificates.create_ssl_certificate params[:azure_dns_name]
         params[:ssl_cert_fingerprint] = thumbprint.to_s.upcase
       end
@@ -90,18 +87,18 @@ class Azure
 
       if !params['deploy_name'].nil?
         role = Role.new(@connection)
-        roleXML = role.setup(params)
-        ret_val = role.create(params, roleXML)
+        role_xml = role.setup(params)
+        ret_val = role.create(params, role_xml)
       else
         params['deploy_name'] = params[:azure_dns_name]
         deploy = Deploy.new(@connection)
-        deployXML = deploy.setup(params)
-        ret_val = deploy.create(params, deployXML)
+        deploy_xml = deploy.setup(params)
+        ret_val = deploy.create(params, deploy_xml)
       end
       error_code, error_message = error_from_response_xml(ret_val)
       if error_code.length > 0
         Chef::Log.debug(ret_val.to_s)
-        raise Chef::Log.fatal 'Unable to create role:' + error_code + ' : ' + error_message
+        fail Chef::Log.fatal 'Unable to create role:' + error_code + ' : ' + error_message
       end
       @connection.roles.find_in_hosted_service(params[:azure_vm_name], params[:azure_dns_name])
     end
@@ -109,7 +106,7 @@ class Azure
     def delete(_rolename)
     end
 
-    def queryDeploy(hostedservicename)
+    def query_deploy(hostedservicename)
       deploy = Deploy.new(@connection)
       deploy.retrieve(hostedservicename)
       deploy
@@ -126,46 +123,45 @@ class Azure
 
     def retrieve(hostedservicename)
       @hostedservicename = hostedservicename
-      deployXML = @connection.query_azure("hostedservices/#{hostedservicename}/deploymentslots/Production")
-      if deployXML.at_css('Deployment Name') != nil
-        @name = xml_content(deployXML, 'Deployment Name')
-        @status = xml_content(deployXML,'Deployment Status')
-        @url = xml_content(deployXML, 'Deployment Url')
-        @roles = {}
-        rolesXML = deployXML.css('Deployment RoleInstanceList RoleInstance')
-        rolesXML.each do |roleXML|
-          role = Role.new(@connection)
-          role.parse(roleXML, hostedservicename, @name)
-          @roles[role.name] = role
-        end
+      deploy_xml = @connection.query_azure("hostedservices/#{hostedservicename}/deploymentslots/Production")
+      return if deploy_xml.at_css('Deployment Name').nil?
+      @name = xml_content(deploy_xml, 'Deployment Name')
+      @status = xml_content(deploy_xml, 'Deployment Status')
+      @url = xml_content(deploy_xml, 'Deployment Url')
+      @roles = {}
+      roles_xml = deploy_xml.css('Deployment RoleInstanceList RoleInstance')
+      roles_xml.each do |role_xml|
+        role = Role.new(@connection)
+        role.parse(role_xml, hostedservicename, @name)
+        @roles[role.name] = role
       end
     end
 
     def setup(params)
       role = Role.new(@connection)
-      roleXML = role.setup(params)
-      # roleXML = Nokogiri::XML role.setup(params)
+      role_xml = role.setup(params)
+      # role_xml = Nokogiri::XML role.setup(params)
       builder = Nokogiri::XML::Builder.new do |xml|
         xml.Deployment(
-          'xmlns'=>'http://schemas.microsoft.com/windowsazure',
-          'xmlns:i'=>'http://www.w3.org/2001/XMLSchema-instance'
+          'xmlns' => 'http://schemas.microsoft.com/windowsazure',
+          'xmlns:i' => 'http://www.w3.org/2001/XMLSchema-instance'
         ) do
           xml.Name params['deploy_name']
           xml.DeploymentSlot 'Production'
           xml.Label Base64.encode64(params['deploy_name']).strip
-          xml.RoleList { xml.Role('i:type'=>'PersistentVMRole') }
+          xml.RoleList { xml.Role('i:type' => 'PersistentVMRole') }
           if params[:azure_network_name]
             xml.VirtualNetworkName params[:azure_network_name]
           end
         end
       end
-      builder.doc.at_css('Role') << roleXML.at_css('PersistentVMRole').children.to_s
+      builder.doc.at_css('Role') << role_xml.at_css('PersistentVMRole').children.to_s
       builder.doc
     end
 
-    def create(params, deployXML)
+    def create(params, deploy_xml)
       servicecall = "hostedservices/#{params[:azure_dns_name]}/deployments"
-      @connection.query_azure(servicecall, "post", deployXML.to_xml)
+      @connection.query_azure(servicecall, 'post', deploy_xml.to_xml)
     end
 
     def roles

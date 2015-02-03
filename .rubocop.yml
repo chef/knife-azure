@@ -25,3 +25,9 @@ CyclomaticComplexity:
   Enabled: false
 ClassLength:
   Max: 1000
+PerceivedComplexity:
+  Enabled: false
+MethodLength:
+  Enabled: false
+ParameterLists:
+  Max: 6

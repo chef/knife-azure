@@ -393,7 +393,7 @@ class Chef
       end
 
       def get_role_server
-        deploy = connection.deploys.queryDeploy(locate_config_value(:azure_dns_name))
+        deploy = connection.deploys.query_deploy(locate_config_value(:azure_dns_name))
         deploy.find_role(locate_config_value(:azure_vm_name))
       end
 
