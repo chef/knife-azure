@@ -27,7 +27,7 @@ class Azure
         osimages = get_images('OSImage')   # get OSImages
         vmimages = get_images('VMImage')   # get VMImages
 
-        all_images = osimages.merge(vmimages)
+        osimages.merge(vmimages)
       end
     end
 
@@ -57,12 +57,12 @@ class Azure
       images
     end
 
-    def is_os_image(image_name)
+    def os_image?(image_name)
       os_images = get_images('OSImage').values
       os_images.detect { |img| img.name == image_name } ? true : false
     end
 
-    def is_vm_image(image_name)
+    def vm_image?(image_name)
       vm_images = get_images('VMImage').values
       vm_images.detect { |img| img.name == image_name } ? true : false
     end

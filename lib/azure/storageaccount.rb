@@ -28,9 +28,9 @@ class Azure
       unless @azure_storage_accounts || force_load
         @azure_storage_accounts = begin
           azure_storage_accounts = {}
-          responseXML = @connection.query_azure('storageservices')
-          servicesXML = responseXML.css('StorageServices StorageService')
-          servicesXML.each do |serviceXML|
+          response_xml = @connection.query_azure('storageservices')
+          services_xml = response_xml.css('StorageServices StorageService')
+          services_xml.each do |serviceXML|
             storage = StorageAccount.new(@connection).parse(serviceXML)
             azure_storage_accounts[storage.name] = storage
           end
@@ -75,10 +75,9 @@ class Azure
     end
 
     def delete(name)
-      if self.exists?(name)
-        servicecall = 'storageservices/' + name
-        @connection.query_azure(servicecall, 'delete')
-      end
+      return unless self.exists?(name)
+      servicecall = 'storageservices/' + name
+      @connection.query_azure(servicecall, 'delete')
     end
   end
 end

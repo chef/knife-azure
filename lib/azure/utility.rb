@@ -20,9 +20,7 @@ module AzureUtility
   def xml_content(xml, key, default = '')
     content = default
     node = xml.at_css(key)
-    if node
-      content = node.content
-    end
+    content = node.content if node
     content
   end
 

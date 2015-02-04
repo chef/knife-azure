@@ -29,9 +29,9 @@ class Azure
       unless @hosted_services || force_load
         @hosted_services = begin
           hosted_services = {}
-          responseXML = @connection.query_azure('hostedservices')
-          servicesXML = responseXML.css('HostedServices HostedService')
-          servicesXML.each do |serviceXML|
+          response_xml = @connection.query_azure('hostedservices')
+          services_xml = response_xml.css('HostedServices HostedService')
+          services_xml.each do |serviceXML|
             host = Host.new(@connection).parse(serviceXML)
             hosted_services[host.name] = host
           end
@@ -87,10 +87,9 @@ class Azure
     end
 
     def delete(name)
-      if self.exists?(name)
-        servicecall = 'hostedservices/' + name
-        @connection.query_azure(servicecall, 'delete')
-      end
+      return unless self.exists?(name)
+      servicecall = 'hostedservices/' + name
+      @connection.query_azure(servicecall, 'delete')
     end
   end
 end
@@ -99,8 +98,8 @@ class Azure
   class Host
     include AzureUtility
     attr_accessor :connection, :name, :url, :label
-    attr_accessor :dateCreated, :description, :location
-    attr_accessor :dateModified, :status
+    attr_accessor :date_created, :description, :location
+    attr_accessor :date_modified, :status
 
     def initialize(connection)
       @connection = connection
@@ -112,10 +111,10 @@ class Azure
       @name = xml_content(serviceXML, 'ServiceName')
       @url = xml_content(serviceXML, 'Url')
       @label = xml_content(serviceXML, 'HostedServiceProperties Label')
-      @dateCreated = xml_content(serviceXML, 'HostedServiceProperties DateCreated')
+      @date_created = xml_content(serviceXML, 'HostedServiceProperties DateCreated')
       @description = xml_content(serviceXML, 'HostedServiceProperties Description')
       @location = xml_content(serviceXML, 'HostedServiceProperties Location')
-      @dateModified = xml_content(serviceXML, 'HostedServiceProperties DateLastModified')
+      @date_modified = xml_content(serviceXML, 'HostedServiceProperties DateLastModified')
       @status = xml_content(serviceXML, 'HostedServiceProperties Status')
       self
     end
@@ -138,7 +137,7 @@ class Azure
     end
 
     def details
-      response = @connection.query_azure('hostedservices/' + @name + '?embed-detail=true')
+      @connection.query_azure('hostedservices/' + @name + '?embed-detail=true')
     end
 
     # Deployments within this hostedservice

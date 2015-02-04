@@ -761,7 +761,7 @@ class Chef
           server_def[:identity_file_passphrase] = locate_config_value(:identity_file_passphrase)
         end
 
-        server_def[:is_vm_image] = connection.images.is_vm_image(locate_config_value(:azure_source_image))
+        server_def[:is_vm_image] = connection.images.vm_image?(locate_config_value(:azure_source_image))
         server_def
       end
 

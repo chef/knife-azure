@@ -54,20 +54,16 @@ class Azure
 
       all if @roles.nil?
 
-      # TODO - optimize this lookup
+      # TODO: optimize this lookup
       @roles.each do |role|
-        if (role.name == role_name)
-          return role
-        end
+        return role if (role.name == role_name)
       end
       nil
     end
 
     def alone_on_hostedservice(found_role)
       roles = find_roles_within_hostedservice(found_role.hostedservicename)
-      if roles && roles.length > 1
-        return false
-      end
+      return false if roles && roles.length > 1
       true
     end
 
@@ -77,24 +73,22 @@ class Azure
 
     def delete(name, params)
       role = find(name)
-      unless role.nil?
-        roleXML = nil
-        roleXML = @connection.query_azure("hostedservices/#{role.hostedservicename}", 'get', '', 'embed-detail=true')
-        osdisk = roleXML.css(roleXML, 'OSVirtualHardDisk')
-        disk_name = xml_content(osdisk, 'DiskName')
-        storage_account_name = xml_content(osdisk, 'MediaLink').gsub('http://', '').gsub(/.blob(.*)$/, '')
+      return if role.nil?
+      role_xml = @connection.query_azure("hostedservices/#{role.hostedservicename}", 'get', '', 'embed-detail=true')
+      osdisk = role_xml.css(role_xml, 'OSVirtualHardDisk')
+      disk_name = xml_content(osdisk, 'DiskName')
+      storage_account_name = xml_content(osdisk, 'MediaLink').gsub('http://', '').gsub(/.blob(.*)$/, '')
 
-        if !params[:preserve_azure_os_disk] && !params[:preserve_azure_vhd] && !params[:wait]
-          # default compmedia = true. So, it deletes role and associated resources
-          check_and_delete_role_and_resources(params, role)
-        else
-          # compmedia = false. So, it deletes only role and not associated resources
-          check_and_delete_role_and_resources(params, role, compmedia = false)
-          check_and_delete_disks(params, disk_name)
-          check_and_delete_service(params)
-        end
-        check_and_delete_storage(params, disk_name, storage_account_name)
+      if !params[:preserve_azure_os_disk] && !params[:preserve_azure_vhd] && !params[:wait]
+        # default compmedia = true. So, it deletes role and associated resources
+        check_and_delete_role_and_resources(params, role)
+      else
+        # compmedia = false. So, it deletes only role and not associated resources
+        check_and_delete_role_and_resources(params, role, false)
+        check_and_delete_disks(params, disk_name)
+        check_and_delete_service(params)
       end
+      check_and_delete_storage(params, disk_name, storage_account_name)
     end
 
     def check_and_delete_role_and_resources(params, role, compmedia = true)
@@ -109,7 +103,7 @@ class Azure
         "/#{role.deployname}/roles/#{role.name}"
       end
       if compmedia
-        @connection.query_azure(servicecall, 'delete', '', 'comp=media', wait = params[:wait])
+        @connection.query_azure(servicecall, 'delete', '', 'comp=media', params[:wait])
       else
         @connection.query_azure(servicecall, 'delete')
       end
@@ -121,48 +115,51 @@ class Azure
 
     def check_and_delete_disks(params, disk_name)
       servicecall = "disks/#{disk_name}"
-      unless params[:preserve_azure_os_disk]
-        # OS Disk can only be deleted if it is detached from the VM.
-        # So Iteratively check for disk detachment from the VM while waiting for 5 minutes ,
-        # exit otherwise after 12 attempts.
-        for attempt in 0..12
-          break if @connection.query_azure(servicecall, 'get').search('AttachedTo').text == ''
-          if attempt == 12 then puts 'The associated disk could not be deleted due to time out.' else sleep 25 end
-        end
-        unless params[:preserve_azure_vhd]
-          @connection.query_azure(servicecall, 'delete', '', 'comp=media', wait = params[:wait])
+      return if params[:preserve_azure_os_disk]
+      # OS Disk can only be deleted if it is detached from the VM.
+      # So Iteratively check for disk detachment from the VM while waiting for 5 minutes ,
+      # exit otherwise after 12 attempts.
+      (0..12).each do |attempt|
+        break if @connection.query_azure(servicecall, 'get').search('AttachedTo').text == ''
+        if attempt == 12
+          puts 'The associated disk could not be deleted due to time out.'
         else
-          @connection.query_azure(servicecall, 'delete')
+          sleep 25
         end
+      end
+      if params[:preserve_azure_vhd]
+        @connection.query_azure(servicecall, 'delete')
+      else
+        @connection.query_azure(servicecall, 'delete', '', 'comp=media', params[:wait])
       end
     end
 
     def check_and_delete_service(params)
-      unless params[:preserve_azure_dns_name]
-        unless params[:azure_dns_name].nil?
-          roles_using_same_service = find_roles_within_hostedservice(params[:azure_dns_name])
-          if roles_using_same_service.size <= 1
-            servicecall = 'hostedservices/' + params[:azure_dns_name]
-            @connection.query_azure(servicecall, 'delete')
-          end
-        end
-      end
+      return if params[:preserve_azure_dns_name]
+      return unless params[:azure_dns_name]
+      roles_using_same_service = find_roles_within_hostedservice(params[:azure_dns_name])
+      return unless roles_using_same_service.size <= 1
+      servicecall = 'hostedservices/' + params[:azure_dns_name]
+      @connection.query_azure(servicecall, 'delete')
     end
 
     def check_and_delete_storage(params, disk_name, storage_account_name)
-      if params[:delete_azure_storage_account]
-        # Iteratively check for disk deletion
-        for attempt in 0..12
-          break unless @connection.query_azure('disks').search('Name').text.include?(disk_name)
-          if attempt == 12 then puts 'The associated disk could not be deleted due to time out.' else sleep 25 end
+      return unless params[:delete_azure_storage_account]
+      # Iteratively check for disk deletion
+      (0..12).each do |attempt|
+        break unless @connection.query_azure('disks').search('Name').text.include?(disk_name)
+        if attempt == 12
+          puts 'The associated disk could not be deleted due to time out.'
+        else
+          sleep 25
         end
-        begin
-          @connection.query_azure("storageservices/#{storage_account_name}", 'delete')
-        rescue Exception => ex
-          ui.warn("#{ex.message}")
-          ui.warn("#{ex.backtrace.join("\n")}")
-        end
-       end
+      end
+      begin
+        @connection.query_azure("storageservices/#{storage_account_name}", 'delete')
+      rescue StandardError => ex
+        ui.warn("#{ex.message}")
+        ui.warn("#{ex.backtrace.join("\n")}")
+      end
     end
 
     private :check_and_delete_role_and_resources, :check_and_delete_disks, :check_and_delete_service, :check_and_delete_storage
@@ -179,18 +176,18 @@ class Azure
       @connection = connection
     end
 
-    def parse(roleXML, hostedservicename, deployname)
-      @name = xml_content(roleXML, 'RoleName')
-      @status = xml_content(roleXML, 'InstanceStatus')
-      @size = xml_content(roleXML, 'InstanceSize')
-      @ipaddress = xml_content(roleXML, 'IpAddress')
-      @hostname = xml_content(roleXML, 'HostName')
+    def parse(role_xml, hostedservicename, deployname)
+      @name = xml_content(role_xml, 'RoleName')
+      @status = xml_content(role_xml, 'InstanceStatus')
+      @size = xml_content(role_xml, 'InstanceSize')
+      @ipaddress = xml_content(role_xml, 'IpAddress')
+      @hostname = xml_content(role_xml, 'HostName')
       @hostedservicename = hostedservicename
       @deployname = deployname
       @tcpports = []
       @udpports = []
 
-      endpoints = roleXML.css('InstanceEndpoint')
+      endpoints = role_xml.css('InstanceEndpoint')
       @publicipaddress = xml_content(endpoints[0], 'Vip') unless endpoints.empty?
       endpoints.each do |endpoint|
         if xml_content(endpoint, 'Name').downcase == 'ssh'
@@ -229,7 +226,7 @@ class Azure
                 xml.ConfigurationSetType 'LinuxProvisioningConfiguration'
                 xml.HostName params[:azure_vm_name]
                 xml.UserName params[:ssh_user]
-                unless params[:identity_file].nil?
+                if params[:identity_file]
                   xml.DisableSshPasswordAuthentication 'true'
                   xml.SSH do
                     xml.PublicKeys do
@@ -272,7 +269,7 @@ class Azure
                         xml.Listener do
                           xml.Protocol 'Http'
                         end
-                       end
+                      end
                     end
                   end
                 end
@@ -395,10 +392,10 @@ class Azure
       builder.doc
     end
 
-    def create(params, roleXML)
+    def create(params, role_xml)
       servicecall = "hostedservices/#{params[:azure_dns_name]}/deployments" \
       "/#{params['deploy_name']}/roles"
-      @connection.query_azure(servicecall, 'post', roleXML.to_xml)
+      @connection.query_azure(servicecall, 'post', role_xml.to_xml)
     end
   end
 end

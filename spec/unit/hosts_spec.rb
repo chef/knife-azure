@@ -16,10 +16,10 @@ describe 'hosts' do
         expect(host.name).to_not be nil
         expect(host.url).to_not be nil
         expect(host.label).to_not be nil
-        expect(host.dateCreated).to_not be nil
+        expect(host.date_created).to_not be nil
         expect(host.description).to_not be nil
         expect(host.location).to_not be nil
-        expect(host.dateModified).to_not be nil
+        expect(host.date_modified).to_not be nil
         expect(host.status).to_not be nil
       end
     end

@@ -84,7 +84,7 @@ describe Chef::Knife::AzureImageList do
   end
 
   it 'checks if the image is OSImage or VMImage' do
-    expect(@server_instance.connection.images.is_os_image('CANONICAL__Canonical-Ubuntu-12-04-20120519-2012-05-19-en-us-30GB.vhd')).to be true
-    expect(@server_instance.connection.images.is_vm_image('CANONICAL__Canonical-Ubuntu-12-04-20120519-2012-05-19-en-us-30GB.vhd')).to be false
+    expect(@server_instance.connection.images.os_image?('CANONICAL__Canonical-Ubuntu-12-04-20120519-2012-05-19-en-us-30GB.vhd')).to be true
+    expect(@server_instance.connection.images.vm_image?('CANONICAL__Canonical-Ubuntu-12-04-20120519-2012-05-19-en-us-30GB.vhd')).to be false
   end
 end
