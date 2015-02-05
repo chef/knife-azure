@@ -150,16 +150,16 @@ describe Chef::Knife::AzureServerCreate do
 
     context "timeout parameters" do
       it "uses correct values when not specified" do
-        @server_instance.azure_vm_startup_timeout.should == 10
-        @server_instance.azure_vm_ready_timeout.should == 15
+        expect(@server_instance.options[:azure_vm_startup_timeout][:default].to_i).to eq(10)
+        expect(@server_instance.options[:azure_vm_ready_timeout][:default].to_i).to eq(15)
       end
 
       it "matches the CLI options" do
         #Set params to non-default values
         Chef::Config[:knife][:azure_vm_startup_timeout] = 5
         Chef::Config[:knife][:azure_vm_ready_timeout] = 10
-        @server_instance.azure_vm_startup_timeout.should == Chef::Config[:knife][:azure_vm_startup_timeout] 
-        @server_instance.azure_vm_ready_timeout.should == Chef::Config[:knife][:azure_vm_ready_timeout]
+        expect(@server_instance.locate_config_value(:azure_vm_startup_timeout).to_i).to eq(Chef::Config[:knife][:azure_vm_startup_timeout])
+        expect(@server_instance.locate_config_value(:azure_vm_ready_timeout).to_i).to eq(Chef::Config[:knife][:azure_vm_ready_timeout])
       end
     end
 
