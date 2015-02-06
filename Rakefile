@@ -35,7 +35,7 @@ RSpec::Core::RakeTask.new(:integration) do |spec|
 end
 
 RSpec::Core::RakeTask.new(:rcov) do |spec|
-  spec.pattern = 'spec/**/*_spec.rb'
+  spec.pattern = 'spec/unit|functional/*_spec.rb'
   spec.rcov = true
 end
 
