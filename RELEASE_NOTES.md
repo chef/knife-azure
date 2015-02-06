@@ -7,36 +7,38 @@ Example Note:
 Details about the thing that changed that needs to get included in the Release Notes in markdown.
 -->
 
-# knife-azure 1.3.0 release notes:
-This release of knife-azure updates gem dependencies and adds missing
-bootstrap json functionality.
+# knife-azure 1.4.0.rc.1 release notes:
+This release of knife-azure updates gem dependencies and adds bug fix and
+feature improvements.
 
-Our thanks to contributor  **Tugdual Saunier** for addressing a confusing
-documentation issue in the README.
+Special thanks go to contributor **Edmund Dipple** for addressing
+[knife-azure 146](https://github.com/chef/knife-azure/pull/146) an issue
+affecting the reliability of Windows VM creation.
 
-Issues with `knife-azure` should be reported in the ticketing system at
-https://tickets.opscode.com/browse/KNIFE, though we will soon transition to
-use of GitHub issues for tracking. To learn more about how you can
-contribute features and bug fixes to `knife-azure`, visit https://wiki.opscode.com/display/chef/How+to+Contribute.
+Please file bugs or feature requests against the KNIFE_WINDOWS project at https://github.com/chef/knife-azure/issues.
+More information on the contribution process for Chef projects can be found in the [Chef Contributions document](https://docs.chef.io/community_contributions.html).
 
-## Features added in knife-azure 1.3.0
+## New `cloud-api` bootstrap feature
+By specifying the value `cloud-api` for the `bootstrap_protocol` option of
+`knife azure server create` instead of `winrm` or `ssh`, Microsoft Azure will install
+Chef Client using its own internal mirror of Chef Client (it does not download
+it from Chef's Internet facing URL's as in the conventional winrm / ssh
+bootstrap). The process as a whole is asynchronous, so once the `knife azure
+server create` command has create the VM, full provisioning and Chef
+bootstrap will continue to occur even if the `knife` command is terminated
+before it completes.
 
-### `-j` option for bootstrap json
-Allows you to specify a string of JSON for first boot attributes during bootstrap.
-
--j JSON_ATTRIBS, --json-attributes JSON_ATTRIBS
-A JSON string that is added to the first run of a chef-client.
+In general, systems bootstrapped via `cloud-api` do not require incoming or
+outgoing Internet access.
 
 ## knife-azure on RubyGems and Github
 https://rubygems.org/gems/knife-azure
-https://github.com/opscode/knife-azure
+https://github.com/chef/knife-azure
 
-## Issues fixed in knife-azure 1.3.0
-* Update specs to rspec 3
-* [KNIFE-472](https://tickets.opscode.com/browse/KNIFE-472) - clean up knife-azure gemspec dependencies
-* Fixed wrong command in README
-* server create should not delete storage account in cleanup - unless created storage account
+## Issues fixed in knife-azure 1.4.0.rc.1
 
-## New features added in knife-azure 1.3.0
-* knife-azure server create is missing -j switch for json at first chef-client run.
+See the
+[CHANGELOG]([knife-azure 146](https://github.com/chef/knife-azure/blob/1.4.0.rc.1/CHANGELOG.md)
+for the complete list of issues fixed in this release.
+
 
