@@ -1,9 +1,9 @@
 # Knife Azure
 
 ## Description
-A [knife] (http://docs.opscode.com/knife.html) plugin to create,
+A [knife] (http://docs.chef.io/knife.html) plugin to create,
 delete, and enumerate
-[Windows Azure] (https://www.windowsazure.com)
+[Microsoft Azure] (https://azure.microsoft.com)
 resources to be managed by Chef.
 
 ## Installation
@@ -46,13 +46,17 @@ location in your knife.rb:
         
       # List all VM's (including those not be managed by Chef)
       $ knife azure server list
-  
+
+      # Create and bootstrap a Windows VM over winrm (winrm is the default for Windows)
+      $ knife azure server create --azure-dns-name MyNewServerName --azure-vm-size Medium -I a699494373c04fc0bc8f2bb1389d6106__Windows-Server-2012-R2-201412.01-en.us-127GB.vhd --azure-service-location 'West US' --winrm-user myuser --winrm-password 'mypassword'
+
       # Create and bootstrap an Ubuntu VM over ssh
       $ knife azure server create -N MyNewNode --azure-vm-size Medium -I b39f27a8b8c64d52b05eac6a62ebad85__Ubuntu-14_04_1-LTS-amd64-server-20140927-en-us-30GB -m 'West US' --ssh-user myuser --identity-file ~/.ssh/myprivatekey_rsa
-  
-      # Create and bootstrap a Windows VM over winrm
-      $ knife azure server create --azure-dns-name MyNewServerName --azure-vm-size Medium --azure-source-image 8fcc3d_Win2012-amd64-30GB --azure-service-location 'West US' --winrm-user myuser --winrm-password 'mypassword' --bootstrap-protocol winrm --distro 'windows-chef-client-msi'
-  
+
+      # Create and bootstrap an Windows VM through the Azure API --
+      # No winrm or ssh transport or Internet access required
+      $ knife azure server create --azure-dns-name MyNewServerName --azure-vm-size Medium -I a699494373c04fc0bc8f2bb1389d6106__Windows-Server-2012-R2-201412.01-en.us-127GB.vhd --azure-service-location 'West US' --winrm-user myuser --winrm-password 'mypassword' --bootstrap-protocol winrm --bootstrap-protocol cloud-api
+
       # Delete a server and purge it from the Chef server
       $ knife azure server delete MyNewNode --purge -y
 
@@ -84,18 +88,18 @@ Outputs a list of all linux images that are available to use for provisioning. Y
 This subcommand provisions a new server in Azure and then performs a Chef bootstrap. The goal of the bootstrap is to get Chef installed on the target system so it can run Chef Client with a Chef Server.
 
 #### Windows Bootstrapping Requirements
-knife-azure depends on knife-windows: https://github.com/opscode/knife-windows
+knife-azure depends on knife-windows: https://github.com/chef/knife-windows
 to bootstrap Windows machines via winrm (Basic, NTLM and Kerberos authentication) or ssh.
 
-The distro/template to be used for bootstrapping is: https://github.com/opscode/knife-windows/blob/master/lib/chef/knife/bootstrap/windows-chef-client-msi.erb
+The distro/template to be used for bootstrapping is: https://github.com/chef/knife-windows/blob/master/lib/chef/knife/bootstrap/windows-chef-client-msi.erb
 
 Windows source images should have the WinRM service enabled and the
 authentication should be set accordingly (Basic, NTLM and Kerberos). Firewall rules should be added accordingly to the source images. Refer to the link to configure this:
-https://github.com/opscode/knife-windows#nodes
+https://github.com/chef/knife-windows#nodes
 
 #### Azure-specific Options
       :azure_dns_name                   Required. The DNS prefix name that can be used to access the cloud
-                                        service which is unique within Windows Azure. If you want to add
+                                        service which is unique within Microsoft Azure. If you want to add
                                         new VM to an existing service/deployment, specify an exiting
                                         dns-name, along with --azure-connect-to-existing-dns option. Otherwise
                                         a new deployment is created.
@@ -105,7 +109,7 @@ https://github.com/opscode/knife-windows#nodes
       :azure_source_image               Required. Specifies the name of the disk image to use to create
                                         the virtual machine. Do a "knife azure image list" to see a
                                         list of available images.
-      :azure_storage_account            A name for the storage account that is unique within Windows Azure.
+      :azure_storage_account            A name for the storage account that is unique within Microsoft Azure.
                                         Storage account names must be between 3 and 24 characters in
                                         length and use numbers and lower-case letters only. This name is
                                         the DNS prefix name and can be used to access blobs, queues, and
