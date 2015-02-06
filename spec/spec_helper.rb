@@ -23,9 +23,7 @@ require 'chef/knife/azure_vnet_list'
 require 'fileutils'
 require "securerandom"
 require 'knife-azure/version'
-require 'test/knife-utils/test_bed'
-require 'resource_spec_helper'
-require 'server_command_common_spec_helper'
+
 
 def temp_dir
   @_temp_dir ||= Dir.mktmpdir
