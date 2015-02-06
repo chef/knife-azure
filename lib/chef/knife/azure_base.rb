@@ -64,10 +64,10 @@ class Chef
         end
       end
 
-      def is_image_windows?
+      def image_windows?
         images = connection.images
         target_image = images.all.select { |i| i.name == locate_config_value(:azure_source_image) }
-        unless target_image[0].nil?
+        if target_image[0]
           return target_image[0].os == 'Windows'
         else
           ui.error("Invalid image. Use the command \"knife azure image list\" to verify the image name")
@@ -75,6 +75,7 @@ class Chef
         end
       end
 
+      # rubocop:disable UselessAssignment
       def connection
         @connection ||= begin
                           connection = Azure::Connection.new(
@@ -92,9 +93,7 @@ class Chef
       end
 
       def msg_pair(label, value, color = :cyan)
-        if value && !value.to_s.empty?
-          puts "#{ui.color(label, color)}: #{value}"
-        end
+        puts "#{ui.color(label, color)}: #{value}" if value && !value.to_s.empty?
       end
 
       def msg_server_summary(server)
@@ -108,8 +107,8 @@ class Chef
         msg_pair('Private Ip Address', server.ipaddress)
         msg_pair('SSH Port', server.sshport) unless server.sshport.nil?
         msg_pair('WinRM Port', server.winrmport) unless server.winrmport.nil?
-        msg_pair('TCP Ports', server.tcpports) unless server.tcpports.nil? or server.tcpports.empty?
-        msg_pair('UDP Ports', server.udpports) unless server.udpports.nil? or server.udpports.empty?
+        msg_pair('TCP Ports', server.tcpports) unless server.tcpports.nil? || server.tcpports.empty?
+        msg_pair('UDP Ports', server.udpports) unless server.udpports.nil? || server.udpports.empty?
         msg_pair('Environment', locate_config_value(:environment) || '_default')
         msg_pair('Runlist', locate_config_value(:run_list)) unless locate_config_value(:run_list).empty?
         puts "\n"
@@ -129,9 +128,7 @@ class Chef
             errors << "You did not provide a valid '#{pretty_key}' value. Please set knife[:#{k}] in your knife.rb or pass as an option."
           end
         end
-        if errors.each { |e| ui.error(e) }.any?
-          exit 1
-        end
+        exit 1 if errors.each { |e| ui.error(e) }.any?
       end
 
       def parse_publish_settings_file(filename)

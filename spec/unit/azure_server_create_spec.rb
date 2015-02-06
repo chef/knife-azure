@@ -162,7 +162,7 @@ describe Chef::Knife::AzureServerCreate do
       end
 
       it 'quick create' do
-        expect(@server_instance).to receive(:is_image_windows?).at_least(:twice).and_return(false)
+        expect(@server_instance).to receive(:image_windows?).at_least(:twice).and_return(false)
         Chef::Config[:knife][:azure_dns_name] = 'vmname' # service name to be used as vm name
         expect(@server_instance).to receive(:get_dns_name)
         @server_instance.run
@@ -175,7 +175,7 @@ describe Chef::Knife::AzureServerCreate do
       end
 
       it 'quick create with wirm - API check' do
-        expect(@server_instance).to receive(:is_image_windows?).at_least(:twice).and_return(true)
+        expect(@server_instance).to receive(:image_windows?).at_least(:twice).and_return(true)
         Chef::Config[:knife][:azure_dns_name] = 'vmname' # service name to be used as vm name
         Chef::Config[:knife][:winrm_user] = 'opscodechef'
         Chef::Config[:knife][:winrm_password] = 'Opscode123'
@@ -208,7 +208,7 @@ describe Chef::Knife::AzureServerCreate do
       it 'skip user specified tcp-endpoints if its ports already use by ssh endpoint' do
         # Default external port for ssh endpoint is 22.
         @server_instance.config[:tcp_endpoints] = '12:22'
-        expect(@server_instance).to receive(:is_image_windows?).at_least(:twice).and_return(false)
+        expect(@server_instance).to receive(:image_windows?).at_least(:twice).and_return(false)
         Chef::Config[:knife][:azure_dns_name] = 'vmname' # service name to be used as vm name
         @server_instance.run
         testxml = Nokogiri::XML(@receivedXML)
@@ -363,7 +363,7 @@ describe Chef::Knife::AzureServerCreate do
         Chef::Config[:knife][:bootstrap_protocol] = 'winrm'
         Chef::Config[:knife][:winrm_user] = 'testuser'
         Chef::Config[:knife][:winrm_password] = 'Jetstream123!'
-        expect(@server_instance).to receive(:is_image_windows?).exactly(3).times.and_return(true)
+        expect(@server_instance).to receive(:image_windows?).exactly(3).times.and_return(true)
         @server_params = @server_instance.create_server_def
         expect(@server_params[:port]).to_not be == '5985'
       end
@@ -373,7 +373,7 @@ describe Chef::Knife::AzureServerCreate do
         Chef::Config[:knife][:winrm_user] = 'testuser'
         Chef::Config[:knife][:winrm_password] = 'Jetstream123!'
         Chef::Config[:knife][:winrm_port] = '5990'
-        expect(@server_instance).to receive(:is_image_windows?).exactly(3).times.and_return(true)
+        expect(@server_instance).to receive(:image_windows?).exactly(3).times.and_return(true)
         @server_params = @server_instance.create_server_def
         expect(@server_params[:port]).to be == '5990'
       end
@@ -383,7 +383,7 @@ describe Chef::Knife::AzureServerCreate do
         Chef::Config[:knife][:winrm_user] = 'domain\\testuser'
         Chef::Config[:knife][:winrm_password] = 'Jetstream123!'
         Chef::Config[:knife][:winrm_port] = '5990'
-        expect(@server_instance).to receive(:is_image_windows?).exactly(3).times.and_return(true)
+        expect(@server_instance).to receive(:image_windows?).exactly(3).times.and_return(true)
         @server_params = @server_instance.create_server_def
         expect(@server_params[:winrm_user]).to be == 'testuser'
       end
@@ -392,7 +392,7 @@ describe Chef::Knife::AzureServerCreate do
         Chef::Config[:knife][:ssh_user] = 'azureuser'
         Chef::Config[:knife][:ssh_password] = 'Jetstream123!'
         Chef::Config[:knife][:bootstrap_protocol] = 'ssh'
-        expect(@server_instance).to receive(:is_image_windows?).exactly(3).times.and_return(false)
+        expect(@server_instance).to receive(:image_windows?).exactly(3).times.and_return(false)
         @server_params = @server_instance.create_server_def
         expect(@server_params[:port]).to_not be == '22'
       end
@@ -401,7 +401,7 @@ describe Chef::Knife::AzureServerCreate do
         Chef::Config[:knife][:ssh_user] = 'azureuser'
         Chef::Config[:knife][:ssh_password] = 'Jetstream123!'
         Chef::Config[:knife][:ssh_port] = '24'
-        expect(@server_instance).to receive(:is_image_windows?).exactly(3).times.and_return(false)
+        expect(@server_instance).to receive(:image_windows?).exactly(3).times.and_return(false)
         @server_params = @server_instance.create_server_def
         expect(@server_params[:port]).to be == '24'
       end
@@ -410,7 +410,7 @@ describe Chef::Knife::AzureServerCreate do
         Chef::Config[:knife][:ssh_user] = 'azureuser'
         Chef::Config[:knife][:ssh_password] = 'Jetstream123!'
         Chef::Config[:knife][:ssh_port] = '22'
-        expect(@server_instance).to receive(:is_image_windows?).exactly(3).times.and_return(false)
+        expect(@server_instance).to receive(:image_windows?).exactly(3).times.and_return(false)
         @server_params = @server_instance.create_server_def
         expect(@server_params[:port]).to_not be == '22'
       end
@@ -423,7 +423,7 @@ describe Chef::Knife::AzureServerCreate do
         @bootstrap = Chef::Knife::BootstrapWindowsWinrm.new
         allow(Chef::Knife::BootstrapWindowsWinrm).to receive(:new).and_return(@bootstrap)
         expect(@bootstrap).to receive(:run)
-        allow(@server_instance).to receive(:is_image_windows?).and_return(true)
+        allow(@server_instance).to receive(:image_windows?).and_return(true)
         Chef::Config[:knife][:bootstrap_protocol] = 'winrm'
         Chef::Config[:knife][:winrm_user] = 'testuser'
         Chef::Config[:knife][:winrm_password] = 'winrm_password'
@@ -449,7 +449,7 @@ describe Chef::Knife::AzureServerCreate do
         @bootstrap = Chef::Knife::Bootstrap.new
         allow(Chef::Knife::Bootstrap).to receive(:new).and_return(@bootstrap)
         expect(@bootstrap).to receive(:run)
-        allow(@server_instance).to receive(:is_image_windows?).and_return(false)
+        allow(@server_instance).to receive(:image_windows?).and_return(false)
         Chef::Config[:knife][:bootstrap_protocol] = 'ssh'
         Chef::Config[:knife][:ssh_password] = 'ssh_password'
         Chef::Config[:knife][:ssh_user] = 'ssh_user'
@@ -481,7 +481,7 @@ describe Chef::Knife::AzureServerCreate do
     end
 
     it 'check if all server params are set correctly' do
-      expect(@server_instance).to receive(:is_image_windows?).exactly(3).times.and_return(true)
+      expect(@server_instance).to receive(:image_windows?).exactly(3).times.and_return(true)
       @server_params = @server_instance.create_server_def
       expect(@server_params[:os_type]).to be == 'Windows'
       expect(@server_params[:admin_password]).to be == 'winrm_password'
@@ -493,13 +493,13 @@ describe Chef::Knife::AzureServerCreate do
     end
 
     it "winrm_user cannot be 'administrator'" do
-      expect(@server_instance).to receive(:is_image_windows?).twice.and_return(true)
+      expect(@server_instance).to receive(:image_windows?).twice.and_return(true)
       Chef::Config[:knife][:winrm_user] = 'administrator'
       expect { @server_instance.create_server_def }.to raise_error
     end
 
     it "winrm_user cannot be 'admin*'" do
-      expect(@server_instance).to receive(:is_image_windows?).twice.and_return(true)
+      expect(@server_instance).to receive(:image_windows?).twice.and_return(true)
       Chef::Config[:knife][:winrm_user] = 'Admin12'
       expect { @server_instance.create_server_def }.to raise_error
     end
@@ -512,49 +512,49 @@ describe Chef::Knife::AzureServerCreate do
       end
 
       it 'sets valid distro for windows vm' do
-        expect(@server_instance).to receive(:is_image_windows?).at_least(:twice).and_return(true)
+        expect(@server_instance).to receive(:image_windows?).at_least(:twice).and_return(true)
         @server_instance.run
         expect(@server_instance.config[:distro]).to be == 'windows-chef-client-msi'
       end
 
       it 'sets param <azure_storage_account> from azure_vm_name' do
         Chef::Config[:knife].delete(:azure_storage_account)
-        expect(@server_instance).to receive(:is_image_windows?).at_least(:twice).and_return(true)
+        expect(@server_instance).to receive(:image_windows?).at_least(:twice).and_return(true)
         @server_instance.run
         expect(@server_instance.config[:azure_storage_account]).to match(/\Avm002/)
       end
 
       it 'sets param <azure_storage_account> from storage name' do
         Chef::Config[:knife].delete(:azure_storage_account)
-        expect(@server_instance).to receive(:is_image_windows?).at_least(:twice).and_return(true)
+        expect(@server_instance).to receive(:image_windows?).at_least(:twice).and_return(true)
         Chef::Config[:knife][:azure_service_location] = 'service-location'
         @server_instance.run
         expect(@server_instance.config[:azure_storage_account]).to match(/storage-service-name/)
       end
 
       it 'successful bootstrap of windows instance' do
-        expect(@server_instance).to receive(:is_image_windows?).exactly(4).times.and_return(true)
+        expect(@server_instance).to receive(:image_windows?).exactly(4).times.and_return(true)
         expect(@server_instance).to receive(:wait_until_virtual_machine_ready).exactly(1).times.and_return(true)
         @server_instance.run
       end
 
       it 'sets encrypted data bag secret parameter' do
         Chef::Config[:knife][:encrypted_data_bag_secret] = 'test_encrypted_data_bag_secret'
-        expect(@server_instance).to receive(:is_image_windows?).exactly(4).times.and_return(true)
+        expect(@server_instance).to receive(:image_windows?).exactly(4).times.and_return(true)
         @server_instance.run
         expect(@bootstrap.config[:encrypted_data_bag_secret]).to be == 'test_encrypted_data_bag_secret'
       end
 
       it 'sets encrypted data bag secret file parameter' do
         Chef::Config[:knife][:encrypted_data_bag_secret_file] = 'test_encrypted_data_bag_secret_file'
-        expect(@server_instance).to receive(:is_image_windows?).exactly(4).times.and_return(true)
+        expect(@server_instance).to receive(:image_windows?).exactly(4).times.and_return(true)
         @server_instance.run
         expect(@bootstrap.config[:encrypted_data_bag_secret_file]).to be == 'test_encrypted_data_bag_secret_file'
       end
 
       it 'sets winrm authentication protocol for windows vm' do
         Chef::Config[:knife][:winrm_authentication_protocol] = 'negotiate'
-        expect(@server_instance).to receive(:is_image_windows?).at_least(:twice).and_return(true)
+        expect(@server_instance).to receive(:image_windows?).at_least(:twice).and_return(true)
         @server_instance.run
         expect(@bootstrap.config[:winrm_authentication_protocol]).to be == 'negotiate'
       end
@@ -570,7 +570,7 @@ describe Chef::Knife::AzureServerCreate do
     context 'windows instance:' do
       it 'successful bootstrap' do
         pending "OC-8384-support ssh for windows vm's in knife-azure"
-        expect(@server_instance).to receive(:is_image_windows?).exactly(3).times.and_return(true)
+        expect(@server_instance).to receive(:image_windows?).exactly(3).times.and_return(true)
         @bootstrap = Chef::Knife::BootstrapWindowsSsh.new
         allow(Chef::Knife::BootstrapWindowsSsh).to receive(:new).and_return(@bootstrap)
         expect(@server_instance).to receive(:wait_until_virtual_machine_ready).exactly(1).times.and_return(true)
@@ -586,7 +586,7 @@ describe Chef::Knife::AzureServerCreate do
       end
 
       it 'check if all server params are set correctly' do
-        expect(@server_instance).to receive(:is_image_windows?).exactly(3).and_return(false)
+        expect(@server_instance).to receive(:image_windows?).exactly(3).and_return(false)
         @server_params = @server_instance.create_server_def
         expect(@server_params[:os_type]).to be == 'Linux'
         expect(@server_params[:ssh_password]).to be == 'ssh_password'
@@ -598,7 +598,7 @@ describe Chef::Knife::AzureServerCreate do
       end
 
       it 'successful bootstrap' do
-        expect(@server_instance).to receive(:is_image_windows?).exactly(5).times.and_return(false)
+        expect(@server_instance).to receive(:image_windows?).exactly(5).times.and_return(false)
         @bootstrap = Chef::Knife::Bootstrap.new
         allow(Chef::Knife::Bootstrap).to receive(:new).and_return(@bootstrap)
         expect(@server_instance).to receive(:wait_until_virtual_machine_ready).exactly(1).times.and_return(true)
@@ -613,7 +613,7 @@ describe Chef::Knife::AzureServerCreate do
         end
 
         it 'check if ssh-key set correctly' do
-          expect(@server_instance).to receive(:is_image_windows?).exactly(3).times.and_return(false)
+          expect(@server_instance).to receive(:image_windows?).exactly(3).times.and_return(false)
           @server_params = @server_instance.create_server_def
           expect(@server_params[:os_type]).to be == 'Linux'
           expect(@server_params[:identity_file]).to be == 'path_to_rsa_private_key'
@@ -623,7 +623,7 @@ describe Chef::Knife::AzureServerCreate do
         end
 
         it 'successful bootstrap with ssh key' do
-          expect(@server_instance).to receive(:is_image_windows?).exactly(5).times.and_return(false)
+          expect(@server_instance).to receive(:image_windows?).exactly(5).times.and_return(false)
           @bootstrap = Chef::Knife::Bootstrap.new
           allow(Chef::Knife::Bootstrap).to receive(:new).and_return(@bootstrap)
           expect(@bootstrap).to receive(:run)
@@ -730,7 +730,7 @@ describe Chef::Knife::AzureServerCreate do
         expect(@server_instance).to receive(:get_chef_extension_version)
         expect(@server_instance).to receive(:get_chef_extension_public_params)
         expect(@server_instance).to receive(:get_chef_extension_private_params)
-        expect(@server_instance).to receive(:is_image_windows?).exactly(4).times.and_return(true)
+        expect(@server_instance).to receive(:image_windows?).exactly(4).times.and_return(true)
         expect(@server_instance).to receive(:wait_until_virtual_machine_ready).exactly(1).times.and_return(true)
         @server_instance.run
       end
@@ -746,7 +746,7 @@ describe Chef::Knife::AzureServerCreate do
         allow(@server_instance.connection).to receive(:query_azure).and_return(version.doc)
         expect(@server_instance).to receive(:get_chef_extension_public_params)
         expect(@server_instance).to receive(:get_chef_extension_private_params)
-        expect(@server_instance).to receive(:is_image_windows?).exactly(4).times.and_return(true)
+        expect(@server_instance).to receive(:image_windows?).exactly(4).times.and_return(true)
         server_config = @server_instance.create_server_def
         expect(server_config[:chef_extension]).to eq('ChefClient')
         expect(server_config[:chef_extension_publisher]).to eq('Chef.Bootstrap.WindowsAzure')
@@ -766,7 +766,7 @@ describe Chef::Knife::AzureServerCreate do
         expect(@server_instance).to_not receive(:bootstrap_exec)
         allow(@server_instance.connection).to receive(:query_azure).and_return(version.doc)
         expect(@server_instance).to receive(:get_chef_extension_private_params)
-        expect(@server_instance).to receive(:is_image_windows?).exactly(4).times.and_return(false)
+        expect(@server_instance).to receive(:image_windows?).exactly(4).times.and_return(false)
         server_config = @server_instance.create_server_def
         expect(server_config[:chef_extension]).to eq('LinuxChefClient')
         expect(server_config[:chef_extension_publisher]).to eq('Chef.Bootstrap.WindowsAzure')
