@@ -2,6 +2,7 @@
 
 ## Last release: 1.4.0.rc.2 (2015/02/06)
 [knife-azure #189](https://github.com/chef/knife-azure/issues/189) Server Create failing for some custom sysprepped images
+[knife-azure #184](https://github.com/chef/knife-azure/pull/184) Disable certificate generation code for ssl transport until supported by knife-windows
 
 ## Last release: 1.4.0.rc.1 (2015/02/05)
 [knife-azure #102](https://github.com/chef/knife-azure/pull/102) User specified ssh/winrm port 22/5985 instead of random port with --azure-connect-to-existing-dns option for server creation
