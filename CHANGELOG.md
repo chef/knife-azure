@@ -1,5 +1,8 @@
 # knife-azure Change Log
 
+## Last release: 1.4.0.rc.2 (2015/02/06)
+[knife-azure #189](https://github.com/chef/knife-azure/issues/189) Server Create failing for some custom sysprepped images
+
 ## Last release: 1.4.0.rc.1 (2015/02/05)
 [knife-azure #102](https://github.com/chef/knife-azure/pull/102) User specified ssh/winrm port 22/5985 instead of random port with --azure-connect-to-existing-dns option for server creation
 [knife-azure #179](https://github.com/chef/knife-azure/pull/179) Enable creation of new vnets

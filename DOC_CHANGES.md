@@ -26,6 +26,19 @@ on the system.
 This is equivalent to using the Azure portal to create a Chef-enabled VM as
 described in the [Chef documentation](https://docs.chef.io/azure_portal.html).
 
+### `azure_vm_startup_timeout` option in server create
+The number of minutes that knife-azure will wait for the virtual machine to reach the 'provisioning' state. Default is 10.
+
+### `azure_vm_ready_timeout` option in server create
+The number of minutes that knife-azure will wait for the virtual machine state to transition from 'provisioning' to 'ready'. Default is 15.
+
+### `auth_timeout` option in server create
+When boostrapping Windows nodes, this is the maximum time in minutes to wait
+for authentication over the WinRM transport
+to the node to succeed. The default value is 25 minutes. This wait starts
+after the guest has reached the "ready" state (or waited unsuccessfully for
+the "ready" the amount of time specified by the `azure_vm_ready_timeout` option.
+
 #### Chef Client log output and troubleshooting
 When `cloud-api` bootstrap is used, you `knife` does not capture the output of
 the Chef Client run as it does when the WinRM or SSH protocols are used. The
