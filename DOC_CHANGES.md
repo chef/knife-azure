@@ -16,14 +16,29 @@ to be specified and will also correctly create vnets as the name of the
 subcommand suggests.
 
 ### `cloud-api` value for `bootstrap_protocol_option` in server create
-This option can be specified as an alternative to the 'winrm'
-(default for Windows) or ssh (default for Linux) protocols as the way to
+This option can be specified as an alternative to the `winrm`
+(default for Windows) or `ssh` (default for Linux) protocols as the way to
 bootstrap a server. It uses Azure's VM Resource Extension feature to allow the
-[Azure Guest Agent](http://blogs.msdn.com/b/mast/archive/2014/02/17/bginfo-guest-agent-extension-for-azure-vms.aspx)
-to bootstrap (i.e. install, configure, and execute Chef-Client with a given
+[Azure Guest Agent](http://blogs.msdn.com/b/mast/archive/2014/02/17/bginfo-guest-agent-extension-for-azure-vms.aspx) to bootstrap (i.e. install, configure, and execute Chef-Client with a given
 runlist) the node. It also installs Chef Client to run as a service / daemon
 on the system.
 
+This is equivalent to using the Azure portal to create a Chef-enabled VM as
+described in the [Chef documentation](https://docs.chef.io/azure_portal.html).
+
+#### Chef Client log output and troubleshooting
+When `cloud-api` bootstrap is used, you `knife` does not capture the output of
+the Chef Client run as it does when the WinRM or SSH protocols are used. The
+knife tool will simply report on the status of the bootstrap process (e.g.
+'provisioning', 'installing,' 'ready,' etc.) and any errors it encounters.
+
+To obtain the output from the Chef Client run, the Chef log may be obtained from
+the guest VM. See the [Chef documentation](https://docs.chef.io/azure_portal.html#log-files) for
+creating Chef-enabled VM's from the Azure portal. Other status about the
+provisioning of the VM with Chef may also be found on the VM's dashboard on
+the Azure portal.
+
+#### Advantages of the `cloud-api` bootstrap method
 This method of bootstrap offers several advantages including
 
 * No Internet access is required on the guest
@@ -38,7 +53,7 @@ during almost the entire provisioining and bootstrap process.
 provisioning and bootstrap have no network dependency.
 
 Azure is able to do this because it maintains images of Chef Client within the
-Azure datacenters, and provides an API for Chef to securely provide configuration
+Azure datacenters, and provides an API for knife to securely provide configuration
 information (specifically a Chef Server URL, validation client name, and
 validator key) to Azure. This information, along with Azure's image of Chef
 Client, is then used by Azure's guest agent to install the Chef Client image
@@ -51,7 +66,3 @@ option is specified. In this case, the VM will be set to automatically update
 to the latest version of the Chef extension, which upgrades the Chef Client to
 the latest version. By default, Chef Client is only updated on the guest for
 patch revision changes.
-
-
-
-
