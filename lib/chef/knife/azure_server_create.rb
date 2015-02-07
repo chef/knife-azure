@@ -200,6 +200,11 @@ class Chef
         :description => "The number of minutes that knife-azure will wait for the virtual machine state to transition from 'provisioning' to 'ready'. Default is 15.",
         :default => 15 
 
+      option :auth_timeout,
+        :long => "--windows-auth-timeout MINUTES",
+        :description => "The maximum time in minutes to wait to for authentication over the transport to the node to succeed. The default value is 25 minutes.",
+        :default => 25
+
       option :identity_file,
         :long => "--identity-file FILENAME",
         :description => "SSH identity file for authentication, optional. It is the RSA private key path. Specify either ssh-password or identity-file"
@@ -260,7 +265,12 @@ class Chef
           azure_vm_ready_timeout = locate_config_value(:azure_vm_ready_timeout).to_i
           vm_status = wait_for_virtual_machine_state(:vm_status_provisioning, azure_vm_startup_timeout, retry_interval_in_seconds)
           if vm_status != :vm_status_ready
-            wait_for_virtual_machine_state(:vm_status_ready, azure_vm_ready_timeout, retry_interval_in_seconds)
+            begin
+              wait_for_virtual_machine_state(:vm_status_ready, azure_vm_ready_timeout, retry_interval_in_seconds)
+            rescue Chef::Exceptions::CommandTimeout => e
+              ui.warn("\n#{e.message}")
+              ui.warn("Ignoring failure to reach 'ready' with bootstrap.")
+            end
           end
 
           msg_server_summary(get_role_server())
@@ -611,6 +621,7 @@ class Chef
             bootstrap.config[:winrm_transport] = locate_config_value(:winrm_transport)
             bootstrap.config[:winrm_authentication_protocol] = locate_config_value(:winrm_authentication_protocol)
             bootstrap.config[:winrm_port] = port
+            bootstrap.config[:auth_timeout] = locate_config_value(:auth_timeout)
 
         elsif locate_config_value(:bootstrap_protocol) == 'ssh'
             bootstrap = Chef::Knife::BootstrapWindowsSsh.new
