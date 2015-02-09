@@ -7,7 +7,7 @@ Example Note:
 Details about the thing that changed that needs to get included in the Release Notes in markdown.
 -->
 
-# knife-azure 1.4.0.rc.2 release notes:
+# knife-azure 1.4.0 release notes:
 This release of knife-azure updates gem dependencies and adds bug fix and
 feature improvements.
 
@@ -20,13 +20,13 @@ More information on the contribution process for Chef projects can be found in t
 
 ## Release highlights
 
-### `knife-azure #189`: Fix for failed bootstraps on some sysprepped images
+### [knife-azure #189](https://github.com/chef/knife-azure/issues/189): Fix for failed bootstraps on some sysprepped images
 For some sysprepped images, Azure would continue to report that the guest was
 in the `provisioning` state and never report `ready`. As a result, `knife-azure`
 would eventually timeout waiting for the "ready" state and fail the bootstrap.
 A change has been made in this release so that failure to reach "ready" is no longer fatal and
 results in a warning; `knife-azure` will move on to testing for WinRM
-availability and will bootstrap if it can authenticate. See the issue [knife-azure #189](https://github.com/chef/knife-azure/issues/189).
+availability and will bootstrap if it can authenticate.
 
 ### New `cloud-api` bootstrap feature
 By specifying the value `cloud-api` for the `bootstrap_protocol` option of
@@ -45,10 +45,10 @@ outgoing Internet access.
 https://rubygems.org/gems/knife-azure
 https://github.com/chef/knife-azure
 
-## Issues fixed in knife-azure 1.4.0.rc.1
+## Issues fixed in knife-azure 1.4.0
 
 See the
-[CHANGELOG]([knife-azure 146](https://github.com/chef/knife-azure/blob/1.4.0.rc.1/CHANGELOG.md)
+[CHANGELOG]([knife-azure 146](https://github.com/chef/knife-azure/blob/1.4.0/CHANGELOG.md)
 for the complete list of issues fixed in this release.
 
 
