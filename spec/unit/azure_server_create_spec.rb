@@ -759,7 +759,11 @@ describe Chef::Knife::AzureServerCreate do
         expect(@server_instance).to receive(:get_chef_extension_private_params)
         expect(@server_instance).to receive(:is_image_windows?).exactly(4).times.and_return(true)
         expect(@server_instance).to receive(:wait_until_virtual_machine_ready).exactly(1).times.and_return(true)
-       @server_instance.run
+        @server_instance.run        
+        testxml = Nokogiri::XML(@receivedXML)        
+        testxml.css('InputEndpoint Protocol:contains("TCP")').each do | port |          
+          expect(port.parent.css("LocalPort").text).to_not eq("5985")          
+        end        
       end
 
       it "check if all server params are set correctly" do
@@ -784,6 +788,20 @@ describe Chef::Knife::AzureServerCreate do
     end
 
     context "linux instance" do
+      it "successful create" do
+        expect(@server_instance).to_not receive(:bootstrap_exec)
+        expect(@server_instance).to receive(:get_chef_extension_version)
+        expect(@server_instance).to receive(:get_chef_extension_public_params)
+        expect(@server_instance).to receive(:get_chef_extension_private_params)
+        expect(@server_instance).to receive(:is_image_windows?).exactly(4).times.and_return(false)
+        expect(@server_instance).to receive(:wait_until_virtual_machine_ready).exactly(1).times.and_return(true)
+        @server_instance.run        
+        testxml = Nokogiri::XML(@receivedXML)        
+        testxml.css('InputEndpoint Protocol:contains("TCP")').each do | port |                    
+          expect(port.parent.css("LocalPort").text).to_not eq("22")
+        end        
+      end
+
       it "check if all server params are set correctly" do
         version = Nokogiri::XML::Builder.new do |xml|
           xml.ResourceExtensionReferences {
