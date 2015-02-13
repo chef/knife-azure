@@ -262,11 +262,13 @@ class Azure
                     end
                     xml.WinRM {
                       xml.Listeners {
-                       if params[:ssl_cert_fingerprint]
-                        xml.Listener {
-                          xml.CertificateThumbprint params[:ssl_cert_fingerprint]
-                          xml.Protocol 'Https'
-                        }
+                        if params[:winrm_transport] = "ssl"
+                          xml.Listener {
+                            if params[:ssl_cert_fingerprint]
+                            xml.CertificateThumbprint params[:ssl_cert_fingerprint]
+                            end
+                            xml.Protocol 'Https'
+                          }
                         else
                         xml.Listener {
                           xml.Protocol 'Http'
@@ -285,7 +287,11 @@ class Azure
 
                 if params[:os_type] == 'Windows' and (params[:bootstrap_proto].downcase == 'winrm' or params[:bootstrap_proto].downcase == 'cloud-api')
                   xml.InputEndpoint {
-                  xml.LocalPort '5985'
+                  if params[:winrm_transport] == "ssl"
+                    xml.LocalPort '5986'
+                  else
+                    xml.LocalPort '5985'
+                  end
                   xml.Name 'WinRM'
                   xml.Port params[:port]
                   xml.Protocol 'TCP'

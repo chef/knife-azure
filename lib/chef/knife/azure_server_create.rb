@@ -423,6 +423,11 @@ class Chef
         deploy.find_role(locate_config_value(:azure_vm_name))
       end
 
+      def get_default_winrm_cert_thumbprint
+        role = connection.query_azure("hostedservices/#{locate_config_value(:azure_dns_name)}/deployments/#{locate_config_value(:azure_dns_name)}/roles/#{locate_config_value(:azure_vm_name)}")
+        role.at_css("DefaultWinRmCertificateThumbprint").text
+      end
+
       def tcp_test_winrm(ip_addr, port)
 	    hostname = ip_addr
         socket = TCPSocket.new(hostname, port)
@@ -524,6 +529,15 @@ class Chef
         end
 
         msg_server_summary(server)
+
+        # when winrm_transport = ssl
+        # displays default WinRm CertificateThumbprint
+        # gets WinRM SSL certificate from role
+        if locate_config_value(:winrm_transport) == "ssl"
+          msg_pair('DefaultWinRmCertificateThumbprint', get_default_winrm_cert_thumbprint) if get_default_winrm_cert_thumbprint && !locate_config_value(:ssl_cert_fingerprint)
+
+          get_winrm_ssl_cert_file
+        end
 
         bootstrap_exec(server) unless locate_config_value(:bootstrap_protocol) == 'cloud-api'
       end
@@ -794,6 +808,31 @@ class Chef
 
         server_def[:is_vm_image] = connection.images.is_vm_image(locate_config_value(:azure_source_image))
         server_def
+      end
+
+      # get certificate from role and save to local
+      def get_winrm_ssl_cert_file(file_path="winrm_ssl_cert.cer")
+        # get cloud service certificate data
+        certificate_data = get_service_certificate
+
+        # creates cert file
+        line_length = 63
+        offset = 0
+        File.open(file_path, 'w') do |f2|
+          f2.puts("-----BEGIN CERTIFICATE-----")
+          while offset < certificate_data.length do
+            remaining = certificate_data.length-offset
+            length = remaining < line_length ? remaining : line_length
+            f2.puts certificate_data[offset..offset+length]
+            offset = line_length + offset
+          end
+          f2.puts("-----BEGIN CERTIFICATE-----")
+        end
+      end
+
+      def get_service_certificate
+        thumbprint = locate_config_value(:ssl_cert_fingerprint) ? locate_config_value(:ssl_cert_fingerprint) : get_default_winrm_cert_thumbprint
+        connection.certificates.get_certificate(thumbprint, locate_config_value(:azure_dns_name))
       end
 
       def get_chef_extension_name
