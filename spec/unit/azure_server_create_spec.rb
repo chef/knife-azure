@@ -793,7 +793,7 @@ describe Chef::Knife::AzureServerCreate do
         expect(@server_instance).to receive(:get_chef_extension_version)
         expect(@server_instance).to receive(:get_chef_extension_public_params)
         expect(@server_instance).to receive(:get_chef_extension_private_params)
-        expect(@server_instance).to receive(:is_image_windows?).exactly(4).times.and_return(true)
+        expect(@server_instance).to receive(:is_image_windows?).exactly(4).times.and_return(false)
         expect(@server_instance).to receive(:wait_until_virtual_machine_ready).exactly(1).times.and_return(true)
         @server_instance.run        
         testxml = Nokogiri::XML(@receivedXML)        
