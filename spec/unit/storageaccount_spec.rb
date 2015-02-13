@@ -1,17 +1,17 @@
 require File.expand_path(File.dirname(__FILE__) + '/../spec_helper')
 require File.expand_path(File.dirname(__FILE__) + '/query_azure_mock')
 
-describe "storageaccounts" do
+describe 'storageaccounts' do
   include AzureSpecHelper
   include QueryAzureMock
-  
+
   before 'setup connection' do
     setup_query_azure_mock
   end
 
   context 'get all storage accounts' do
-    specify {expect(@connection.storageaccounts.all.length).to be > 0}
-    it "entry fields should not be null" do
+    specify { expect(@connection.storageaccounts.all.length).to be > 0 }
+    it 'entry fields should not be null' do
       items = @connection.storageaccounts.all
       items.each do |storageaccount|
         expect(storageaccount.name).to_not be nil
@@ -21,10 +21,10 @@ describe "storageaccounts" do
 
   context 'check storage account existence' do
     it 'storage account should exist' do
-      expect(@connection.storageaccounts.exists?("storage-service-name")).to be true
+      expect(@connection.storageaccounts.exists?('storage-service-name')).to be true
     end
     it 'storage account should not exist' do
-      expect(@connection.storageaccounts.exists?("invalid-storage-service-name")).to be false
+      expect(@connection.storageaccounts.exists?('invalid-storage-service-name')).to be false
     end
   end
 
@@ -55,5 +55,4 @@ describe "storageaccounts" do
       expect(@postbody).to eq(readFile('create_storageservice_for_service004.xml'))
     end
   end
-
 end

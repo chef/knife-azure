@@ -26,5 +26,4 @@ describe 'vnets' do
       vnet.state.should_not be_nil
     end
   end
-
 end

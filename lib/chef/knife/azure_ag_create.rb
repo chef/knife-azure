@@ -55,7 +55,7 @@ class Chef
         params = {
           azure_ag_name: locate_config_value(:azure_affinity_group),
           azure_ag_desc: locate_config_value(:azure_ag_desc),
-          azure_location: locate_config_value(:azure_service_location),
+          azure_location: locate_config_value(:azure_service_location)
         }
 
         rsp = connection.ags.create(params)

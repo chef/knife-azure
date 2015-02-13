@@ -1,12 +1,12 @@
 require File.expand_path(File.dirname(__FILE__) + '/../spec_helper')
 require File.expand_path(File.dirname(__FILE__) + '/query_azure_mock')
-describe "roles" do 
+describe 'roles' do
   include AzureSpecHelper
   include QueryAzureMock
   before do
     setup_query_azure_mock
   end
-  
+
   it 'show all roles' do
     roles = @connection.roles.all
     roles.each do |role|
@@ -14,11 +14,11 @@ describe "roles" do
     end
     expect(roles.length).to be == 7
   end
-  specify {expect(@connection.roles.exists?('vm01')).to be true}
-  specify {expect(@connection.roles.exists?('vm002')).to be true}
-  specify {expect(@connection.roles.exists?('role001')).to be true}
-  specify {expect(@connection.roles.exists?('role002')).to be true}
-  specify {expect(@connection.roles.exists?('role002qqqqq')).to be false}
+  specify { expect(@connection.roles.exists?('vm01')).to be true }
+  specify { expect(@connection.roles.exists?('vm002')).to be true }
+  specify { expect(@connection.roles.exists?('role001')).to be true }
+  specify { expect(@connection.roles.exists?('role002')).to be true }
+  specify { expect(@connection.roles.exists?('role002qqqqq')).to be false }
 
   it 'each role should have values' do
     role = @connection.roles.find('vm01')

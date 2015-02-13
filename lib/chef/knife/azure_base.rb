@@ -23,46 +23,44 @@ require File.expand_path('../../../azure/connection', __FILE__)
 class Chef
   class Knife
     module AzureBase
-
       # :nodoc:
       # Would prefer to do this in a rational way, but can't be done b/c of
       # Mixlib::CLI's design :(
       def self.included(includer)
         includer.class_eval do
-
           deps do
             require 'readline'
             require 'chef/json_compat'
           end
 
           option :azure_subscription_id,
-            :short => "-S ID",
-            :long => "--azure-subscription-id ID",
-            :description => "Your Azure subscription ID",
-            :proc => Proc.new { |key| Chef::Config[:knife][:azure_subscription_id] = key }
+            :short => '-S ID',
+            :long => '--azure-subscription-id ID',
+            :description => 'Your Azure subscription ID',
+            :proc => proc { |key| Chef::Config[:knife][:azure_subscription_id] = key }
 
           option :azure_mgmt_cert,
-            :short => "-p FILENAME",
-            :long => "--azure-mgmt-cert FILENAME",
-            :description => "Your Azure PEM file name",
-            :proc => Proc.new { |key| Chef::Config[:knife][:azure_mgmt_cert] = key }
+            :short => '-p FILENAME',
+            :long => '--azure-mgmt-cert FILENAME',
+            :description => 'Your Azure PEM file name',
+            :proc => proc { |key| Chef::Config[:knife][:azure_mgmt_cert] = key }
 
           option :azure_api_host_name,
-            :short => "-H HOSTNAME",
-            :long => "--azure-api-host-name HOSTNAME",
-            :description => "Your Azure host name",
-            :proc => Proc.new { |key| Chef::Config[:knife][:azure_api_host_name] = key }
+            :short => '-H HOSTNAME',
+            :long => '--azure-api-host-name HOSTNAME',
+            :description => 'Your Azure host name',
+            :proc => proc { |key| Chef::Config[:knife][:azure_api_host_name] = key }
 
           option :verify_ssl_cert,
-            :long => "--verify-ssl-cert",
-            :description => "Verify SSL Certificates for communication over HTTPS",
+            :long => '--verify-ssl-cert',
+            :description => 'Verify SSL Certificates for communication over HTTPS',
             :boolean => true,
             :default => false
 
           option :azure_publish_settings_file,
-            :long => "--azure-publish-settings-file FILENAME",
-            :description => "Your Azure Publish Settings File",
-            :proc => Proc.new { |key| Chef::Config[:knife][:azure_publish_settings_file] = key }
+            :long => '--azure-publish-settings-file FILENAME',
+            :description => 'Your Azure Publish Settings File',
+            :proc => proc { |key| Chef::Config[:knife][:azure_publish_settings_file] = key }
         end
       end
 
@@ -76,6 +74,7 @@ class Chef
           exit 1
         end
       end
+
       def connection
         @connection ||= begin
                           connection = Azure::Connection.new(
@@ -92,7 +91,7 @@ class Chef
         config[key] || Chef::Config[:knife][key]
       end
 
-      def msg_pair(label, value, color=:cyan)
+      def msg_pair(label, value, color = :cyan)
         if value && !value.to_s.empty?
           puts "#{ui.color(label, color)}: #{value}"
         end
@@ -100,7 +99,7 @@ class Chef
 
       def msg_server_summary(server)
         puts "\n"
-        msg_pair('DNS Name', server.hostedservicename + ".cloudapp.net")
+        msg_pair('DNS Name', server.hostedservicename + '.cloudapp.net')
         msg_pair('VM Name', server.name)
         msg_pair('Size', server.size)
         msg_pair('Azure Source Image', locate_config_value(:azure_source_image))
@@ -116,21 +115,21 @@ class Chef
         puts "\n"
       end
 
-      def validate!(keys=[:azure_subscription_id, :azure_mgmt_cert, :azure_api_host_name])
+      def validate!(keys = [:azure_subscription_id, :azure_mgmt_cert, :azure_api_host_name])
         errors = []
-        if(locate_config_value(:azure_mgmt_cert) != nil)
+        unless locate_config_value(:azure_mgmt_cert).nil?
           config[:azure_mgmt_cert] = File.read find_file(locate_config_value(:azure_mgmt_cert))
         end
-        if(locate_config_value(:azure_publish_settings_file) != nil)
+        unless locate_config_value(:azure_publish_settings_file).nil?
           parse_publish_settings_file(locate_config_value(:azure_publish_settings_file))
         end
         keys.each do |k|
-          pretty_key = k.to_s.gsub(/_/, ' ').gsub(/\w+/){ |w| (w =~ /(ssh)|(aws)/i) ? w.upcase  : w.capitalize }
+          pretty_key = k.to_s.gsub(/_/, ' ').gsub(/\w+/) { |w| (w =~ /(ssh)|(aws)/i) ? w.upcase  : w.capitalize }
           if locate_config_value(k).nil?
             errors << "You did not provide a valid '#{pretty_key}' value. Please set knife[:#{k}] in your knife.rb or pass as an option."
           end
         end
-        if errors.each{|e| ui.error(e)}.any?
+        if errors.each { |e| ui.error(e) }.any?
           exit 1
         end
       end
@@ -142,22 +141,22 @@ class Chef
         require 'uri'
         begin
           doc = Nokogiri::XML(File.open(find_file(filename)))
-          profile = doc.at_css("PublishProfile")
-          subscription = profile.at_css("Subscription")
-          #check given PublishSettings XML file format.Currently PublishSettings file have two different XML format
-          if profile.attribute("SchemaVersion").nil?
-            management_cert = OpenSSL::PKCS12.new(Base64.decode64(profile.attribute("ManagementCertificate").value))
-            Chef::Config[:knife][:azure_api_host_name] = URI(profile.attribute("Url").value).host
-          elsif profile.attribute("SchemaVersion").value == "2.0"
-            management_cert = OpenSSL::PKCS12.new(Base64.decode64(subscription.attribute("ManagementCertificate").value))
-            Chef::Config[:knife][:azure_api_host_name] = URI(subscription.attribute("ServiceManagementUrl").value).host
+          profile = doc.at_css('PublishProfile')
+          subscription = profile.at_css('Subscription')
+          # check given PublishSettings XML file format.Currently PublishSettings file have two different XML format
+          if profile.attribute('SchemaVersion').nil?
+            management_cert = OpenSSL::PKCS12.new(Base64.decode64(profile.attribute('ManagementCertificate').value))
+            Chef::Config[:knife][:azure_api_host_name] = URI(profile.attribute('Url').value).host
+          elsif profile.attribute('SchemaVersion').value == '2.0'
+            management_cert = OpenSSL::PKCS12.new(Base64.decode64(subscription.attribute('ManagementCertificate').value))
+            Chef::Config[:knife][:azure_api_host_name] = URI(subscription.attribute('ServiceManagementUrl').value).host
           else
-            ui.error("Publish settings file Schema not supported - " + filename)
+            ui.error('Publish settings file Schema not supported - ' + filename)
           end
           Chef::Config[:knife][:azure_mgmt_cert] = management_cert.certificate.to_pem + management_cert.key.to_pem
-          Chef::Config[:knife][:azure_subscription_id] = doc.at_css("Subscription").attribute("Id").value
+          Chef::Config[:knife][:azure_subscription_id] = doc.at_css('Subscription').attribute('Id').value
         rescue
-          ui.error("Incorrect publish settings file - " + filename)
+          ui.error('Incorrect publish settings file - ' + filename)
           exit 1
         end
       end
@@ -176,7 +175,6 @@ class Chef
         end
         file
       end
-
     end
   end
 end
