@@ -60,6 +60,10 @@ class Chef
             end
             details << ui.color('Public IP', :bold, :cyan)
             details << role.publicipaddress
+            unless role.thumbprint.empty?
+              details << ui.color('Thumbprint', :bold, :cyan)
+              details << role.thumbprint
+            end
             puts ui.list(details, :columns_across, 2)
             if role.tcpports.length > 0 || role.udpports.length > 0
               details.clear

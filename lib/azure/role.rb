@@ -172,7 +172,7 @@ class Azure
   class Role
     include AzureUtility
     attr_accessor :connection, :name, :status, :size, :ipaddress, :publicipaddress
-    attr_accessor :sshport, :hostedservicename, :deployname
+    attr_accessor :sshport, :hostedservicename, :deployname, :thumbprint
     attr_accessor :winrmport
     attr_accessor :hostname, :tcpports, :udpports
 
@@ -187,6 +187,7 @@ class Azure
       @hostname = xml_content(roleXML, 'HostName')
       @hostedservicename = hostedservicename
       @deployname = deployname
+      @thumbprint = fetch_thumbprint(@hostname,@deployname)
       @tcpports = Array.new
       @udpports = Array.new
 
@@ -211,6 +212,12 @@ class Azure
         end
       end
     end
+
+    def fetch_thumbprint(hostname,deployname)
+      query_result = connection.query_azure("hostedservices/#{@hostname}/deployments/#{@hostname}/roles/#{@deployname}")
+      query_result.at_css("DefaultWinRmCertificateThumbprint").nil? ? '' : query_result.at_css("DefaultWinRmCertificateThumbprint").text
+    end
+
     def setup(params)
       builder = Nokogiri::XML::Builder.new do |xml|
         xml.PersistentVMRole(
