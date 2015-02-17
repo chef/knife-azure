@@ -1,0 +1,47 @@
+<?xml version="1.0"?>
+<PersistentVMRole xmlns="http://schemas.microsoft.com/windowsazure" xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+  <RoleName>adamed-winrm1</RoleName>
+  <OsVersion/>
+  <RoleType>PersistentVMRole</RoleType>
+  <ConfigurationSets>
+    <ConfigurationSet i:type="NetworkConfigurationSet">
+      <ConfigurationSetType>NetworkConfiguration</ConfigurationSetType>
+      <InputEndpoints>
+        <InputEndpoint>
+          <LocalPort>5986</LocalPort>
+          <Name>PowerShell</Name>
+          <Port>5986</Port>
+          <Protocol>tcp</Protocol>
+          <EnableDirectServerReturn>false</EnableDirectServerReturn>
+        </InputEndpoint>
+        <InputEndpoint>
+          <LocalPort>3389</LocalPort>
+          <Name>Remote Desktop</Name>
+          <Port>65365</Port>
+          <Protocol>tcp</Protocol>
+          <EnableDirectServerReturn>false</EnableDirectServerReturn>
+        </InputEndpoint>
+      </InputEndpoints>
+    </ConfigurationSet>
+  </ConfigurationSets>
+  <ResourceExtensionReferences>
+    <ResourceExtensionReference>
+      <ReferenceName>BGInfo</ReferenceName>
+      <Publisher>Microsoft.Compute</Publisher>
+      <Name>BGInfo</Name>
+      <Version>1.*</Version>
+      <State>Enable</State>
+    </ResourceExtensionReference>
+  </ResourceExtensionReferences>
+  <DataVirtualHardDisks/>
+  <OSVirtualHardDisk>
+    <HostCaching>ReadWrite</HostCaching>
+    <DiskName>adamed-winrm1-adamed-winrm1-0-201502110739010645</DiskName>
+    <MediaLink>https://portalvhdsymd2l3vzqvy06.blob.core.windows.net/vhds/adamed-winrm1-adamed-winrm1-2015-02-11.vhd</MediaLink>
+    <SourceImageName>a699494373c04fc0bc8f2bb1389d6106__Windows-Server-2012-R2-201412.01-en.us-127GB.vhd</SourceImageName>
+    <OS>Windows</OS>
+  </OSVirtualHardDisk>
+  <RoleSize>Small</RoleSize>
+  <DefaultWinRmCertificateThumbprint>4BAE99A617B7B4F975C51A572CB8420F66477F4C</DefaultWinRmCertificateThumbprint>
+  <ProvisionGuestAgent>true</ProvisionGuestAgent>
+</PersistentVMRole>

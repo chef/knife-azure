@@ -187,7 +187,7 @@ class Azure
       @hostname = xml_content(roleXML, 'HostName')
       @hostedservicename = hostedservicename
       @deployname = deployname
-      @thumbprint = fetch_thumbprint(@hostname,@deployname)
+      @thumbprint = fetch_thumbprint
       @tcpports = Array.new
       @udpports = Array.new
 
@@ -213,8 +213,8 @@ class Azure
       end
     end
 
-    def fetch_thumbprint(hostname,deployname)
-      query_result = connection.query_azure("hostedservices/#{@hostname}/deployments/#{@hostname}/roles/#{@deployname}")
+    def fetch_thumbprint
+      query_result = connection.query_azure("hostedservices/#{@hostname}/deployments/#{@hostname}/roles/#{@name}")
       query_result.at_css("DefaultWinRmCertificateThumbprint").nil? ? '' : query_result.at_css("DefaultWinRmCertificateThumbprint").text
     end
 
