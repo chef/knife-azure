@@ -44,73 +44,73 @@ class Chef
         require 'chef/knife/bootstrap_windows_winrm'
       end
 
-      banner "knife azure server create (options)"
+      banner 'knife azure server create (options)'
 
       attr_accessor :initial_sleep_delay
 
       option :bootstrap_protocol,
-        :long => "--bootstrap-protocol protocol",
+        :long => '--bootstrap-protocol protocol',
         :description => "Protocol to bootstrap windows servers. options: 'winrm' or 'ssh' or 'cloud-api'.",
-        :default => "winrm"
+        :default => 'winrm'
 
       option :chef_node_name,
-        :short => "-N NAME",
-        :long => "--node-name NAME",
-        :description => "The Chef node name for your new node"
+        :short => '-N NAME',
+        :long => '--node-name NAME',
+        :description => 'The Chef node name for your new node'
 
       option :ssh_user,
-        :short => "-x USERNAME",
-        :long => "--ssh-user USERNAME",
-        :description => "The ssh username",
-        :default => "root"
+        :short => '-x USERNAME',
+        :long => '--ssh-user USERNAME',
+        :description => 'The ssh username',
+        :default => 'root'
 
       option :ssh_password,
-        :short => "-P PASSWORD",
-        :long => "--ssh-password PASSWORD",
-        :description => "The ssh password"
+        :short => '-P PASSWORD',
+        :long => '--ssh-password PASSWORD',
+        :description => 'The ssh password'
 
       option :ssh_port,
-        :long => "--ssh-port PORT",
-        :description => "The ssh port. Default is 22. If --azure-connect-to-existing-dns set then default SSH port is random"
+        :long => '--ssh-port PORT',
+        :description => 'The ssh port. Default is 22. If --azure-connect-to-existing-dns set then default SSH port is random'
 
       option :prerelease,
-        :long => "--prerelease",
-        :description => "Install the pre-release chef gems"
+        :long => '--prerelease',
+        :description => 'Install the pre-release chef gems'
 
       option :bootstrap_version,
-        :long => "--bootstrap-version VERSION",
-        :description => "The version of Chef to install",
-        :proc => Proc.new { |v| Chef::Config[:knife][:bootstrap_version] = v }
+        :long => '--bootstrap-version VERSION',
+        :description => 'The version of Chef to install',
+        :proc => proc { |v| Chef::Config[:knife][:bootstrap_version] = v }
 
       option :distro,
-        :short => "-d DISTRO",
-        :long => "--distro DISTRO",
-        :description => "Bootstrap a distro using a template",
-        :proc => Proc.new { |d| Chef::Config[:knife][:distro] = d },
-        :default => "chef-full"
+        :short => '-d DISTRO',
+        :long => '--distro DISTRO',
+        :description => 'Bootstrap a distro using a template',
+        :proc => proc { |d| Chef::Config[:knife][:distro] = d },
+        :default => 'chef-full'
 
       option :template_file,
-        :long => "--template-file TEMPLATE",
-        :description => "Full path to location of template to use",
-        :proc => Proc.new { |t| Chef::Config[:knife][:template_file] = t },
+        :long => '--template-file TEMPLATE',
+        :description => 'Full path to location of template to use',
+        :proc => proc { |t| Chef::Config[:knife][:template_file] = t },
         :default => false
 
       option :run_list,
-        :short => "-r RUN_LIST",
-        :long => "--run-list RUN_LIST",
-        :description => "Comma separated list of roles/recipes to apply",
-        :proc => lambda { |o| o.split(/[\s,]+/) },
+        :short => '-r RUN_LIST',
+        :long => '--run-list RUN_LIST',
+        :description => 'Comma separated list of roles/recipes to apply',
+        :proc => ->(o) { o.split(/[\s,]+/) },
         :default => []
 
       option :host_key_verify,
-        :long => "--[no-]host-key-verify",
-        :description => "Verify host key, enabled by default.",
+        :long => '--[no-]host-key-verify',
+        :description => 'Verify host key, enabled by default.',
         :boolean => true,
         :default => true
 
       option :azure_storage_account,
-        :short => "-a NAME",
-        :long => "--azure-storage-account NAME",
+        :short => '-a NAME',
+        :long => '--azure-storage-account NAME',
         :description => "Required for advanced server-create option.
                                       A name for the storage account that is unique within Windows Azure. Storage account names must be
                                       between 3 and 24 characters in length and use numbers and lower-case letters only.
@@ -118,24 +118,24 @@ class Chef
                                       For example: http://ServiceName.blob.core.windows.net/mycontainer/"
 
       option :azure_vm_name,
-        :long => "--azure-vm-name NAME",
+        :long => '--azure-vm-name NAME',
         :description => "Required for advanced server-create option.
                                       Specifies the name for the virtual machine. The name must be unique within the deployment. The azure vm name cannot be more than 15 characters long"
 
       option :azure_service_location,
-        :short => "-m LOCATION",
-        :long => "--azure-service-location LOCATION",
+        :short => '-m LOCATION',
+        :long => '--azure-service-location LOCATION',
         :description => "Required if not using an Affinity Group. Specifies the geographic location - the name of the data center location that is valid for your subscription.
                                       Eg: West US, East US, East Asia, Southeast Asia, North Europe, West Europe"
 
       option :azure_affinity_group,
-        :short => "-a GROUP",
-        :long => "--azure-affinity-group GROUP",
-        :description => "Required if not using a Service Location. Specifies Affinity Group the VM should belong to."
+        :short => '-a GROUP',
+        :long => '--azure-affinity-group GROUP',
+        :description => 'Required if not using a Service Location. Specifies Affinity Group the VM should belong to.'
 
       option :azure_dns_name,
-        :short => "-d DNS_NAME",
-        :long => "--azure-dns-name DNS_NAME",
+        :short => '-d DNS_NAME',
+        :long => '--azure-dns-name DNS_NAME',
         :description => "The DNS prefix name that can be used to access the cloud service which is unique within Windows Azure. Default is 'azure-dns-any_random_text'(e.g: azure-dns-be9b0f6f-7dda-456f-b2bf-4e28a3bc0add).
                                       If you want to add new VM to an existing service/deployment, specify an exiting dns-name,
                                       along with --azure-connect-to-existing-dns option.
@@ -143,119 +143,118 @@ class Chef
                                       by calling: http://DNS_NAME.cloudapp.net"
 
       option :azure_os_disk_name,
-        :short => "-o DISKNAME",
-        :long => "--azure-os-disk-name DISKNAME",
-        :description => "Optional. Specifies the friendly name of the disk containing the guest OS image in the image repository."
+        :short => '-o DISKNAME',
+        :long => '--azure-os-disk-name DISKNAME',
+        :description => 'Optional. Specifies the friendly name of the disk containing the guest OS image in the image repository.'
 
       option :azure_source_image,
-        :short => "-I IMAGE",
-        :long => "--azure-source-image IMAGE",
+        :short => '-I IMAGE',
+        :long => '--azure-source-image IMAGE',
         :description => "Required. Specifies the name of the disk image to use to create the virtual machine.
                                       Do a \"knife azure image list\" to see a list of available images."
 
       option :azure_vm_size,
-        :short => "-z SIZE",
-        :long => "--azure-vm-size SIZE",
-        :description => "Optional. Size of virtual machine (ExtraSmall, Small, Medium, Large, ExtraLarge)",
+        :short => '-z SIZE',
+        :long => '--azure-vm-size SIZE',
+        :description => 'Optional. Size of virtual machine (ExtraSmall, Small, Medium, Large, ExtraLarge)',
         :default => 'Small'
 
       option :azure_availability_set,
-             :long => "--azure-availability-set NAME",
-             :description => "Optional. Name of availability set to add virtual machine into."
+             :long => '--azure-availability-set NAME',
+             :description => 'Optional. Name of availability set to add virtual machine into.'
 
       option :tcp_endpoints,
-        :short => "-t PORT_LIST",
-        :long => "--tcp-endpoints PORT_LIST",
+        :short => '-t PORT_LIST',
+        :long => '--tcp-endpoints PORT_LIST',
         :description => "Comma-separated list of TCP local and public ports to open e.g. '80:80,433:5000'"
 
       option :udp_endpoints,
-        :short => "-u PORT_LIST",
-        :long => "--udp-endpoints PORT_LIST",
+        :short => '-u PORT_LIST',
+        :long => '--udp-endpoints PORT_LIST',
         :description => "Comma-separated list of UDP local and public ports to open e.g. '80:80,433:5000'"
 
       option :azure_connect_to_existing_dns,
-        :short => "-c",
-        :long => "--azure-connect-to-existing-dns",
+        :short => '-c',
+        :long => '--azure-connect-to-existing-dns',
         :boolean => true,
         :default => false,
         :description => "Set this flag to add the new VM to an existing deployment/service. Must give the name of the existing
                                         DNS correctly in the --dns-name option"
 
       option :azure_network_name,
-        :long => "--azure-network-name NETWORK_NAME",
-        :description => "Optional. Specifies the network of virtual machine"
+        :long => '--azure-network-name NETWORK_NAME',
+        :description => 'Optional. Specifies the network of virtual machine'
 
       option :azure_subnet_name,
-        :long => "--azure-subnet-name SUBNET_NAME",
-        :description => "Optional. Specifies the subnet of virtual machine"
+        :long => '--azure-subnet-name SUBNET_NAME',
+        :description => 'Optional. Specifies the subnet of virtual machine'
 
       option :azure_vm_startup_timeout,
-        :long => "--azure-vm-startup-timeout TIMEOUT",
+        :long => '--azure-vm-startup-timeout TIMEOUT',
         :description => "The number of minutes that knife-azure will wait for the virtual machine to reach the 'provisioning' state. Default is 10.",
         :default => 10
 
       option :azure_vm_ready_timeout,
-        :long => "--azure-vm-ready-timeout TIMEOUT",
+        :long => '--azure-vm-ready-timeout TIMEOUT',
         :description => "The number of minutes that knife-azure will wait for the virtual machine state to transition from 'provisioning' to 'ready'. Default is 15.",
         :default => 15
 
       option :auth_timeout,
-        :long => "--windows-auth-timeout MINUTES",
-        :description => "The maximum time in minutes to wait to for authentication over the transport to the node to succeed. The default value is 25 minutes.",
+        :long => '--windows-auth-timeout MINUTES',
+        :description => 'The maximum time in minutes to wait to for authentication over the transport to the node to succeed. The default value is 25 minutes.',
         :default => 25
 
       option :identity_file,
-        :long => "--identity-file FILENAME",
-        :description => "SSH identity file for authentication, optional. It is the RSA private key path. Specify either ssh-password or identity-file"
+        :long => '--identity-file FILENAME',
+        :description => 'SSH identity file for authentication, optional. It is the RSA private key path. Specify either ssh-password or identity-file'
 
       option :identity_file_passphrase,
-        :long => "--identity-file-passphrase PASSWORD",
-        :description => "SSH key passphrase. Optional, specify if passphrase for identity-file exists"
+        :long => '--identity-file-passphrase PASSWORD',
+        :description => 'SSH key passphrase. Optional, specify if passphrase for identity-file exists'
 
       option :hint,
-        :long => "--hint HINT_NAME[=HINT_FILE]",
-        :description => "Specify Ohai Hint to be set on the bootstrap target.  Use multiple --hint options to specify multiple hints.",
-        :proc => Proc.new { |h|
+        :long => '--hint HINT_NAME[=HINT_FILE]',
+        :description => 'Specify Ohai Hint to be set on the bootstrap target.  Use multiple --hint options to specify multiple hints.',
+        # rubocop:disable Blocks
+        :proc => proc { |h|
           Chef::Config[:knife][:hints] ||= {}
-          name, path = h.split("=")
+          name, path = h.split('=')
           Chef::Config[:knife][:hints][name] = path ? JSON.parse(::File.read(path)) : Hash.new
         }
 
       option :json_attributes,
-        :short => "-j JSON",
-        :long => "--json-attributes JSON",
-        :description => "A JSON string to be added to the first run of chef-client",
-        :proc => lambda { |o| JSON.parse(o) }
+        :short => '-j JSON',
+        :long => '--json-attributes JSON',
+        :description => 'A JSON string to be added to the first run of chef-client',
+        :proc => ->(o) { JSON.parse(o) }
 
       option :thumbprint,
-        :long => "--thumbprint THUMBPRINT",
-        :description => "The thumprint of the ssl certificate"
+        :long => '--thumbprint THUMBPRINT',
+        :description => 'The thumprint of the ssl certificate'
 
       option :cert_passphrase,
-        :long => "--cert-passphrase PASSWORD",
-        :description => "SSL Certificate Password"
+        :long => '--cert-passphrase PASSWORD',
+        :description => 'SSL Certificate Password'
 
       option :cert_path,
-        :long => "--cert-path PATH",
-        :description => "SSL Certificate Path"
+        :long => '--cert-path PATH',
+        :description => 'SSL Certificate Path'
 
       option :auto_update_client,
-      :long => "--auto-update-client",
+      :long => '--auto-update-client',
       :boolean => true,
       :default => false,
-      :description => "Set this flag to enable auto chef client update in azure chef extension. This flag should be used with cloud-api bootstrap protocol only"
+      :description => 'Set this flag to enable auto chef client update in azure chef extension. This flag should be used with cloud-api bootstrap protocol only'
 
       def strip_non_ascii(string)
         string.gsub(/[^0-9a-z ]/i, '')
       end
 
-      def random_string(len=10)
-        (0...len).map{65.+(rand(25)).chr}.join
+      def random_string(len = 10)
+        (0...len).map{ 65.+(rand(25)).chr }.join
       end
 
       def wait_until_virtual_machine_ready(retry_interval_in_seconds = 30)
-        vm_status = nil
-
         puts
 
         begin
@@ -476,7 +475,7 @@ class Chef
         Chef::Log.info("validating...")
         validate!
 
-        ssh_override_winrm if %w(ssh cloud-api).include?(locate_config_value(:bootstrap_protocol)) && !is_image_windows?
+        ssh_override_winrm if %w(ssh cloud-api).include?(locate_config_value(:bootstrap_protocol)) && !image_windows?
 
         Chef::Log.info("creating...")
 
@@ -528,7 +527,7 @@ class Chef
       def bootstrap_exec(server)
         fqdn = server.publicipaddress
 
-        if is_image_windows?
+        if image_windows?
           # Set distro to windows-chef-client-msi
           config[:distro] = "windows-chef-client-msi" if (config[:distro].nil? || config[:distro] == "chef-full")
 
@@ -723,7 +722,7 @@ class Chef
         }
         # If user is connecting a new VM to an existing dns, then
         # the VM needs to have a unique public port. Logic below takes care of this.
-        if !is_image_windows? || locate_config_value(:bootstrap_protocol) == 'ssh'
+        if !image_windows? || locate_config_value(:bootstrap_protocol) == 'ssh'
           if locate_config_value(:azure_connect_to_existing_dns)
             port = locate_config_value(:ssh_port) || Random.rand(64000) + 1000
           else
@@ -746,7 +745,7 @@ class Chef
           server_def[:chef_extension_public_param] = get_chef_extension_public_params
           server_def[:chef_extension_private_param] = get_chef_extension_private_params
         else
-          if is_image_windows?
+          if image_windows?
             if not locate_config_value(:winrm_password) or not locate_config_value(:bootstrap_protocol)
               ui.error("WinRM Password and Bootstrapping Protocol are compulsory parameters")
               exit 1
@@ -774,7 +773,7 @@ class Chef
             end
           end
         end
-        if is_image_windows?
+        if image_windows?
           server_def[:os_type] = 'Windows'
           server_def[:admin_password] = locate_config_value(:winrm_password)
           server_def[:bootstrap_proto] = locate_config_value(:bootstrap_protocol)
@@ -792,7 +791,7 @@ class Chef
       end
 
       def get_chef_extension_name
-        extension_name = is_image_windows? ? "ChefClient" : "LinuxChefClient"
+        extension_name = image_windows? ? "ChefClient" : "LinuxChefClient"
       end
 
       def get_chef_extension_publisher
