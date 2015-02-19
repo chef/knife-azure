@@ -251,7 +251,7 @@ class Chef
       end
 
       def random_string(len = 10)
-        (0...len).map{ 65.+(rand(25)).chr }.join
+        (0...len).map { 65.+(rand(25)).chr }.join
       end
 
       def wait_until_virtual_machine_ready(retry_interval_in_seconds = 30)
@@ -270,9 +270,9 @@ class Chef
             end
           end
 
-          msg_server_summary(get_role_server)
+          msg_server_summary(role_server)
 
-          if locate_config_value(:bootstrap_protocol) == "cloud-api"
+          if locate_config_value(:bootstrap_protocol) == 'cloud-api'
             extension_status = wait_for_resource_extension_state(:wagent_provisioning, 5, retry_interval_in_seconds)
 
             if extension_status != :extension_installing
@@ -287,15 +287,15 @@ class Chef
               wait_for_resource_extension_state(:extension_ready, 5, retry_interval_in_seconds)
             end
           end
-        rescue Exception => e
+        rescue StandardError => e
           Chef::Log.error("#{e}")
           raise 'Verify connectivity to Azure and subscription resource limit compliance (e.g. maximum CPU core limits) and try again.'
         end
       end
 
       def wait_for_virtual_machine_state(vm_status_goal, total_wait_time_in_minutes, retry_interval_in_seconds)
-        vm_status_ordering = {:vm_status_not_detected => 0, :vm_status_provisioning => 1, :vm_status_ready => 2}
-        vm_status_description = {:vm_status_not_detected => 'any', :vm_status_provisioning => 'provisioning', :vm_status_ready => 'ready'}
+        vm_status_ordering = { :vm_status_not_detected => 0, :vm_status_provisioning => 1, :vm_status_ready => 2 }
+        vm_status_description = { :vm_status_not_detected => 'any', :vm_status_provisioning => 'provisioning', :vm_status_ready => 'ready' }
 
         print ui.color("Waiting for virtual machine to reach status '#{vm_status_description[vm_status_goal]}'", :magenta)
 
@@ -305,16 +305,19 @@ class Chef
 
         wait_start_time = Time.now
 
-        begin
-          vm_status = get_virtual_machine_status
+        vm_status = nil
+        vm_ready = nil
+        loop do
+          vm_status = virtual_machine_status
           vm_ready = vm_status_ordering[vm_status] >= vm_status_ordering[vm_status_goal]
           print '.'
           sleep retry_interval_in_seconds unless vm_ready
           polling_attempts += 1
-        end until vm_ready || polling_attempts >= max_polling_attempts
+          break if vm_ready || polling_attempts >= max_polling_attempts
+        end
 
         unless vm_ready
-          raise Chef::Exceptions::CommandTimeout, "Virtual machine state '#{vm_status_description[vm_status_goal]}' not reached after #{total_wait_time_in_minutes} minutes."
+          fail Chef::Exceptions::CommandTimeout, "Virtual machine state '#{vm_status_description[vm_status_goal]}' not reached after #{total_wait_time_in_minutes} minutes."
         end
 
         elapsed_time_in_minutes = ((Time.now - wait_start_time) / 60).round(2)
@@ -323,9 +326,9 @@ class Chef
       end
 
       def wait_for_resource_extension_state(extension_status_goal, total_wait_time_in_minutes, retry_interval_in_seconds)
-        extension_status_ordering = {:extension_status_not_detected => 0, :wagent_provisioning => 1, :extension_installing => 2, :extension_provisioning => 3, :extension_ready => 4}
+        extension_status_ordering = { :extension_status_not_detected => 0, :wagent_provisioning => 1, :extension_installing => 2, :extension_provisioning => 3, :extension_ready => 4 }
 
-        status_description = {:extension_status_not_detected => 'any', :wagent_provisioning => 'wagent provisioning', :extension_installing => "installing", :extension_provisioning => "provisioning", :extension_ready => "ready" }
+        status_description = { :extension_status_not_detected => 'any', :wagent_provisioning => 'wagent provisioning', :extension_installing => 'installing', :extension_provisioning => 'provisioning', :extension_ready => 'ready' }
 
         print ui.color("Waiting for Resource Extension to reach status '#{status_description[extension_status_goal]}'", :magenta)
 
@@ -334,16 +337,19 @@ class Chef
 
         wait_start_time = Time.now
 
-        begin
-          extension_status = get_extension_status
+        extension_status = {}
+        extension_ready = nil
+        loop do
+          extension_status = extension_status
           extension_ready = extension_status_ordering[extension_status[:status]] >= extension_status_ordering[extension_status_goal]
           print '.'
           sleep retry_interval_in_seconds unless extension_ready
           polling_attempts += 1
-        end until extension_ready || polling_attempts >= max_polling_attempts
+          break if extension_ready || polling_attempts >= max_polling_attempts
+        end
 
         unless extension_ready
-          raise Chef::Exceptions::CommandTimeout, "Resource extension state '#{status_description[extension_status_goal]}' not reached after #{total_wait_time_in_minutes} minutes. #{extension_status[:message]}"
+          fail Chef::Exceptions::CommandTimeout, "Resource extension state '#{status_description[extension_status_goal]}' not reached after #{total_wait_time_in_minutes} minutes. #{extension_status[:message]}"
         end
 
         elapsed_time_in_minutes = ((Time.now - wait_start_time) / 60).round(2)
@@ -352,56 +358,56 @@ class Chef
         extension_status[:status]
       end
 
-      def get_virtual_machine_status
-        role = get_role_server
+      def virtual_machine_status
+        role = role_server
         unless role.nil?
           Chef::Log.debug("Role status is #{role.status}")
-          if  "ReadyRole".eql? role.status.to_s
+          if  'ReadyRole'.eql? role.status.to_s
             return :vm_status_ready
-          elsif "Provisioning".eql? role.status.to_s
+          elsif 'Provisioning'.eql? role.status.to_s
             return :vm_status_provisioning
           else
             return :vm_status_not_detected
           end
         end
-        return :vm_status_not_detected
+        :vm_status_not_detected
       end
 
-      def get_extension_status
+      def extension_status
         deployment_name = connection.deploys.get_deploy_name_for_hostedservice(locate_config_value(:azure_dns_name))
         deployment = connection.query_azure("hostedservices/#{locate_config_value(:azure_dns_name)}/deployments/#{deployment_name}")
         extension_status = {}
 
-        if deployment.at_css('Deployment Name') != nil
+        if !deployment.at_css('Deployment Name').nil?
           role_list_xml =  deployment.css('RoleInstanceList RoleInstance')
           role_list_xml.each do |role|
-            if role.at_css("RoleName").text == locate_config_value(:azure_vm_name)
-              lnx_waagent_fail_msg = "Failed to deserialize the status reported by the Guest Agent"
-              waagent_status_msg = role.at_css("GuestAgentStatus FormattedMessage Message").text
+            if role.at_css('RoleName').text == locate_config_value(:azure_vm_name)
+              lnx_waagent_fail_msg = 'Failed to deserialize the status reported by the Guest Agent'
+              waagent_status_msg = role.at_css('GuestAgentStatus FormattedMessage Message').text
 
-              if role.at_css("GuestAgentStatus Status").text == "Ready"
-                extn_status = role.at_css("ResourceExtensionStatusList Status").text
+              if role.at_css('GuestAgentStatus Status').text == 'Ready'
+                extn_status = role.at_css('ResourceExtensionStatusList Status').text
 
                 Chef::Log.debug("Resource extension status is #{extn_status}")
 
-                if extn_status == "Installing"
+                if extn_status == 'Installing'
                   extension_status[:status] = :extension_installing
-                  extension_status[:message] = role.at_css("ResourceExtensionStatusList FormattedMessage Message").text
-                elsif extn_status == "NotReady"
+                  extension_status[:message] = role.at_css('ResourceExtensionStatusList FormattedMessage Message').text
+                elsif extn_status == 'NotReady'
                   extension_status[:status] = :extension_provisioning
-                  extension_status[:message] = role.at_css("ResourceExtensionStatusList FormattedMessage Message").text
-                elsif extn_status == "Ready"
+                  extension_status[:message] = role.at_css('ResourceExtensionStatusList FormattedMessage Message').text
+                elsif extn_status == 'Ready'
                   extension_status[:status] = :extension_ready
-                  extension_status[:message] = role.at_css("ResourceExtensionStatusList FormattedMessage Message").text
+                  extension_status[:message] = role.at_css('ResourceExtensionStatusList FormattedMessage Message').text
                 else
                   extension_status[:status] = :extension_status_not_detected
                 end
               # This fix is for linux waagent issue: api unable to deserialize the waagent status.
-              elsif role.at_css("GuestAgentStatus Status").text == "NotReady" && waagent_status_msg == lnx_waagent_fail_msg
+              elsif role.at_css('GuestAgentStatus Status').text == 'NotReady' && waagent_status_msg == lnx_waagent_fail_msg
                 extension_status[:status] = :extension_ready
               else
                 extension_status[:status] = :wagent_provisioning
-                extension_status[:message] = role.at_css("GuestAgentStatus Message").text
+                extension_status[:message] = role.at_css('GuestAgentStatus Message').text
               end
             else
               extension_status[:status] = :extension_status_not_detected
@@ -411,16 +417,16 @@ class Chef
           extension_status[:status] = :extension_status_not_detected
         end
 
-        return extension_status
+        extension_status
       end
 
-      def get_role_server
+      def role_server
         deploy = connection.deploys.queryDeploy(locate_config_value(:azure_dns_name))
         deploy.find_role(locate_config_value(:azure_vm_name))
       end
 
       def tcp_test_winrm(ip_addr, port)
-	       hostname = ip_addr
+	      hostname = ip_addr
         socket = TCPSocket.new(hostname, port)
    	    return true
          rescue SocketError
@@ -439,6 +445,8 @@ class Chef
          rescue Errno::ENETUNREACH
            sleep 2
            false
+         ensure
+          socket && socket.close
       end
 
       def tcp_test_ssh(fqdn, sshport)
@@ -511,7 +519,7 @@ class Chef
         begin
           connection.deploys.create(create_server_def)
           wait_until_virtual_machine_ready
-          server = get_role_server
+          server = role_server
         rescue Exception => e
           Chef::Log.error("Failed to create the server -- exception being rescued: #{e}")
           backtrace_message = "#{e.class}: #{e}\n#{e.backtrace.join("\n")}"
