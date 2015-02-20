@@ -821,6 +821,13 @@ class Chef
         pub_config[:runlist] = locate_config_value(:run_list).empty? ? "" : locate_config_value(:run_list).join(",").to_json
         pub_config[:autoUpdateClient] = locate_config_value(:auto_update_client) ? "true" : "false"
         pub_config[:custom_json_attr] = locate_config_value(:json_attributes) || {}
+
+        # bootstrap attributes
+        pub_config[:client_rb] += "\nenvironment \t #{locate_config_value(:environment).to_json}" if locate_config_value(:environment)
+        pub_config[:client_rb] += "\nvalidation_key  \t #{Chef::Config[:validation_key].to_json}" if Chef::Config[:validation_key]
+        pub_config[:client_rb] += "\nnode_name  \t #{config[:chef_node_name].to_json}" if config[:chef_node_name]
+        pub_config[:client_rb] += "\nencrypted_data_bag_secret  \t #{locate_config_value(:encrypted_data_bag_secret).to_json}" if locate_config_value(:encrypted_data_bag_secret)
+
         Base64.encode64(pub_config.to_json)
       end
 
