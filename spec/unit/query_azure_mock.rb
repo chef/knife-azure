@@ -70,6 +70,8 @@ module QueryAzureMock
           retval = Nokogiri::XML readFile('list_deployments_for_service001.xml')
         elsif name == 'hostedservices/service001/deployments/deployment001/roles/role001'
           retval = Nokogiri::XML readFile('list_deployments_for_service001.xml')
+        elsif name =~ /hostedservices\/[-\w]*\/deployments\/[-\w]*\/roles\/[-\w]*/
+          retval = Nokogiri::XML readFile('list_deployments_for_service005.xml')
         elsif name == 'hostedservices/service002/deploymentslots/Production'
           retval = Nokogiri::XML readFile('list_deployments_for_service002.xml')
         elsif name == 'hostedservices/service002/deployments/testrequest'

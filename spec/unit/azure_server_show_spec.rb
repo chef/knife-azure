@@ -29,7 +29,8 @@ describe Chef::Knife::AzureAgList do
        'Deployment name', 'deployment001',
        'Host name', 'role001',
        'SSH port', '22',
-       'Public IP', '65.52.249.191'],
+       'Public IP', '65.52.249.191',
+       'Thumbprint', '4BAE99A617B7B4F975C51A572CB8420F66477F4C'],
       :columns_across,
       2
     )
@@ -41,7 +42,8 @@ describe Chef::Knife::AzureAgList do
        'Deployment name', 'deployment001',
        'Host name', 'role002',
        'SSH port', '23',
-       'Public IP', '65.52.249.191'],
+       'Public IP', '65.52.249.191',
+       'Thumbprint', '4BAE99A617B7B4F975C51A572CB8420F66477F4C'],
       :columns_across,
       2
     )
@@ -53,7 +55,8 @@ describe Chef::Knife::AzureAgList do
        'Deployment name', 'deployment001',
        'Host name', 'myVm2',
        'SSH port', '22',
-       'Public IP', '65.52.251.57'],
+       'Public IP', '65.52.251.57',
+       'Thumbprint', '4BAE99A617B7B4F975C51A572CB8420F66477F4C'],
       :columns_across,
       2
     )
@@ -71,7 +74,8 @@ describe Chef::Knife::AzureAgList do
        'Deployment name', 'testrequest',
        'Host name', 'myVm',
        'SSH port', '54047',
-       'Public IP', '65.52.251.144'],
+       'Public IP', '65.52.251.144',
+       'Thumbprint', '4BAE99A617B7B4F975C51A572CB8420F66477F4C'],
       :columns_across,
       2
     )
@@ -83,7 +87,8 @@ describe Chef::Knife::AzureAgList do
        'Deployment name', 'deployment004',
        'Host name', 'ssh-vm',
        'SSH port', '22',
-       'Public IP', '65.52.251.57'],
+       'Public IP', '65.52.251.57',
+       'Thumbprint', '4BAE99A617B7B4F975C51A572CB8420F66477F4C'],
       :columns_across,
       2
     )
@@ -95,7 +100,8 @@ describe Chef::Knife::AzureAgList do
        'Deployment name', 'deployment004',
        'Host name', 'winrm-vm',
        'WinRM port', '5985',
-       'Public IP', '65.52.249.191'],
+       'Public IP', '65.52.249.191',
+       'Thumbprint', '4BAE99A617B7B4F975C51A572CB8420F66477F4C'],
       :columns_across,
       2
     )
@@ -107,7 +113,8 @@ describe Chef::Knife::AzureAgList do
        'Deployment name', 'deployment001',
        'Host name', 'myVm2',
        'SSH port', '22',
-       'Public IP', '65.52.251.57'],
+       'Public IP', '65.52.251.57',
+       'Thumbprint', '4BAE99A617B7B4F975C51A572CB8420F66477F4C'],
       :columns_across,
       2
     )
