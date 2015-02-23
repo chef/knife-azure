@@ -823,10 +823,11 @@ class Chef
         pub_config[:custom_json_attr] = locate_config_value(:json_attributes) || {}
 
         # bootstrap attributes
-        pub_config[:client_rb] += "\nenvironment \t #{locate_config_value(:environment).to_json}" if locate_config_value(:environment)
-        pub_config[:client_rb] += "\nvalidation_key  \t #{Chef::Config[:validation_key].to_json}" if Chef::Config[:validation_key]
-        pub_config[:client_rb] += "\nnode_name  \t #{config[:chef_node_name].to_json}" if config[:chef_node_name]
-        pub_config[:client_rb] += "\nencrypted_data_bag_secret  \t #{locate_config_value(:encrypted_data_bag_secret).to_json}" if locate_config_value(:encrypted_data_bag_secret)
+        pub_config[:bootstrap_options] = {}
+        pub_config[:bootstrap_options][:environment] = locate_config_value(:environment) if locate_config_value(:environment)
+        pub_config[:bootstrap_options][:validation_key] = Chef::Config[:validation_key] if Chef::Config[:validation_key]
+        pub_config[:bootstrap_options][:chef_node_name] = config[:chef_node_name] if config[:chef_node_name]
+        pub_config[:bootstrap_options][:encrypted_data_bag_secret] = locate_config_value(:encrypted_data_bag_secret) if locate_config_value(:encrypted_data_bag_secret)
 
         Base64.encode64(pub_config.to_json)
       end
