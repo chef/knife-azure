@@ -39,6 +39,7 @@ class Chef
       end
 
       def load_winrm_deps
+        require 'winrm'
         require 'chef/knife/winrm'
         require 'chef/knife/bootstrap_windows_winrm'
       end
