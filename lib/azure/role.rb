@@ -292,7 +292,11 @@ class Azure
 
                 if params[:os_type] == 'Windows' and params[:bootstrap_proto].downcase == 'winrm'
                   xml.InputEndpoint {
-                  xml.LocalPort '5985'
+                  if params[:winrm_transport] == "ssl"
+                    xml.LocalPort '5986'
+                  else
+                    xml.LocalPort '5985'
+                  end
                   xml.Name 'WinRM'
                   xml.Port params[:port]
                   xml.Protocol 'TCP'

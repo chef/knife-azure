@@ -40,7 +40,6 @@ class Chef
 
       def load_winrm_deps
         require 'winrm'
-        require 'em-winrm'
         require 'chef/knife/winrm'
         require 'chef/knife/bootstrap_windows_winrm'
       end
