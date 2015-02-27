@@ -283,6 +283,57 @@ class Azure
                     }
                   end
                 xml.AdminUsername params[:winrm_user]
+                if params[:bootstrap_proto].downcase == 'winrm'
+                  xml.AdditionalUnattendContent {
+                    xml.Passes {
+                      xml.UnattendPass {
+                        xml.PassName 'oobeSystem'
+                        xml.Components {
+                          xml.UnattendComponent {
+                            xml.ComponentName 'Microsoft-Windows-Shell-Setup'
+                            xml.ComponentSettings {
+                              xml.ComponentSetting {
+                                xml.SettingName 'AutoLogon'
+                                xml.Content Base64.encode64(
+                                  Nokogiri::XML::Builder.new do |auto_logon_xml|
+                                    auto_logon_xml.AutoLogon {
+                                      auto_logon_xml.Username params[:winrm_user]
+                                      auto_logon_xml.Password {
+                                        auto_logon_xml.Value params[:admin_password]
+                                        auto_logon_xml.PlainText true
+                                      }
+                                      auto_logon_xml.LogonCount 1
+                                      auto_logon_xml.Enabled true
+                                    }
+                                  end.to_xml(save_with: Nokogiri::XML::Node::SaveOptions::NO_DECLARATION)
+                                ).strip
+                              }
+                              xml.ComponentSetting {
+                                xml.SettingName 'FirstLogonCommands'
+                                xml.Content Base64.encode64(
+                                  Nokogiri::XML::Builder.new do |first_logon_xml|
+                                    first_logon_xml.FirstLogonCommands {
+                                      first_logon_xml.SynchronousCommand('wcm:action' => 'add') {
+                                        first_logon_xml.Order 1
+                                        first_logon_xml.CommandLine 'cmd.exe /c winrm set winrm/config @{MaxTimeoutms="1800000"}'
+                                        first_logon_xml.Description 'Bump WinRM max timeout to 30 minutes'
+                                      }
+                                      first_logon_xml.SynchronousCommand('wcm:action' => 'add') {
+                                        first_logon_xml.Order 2
+                                        first_logon_xml.CommandLine 'cmd.exe /c winrm set winrm/config/winrs @{MaxMemoryPerShellMB="600"}'
+                                        first_logon_xml.Description 'Bump WinRM max memory per shell to 600 MB'
+                                      }
+                                    }
+                                  end.to_xml(save_with: Nokogiri::XML::Node::SaveOptions::NO_DECLARATION)
+                                ).strip
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                end
               }
             end
 
