@@ -425,6 +425,9 @@ class Chef
         deploy.find_role(locate_config_value(:azure_vm_name))
       end
 
+      # rubocop:disable Tab
+      # rubocop:disable IndentationConsistency
+      # rubocop:disable IndentationWidth
       def tcp_test_winrm(ip_addr, port)
 	      hostname = ip_addr
         socket = TCPSocket.new(hostname, port)
@@ -480,12 +483,12 @@ class Chef
         $stdout.sync = true
         storage = nil
 
-        Chef::Log.info("validating...")
+        Chef::Log.info('validating...')
         validate!
 
         ssh_override_winrm if %w(ssh cloud-api).include?(locate_config_value(:bootstrap_protocol)) && !image_windows?
 
-        Chef::Log.info("creating...")
+        Chef::Log.info('creating...')
 
         config[:azure_dns_name] = get_dns_name(locate_config_value(:azure_dns_name))
         unless locate_config_value(:azure_vm_name)
@@ -498,10 +501,10 @@ class Chef
         end
 
         # If Storage Account is not specified, check if the geographic location has one to re-use
-        if not locate_config_value(:azure_storage_account)
+        if !locate_config_value(:azure_storage_account)
           storage_accts = connection.storageaccounts.all
           storage = storage_accts.find { |storage_acct| storage_acct.location.to_s == locate_config_value(:azure_service_location) }
-          if not storage
+          if !storage
             config[:azure_storage_account] = [strip_non_ascii(locate_config_value(:azure_vm_name)), random_string].join.downcase
             remove_storage_service_on_failure = config[:azure_storage_account]
           else
@@ -520,7 +523,7 @@ class Chef
           connection.deploys.create(create_server_def)
           wait_until_virtual_machine_ready
           server = role_server
-        rescue Exception => e
+        rescue StandardError => e
           Chef::Log.error("Failed to create the server -- exception being rescued: #{e}")
           backtrace_message = "#{e.class}: #{e}\n#{e.backtrace.join("\n")}"
           Chef::Log.debug("#{backtrace_message}")
@@ -537,15 +540,15 @@ class Chef
 
         if image_windows?
           # Set distro to windows-chef-client-msi
-          config[:distro] = "windows-chef-client-msi" if (config[:distro].nil? || config[:distro] == "chef-full")
+          config[:distro] = 'windows-chef-client-msi' if config[:distro].nil? || config[:distro] == 'chef-full'
 
           if locate_config_value(:bootstrap_protocol) == 'ssh'
             port = server.sshport
             print "#{ui.color("Waiting for sshd on #{fqdn}:#{port}", :magenta)}"
 
-            print(".") until tcp_test_ssh(fqdn,port) do
+            print('.') until tcp_test_ssh(fqdn, port) do
               sleep @initial_sleep_delay ||= 10
-              puts("done")
+              puts('done')
             end
 
           elsif locate_config_value(:bootstrap_protocol) == 'winrm'
@@ -553,17 +556,17 @@ class Chef
 
             print "#{ui.color("Waiting for winrm on #{fqdn}:#{port}", :magenta)}"
 
-            print(".") until tcp_test_winrm(fqdn,port) do
+            print('.') until tcp_test_winrm(fqdn, port) do
               sleep @initial_sleep_delay ||= 10
-              puts("done")
+              puts('done')
             end
           end
 
           puts("\n")
-          bootstrap_for_windows_node(server,fqdn, port).run
+          bootstrap_for_windows_node(server, fqdn, port).run
         else
           unless server && server.publicipaddress && server.sshport
-            Chef::Log.fatal("server not created")
+            Chef::Log.fatal('server not created')
             exit 1
           end
 
@@ -571,13 +574,13 @@ class Chef
 
           print "#{ui.color("Waiting for sshd on #{fqdn}:#{port}", :magenta)}"
 
-          print(".") until tcp_test_ssh(fqdn,port) do
+          print('.') until tcp_test_ssh(fqdn, port) do
             sleep @initial_sleep_delay ||= 10
-            puts("done")
+            puts('done')
           end
 
           puts("\n")
-          bootstrap_for_node(server,fqdn,port).run
+          bootstrap_for_node(server, fqdn, port).run
         end
 
         msg_server_summary(server)
@@ -587,14 +590,14 @@ class Chef
         # Modify global configuration state to ensure hint gets set by knife-bootstrap
         # Query azure and load necessary attributes.
         cloud_attributes = {}
-        cloud_attributes["public_ip"] = server.publicipaddress
-        cloud_attributes["vm_name"] = server.name
-        cloud_attributes["public_fqdn"] = server.hostedservicename.to_s + ".cloudapp.net"
-        cloud_attributes["public_ssh_port"] = server.sshport if server.sshport
-        cloud_attributes["public_winrm_port"] = server.winrmport if server.winrmport
+        cloud_attributes['public_ip'] = server.publicipaddress
+        cloud_attributes['vm_name'] = server.name
+        cloud_attributes['public_fqdn'] = server.hostedservicename.to_s + '.cloudapp.net'
+        cloud_attributes['public_ssh_port'] = server.sshport if server.sshport
+        cloud_attributes['public_winrm_port'] = server.winrmport if server.winrmport
 
         Chef::Config[:knife][:hints] ||= {}
-        Chef::Config[:knife][:hints]["azure"] ||= cloud_attributes
+        Chef::Config[:knife][:hints]['azure'] ||= cloud_attributes
       end
 
       def bootstrap_common_params(bootstrap, server)
@@ -612,9 +615,7 @@ class Chef
         if locate_config_value(:bootstrap_protocol) == 'winrm'
 
           load_winrm_deps
-          unless Chef::Platform.windows?
-            require 'gssapi'
-          end
+          require 'gssapi' unless Chef::Platform.windows?
 
           bootstrap = Chef::Knife::BootstrapWindowsWinrm.new
 
@@ -633,7 +634,7 @@ class Chef
           bootstrap.config[:identity_file] = locate_config_value(:identity_file)
           bootstrap.config[:host_key_verify] = locate_config_value(:host_key_verify)
         else
-          ui.error("Unsupported Bootstrapping Protocol. Supported : winrm, ssh")
+          ui.error('Unsupported Bootstrapping Protocol. Supported : winrm, ssh')
           exit 1
         end
         bootstrap.name_args = [fqdn]
@@ -643,7 +644,7 @@ class Chef
         bootstrap_common_params(bootstrap, server)
       end
 
-      def bootstrap_for_node(server,fqdn,port)
+      def bootstrap_for_node(server, fqdn, port)
         bootstrap = Chef::Knife::Bootstrap.new
         bootstrap.name_args = [fqdn]
         bootstrap.config[:ssh_user] = locate_config_value(:ssh_user)
@@ -668,39 +669,40 @@ class Chef
           :azure_mgmt_cert,
           :azure_api_host_name,
           :azure_source_image,
-          :azure_vm_size,
+          :azure_vm_size
         ])
 
         if locate_config_value(:winrm_password) && (locate_config_value(:winrm_password).length <= 6 && locate_config_value(:winrm_password).length >= 72)
-          ui.error("The supplied password must be 6-72 characters long and meet password complexity requirements")
+          ui.error('The supplied password must be 6-72 characters long and meet password complexity requirements')
           exit 1
         end
 
         if locate_config_value(:ssh_password) && (locate_config_value(:ssh_password).length <= 6 && locate_config_value(:ssh_password).length >= 72)
-          ui.error("The supplied password must be 6-72 characters long and meet password complexity requirements")
+          ui.error('The supplied password must be 6-72 characters long and meet password complexity requirements')
           exit 1
         end
 
         if locate_config_value(:azure_connect_to_existing_dns) && locate_config_value(:azure_vm_name).nil?
-          ui.error("Specify the VM name using --azure-vm-name option, since you are connecting to existing dns")
+          ui.error('Specify the VM name using --azure-vm-name option, since you are connecting to existing dns')
           exit 1
         end
 
         if locate_config_value(:azure_service_location) && locate_config_value(:azure_affinity_group)
-          ui.error("Cannot specify both --azure-service-location and --azure-affinity-group, use one or the other.")
+          ui.error('Cannot specify both --azure-service-location and --azure-affinity-group, use one or the other.')
           exit 1
         elsif locate_config_value(:azure_service_location).nil? && locate_config_value(:azure_affinity_group).nil?
-          ui.error("Must specify either --azure-service-location or --azure-affinity-group.")
+          ui.error('Must specify either --azure-service-location or --azure-affinity-group.')
           exit 1
         end
 
-        if locate_config_value(:winrm_authentication_protocol) && ! %w{basic negotiate kerberos}.include?(locate_config_value(:winrm_authentication_protocol))
-          ui.error("Invalid value for --winrm-authentication-protocol option. Use valid protocol values i.e [basic, negotiate, kerberos]")
+        if locate_config_value(:winrm_authentication_protocol) && !%w({basic negotiate kerberos}).include?(locate_config_value(:winrm_authentication_protocol))
+          ui.error('Invalid value for --winrm-authentication-protocol option. Use valid protocol values i.e [basic, negotiate, kerberos]')
           exit 1
         end
 
-        unless (connection.images.exists?(locate_config_value(:azure_source_image)))
-          ui.error("Image provided is invalid")
+        # rubocop:disable GuardClause
+        unless connection.images.exists?(locate_config_value(:azure_source_image))
+          ui.error('Image provided is invalid')
           exit 1
         end
       end
@@ -732,13 +734,13 @@ class Chef
         # the VM needs to have a unique public port. Logic below takes care of this.
         if !image_windows? || locate_config_value(:bootstrap_protocol) == 'ssh'
           if locate_config_value(:azure_connect_to_existing_dns)
-            port = locate_config_value(:ssh_port) || Random.rand(64000) + 1000
+            port = locate_config_value(:ssh_port) || Random.rand(64_000) + 1000
           else
             port = locate_config_value(:ssh_port) || '22'
           end
         else
           if locate_config_value(:azure_connect_to_existing_dns)
-            port = locate_config_value(:winrm_port) || Random.rand(64000) + 1000
+            port = locate_config_value(:winrm_port) || Random.rand(64_000) + 1000
           else
             port = locate_config_value(:winrm_port) || '5985'
           end
@@ -747,15 +749,15 @@ class Chef
         server_def[:port] = port
 
         if locate_config_value(:bootstrap_protocol) == 'cloud-api'
-          server_def[:chef_extension] = get_chef_extension_name
-          server_def[:chef_extension_publisher] = get_chef_extension_publisher
-          server_def[:chef_extension_version] = get_chef_extension_version
-          server_def[:chef_extension_public_param] = get_chef_extension_public_params
-          server_def[:chef_extension_private_param] = get_chef_extension_private_params
+          server_def[:chef_extension] = chef_extension_name
+          server_def[:chef_extension_publisher] = chef_extension_publisher
+          server_def[:chef_extension_version] = chef_extension_version
+          server_def[:chef_extension_public_param] = chef_extension_public_params
+          server_def[:chef_extension_private_param] = chef_extension_private_params
         else
           if image_windows?
-            if not locate_config_value(:winrm_password) or not locate_config_value(:bootstrap_protocol)
-              ui.error("WinRM Password and Bootstrapping Protocol are compulsory parameters")
+            if !locate_config_value(:winrm_password) || !locate_config_value(:bootstrap_protocol)
+              ui.error('WinRM Password and Bootstrapping Protocol are compulsory parameters')
               exit 1
             end
             # We can specify the AdminUsername after API version 2013-03-01. However, in this API version,
@@ -767,16 +769,16 @@ class Chef
             end
             # take cares of when user name contains domain
             # azure add role api doesn't support '\\' in user name
-            if locate_config_value(:winrm_user) && locate_config_value(:winrm_user).split("\\").length.eql?(2)
-              server_def[:winrm_user] = locate_config_value(:winrm_user).split("\\")[1]
+            if locate_config_value(:winrm_user) && locate_config_value(:winrm_user).split('\\').length.eql?(2)
+              server_def[:winrm_user] = locate_config_value(:winrm_user).split('\\')[1]
             end
           else
             unless locate_config_value(:ssh_user)
-              ui.error("SSH User is compulsory parameter")
+              ui.error('SSH User is compulsory parameter')
               exit 1
             end
             unless locate_config_value(:ssh_password) || locate_config_value(:identity_file)
-              ui.error("Specify either SSH Key or SSH Password")
+              ui.error('Specify either SSH Key or SSH Password')
               exit 1
             end
           end
@@ -798,36 +800,36 @@ class Chef
         server_def
       end
 
-      def get_chef_extension_name
-        extension_name = image_windows? ? "ChefClient" : "LinuxChefClient"
+      def chef_extension_name
+        image_windows? ? 'ChefClient' : 'LinuxChefClient'
       end
 
-      def get_chef_extension_publisher
-        publisher = "Chef.Bootstrap.WindowsAzure"
+      def chef_extension_publisher
+        'Chef.Bootstrap.WindowsAzure'
       end
 
       # get latest version
-      def get_chef_extension_version
-        extensions = @connection.query_azure("resourceextensions/#{get_chef_extension_publisher}/#{get_chef_extension_name}")
-        extensions.css("Version").max.text.split(".").first + ".*"
+      def chef_extension_version
+        extensions = @connection.query_azure("resourceextensions/#{chef_extension_publisher}/#{chef_extension_name}")
+        extensions.css('Version').max.text.split('.').first + '.*'
       end
 
-      def get_chef_extension_public_params
+      def chef_extension_public_params
         pub_config = {}
         pub_config[:client_rb] = "chef_server_url \t #{Chef::Config[:chef_server_url].to_json}\nvalidation_client_name\t#{Chef::Config[:validation_client_name].to_json}"
-        pub_config[:runlist] = locate_config_value(:run_list).empty? ? "" : locate_config_value(:run_list).join(",").to_json
-        pub_config[:autoUpdateClient] = locate_config_value(:auto_update_client) ? "true" : "false"
+        pub_config[:runlist] = locate_config_value(:run_list).empty? ? '' : locate_config_value(:run_list).join(',').to_json
+        pub_config[:autoUpdateClient] = locate_config_value(:auto_update_client) ? 'true' : 'false'
         Base64.encode64(pub_config.to_json)
       end
 
-      def get_chef_extension_private_params
+      def chef_extension_private_params
         pri_config = {}
         pri_config[:validation_key] = File.read(Chef::Config[:validation_key])
         Base64.encode64(pri_config.to_json)
       end
 
       def cleanup_and_exit(remove_hosted_service_on_failure, remove_storage_service_on_failure)
-        ui.warn("Cleaning up resources...")
+        ui.warn('Cleaning up resources...')
 
         if remove_hosted_service_on_failure
           ret_val = connection.hosts.delete(remove_hosted_service_on_failure)
@@ -871,13 +873,14 @@ class Chef
       MAX_VM_NAME_CHARACTERS = 15
 
       # generate a random dns_name if azure_dns_name is empty
-      def get_dns_name(azure_dns_name, prefix = "az-")
+      def get_dns_name(azure_dns_name, prefix = 'az-')
         return azure_dns_name unless azure_dns_name.nil?
         if locate_config_value(:azure_vm_name).nil?
-          azure_dns_name = prefix + SecureRandom.hex(( MAX_VM_NAME_CHARACTERS - prefix.length)/2)
+          azure_dns_name = prefix + SecureRandom.hex((MAX_VM_NAME_CHARACTERS - prefix.length) / 2)
         else
           azure_dns_name = locate_config_value(:azure_vm_name)
         end
+        azure_dns_name
       end
     end
   end

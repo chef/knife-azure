@@ -732,13 +732,13 @@ describe Chef::Knife::AzureServerCreate do
       Chef::Config[:knife].delete(:chef_server_url)
     end
 
-    context 'get_chef_extension_public_params' do
+    context 'chef_extension_public_params' do
       it 'should set autoUpdateClient flag to true' do
         @server_instance.config[:auto_update_client] = true
         public_config = "{\"client_rb\":\"chef_server_url \\t \\\"https://localhost:443\\\"\\nvalidation_client_name\\t\\\"chef-validator\\\"\",\"runlist\":\"\\\"getting-started\\\"\",\"autoUpdateClient\":\"true\"}"
 
         expect(Base64).to receive(:encode64).with(public_config)
-        @server_instance.get_chef_extension_public_params
+        @server_instance.chef_extension_public_params
       end
 
       it 'should set autoUpdateClient flag to false' do
@@ -746,16 +746,16 @@ describe Chef::Knife::AzureServerCreate do
         public_config = "{\"client_rb\":\"chef_server_url \\t \\\"https://localhost:443\\\"\\nvalidation_client_name\\t\\\"chef-validator\\\"\",\"runlist\":\"\\\"getting-started\\\"\",\"autoUpdateClient\":\"false\"}"
 
         expect(Base64).to receive(:encode64).with(public_config)
-        @server_instance.get_chef_extension_public_params
+        @server_instance.chef_extension_public_params
       end
     end
 
     context 'windows instance:' do
       it 'successful create' do
         expect(@server_instance).to_not receive(:bootstrap_exec)
-        expect(@server_instance).to receive(:get_chef_extension_version)
-        expect(@server_instance).to receive(:get_chef_extension_public_params)
-        expect(@server_instance).to receive(:get_chef_extension_private_params)
+        expect(@server_instance).to receive(:chef_extension_version)
+        expect(@server_instance).to receive(:chef_extension_public_params)
+        expect(@server_instance).to receive(:chef_extension_private_params)
         expect(@server_instance).to receive(:image_windows?).exactly(4).times.and_return(true)
         expect(@server_instance).to receive(:wait_until_virtual_machine_ready).exactly(1).times.and_return(true)
         @server_instance.run
@@ -770,8 +770,8 @@ describe Chef::Knife::AzureServerCreate do
         expect(@server_instance).to_not receive(:bootstrap_exec)
 
         allow(@server_instance.connection).to receive(:query_azure).and_return(version.doc)
-        expect(@server_instance).to receive(:get_chef_extension_public_params)
-        expect(@server_instance).to receive(:get_chef_extension_private_params)
+        expect(@server_instance).to receive(:chef_extension_public_params)
+        expect(@server_instance).to receive(:chef_extension_private_params)
         expect(@server_instance).to receive(:image_windows?).exactly(4).times.and_return(true)
         server_config = @server_instance.create_server_def
         expect(server_config[:chef_extension]).to eq('ChefClient')
@@ -791,7 +791,7 @@ describe Chef::Knife::AzureServerCreate do
         end
         expect(@server_instance).to_not receive(:bootstrap_exec)
         allow(@server_instance.connection).to receive(:query_azure).and_return(version.doc)
-        expect(@server_instance).to receive(:get_chef_extension_private_params)
+        expect(@server_instance).to receive(:chef_extension_private_params)
         expect(@server_instance).to receive(:image_windows?).exactly(4).times.and_return(false)
         server_config = @server_instance.create_server_def
         expect(server_config[:chef_extension]).to eq('LinuxChefClient')
