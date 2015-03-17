@@ -328,7 +328,7 @@ describe Chef::Knife::AzureServerCreate do
         expect(lb_set2_ep['LoadBalancedEndpointSetName']).to be == 'lb_set2'
         expect(lb_set2_ep['LocalPort']).to be == '443'
         expect(lb_set2_ep['Port']).to be == '443'
-        expect(lb_set2_ep['Protocol']).to be == 'TCP'
+        expect(lb_set2_ep['Protocol']).to be == 'tcp'
         expect(lb_set2_ep['LoadBalancerProbe']['Path']).to be == '/healthcheck2' # The existing one wins. This is defined in the stub.
         expect(lb_set2_ep['LoadBalancerProbe']['Port']).to be == '443'
         expect(lb_set2_ep['LoadBalancerProbe']['Protocol']).to be == 'http'

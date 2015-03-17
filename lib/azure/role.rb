@@ -228,7 +228,7 @@ class Azure
         hash['LoadBalancerProbe'] = Hash.new
         hash['LoadBalancerProbe']['Path'] = fields[3]
         hash['LoadBalancerProbe']['Port'] = fields[0]
-        hash['LoadBalancerProbe']['Protocol'] = fields[3] ? 'HTTP' : 'TCP'
+        hash['LoadBalancerProbe']['Protocol'] = fields[3] ? 'HTTP' : protocol
       end
       hash
     end
@@ -267,7 +267,7 @@ class Azure
               xml.TimeoutInSeconds ep['LoadBalancerProbe']['TimeoutInSeconds'] if ep['LoadBalancerProbe']['TimeoutInSeconds']
             }
           end
-          xml.Protocol 'TCP'
+          xml.Protocol ep['Protocol']
           xml.EnableDirectServerReturn ep['EnableDirectServerReturn'] if ep['EnableDirectServerReturn']
           xml.LoadBalancerName ep['LoadBalancerName'] if ep['LoadBalancerName']
           xml.IdleTimeoutInMinutes ep['IdleTimeoutInMinutes'] if ep['IdleTimeoutInMinutes']

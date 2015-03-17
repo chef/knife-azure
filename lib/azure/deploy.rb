@@ -177,6 +177,10 @@ class Azure
       %w{LoadBalancedEndpointSetName LocalPort Name Port Protocol EnableDirectServerReturn LoadBalancerName IdleTimeoutInMinutes}.each do |key|
         hash[key] = xml_content(inputendpoint_xml, key, nil)
       end
+      # Protocol could be in there twice... If we have two, pick the second one as the first is for the probe.
+      if inputendpoint_xml.css('Protocol').count > 1
+        hash['Protocol'] = inputendpoint_xml.css('Protocol')[1].content
+      end
       probe = inputendpoint_xml.css('LoadBalancerProbe')
       if probe
         hash['LoadBalancerProbe'] = Hash.new
