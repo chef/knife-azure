@@ -807,8 +807,12 @@ class Chef
 
       # get latest version
       def get_chef_extension_version
-        extensions = @connection.query_azure("resourceextensions/#{get_chef_extension_publisher}/#{get_chef_extension_name}")
-        extensions.css("Version").max.text.split(".").first + ".*"
+        if locate_config_value(:azure_chef_extension_version)
+          Chef::Config[:knife][:azure_chef_extension_version]
+        else
+          extensions = @connection.query_azure("resourceextensions/#{get_chef_extension_publisher}/#{get_chef_extension_name}")
+          extensions.css("Version").max.text.split(".").first + ".*"
+        end
       end
 
       def get_chef_extension_public_params

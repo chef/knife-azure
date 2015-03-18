@@ -751,6 +751,13 @@ describe Chef::Knife::AzureServerCreate do
       end
     end
 
+    context "get azure chef extension version" do
+      it "take user specified verison" do
+        Chef::Config[:knife][:azure_chef_extension_version] = "1200.12"
+        expect(@server_instance.get_chef_extension_version).to eq("1200.12")
+      end
+    end
+
     context "windows instance:" do
       it "successful create" do
         expect(@server_instance).to_not receive(:bootstrap_exec)
