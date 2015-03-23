@@ -753,6 +753,7 @@ class Chef
       def create_server_def
         server_def = {
           :azure_storage_account => locate_config_value(:azure_storage_account),
+          :azure_api_host_name => locate_config_value(:azure_api_host_name),
           :azure_dns_name => locate_config_value(:azure_dns_name),
           :azure_vm_name => locate_config_value(:azure_vm_name),
           :azure_service_location => locate_config_value(:azure_service_location),
