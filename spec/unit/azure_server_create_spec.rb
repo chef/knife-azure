@@ -271,7 +271,7 @@ describe Chef::Knife::AzureServerCreate do
 
       it "creates new load balanced endpoints" do
         Chef::Config[:knife][:azure_dns_name] = 'vmname'
-        @server_instance.config[:tcp_endpoints] = "80:80:lb_set,443:443:lb_set_ssl:/healthcheck" #TODO is this a good way of specifying this?
+        @server_instance.config[:tcp_endpoints] = "80:80:EXTERNAL:lb_set,443:443:EXTERNAL:lb_set_ssl:/healthcheck" #TODO is this a good way of specifying this?
         expect(@server_instance).to receive(:is_image_windows?).at_least(:twice).and_return(false)
         @server_instance.run
         testxml = Nokogiri::XML(@receivedXML)
@@ -308,7 +308,7 @@ describe Chef::Knife::AzureServerCreate do
       
       it "re-uses existing load balanced endpoints" do
         Chef::Config[:knife][:azure_dns_name] = 'vmname'
-        @server_instance.config[:tcp_endpoints] = "443:443:lb_set2:/healthcheck"
+        @server_instance.config[:tcp_endpoints] = "443:443:EXTERNAL:lb_set2:/healthcheck"
         expect(@server_instance).to receive(:is_image_windows?).at_least(:twice).and_return(false)
         
         @server_instance.run
@@ -329,10 +329,37 @@ describe Chef::Knife::AzureServerCreate do
         expect(lb_set2_ep['LocalPort']).to be == '443'
         expect(lb_set2_ep['Port']).to be == '443'
         expect(lb_set2_ep['Protocol']).to be == 'tcp'
-        expect(lb_set2_ep['LoadBalancerProbe']['Path']).to be == '/healthcheck2' # The existing one wins. This is defined in the stub.
+        expect(lb_set2_ep['LoadBalancerProbe']['Path']).to be == '/healthcheck2' # The existing one wins. The 'healthcheck2' value is defined in the stub.
         expect(lb_set2_ep['LoadBalancerProbe']['Port']).to be == '443'
         expect(lb_set2_ep['LoadBalancerProbe']['Protocol']).to be == 'http'
 
+      end
+
+      it "allows internal load balancer to be specified" do
+        Chef::Config[:knife][:azure_dns_name] = 'vmname'
+        @server_instance.config[:tcp_endpoints] = "80:80:internal-lb-name:lb_set" #TODO is this a good way of specifying this?
+        expect(@server_instance).to receive(:is_image_windows?).at_least(:twice).and_return(false)
+
+        @server_instance.run
+        testxml = Nokogiri::XML(@receivedXML)
+        endpoints = testxml.css('InputEndpoint')
+        expect(endpoints.count).to be  == 2
+
+        # Convert it to a hash as it's easier to test.
+        eps = []
+        endpoints.each do | ep |
+          eps << Hash.from_xml(ep.to_s)
+        end
+        expect(eps[0]['InputEndpoint']['Name']).to be == 'SSH'
+
+        lb_set_ep = eps[1]['InputEndpoint']
+        expect(lb_set_ep['LoadBalancedEndpointSetName']).to be == 'lb_set'
+        expect(lb_set_ep['LocalPort']).to be == '80'
+        expect(lb_set_ep['Port']).to be == '80'
+        expect(lb_set_ep['Protocol']).to be == 'TCP'
+        expect(lb_set_ep['LoadBalancerProbe']['Port']).to be == '80'
+        expect(lb_set_ep['LoadBalancerProbe']['Protocol']).to be == 'TCP'
+        expect(lb_set_ep['LoadBalancerName']).to be == 'internal-lb-name'
       end
 
       it "server create display server summary" do

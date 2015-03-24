@@ -221,14 +221,15 @@ class Azure
       hash = Hash.new
       hash['LocalPort'] = fields[0]
       hash['Port'] = fields[1] || fields[0]
-      hash['LoadBalancedEndpointSetName'] = fields[2]
+      hash['LoadBalancerName'] = fields[2] if fields[2] != 'EXTERNAL' # TODO hackity hack.. Shouldn't use magic words.
+      hash['LoadBalancedEndpointSetName'] = fields[3]
       hash['Protocol'] = protocol
       hash['Name'] = "#{protocol.downcase}port_#{fields[0]}_#{azure_vm_name}"
       if fields[2]
         hash['LoadBalancerProbe'] = Hash.new
-        hash['LoadBalancerProbe']['Path'] = fields[3]
+        hash['LoadBalancerProbe']['Path'] = fields[4]
         hash['LoadBalancerProbe']['Port'] = fields[0]
-        hash['LoadBalancerProbe']['Protocol'] = fields[3] ? 'HTTP' : protocol
+        hash['LoadBalancerProbe']['Protocol'] = fields[4] ? 'HTTP' : protocol
       end
       hash
     end

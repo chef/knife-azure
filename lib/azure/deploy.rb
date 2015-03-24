@@ -116,7 +116,7 @@ class Azure
 
   class Deploy
     include AzureUtility
-    attr_accessor :connection, :name, :status, :url, :hostedservicename, :input_endpoints
+    attr_accessor :connection, :name, :status, :url, :hostedservicename, :input_endpoints, :loadbalancers
 
     def initialize(connection)
       @connection = connection
@@ -139,6 +139,13 @@ class Azure
         endpointsXML = deployXML.css('InputEndpoint')
         endpointsXML.each do |endpointXML|
           @input_endpoints << parse_endpoint(endpointXML)
+        end
+        @loadbalancers = Hash.new
+        lbsXML = deployXML.css('Deployment LoadBalancers LoadBalancer')
+        lbsXML.each do |lbXML|
+          loadbalancer = Loadbalancer.new(@connection)
+          loadbalancer.parse(lbXML, hostedservicename)
+          @loadbalancers[loadbalancer.name] = loadbalancer
         end
       end
     end

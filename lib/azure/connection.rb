@@ -25,6 +25,7 @@ require File.expand_path('../disk', __FILE__)
 require File.expand_path('../image', __FILE__)
 require File.expand_path('../certificate', __FILE__)
 require File.expand_path('../ag', __FILE__)
+require File.expand_path('../loadbalancer', __FILE__)
 require File.expand_path('../vnet', __FILE__)
 
 class Azure
@@ -32,7 +33,7 @@ class Azure
     include AzureAPI
     include AzureUtility
     attr_accessor :hosts, :rest, :images, :deploys, :roles,
-                  :disks, :storageaccounts, :certificates, :ags, :vnets
+                  :disks, :storageaccounts, :certificates, :ags, :vnets, :lbs
     def initialize(params={})
       @rest = Rest.new(params)
       @hosts = Hosts.new(self)
@@ -44,6 +45,7 @@ class Azure
       @certificates = Certificates.new(self)
       @ags = AGs.new(self)
       @vnets = Vnets.new(self)
+      @lbs = Loadbalancers.new(self)
     end
 
     def query_azure(service_name,

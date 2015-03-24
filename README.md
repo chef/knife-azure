@@ -274,6 +274,20 @@ Knife options:
     :azure_service_location     Specifies the geographic location.
     :azure_ag_desc              Optional. Description for new affinity group.
 
+### Azure Internal LB List Subcommand
+Outputs a lit of defined load balancers for all cloud services. Public facing load balancers are not shown here.
+
+### Azure Internal LB Create Subcommand
+Creates a new Internal Load Balancer within a cloud service.
+
+    knife azure internal lb create -n 'my_lb' --azure-lb-static-vip '10.0.0.123' --azure-subnet_name 'Subnet_1' --azure-dns-name 'service_name'
+
+Knife options:
+      :azure_load_balancer      Required. Specifies the name of the Load Balancer.
+      :azure_lb_static_vip      Optional. Allows you to set a static IP for the VIP.
+      :azure_subnet_name        Required ONLY IF azure_lb_static_ip is set. Specifies the subnet that the static IP resides in.
+      :azure_dns_name           Required. The cloud service that this internal Load Balancer will be added to.
+
 ### Azure Vnet List Subcommand
 Outputs a list of defined virtual networks in the azure subscription.
 
