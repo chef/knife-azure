@@ -291,7 +291,6 @@ class Azure
           xml.RoleName {xml.text params[:azure_vm_name]}
           xml.OsVersion('i:nil' => 'true')
           xml.RoleType 'PersistentVMRole'
-          xml.VMImageName params[:azure_source_image] if params[:is_vm_image]
 
           xml.ConfigurationSets {
             if params[:os_type] == 'Linux'
@@ -426,6 +425,7 @@ class Azure
             }
           end
 
+          xml.VMImageName params[:azure_source_image] if params[:is_vm_image]
           xml.Label Base64.encode64(params[:azure_vm_name]).strip
 
           #OSVirtualHardDisk not required in case azure_source_image is a VMImage
