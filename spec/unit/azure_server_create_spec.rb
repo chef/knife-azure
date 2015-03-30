@@ -440,7 +440,7 @@ describe Chef::Knife::AzureServerCreate do
         expect(@server_instance).to receive(:is_image_windows?).exactly(3).times.and_return(true)
         @server_params = @server_instance.create_server_def
         expect(@server_params[:port]).to be == '5985'
-      end      
+      end
     end
   end
 
@@ -736,7 +736,7 @@ describe Chef::Knife::AzureServerCreate do
     context "get_chef_extension_public_params" do
       it "should set autoUpdateClient flag to true" do
         @server_instance.config[:auto_update_client] = true
-        public_config = "{\"client_rb\":\"chef_server_url \\t \\\"https://localhost:443\\\"\\nvalidation_client_name\\t\\\"chef-validator\\\"\",\"runlist\":\"\\\"getting-started\\\"\",\"autoUpdateClient\":\"true\"}"
+        public_config = "{\"client_rb\":\"chef_server_url \\t \\\"https://localhost:443\\\"\\nvalidation_client_name\\t\\\"chef-validator\\\"\",\"runlist\":\"\\\"getting-started\\\"\",\"autoUpdateClient\":\"true\",\"custom_json_attr\":{},\"bootstrap_options\":{\"chef_server_url\":\"https://localhost:443\",\"validation_client_name\":\"chef-validator\"}}"
 
         expect(Base64).to receive(:encode64).with(public_config)
         @server_instance.get_chef_extension_public_params
@@ -744,7 +744,7 @@ describe Chef::Knife::AzureServerCreate do
 
       it "should set autoUpdateClient flag to false" do
         @server_instance.config[:auto_update_client] = false
-        public_config = "{\"client_rb\":\"chef_server_url \\t \\\"https://localhost:443\\\"\\nvalidation_client_name\\t\\\"chef-validator\\\"\",\"runlist\":\"\\\"getting-started\\\"\",\"autoUpdateClient\":\"false\"}"
+        public_config = "{\"client_rb\":\"chef_server_url \\t \\\"https://localhost:443\\\"\\nvalidation_client_name\\t\\\"chef-validator\\\"\",\"runlist\":\"\\\"getting-started\\\"\",\"autoUpdateClient\":\"false\",\"custom_json_attr\":{},\"bootstrap_options\":{\"chef_server_url\":\"https://localhost:443\",\"validation_client_name\":\"chef-validator\"}}"
 
         expect(Base64).to receive(:encode64).with(public_config)
         @server_instance.get_chef_extension_public_params
@@ -766,11 +766,11 @@ describe Chef::Knife::AzureServerCreate do
         expect(@server_instance).to receive(:get_chef_extension_private_params)
         expect(@server_instance).to receive(:is_image_windows?).exactly(4).times.and_return(true)
         expect(@server_instance).to receive(:wait_until_virtual_machine_ready).exactly(1).times.and_return(true)
-        @server_instance.run        
-        testxml = Nokogiri::XML(@receivedXML)        
-        testxml.css('InputEndpoint Protocol:contains("TCP")').each do | port |          
-          expect(port.parent.css("LocalPort").text).to_not eq("5985")          
-        end        
+        @server_instance.run
+        testxml = Nokogiri::XML(@receivedXML)
+        testxml.css('InputEndpoint Protocol:contains("TCP")').each do | port |
+          expect(port.parent.css("LocalPort").text).to_not eq("5985")
+        end
       end
 
       it "check if all server params are set correctly" do
@@ -802,11 +802,11 @@ describe Chef::Knife::AzureServerCreate do
         expect(@server_instance).to receive(:get_chef_extension_private_params)
         expect(@server_instance).to receive(:is_image_windows?).exactly(4).times.and_return(false)
         expect(@server_instance).to receive(:wait_until_virtual_machine_ready).exactly(1).times.and_return(true)
-        @server_instance.run        
-        testxml = Nokogiri::XML(@receivedXML)        
-        testxml.css('InputEndpoint Protocol:contains("TCP")').each do | port |                    
+        @server_instance.run
+        testxml = Nokogiri::XML(@receivedXML)
+        testxml.css('InputEndpoint Protocol:contains("TCP")').each do | port |
           expect(port.parent.css("LocalPort").text).to_not eq("22")
-        end        
+        end
       end
 
       it "check if all server params are set correctly" do
