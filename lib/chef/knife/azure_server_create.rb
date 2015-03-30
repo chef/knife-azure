@@ -197,7 +197,7 @@ class Chef
       option :azure_vm_ready_timeout,
         :long => "--azure-vm-ready-timeout TIMEOUT",
         :description => "The number of minutes that knife-azure will wait for the virtual machine state to transition from 'provisioning' to 'ready'. Default is 15.",
-        :default => 15 
+        :default => 15
 
       option :auth_timeout,
         :long => "--windows-auth-timeout MINUTES",
@@ -820,6 +820,16 @@ class Chef
         pub_config[:client_rb] = "chef_server_url \t #{Chef::Config[:chef_server_url].to_json}\nvalidation_client_name\t#{Chef::Config[:validation_client_name].to_json}"
         pub_config[:runlist] = locate_config_value(:run_list).empty? ? "" : locate_config_value(:run_list).join(",").to_json
         pub_config[:autoUpdateClient] = locate_config_value(:auto_update_client) ? "true" : "false"
+        pub_config[:custom_json_attr] = locate_config_value(:json_attributes) || {}
+
+        # bootstrap attributes
+        pub_config[:bootstrap_options] = {}
+        pub_config[:bootstrap_options][:environment] = locate_config_value(:environment) if locate_config_value(:environment)
+        pub_config[:bootstrap_options][:chef_node_name] = config[:chef_node_name] if config[:chef_node_name]
+        pub_config[:bootstrap_options][:encrypted_data_bag_secret] = locate_config_value(:encrypted_data_bag_secret) if locate_config_value(:encrypted_data_bag_secret)
+        pub_config[:bootstrap_options][:chef_server_url] = Chef::Config[:chef_server_url] if Chef::Config[:chef_server_url]
+        pub_config[:bootstrap_options][:validation_client_name] = Chef::Config[:validation_client_name] if Chef::Config[:validation_client_name]
+
         Base64.encode64(pub_config.to_json)
       end
 
