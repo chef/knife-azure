@@ -1,5 +1,6 @@
 require File.expand_path(File.dirname(__FILE__) + '/../spec_helper')
 require File.expand_path(File.dirname(__FILE__) + '/query_azure_mock')
+require 'pry'
 
 class Azure
   class Certificate
@@ -142,7 +143,9 @@ describe "roles" do
           :azure_storage_account=>'chefci',
           :os_type=>'Windows',
           :bootstrap_proto=>'winrm',
-          :winrm_transport=>'ssl'
+          :winrm_transport=>'ssl',
+          :winrm_max_timeout=>1800000,
+          :winrm_max_memoryPerShell=>600
         }
 
         deploy = @connection.deploys.create(params)
