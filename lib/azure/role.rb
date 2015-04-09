@@ -283,7 +283,7 @@ class Azure
                     }
                   end
                 xml.AdminUsername params[:winrm_user]
-                if params[:bootstrap_proto].downcase == 'winrm'
+                if params[:bootstrap_proto].downcase == 'winrm' && (params[:winrm_max_timeout] || params[:winrm_max_memoryPerShell])
                   xml.AdditionalUnattendContent {
                     xml.Passes {
                       xml.UnattendPass {
@@ -313,16 +313,21 @@ class Azure
                                 xml.Content Base64.encode64(
                                   Nokogiri::XML::Builder.new do |first_logon_xml|
                                     first_logon_xml.FirstLogonCommands {
-                                      first_logon_xml.SynchronousCommand('wcm:action' => 'add') {
-                                        first_logon_xml.Order 1
-                                        first_logon_xml.CommandLine 'cmd.exe /c winrm set winrm/config @{MaxTimeoutms="1800000"}'
-                                        first_logon_xml.Description 'Bump WinRM max timeout to 30 minutes'
-                                      }
-                                      first_logon_xml.SynchronousCommand('wcm:action' => 'add') {
-                                        first_logon_xml.Order 2
-                                        first_logon_xml.CommandLine 'cmd.exe /c winrm set winrm/config/winrs @{MaxMemoryPerShellMB="600"}'
-                                        first_logon_xml.Description 'Bump WinRM max memory per shell to 600 MB'
-                                      }
+                                      if params[:winrm_max_timeout]
+                                        first_logon_xml.SynchronousCommand('wcm:action' => 'add') {
+                                          first_logon_xml.Order 1
+                                          first_logon_xml.CommandLine "cmd.exe /c winrm set winrm/config @{MaxTimeoutms=\"#{params[:winrm_max_timeout]}\"}"
+                                          first_logon_xml.Description "Bump WinRM max timeout to #{params[:winrm_max_timeout]} milliseconds"
+                                        }
+                                      end
+
+                                      if params[:winrm_max_memoryPerShell]
+                                        first_logon_xml.SynchronousCommand('wcm:action' => 'add') {
+                                          first_logon_xml.Order 2
+                                          first_logon_xml.CommandLine "cmd.exe /c winrm set winrm/config/winrs @{MaxMemoryPerShellMB=\"#{params[:winrm_max_memoryPerShell]}\"}"
+                                          first_logon_xml.Description "Bump WinRM max memory per shell to #{params[:winrm_max_memoryPerShell]} MB"
+                                        }
+                                      end
                                     }
                                   end.to_xml(save_with: Nokogiri::XML::Node::SaveOptions::NO_DECLARATION)
                                 ).strip

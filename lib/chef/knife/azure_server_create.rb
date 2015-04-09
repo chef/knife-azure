@@ -197,7 +197,7 @@ class Chef
       option :azure_vm_ready_timeout,
         :long => "--azure-vm-ready-timeout TIMEOUT",
         :description => "The number of minutes that knife-azure will wait for the virtual machine state to transition from 'provisioning' to 'ready'. Default is 15.",
-        :default => 15 
+        :default => 15
 
       option :auth_timeout,
         :long => "--windows-auth-timeout MINUTES",
@@ -725,7 +725,9 @@ class Chef
           :ssl_cert_fingerprint => locate_config_value(:thumbprint),
           :cert_path => locate_config_value(:cert_path),
           :cert_password => locate_config_value(:cert_passphrase),
-          :winrm_transport => locate_config_value(:winrm_transport)
+          :winrm_transport => locate_config_value(:winrm_transport),
+          :winrm_max_timeout => locate_config_value(:set_winrm_max_timeout),
+          :winrm_max_memoryPerShell => locate_config_value(:set_winrm_max_memoryPerShell)
         }
         # If user is connecting a new VM to an existing dns, then
         # the VM needs to have a unique public port. Logic below takes care of this.
