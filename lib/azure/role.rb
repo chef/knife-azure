@@ -214,7 +214,7 @@ class Azure
     end
 
     def fetch_thumbprint
-      query_result = connection.query_azure("hostedservices/#{@hostname}/deployments/#{@hostname}/roles/#{@name}")
+      query_result = connection.query_azure("hostedservices/#{@hostedservicename}/deployments/#{@hostname}/roles/#{@name}")
       query_result.at_css("DefaultWinRmCertificateThumbprint").nil? ? '' : query_result.at_css("DefaultWinRmCertificateThumbprint").text
     end
 
