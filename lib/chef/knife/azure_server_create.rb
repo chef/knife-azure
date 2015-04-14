@@ -245,6 +245,14 @@ class Chef
       :default => false,
       :description => "Set this flag to enable auto chef client update in azure chef extension. This flag should be used with cloud-api bootstrap protocol only"
 
+      option :winrm_max_timeout,
+        :long => "--winrm-max-timeout MILISECONDS",
+        :description => "Set winrm max timeout in miliseconds"
+
+      option :winrm_max_memoryPerShell,
+        :long => "--winrm-max-memoryPerShell MB",
+        :description => "Set winrm max memory per shell in MB"
+
       def strip_non_ascii(string)
         string.gsub(/[^0-9a-z ]/i, '')
       end
@@ -726,8 +734,8 @@ class Chef
           :cert_path => locate_config_value(:cert_path),
           :cert_password => locate_config_value(:cert_passphrase),
           :winrm_transport => locate_config_value(:winrm_transport),
-          :winrm_max_timeout => locate_config_value(:set_winrm_max_timeout),
-          :winrm_max_memoryPerShell => locate_config_value(:set_winrm_max_memoryPerShell)
+          :winrm_max_timeout => locate_config_value(:winrm_max_timeout),
+          :winrm_max_memoryPerShell => locate_config_value(:winrm_max_memoryPerShell)
         }
         # If user is connecting a new VM to an existing dns, then
         # the VM needs to have a unique public port. Logic below takes care of this.
