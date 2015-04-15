@@ -246,8 +246,8 @@ class Chef
       :description => "Set this flag to enable auto chef client update in azure chef extension. This flag should be used with cloud-api bootstrap protocol only"
 
       option :winrm_max_timeout,
-        :long => "--winrm-max-timeout MILISECONDS",
-        :description => "Set winrm max timeout in miliseconds"
+        :long => "--winrm-max-timeout MINUTES",
+        :description => "Set winrm max timeout in minutes"
 
       option :winrm_max_memoryPerShell,
         :long => "--winrm-max-memoryPerShell MB",
@@ -734,7 +734,7 @@ class Chef
           :cert_path => locate_config_value(:cert_path),
           :cert_password => locate_config_value(:cert_passphrase),
           :winrm_transport => locate_config_value(:winrm_transport),
-          :winrm_max_timeout => locate_config_value(:winrm_max_timeout),
+          :winrm_max_timeout => locate_config_value(:winrm_max_timeout).to_i * 60 * 1000, #converting minutes to milliseconds
           :winrm_max_memoryPerShell => locate_config_value(:winrm_max_memoryPerShell)
         }
         # If user is connecting a new VM to an existing dns, then

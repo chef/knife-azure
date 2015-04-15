@@ -201,8 +201,9 @@ These options may also be configured from knife.rb, as in this example:
     :ca_trust_file                The Certificate Authority (CA) trust file used for SSL transport
 
 #### Options to configure WinRM for Bootstrapping a Windows Node
+Theses options are useful if you have long-running run-lists and if the chef run might use a lot of memory. In most cases people don't need to set these, but if they see certain timeout or memory related errors during bootstrap, particularly on Win2k8r2, it may make sense to move these beyond the default.
 
-    :winrm_max_timeout           Set winrm max timeout in miliseconds
+    :winrm_max_timeout           Set winrm max timeout in minutes
     :winrm_max_memoryPerShell    Set winrm max memory per shell in MB
 
     Command:
@@ -212,7 +213,7 @@ These options may also be configured from knife.rb, as in this example:
             --azure-service-location 'West US'
             --winrm-user azure
             --winrm-password 'azure@123'
-            --winrm-max-timeout 1500000
+            --winrm-max-timeout 30
             --winrm-max-memoryPerShell 400
 
 #### Azure Windows Node Create
