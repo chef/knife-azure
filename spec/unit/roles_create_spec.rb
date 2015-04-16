@@ -1,5 +1,6 @@
 require File.expand_path(File.dirname(__FILE__) + '/../spec_helper')
 require File.expand_path(File.dirname(__FILE__) + '/query_azure_mock')
+require 'pry'
 
 class Azure
   class Certificate
@@ -126,6 +127,30 @@ describe "roles" do
 
       deploy = @connection.deploys.create(params)
       expect(readFile('create_deployment_key.xml')).to eq(@receivedXML)
+    end
+
+    describe 'WinRM bootstrapping' do
+      it 'customizes the WinRM config' do
+        params = {
+          :azure_dns_name=>'unknown_yet',
+          :azure_vm_name=>'vm01',
+          :winrm_user=>'build',
+          :admin_password=> 'foobar',
+          :ssl_cert_fingerprint=> '7FCCD713CC390E3488290BF7A106AD267B5AC2A5',
+          :azure_os_disk_name=>'disk_ce92083f-0041-4825-84b3-6ae8b3525b29',
+          :azure_source_image=>'a699494373c04fc0bc8f2bb1389d6106__Win2K8R2SP1-Datacenter-201502.01-en.us-127GB.vhd',
+          :azure_vm_size=>'Medium',
+          :azure_storage_account=>'chefci',
+          :os_type=>'Windows',
+          :bootstrap_proto=>'winrm',
+          :winrm_transport=>'ssl',
+          :winrm_max_timeout=>1800000,
+          :winrm_max_memoryPerShell=>600
+        }
+
+        deploy = @connection.deploys.create(params)
+        expect(readFile('create_deployment_winrm.xml')).to eq(@receivedXML)
+      end
     end
   end
 end

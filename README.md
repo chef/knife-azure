@@ -15,7 +15,7 @@ via:
 This plugin is distributed as a Ruby Gem. To install it, run:
 
     gem install knife-azure
-    
+
 Depending on your system's configuration, you may need to run this command
 with root/administrator privileges.
 
@@ -28,7 +28,7 @@ local file system location, and
 then refer to the local file via an entry in your knife.rb:
 
     knife[:azure_publish_settings_file] = "~/myazure.publishsettings"
-    
+
 Alternatively, all subcommands for this plugin will accept an
 --azure-publish-settings-file option to allow you to specify the path to that
 file with each command invocation.
@@ -43,7 +43,7 @@ location in your knife.rb:
 
       # List images for use in creating new VM's:
       $ knife azure image list
-        
+
       # List all VM's (including those not be managed by Chef)
       $ knife azure server list
 
@@ -200,16 +200,32 @@ These options may also be configured from knife.rb, as in this example:
     :kerberos_service             The Kerberos service used for authentication
     :ca_trust_file                The Certificate Authority (CA) trust file used for SSL transport
 
+#### Options to configure WinRM for Bootstrapping a Windows Node
+Theses options are useful if you have long-running run-lists and if the chef run might use a lot of memory. In most cases people don't need to set these, but if they see certain timeout or memory related errors during bootstrap, particularly on Win2k8r2, it may make sense to move these beyond the default.
+
+    :winrm_max_timeout           Set winrm max timeout in minutes
+    :winrm_max_memoryPerShell    Set winrm max memory per shell in MB
+
+    Command:
+    knife azure server create
+            --azure-dns-name 'myserver'
+            --azure-source-image 'windows-2012-image-id'
+            --azure-service-location 'West US'
+            --winrm-user azure
+            --winrm-password 'azure@123'
+            --winrm-max-timeout 30
+            --winrm-max-memoryPerShell 400
+
 #### Azure Windows Node Create
 The quick create option requires the following options for a windows instance:
-    
+
     knife azure server create
                 --azure-publish-settings-file '/path/to/your/cert.publishsettingsfile'
                 --azure-dns-name 'myserverdnsname'
                 --azure-service-location 'West US'
                 --azure-source-image 'windows-2012-image-id'
                 --winrm-user 'jetstream'
-                --winrm-password 'jetstream@123'                
+                --winrm-password 'jetstream@123'
                 --distro 'windows-chef-client-msi'
 
 Sample knife.rb for bootstrapping Windows Node with basic authentication

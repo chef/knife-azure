@@ -1,0 +1,92 @@
+<?xml version="1.0"?>
+<Deployment xmlns="http://schemas.microsoft.com/windowsazure" xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+  <Name>unknown_yet</Name>
+  <DeploymentSlot>Production</DeploymentSlot>
+  <Label>dW5rbm93bl95ZXQ=</Label>
+  <RoleList>
+    <Role i:type="PersistentVMRole">
+      <RoleName>vm01</RoleName>
+      <OsVersion i:nil="true"/>
+      <RoleType>PersistentVMRole</RoleType>
+      <ConfigurationSets>
+  <ConfigurationSet i:type="WindowsProvisioningConfigurationSet">
+    <ConfigurationSetType>WindowsProvisioningConfiguration</ConfigurationSetType>
+    <ComputerName>vm01</ComputerName>
+    <AdminPassword>foobar</AdminPassword>
+    <ResetPasswordOnFirstLogon>false</ResetPasswordOnFirstLogon>
+    <EnableAutomaticUpdates>false</EnableAutomaticUpdates>
+    <StoredCertificateSettings>
+      <CertificateSetting>
+        <StoreLocation>LocalMachine</StoreLocation>
+        <StoreName>My</StoreName>
+        <Thumbprint>7FCCD713CC390E3488290BF7A106AD267B5AC2A5</Thumbprint>
+      </CertificateSetting>
+    </StoredCertificateSettings>
+    <WinRM>
+      <Listeners>
+        <Listener>
+          <CertificateThumbprint>7FCCD713CC390E3488290BF7A106AD267B5AC2A5</CertificateThumbprint>
+          <Protocol>Https</Protocol>
+        </Listener>
+      </Listeners>
+    </WinRM>
+    <AdminUsername>build</AdminUsername>
+    <AdditionalUnattendContent>
+      <Passes>
+        <UnattendPass>
+          <PassName>oobeSystem</PassName>
+          <Components>
+            <UnattendComponent>
+              <ComponentName>Microsoft-Windows-Shell-Setup</ComponentName>
+              <ComponentSettings>
+                <ComponentSetting>
+                  <SettingName>AutoLogon</SettingName>
+                  <Content>PEF1dG9Mb2dvbj48VXNlcm5hbWU+YnVpbGQ8L1VzZXJuYW1lPjxQYXNzd29y
+ZD48VmFsdWU+Zm9vYmFyPC9WYWx1ZT48UGxhaW5UZXh0PnRydWU8L1BsYWlu
+VGV4dD48L1Bhc3N3b3JkPjxMb2dvbkNvdW50PjE8L0xvZ29uQ291bnQ+PEVu
+YWJsZWQ+dHJ1ZTwvRW5hYmxlZD48L0F1dG9Mb2dvbj4K</Content>
+                </ComponentSetting>
+                <ComponentSetting>
+                  <SettingName>FirstLogonCommands</SettingName>
+                  <Content>PEZpcnN0TG9nb25Db21tYW5kcz48U3luY2hyb25vdXNDb21tYW5kIHdjbTph
+Y3Rpb249ImFkZCI+PE9yZGVyPjE8L09yZGVyPjxDb21tYW5kTGluZT5jbWQu
+ZXhlIC9jIHdpbnJtIHNldCB3aW5ybS9jb25maWcgQHtNYXhUaW1lb3V0bXM9
+IjE4MDAwMDAifTwvQ29tbWFuZExpbmU+PERlc2NyaXB0aW9uPkJ1bXAgV2lu
+Uk0gbWF4IHRpbWVvdXQgdG8gMTgwMDAwMCBtaWxsaXNlY29uZHM8L0Rlc2Ny
+aXB0aW9uPjwvU3luY2hyb25vdXNDb21tYW5kPjxTeW5jaHJvbm91c0NvbW1h
+bmQgd2NtOmFjdGlvbj0iYWRkIj48T3JkZXI+MjwvT3JkZXI+PENvbW1hbmRM
+aW5lPmNtZC5leGUgL2Mgd2lucm0gc2V0IHdpbnJtL2NvbmZpZy93aW5ycyBA
+e01heE1lbW9yeVBlclNoZWxsTUI9IjYwMCJ9PC9Db21tYW5kTGluZT48RGVz
+Y3JpcHRpb24+QnVtcCBXaW5STSBtYXggbWVtb3J5IHBlciBzaGVsbCB0byA2
+MDAgTUI8L0Rlc2NyaXB0aW9uPjwvU3luY2hyb25vdXNDb21tYW5kPjwvRmly
+c3RMb2dvbkNvbW1hbmRzPgo=</Content>
+                </ComponentSetting>
+              </ComponentSettings>
+            </UnattendComponent>
+          </Components>
+        </UnattendPass>
+      </Passes>
+    </AdditionalUnattendContent>
+  </ConfigurationSet>
+  <ConfigurationSet i:type="NetworkConfigurationSet">
+    <ConfigurationSetType>NetworkConfiguration</ConfigurationSetType>
+    <InputEndpoints>
+      <InputEndpoint>
+        <LocalPort>5986</LocalPort>
+        <Name>WinRM</Name>
+        <Port/>
+        <Protocol>TCP</Protocol>
+      </InputEndpoint>
+    </InputEndpoints>
+  </ConfigurationSet>
+</ConfigurationSets>
+      <Label>dm0wMQ==</Label>
+      <OSVirtualHardDisk>
+  <DiskName>disk_ce92083f-0041-4825-84b3-6ae8b3525b29</DiskName>
+  <MediaLink>http://chefci.blob.core.windows.net/vhds/disk_ce92083f-0041-4825-84b3-6ae8b3525b29.vhd</MediaLink>
+  <SourceImageName>a699494373c04fc0bc8f2bb1389d6106__Win2K8R2SP1-Datacenter-201502.01-en.us-127GB.vhd</SourceImageName>
+</OSVirtualHardDisk>
+      <RoleSize>Medium</RoleSize>
+    </Role>
+  </RoleList>
+</Deployment>
