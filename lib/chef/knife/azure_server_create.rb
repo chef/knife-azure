@@ -253,6 +253,12 @@ class Chef
         :long => "--winrm-max-memoryPerShell MB",
         :description => "Set winrm max memory per shell in MB"
 
+      option :delete_chef_config,
+        :long => "--delete-chef-config",
+        :boolean => true,
+        :default => false,
+        :description => "Set this flag to delete chef configuration files during chef extension uninstall or update process it by default set to false"
+
       def strip_non_ascii(string)
         string.gsub(/[^0-9a-z ]/i, '')
       end
@@ -602,7 +608,6 @@ class Chef
       end
 
       def bootstrap_common_params(bootstrap, server)
-
         bootstrap.config[:run_list] = config[:run_list]
         bootstrap.config[:prerelease] = config[:prerelease]
         bootstrap.config[:first_boot_attributes] = locate_config_value(:json_attributes) || {}
@@ -830,6 +835,7 @@ class Chef
         pub_config[:client_rb] = "chef_server_url \t #{Chef::Config[:chef_server_url].to_json}\nvalidation_client_name\t#{Chef::Config[:validation_client_name].to_json}"
         pub_config[:runlist] = locate_config_value(:run_list).empty? ? "" : locate_config_value(:run_list).join(",").to_json
         pub_config[:autoUpdateClient] = locate_config_value(:auto_update_client) ? "true" : "false"
+        pub_config[:deleteChefConfig] = locate_config_value(:delete_chef_config) ? "true" : "false"
         pub_config[:custom_json_attr] = locate_config_value(:json_attributes) || {}
 
         # bootstrap attributes
