@@ -257,7 +257,7 @@ class Chef
         :long => "--delete-chef-config",
         :boolean => true,
         :default => false,
-        :description => "Set this flag if you want to delete chef configuration files on uninsall or update"
+        :description => "Set this flag to delete chef configuration files during chef extension uninstall or update process it by default set to false"
 
       def strip_non_ascii(string)
         string.gsub(/[^0-9a-z ]/i, '')
