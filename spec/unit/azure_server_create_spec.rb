@@ -717,6 +717,31 @@ describe Chef::Knife::AzureServerCreate do
     end
   end
 
+  describe "for --auto-udpate-client and --delete-chef-extension-config" do
+    before do
+      allow(@server_instance).to receive(:msg_server_summary)
+      Chef::Config[:knife][:run_list] = ['getting-started']
+      Chef::Config[:knife][:validation_client_name] = 'testorg-validator'
+      Chef::Config[:knife][:chef_server_url] = 'https://api.opscode.com/organizations/testorg'
+    end
+
+    after do
+      Chef::Config[:knife].delete(:bootstrap_protocol)
+      Chef::Config[:knife].delete(:run_list)
+      Chef::Config[:knife].delete(:validation_client_name)
+      Chef::Config[:knife].delete(:chef_server_url)
+    end
+
+    context 'option --bootstrap-protocol cloud-api not passed' do
+      it 'throws error and server create command fails.' do
+        @server_instance.config[:auto_update_client] = true
+        @server_instance.config[:delete_chef_extension_config] = true
+        allow(@server_instance.ui).to receive(:error)
+        expect {@server_instance.run}.to raise_error
+      end
+    end
+  end
+
   describe "for bootstrap protocol cloud-api:" do
     before do
       Chef::Config[:knife][:bootstrap_protocol] = 'cloud-api'
@@ -750,16 +775,16 @@ describe Chef::Knife::AzureServerCreate do
         @server_instance.get_chef_extension_public_params
       end
 
-      it "should set deleteChefConfig flag to true" do
-        @server_instance.config[:delete_chef_config] = true
+      it "sets deleteChefConfig flag to true" do
+        @server_instance.config[:delete_chef_extension_config] = true
         public_config = "{\"client_rb\":\"chef_server_url \\t \\\"https://localhost:443\\\"\\nvalidation_client_name\\t\\\"chef-validator\\\"\",\"runlist\":\"\\\"getting-started\\\"\",\"autoUpdateClient\":\"false\",\"deleteChefConfig\":\"true\",\"custom_json_attr\":{},\"bootstrap_options\":{\"chef_server_url\":\"https://localhost:443\",\"validation_client_name\":\"chef-validator\"}}"
 
         expect(Base64).to receive(:encode64).with(public_config)
         @server_instance.get_chef_extension_public_params
       end
 
-      it "should set deleteChefConfig flag to false" do
-        @server_instance.config[:delete_chef_config] = false
+      it "sets deleteChefConfig flag to false" do
+        @server_instance.config[:delete_chef_extension_config] = false
         public_config = "{\"client_rb\":\"chef_server_url \\t \\\"https://localhost:443\\\"\\nvalidation_client_name\\t\\\"chef-validator\\\"\",\"runlist\":\"\\\"getting-started\\\"\",\"autoUpdateClient\":\"false\",\"deleteChefConfig\":\"false\",\"custom_json_attr\":{},\"bootstrap_options\":{\"chef_server_url\":\"https://localhost:443\",\"validation_client_name\":\"chef-validator\"}}"
 
         expect(Base64).to receive(:encode64).with(public_config)
