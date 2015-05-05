@@ -253,6 +253,14 @@ class Chef
         :long => "--winrm-max-memoryPerShell MB",
         :description => "Set winrm max memory per shell in MB"
 
+
+      option :delete_chef_extension_config,
+        :long => "--delete-chef-extension-config",
+        :boolean => true,
+        :default => false,
+        :description => "Determines whether Chef configuration files removed when Azure removes the Chef resource extension from the VM. This option is only valid for the 'cloud-api' bootstrap protocol. The default is false."
+
+
       def strip_non_ascii(string)
         string.gsub(/[^0-9a-z ]/i, '')
       end
@@ -485,6 +493,12 @@ class Chef
 
         Chef::Log.info("validating...")
         validate!
+
+        if (locate_config_value(:auto_update_client) ||  locate_config_value(:delete_chef_extension_config))  &&  (locate_config_value(:bootstrap_protocol) != 'cloud-api')
+          ui.error("--auto-update-client option works with --bootstrap-protocol cloud-api") if locate_config_value(:auto_update_client)
+          ui.error("--delete-chef-extension-config option works with --bootstrap-protocol cloud-api") if locate_config_value(:delete_chef_extension_config)
+          exit 1
+        end
 
         ssh_override_winrm if %w(ssh cloud-api).include?(locate_config_value(:bootstrap_protocol)) and !is_image_windows?
 
@@ -830,6 +844,7 @@ class Chef
         pub_config[:client_rb] = "chef_server_url \t #{Chef::Config[:chef_server_url].to_json}\nvalidation_client_name\t#{Chef::Config[:validation_client_name].to_json}"
         pub_config[:runlist] = locate_config_value(:run_list).empty? ? "" : locate_config_value(:run_list).join(",").to_json
         pub_config[:autoUpdateClient] = locate_config_value(:auto_update_client) ? "true" : "false"
+        pub_config[:deleteChefConfig] = locate_config_value(:delete_chef_extension_config) ? "true" : "false"
         pub_config[:custom_json_attr] = locate_config_value(:json_attributes) || {}
 
         # bootstrap attributes
