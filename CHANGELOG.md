@@ -1,6 +1,17 @@
 # knife-azure Change Log
 
-## Last release: 1.4.0 (2015/02/09)
+## Last release: 1.5.0 (2015/05/dd)
+* [knife-azure #215](https://github.com/chef/knife-azure/pull/215) Added --delete-chef-config option in knife azure server create
+* [knife-azure #204](https://github.com/chef/knife-azure/pull/204) Properly configure WinRM for bootstrapping; Fixes [#203](https://github.com/chef/knife-azure/pull/203)
+* [knife-azure #197](https://github.com/chef/knife-azure/pull/197) Add custom json attributes to chef extension
+* [knife-azure #211](https://github.com/chef/knife-azure/pull/211) Allow user to specify chef extension version by using knife_rb
+* [knife-azure #202](https://github.com/chef/knife-azure/pull/202) knife-windows 1.0.0+ compat fixes
+* [knife-azure #198](https://github.com/chef/knife-azure/pull/198) Adding winrm_ssl_verify_mode to bootstrap config
+* [knife-azure #196](https://github.com/chef/knife-azure/pull/196) Update Rubies; remove Chef-unsupported versions from matrix
+* [knife-azure #195](https://github.com/chef/knife-azure/pull/195) Showing thumbprint with Server show command
+* [knife-azure #188](https://github.com/chef/knife-azure/pull/188) Winrm port should not be configured if --bootstrap-protocol=cloud-api
+
+## Release: 1.4.0 (2015/02/09)
 * [knife-azure #189](https://github.com/chef/knife-azure/issues/189) Server Create failing for some custom sysprepped images
 * [knife-azure #184](https://github.com/chef/knife-azure/pull/184) Disable certificate generation code for ssl transport until supported by knife-windows
 * [knife-azure #102](https://github.com/chef/knife-azure/pull/102) User specified ssh/winrm port 22/5985 instead of random port with --azure-connect-to-existing-dns option for server creation
