@@ -14,7 +14,7 @@ feature improvements.
 Special thanks go to contributor **Seth Chisamore** for addressing
 [knife-azure #204](https://github.com/chef/knife-azure/pull/204). This change ensures WinRM is configured to allow the initial chef-client run to succeed
 
-Please file bugs or feature requests against the KNIFE_AZURE project at https://github.com/chef/knife-azure/issues.
+Please file bugs or feature requests against the [KNIFE_AZURE](https://github.com/chef/knife-azure/issues) repository.
 More information on the contribution process for Chef projects can be found in the [Chef Contributions document](https://docs.chef.io/community_contributions.html).
 
 ## Release highlights
