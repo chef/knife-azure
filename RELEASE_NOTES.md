@@ -7,7 +7,7 @@ Example Note:
 Details about the thing that changed that needs to get included in the Release Notes in markdown.
 -->
 
-# knife-azure 1.4.0 release notes:
+# knife-azure 1.5.0 release notes:
 This release of knife-azure updates gem dependencies and adds bug fix and
 feature improvements.
 
@@ -31,7 +31,8 @@ This change adds two more options `winrm_max_timeout` and `winrm_max_memoryPerSh
 https://rubygems.org/gems/knife-azure
 https://github.com/chef/knife-azure
 
-## Issues fixed in knife-azure 1.4.0
+## Issues fixed in knife-azure 1.5.0
+* [knife-azure #213](https://github.com/chef/knife-azure/pull/213) Typo in fetch_thumbprint method
 * [knife-azure #188](https://github.com/chef/knife-azure/pull/188) Winrm port should not be configured if --bootstrap-protocol=cloud-api
 
 See the
