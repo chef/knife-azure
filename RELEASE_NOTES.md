@@ -7,48 +7,36 @@ Example Note:
 Details about the thing that changed that needs to get included in the Release Notes in markdown.
 -->
 
-# knife-azure 1.4.0 release notes:
+# knife-azure 1.5.0 release notes:
 This release of knife-azure updates gem dependencies and adds bug fix and
 feature improvements.
 
-Special thanks go to contributor **Edmund Dipple** for addressing
-[knife-azure 146](https://github.com/chef/knife-azure/pull/146) an issue
-affecting the reliability of Windows VM creation.
+Special thanks go to contributor **Seth Chisamore** for addressing
+[knife-azure #204](https://github.com/chef/knife-azure/pull/204). This change ensures WinRM is configured to allow the initial chef-client run to succeed
 
-Please file bugs or feature requests against the KNIFE_WINDOWS project at https://github.com/chef/knife-azure/issues.
+Please file bugs or feature requests against the [KNIFE_AZURE](https://github.com/chef/knife-azure/issues) repository.
 More information on the contribution process for Chef projects can be found in the [Chef Contributions document](https://docs.chef.io/community_contributions.html).
 
 ## Release highlights
 
-### [knife-azure #189](https://github.com/chef/knife-azure/issues/189): Fix for failed bootstraps on some sysprepped images
-For some sysprepped images, Azure would continue to report that the guest was
-in the `provisioning` state and never report `ready`. As a result, `knife-azure`
-would eventually timeout waiting for the "ready" state and fail the bootstrap.
-A change has been made in this release so that failure to reach "ready" is no longer fatal and
-results in a warning; `knife-azure` will move on to testing for WinRM
-availability and will bootstrap if it can authenticate.
+### delete-chef-config option in knife azure server create command
+This option works with --bootstrap-protocol cloud-api. It is used to set the value of deleteChefConfig for chef extension. It allows to delete chef configuration files during chef extension uninstall or update process. By default it's set to false and will not delete the configuration files.
 
-### New `cloud-api` bootstrap feature
-By specifying the value `cloud-api` for the `bootstrap_protocol` option of
-`knife azure server create` instead of `winrm` or `ssh`, Microsoft Azure will install
-Chef Client using its own internal mirror of Chef Client (it does not download
-it from Chef's Internet facing URL's as in the conventional winrm / ssh
-bootstrap). The process as a whole is asynchronous, so once the `knife azure
-server create` command has create the VM, full provisioning and Chef
-bootstrap will continue to occur even if the `knife` command is terminated
-before it completes.
+### [knife-azure #204](https://github.com/chef/knife-azure/pull/204) Properly configure WinRM for bootstrapping; Fixes [#203](https://github.com/chef/knife-azure/pull/203)
+This change adds two more options `winrm_max_timeout` and `winrm_max_memoryPerShell`. Theses options are useful if you have long-running run-lists and if the chef run might use a lot of memory. In most cases people don't need to set these, but if they see certain timeout or memory related errors during bootstrap, particularly on Win2k8r2, it may make sense to move these beyond the default.
 
-In general, systems bootstrapped via `cloud-api` do not require incoming or
-outgoing Internet access.
+### [knife-azure #195](https://github.com/chef/knife-azure/pull/195) Showing thumbprint with Server show command
 
 ## knife-azure on RubyGems and Github
 https://rubygems.org/gems/knife-azure
 https://github.com/chef/knife-azure
 
-## Issues fixed in knife-azure 1.4.0
+## Issues fixed in knife-azure 1.5.0
+* [knife-azure #213](https://github.com/chef/knife-azure/pull/213) Typo in fetch_thumbprint method
+* [knife-azure #188](https://github.com/chef/knife-azure/pull/188) Winrm port should not be configured if --bootstrap-protocol=cloud-api
 
 See the
-[CHANGELOG]([knife-azure 146](https://github.com/chef/knife-azure/blob/1.4.0/CHANGELOG.md)
+[CHANGELOG](https://github.com/chef/knife-azure/blob/1.5.0/CHANGELOG.md)
 for the complete list of issues fixed in this release.
 
 

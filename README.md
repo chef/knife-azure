@@ -55,7 +55,7 @@ location in your knife.rb:
 
       # Create and bootstrap an Windows VM through the Azure API --
       # No winrm or ssh transport or Internet access required
-      $ knife azure server create --azure-dns-name MyNewServerName --azure-vm-size Medium -I a699494373c04fc0bc8f2bb1389d6106__Windows-Server-2012-R2-201412.01-en.us-127GB.vhd --azure-service-location 'West US' --winrm-user myuser --winrm-password 'mypassword' --bootstrap-protocol winrm --bootstrap-protocol cloud-api
+      $ knife azure server create --azure-dns-name MyNewServerName --azure-vm-size Medium -I a699494373c04fc0bc8f2bb1389d6106__Windows-Server-2012-R2-201412.01-en.us-127GB.vhd --azure-service-location 'West US' --winrm-user myuser --winrm-password 'mypassword' --bootstrap-protocol cloud-api
 
       # Delete a server and purge it from the Chef server
       $ knife azure server delete MyNewNode --purge -y
@@ -236,6 +236,24 @@ Sample knife.rb for bootstrapping Windows Node with basic authentication
     knife[:winrm_port] = '5985'
     knife[:distro] = 'windows-chef-client-msi'
     knife[:azure_source_image]='windows-2012-image-id'
+
+#### `cloud-api` bootstrap feature
+By specifying the value `cloud-api` for the `bootstrap_protocol` option of `knife azure server create` instead of `winrm` or `ssh`, Microsoft Azure will install Chef Client using its own internal mirror of Chef Client (it does not download it from Chef's Internet facing URL's as in the conventional winrm / ssh bootstrap). The process as a whole is asynchronous, so once the `knife azure server create` command has create the VM, full provisioning and Chef bootstrap will continue to occur even if the `knife` command is terminated before it completes.
+
+In general, systems bootstrapped via `cloud-api` do not require incoming or outgoing Internet access.
+
+    knife azure server create
+                --azure-publish-settings-file '/path/to/your/cert.publishsettingsfile'
+                --azure-dns-name 'myserverdnsname'
+                --azure-service-location 'West US'
+                --azure-source-image 'windows-2012-image-id'
+                --winrm-user 'jetstream'
+                --winrm-password 'jetstream@123'
+                --bootstrap-protocol 'cloud-api'
+                --delete-chef-extension-config
+
+`--delete-chef-extension-config` determines if Chef configuration files should be removed when Azure removes the Chef resource extension from the VM or not. This option is only valid for the 'cloud-api' bootstrap protocol. The default value is false. This is useful when `update` and `uninstall` commands are run for the extension on the VM created.
+
 
 ### Azure Server Delete Subcommand
 Deletes an existing server in the currently configured Azure account. By
