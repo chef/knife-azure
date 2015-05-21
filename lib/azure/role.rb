@@ -411,9 +411,6 @@ class Azure
             }
           }
 
-          if params[:azure_availability_set]
-            xml.AvailabilitySetName params[:azure_availability_set]
-          end
           # Azure resource extension support
           if params[:bootstrap_proto] == 'cloud-api'
             xml.ResourceExtensionReferences {
@@ -441,6 +438,10 @@ class Azure
                 xml.State "Enable"
               }
             }
+          end
+
+          if params[:azure_availability_set]
+            xml.AvailabilitySetName params[:azure_availability_set]
           end
 
           xml.Label Base64.encode64(params[:azure_vm_name]).strip
