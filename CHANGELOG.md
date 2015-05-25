@@ -1,6 +1,9 @@
 # knife-azure Change Log
 
-## Last release: 1.5.0 (2015/05/20)
+## Last release: 1.5.1 (2015/05/25)
+* [knife-azure #218](https://github.com/chef/knife-azure/pull/218) Fixed azure_availability_set related issue
+
+## Release: 1.5.0 (2015/05/20)
 * [knife-azure #213](https://github.com/chef/knife-azure/pull/213) Typo in fetch_thumbprint method
 * [knife-azure #215](https://github.com/chef/knife-azure/pull/215) Added --delete-chef-config option in knife azure server create
 * [knife-azure #204](https://github.com/chef/knife-azure/pull/204) Properly configure WinRM for bootstrapping; Fixes [#203](https://github.com/chef/knife-azure/pull/203)
