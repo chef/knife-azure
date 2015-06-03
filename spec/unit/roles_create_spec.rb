@@ -167,6 +167,7 @@ describe "roles" do
         params = {
           :azure_dns_name=>'unknown_yet',
           :azure_vm_name=>'vm01',
+          :azure_api_host_name => 'management.core.windows.net',
           :winrm_user=>'build',
           :admin_password=> 'foobar',
           :ssl_cert_fingerprint=> '7FCCD713CC390E3488290BF7A106AD267B5AC2A5',
