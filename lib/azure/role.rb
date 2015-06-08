@@ -462,7 +462,8 @@ class Azure
             xml.OSVirtualHardDisk {
               disk_name = params[:azure_os_disk_name] || "disk_" + SecureRandom.uuid
               xml.DiskName disk_name
-              xml.MediaLink 'http://' + params[:azure_storage_account] + '.blob.core.windows.net/vhds/' + disk_name + '.vhd'
+              domain_suffix = params[:azure_api_host_name].scan(/core.*/)[0]
+              xml.MediaLink 'http://' + params[:azure_storage_account] + '.blob.' + domain_suffix + '/vhds/' + disk_name + '.vhd'
               xml.SourceImageName params[:azure_source_image]
             }
           end

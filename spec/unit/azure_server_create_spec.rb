@@ -241,7 +241,7 @@ describe Chef::Knife::AzureServerCreate do
         Chef::Config[:knife][:azure_os_disk_name] = 'os-disk'
         @server_instance.run
         testxml = Nokogiri::XML(@receivedXML)
-        expect(xml_content(testxml, 'MediaLink')).to be == 'http://ka001testeurope.blob.core.windows.net/vhds/os-disk.vhd'
+        expect(xml_content(testxml, 'MediaLink')).to be == 'http://ka001testeurope.blob.core.windows-int.net/vhds/os-disk.vhd'
         expect(xml_content(testxml, 'DiskName')).to be == Chef::Config[:knife][:azure_os_disk_name]
         test_params(testxml, Chef::Config[:knife], Chef::Config[:knife][:azure_vm_name],
         Chef::Config[:knife][:azure_vm_name])

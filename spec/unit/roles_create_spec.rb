@@ -47,6 +47,7 @@ describe "roles" do
     it 'should pass in expected body' do
       params = {
         :azure_dns_name=>'service001',
+        :azure_api_host_name => 'management.core.windows.net',
         :azure_vm_name=>'vm01',
         :ssh_user=>'jetstream',
         :ssh_password=>'jetstream1!',
@@ -71,6 +72,7 @@ describe "roles" do
     it 'should pass in expected body' do
       params = {
         :azure_dns_name=>'unknown_yet',
+        :azure_api_host_name => 'management.core.windows.net',
         :azure_vm_name=>'vm01',
         :ssh_user=>'jetstream',
         :ssh_password=>'jetstream1!',
@@ -90,6 +92,7 @@ describe "roles" do
     it 'create request with virtual network' do
       params = {
         :azure_dns_name=>'unknown_yet',
+        :azure_api_host_name => 'management.core.windows.net',
         :azure_vm_name=>'vm01',
         :ssh_user=>'jetstream',
         :ssh_password=>'jetstream1!',
@@ -112,6 +115,7 @@ describe "roles" do
     it 'with ssh key' do
       params = {
         :azure_dns_name=>'unknown_yet',
+        :azure_api_host_name => 'management.core.windows.net',
         :azure_vm_name=>'vm01',
         :ssh_user=>'jetstream',
         :identity_file=> File.dirname(__FILE__) + '/assets/key_rsa',
@@ -163,6 +167,7 @@ describe "roles" do
         params = {
           :azure_dns_name=>'unknown_yet',
           :azure_vm_name=>'vm01',
+          :azure_api_host_name => 'management.core.windows.net',
           :winrm_user=>'build',
           :admin_password=> 'foobar',
           :ssl_cert_fingerprint=> '7FCCD713CC390E3488290BF7A106AD267B5AC2A5',
