@@ -1,0 +1,59 @@
+<?xml version="1.0"?>
+       <Deployment xmlns="http://schemas.microsoft.com/windowsazure" xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+         <Name>unknown_yet</Name>
+         <DeploymentSlot>Production</DeploymentSlot>
+         <Label>dW5rbm93bl95ZXQ=</Label>
+         <RoleList>
+           <Role i:type="PersistentVMRole">
+             <RoleName>vm-in-domain</RoleName>
+             <OsVersion i:nil="true"/>
+             <RoleType>PersistentVMRole</RoleType>
+             <ConfigurationSets>
+         <ConfigurationSet i:type="WindowsProvisioningConfigurationSet">
+           <ConfigurationSetType>WindowsProvisioningConfiguration</ConfigurationSetType>
+           <ComputerName>vm-in-domain</ComputerName>
+           <AdminPassword/>
+           <ResetPasswordOnFirstLogon>false</ResetPasswordOnFirstLogon>
+           <EnableAutomaticUpdates>false</EnableAutomaticUpdates>
+           <DomainJoin>
+             <Credentials>
+               <Domain>vmtestad.com</Domain>
+               <Username>user2</Username>
+               <Password>user2pass</Password>
+             </Credentials>
+             <JoinDomain>vmtestad.com</JoinDomain>
+           </DomainJoin>
+           <WinRM>
+             <Listeners>
+               <Listener>
+                 <Protocol>Http</Protocol>
+               </Listener>
+             </Listeners>
+           </WinRM>
+          <AdminUsername>user2</AdminUsername>
+         </ConfigurationSet>
+         <ConfigurationSet i:type="NetworkConfigurationSet">
+           <ConfigurationSetType>NetworkConfiguration</ConfigurationSetType>
+           <InputEndpoints>
+             <InputEndpoint>
+               <LocalPort>5985</LocalPort>
+               <Name>WinRM</Name>
+               <Port/>
+               <Protocol>TCP</Protocol>
+             </InputEndpoint>
+           </InputEndpoints>
+           <SubnetNames>
+             <SubnetName>Subnet-1</SubnetName>
+           </SubnetNames>
+         </ConfigurationSet>
+       </ConfigurationSets>
+             <Label>dm0taW4tZG9tYWlu</Label>
+             <OSVirtualHardDisk>
+         <DiskName>somediskname</DiskName>
+         <MediaLink>http://storageaccount001.blob.core.windows.net/vhds/somediskname.vhd</MediaLink>
+         <SourceImageName>Windows-Server-2012-Datacenter-201310.01-en.us-127GB</SourceImageName>
+       </OSVirtualHardDisk>
+             <RoleSize>Medium</RoleSize>
+           </Role>
+         </RoleList>
+       </Deployment>
