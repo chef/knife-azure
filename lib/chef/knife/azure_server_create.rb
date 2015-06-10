@@ -900,6 +900,7 @@ class Chef
         pub_config[:bootstrap_options][:encrypted_data_bag_secret] = locate_config_value(:encrypted_data_bag_secret) if locate_config_value(:encrypted_data_bag_secret)
         pub_config[:bootstrap_options][:chef_server_url] = Chef::Config[:chef_server_url] if Chef::Config[:chef_server_url]
         pub_config[:bootstrap_options][:validation_client_name] = Chef::Config[:validation_client_name] if Chef::Config[:validation_client_name]
+        pub_config[:bootstrap_options][:node_verify_api_cert] = Chef::Config[:node_verify_api_cert] if Chef::Config[:node_verify_api_cert]
 
         Base64.encode64(pub_config.to_json)
       end
