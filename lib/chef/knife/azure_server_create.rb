@@ -109,6 +109,11 @@ class Chef
         :boolean => true,
         :default => true
 
+      option :node_verify_api_cert,
+        :long        => "--[no-]node-verify-api-cert",
+        :description => "Verify the SSL cert for HTTPS requests to the Chef server API.",
+        :boolean     => true
+
       option :azure_storage_account,
         :short => "-a NAME",
         :long => "--azure-storage-account NAME",
@@ -639,6 +644,7 @@ class Chef
         bootstrap.config[:bootstrap_version] = locate_config_value(:bootstrap_version)
         bootstrap.config[:distro] = locate_config_value(:distro)
         bootstrap.config[:template_file] = locate_config_value(:template_file)
+        bootstrap.config[:node_verify_api_cert] = locate_config_value(:node_verify_api_cert)
         load_cloud_attributes_in_hints(server)
         bootstrap
       end
