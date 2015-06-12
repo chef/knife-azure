@@ -713,7 +713,6 @@ class Chef
         bootstrap.config[:distro] = locate_config_value(:distro) || default_bootstrap_template
         # setting bootstrap_template value to template_file for backward 
         bootstrap.config[:template_file] = locate_config_value(:template_file) || locate_config_value(:bootstrap_template)
-        bootstrap.config[:node_verify_api_cert] = locate_config_value(:node_verify_api_cert)
         bootstrap.config[:node_ssl_verify_mode] = locate_config_value(:node_ssl_verify_mode)
         bootstrap.config[:node_verify_api_cert] = locate_config_value(:node_verify_api_cert)
         bootstrap.config[:bootstrap_no_proxy] = locate_config_value(:bootstrap_no_proxy)
