@@ -1020,7 +1020,7 @@ describe Chef::Knife::AzureServerCreate do
         @server_instance.run
         testxml = Nokogiri::XML(@receivedXML)
         testxml.css('InputEndpoint Protocol:contains("TCP")').each do | port |
-          expect(port.parent.css("LocalPort").text).to_not eq("22")
+          expect(port.parent.css("LocalPort").text).to eq("22")
         end
       end
 
