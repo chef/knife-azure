@@ -21,6 +21,7 @@
 require 'chef/knife/azure_base'
 require 'chef/knife/winrm_base'
 require 'securerandom'
+require 'pry'
 
 class Chef
   class Knife
@@ -326,7 +327,6 @@ class Chef
         :long => "--winrm-max-memoryPerShell MB",
         :description => "Set winrm max memory per shell in MB"
 
-
       option :delete_chef_extension_config,
         :long => "--delete-chef-extension-config",
         :boolean => true,
@@ -504,7 +504,7 @@ class Chef
                   extension_status[:status] = :extension_status_not_detected
                 end
               # This fix is for linux waagent issue: api unable to deserialize the waagent status.
-              elsif role.at_css("GuestAgentStatus Status").text == "NotReady" and waagent_status_msg == lnx_waagent_fail_msg
+              elsif role.at_css('GuestAgentStatus Status').text == 'NotReady' and waagent_status_msg == lnx_waagent_fail_msg
                 extension_status[:status] = :extension_ready
               else
                 extension_status[:status] = :wagent_provisioning
@@ -521,31 +521,31 @@ class Chef
         return extension_status
       end
 
-      def get_role_server()
+      def get_role_server
         deploy = connection.deploys.queryDeploy(locate_config_value(:azure_dns_name))
         deploy.find_role(locate_config_value(:azure_vm_name))
       end
 
       def tcp_test_winrm(ip_addr, port)
-	    hostname = ip_addr
+        hostname = ip_addr
         socket = TCPSocket.new(hostname, port)
-	    return true
-      rescue SocketError
-        sleep 2
-        false
-      rescue Errno::ETIMEDOUT
-        false
-      rescue Errno::EPERM
-        false
-      rescue Errno::ECONNREFUSED
-        sleep 2
-        false
-      rescue Errno::EHOSTUNREACH
-        sleep 2
-        false
-      rescue Errno::ENETUNREACH
-        sleep 2
-        false
+        return true
+        rescue SocketError
+          sleep 2
+          false
+        rescue Errno::ETIMEDOUT
+          false
+        rescue Errno::EPERM
+          false
+        rescue Errno::ECONNREFUSED
+          sleep 2
+          false
+        rescue Errno::EHOSTUNREACH
+          sleep 2
+          false
+        rescue Errno::ENETUNREACH
+          sleep 2
+          false
       end
 
       def tcp_test_ssh(fqdn, sshport)
@@ -990,7 +990,19 @@ class Chef
 
       def get_chef_extension_private_params
         pri_config = Hash.new
-        pri_config[:validation_key] = File.read(Chef::Config[:validation_key])
+        if (Chef::Config[:validation_key] && !File.exist?(File.expand_path(Chef::Config[:validation_key])))
+          # validator less bootstrap support for bootstrap protocol cloud-api
+          client_builder = Chef::Knife::Bootstrap::ClientBuilder.new(
+            chef_config: Chef::Config,
+            knife_config: config,
+            ui: ui,
+          )
+          client_builder.run
+          key_path = client_builder.client_path
+          pri_config[:client_pem] = File.read(key_path)
+        else
+          pri_config[:validation_key] = File.read(Chef::Config[:validation_key])
+        end
         Base64.encode64(pri_config.to_json)
       end
 
