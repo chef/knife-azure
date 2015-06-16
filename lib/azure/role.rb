@@ -431,7 +431,7 @@ class Azure
                   xml.Port params[:port]
                   xml.Protocol 'TCP'
                 }
-                elsif params[:os_type] == 'Linux' and params[:bootstrap_proto].downcase == 'ssh'
+                else
                   xml.InputEndpoint {
                   xml.LocalPort '22'
                   xml.Name 'SSH'
