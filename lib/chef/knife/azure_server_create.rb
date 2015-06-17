@@ -41,7 +41,7 @@ class Chef
 
       def load_winrm_deps
         require 'winrm'
-        require 'em-winrm'
+        # require 'em-winrm'
         require 'chef/knife/winrm'
         require 'chef/knife/bootstrap_windows_winrm'
       end
@@ -875,7 +875,6 @@ class Chef
             port = locate_config_value(:winrm_port) || '5985'
           end
         end
-
         server_def[:port] = port
 
         if locate_config_value(:bootstrap_protocol) == 'cloud-api'
@@ -991,12 +990,19 @@ class Chef
       def get_chef_extension_private_params
         pri_config = Hash.new
         if (Chef::Config[:validation_key] && !File.exist?(File.expand_path(Chef::Config[:validation_key])))
+
+          if Chef::VERSION.split('.').first.to_i == 11
+            ui.error('Unable to find validation key. Please verify your configuration file for validation_key config value.')
+            exit 1
+          end
+
           # validator less bootstrap support for bootstrap protocol cloud-api
           client_builder = Chef::Knife::Bootstrap::ClientBuilder.new(
             chef_config: Chef::Config,
             knife_config: config,
             ui: ui,
           )
+
           client_builder.run
           key_path = client_builder.client_path
           pri_config[:client_pem] = File.read(key_path)

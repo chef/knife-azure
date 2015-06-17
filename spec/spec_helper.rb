@@ -39,7 +39,7 @@ RSpec.configure do |c|
   c.before(:each) do
     Chef::Config.reset
   end
-  
+
   c.before(:all) do
     #Create an empty mock certificate file
     @cert_file = tmpFile('AzureLinuxCert.pem')
@@ -81,7 +81,7 @@ def is_config_present
   is_config = true
   config_file_exist = File.exist?(File.expand_path("../integration/config/environment.yml", __FILE__))
   azure_config = YAML.load(File.read(File.expand_path("../integration/config/environment.yml", __FILE__))) if config_file_exist
-  
+
   %w(AZURE_PUBLISH_SETTINGS_FILE AZURE_MGMT_CERT AZURE_SUBSCRIPTION_ID AZURE_API_HOST_NAME).each do |az_env_var|
     if ENV[az_env_var].nil?
       unset_env_var <<  az_env_var
@@ -105,7 +105,7 @@ def is_config_present
   config_err_msg = "\nPlease set #{unset_config_options.join(', ')} config"
   config_err_msg = config_err_msg + ( unset_config_options.length > 1 ? " options in ../spec/integration/config/environment.yml or as environment variables" : " option in ../spec/integration/config/environment.yml or as environment variable" ) + " for integration tests."
   puts config_err_msg unless unset_config_options.empty?
-  
+
   is_config
 end
 
@@ -133,7 +133,7 @@ def init_azure_test
   init_test
 
   begin
-    %w(azure_invalid.publishsettings).each do |file_name| 
+    %w(azure_invalid.publishsettings).each do |file_name|
       data_to_write = File.read(File.expand_path("../integration/config/#{file_name}", __FILE__))
       File.open("#{temp_dir}/#{file_name}", 'w') {|f| f.write(data_to_write)}
     end
@@ -147,4 +147,17 @@ def init_azure_test
   %w(AZ_SSH_USER AZ_SSH_PASSWORD AZ_WINDOWS_SSH_USER AZ_WINDOWS_SSH_PASSWORD AZ_WINRM_USER AZ_WINRM_PASSWORD AZ_LINUX_IMAGE AZ_LINUX_VM_SIZE AZ_INVALID_VM_SIZE AZ_WINDOWS_VM_SIZE AZ_WINDOWS_IMAGE AZ_WINDOWS_SSH_IMAGE AZURE_SERVICE_LOCATION).each do |az_config_opt|
     instance_variable_set("@#{az_config_opt.downcase}", (azure_config[az_config_opt] if azure_config) || ENV[az_config_opt])
   end
+end
+
+def chef_gte_12?
+  Chef::VERSION.split('.').first.to_i >= 12
+end
+
+def chef_lt_12?
+  Chef::VERSION.split('.').first.to_i < 12
+end
+
+RSpec.configure do |config|
+  config.filter_run_excluding :chef_gte_12_only => true unless chef_gte_12?
+  config.filter_run_excluding :chef_lt_12_only => true unless chef_lt_12?
 end
