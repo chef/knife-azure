@@ -21,7 +21,6 @@
 require 'chef/knife/azure_base'
 require 'chef/knife/winrm_base'
 require 'securerandom'
-require 'pry'
 
 class Chef
   class Knife
