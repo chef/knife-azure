@@ -189,6 +189,20 @@ These options may also be configured from knife.rb, as in this example:
     knife[:tcp-endpoints]='80:80,3389:5678'
     knife[:udp-endpoints]='123:123'
 
+#### Endpoint configuration
+
+Endpoints are configured using tcp-endpoints and udp-endpoints. This is a string in the form:
+{localPort}:{publicPort}:{load_balancer_set_name}:{load_balancer_probe_path}
+
+Examples:
+
+    knife[:tcp-endpoints]='80'                            # Allow Port 80 inbound
+    knife[:tcp-endpoints]='80:8080'                       # Allow Port 80 inbound and map it to local port 8080
+    knife[:tcp-endpoints]='80:8080:web-set'               # Allow Port 80 and add it to the load balancing set called 'web-set'
+    knife[:tcp-endpoints]='80:8080:web-set:/healthcheck'  # Allow Port 80, add it to the load balancing set, and use an HTTP probe at path "/healthcheck"
+
+Note that the load balancing set will be created if it does not exist. If it exists within another VM in the cloud service, it will re-use those values for the probe.
+
 #### Options for Bootstrapping a Windows Node in Azure
 
     :bootstrap_protocol           Default is winrm for a windows image
@@ -293,6 +307,20 @@ Knife options:
     :azure_affinity_group       Specifies new affinity group name.
     :azure_service_location     Specifies the geographic location.
     :azure_ag_desc              Optional. Description for new affinity group.
+
+### Azure Internal LB List Subcommand
+Outputs a lit of defined load balancers for all cloud services. Public facing load balancers are not shown here.
+
+### Azure Internal LB Create Subcommand
+Creates a new Internal Load Balancer within a cloud service.
+
+    knife azure internal lb create -n 'my_lb' --azure-lb-static-vip '10.0.0.123' --azure-subnet_name 'Subnet_1' --azure-dns-name 'service_name'
+
+Knife options:
+      :azure_load_balancer      Required. Specifies the name of the Load Balancer.
+      :azure_lb_static_vip      Optional. Allows you to set a static IP for the VIP.
+      :azure_subnet_name        Required ONLY IF azure_lb_static_ip is set. Specifies the subnet that the static IP resides in.
+      :azure_dns_name           Required. The cloud service that this internal Load Balancer will be added to.
 
 ### Azure Vnet List Subcommand
 Outputs a list of defined virtual networks in the azure subscription.

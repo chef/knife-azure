@@ -116,7 +116,7 @@ class Azure
 
   class Deploy
     include AzureUtility
-    attr_accessor :connection, :name, :status, :url, :hostedservicename
+    attr_accessor :connection, :name, :status, :url, :hostedservicename, :input_endpoints, :loadbalancers
 
     def initialize(connection)
       @connection = connection
@@ -135,8 +135,21 @@ class Azure
           role.parse(roleXML, hostedservicename, @name)
           @roles[role.name] = role
         end
+        @input_endpoints = Array.new
+        endpointsXML = deployXML.css('InputEndpoint')
+        endpointsXML.each do |endpointXML|
+          @input_endpoints << parse_endpoint(endpointXML)
+        end
+        @loadbalancers = Hash.new
+        lbsXML = deployXML.css('Deployment LoadBalancers LoadBalancer')
+        lbsXML.each do |lbXML|
+          loadbalancer = Loadbalancer.new(@connection)
+          loadbalancer.parse(lbXML, hostedservicename)
+          @loadbalancers[loadbalancer.name] = loadbalancer
+        end
       end
     end
+
     def setup(params)
       role = Role.new(@connection)
       roleXML = role.setup(params)
@@ -158,9 +171,31 @@ class Azure
       builder.doc.at_css('Role') << roleXML.at_css('PersistentVMRole').children.to_s
       builder.doc
     end
+
     def create(params, deployXML)
       servicecall = "hostedservices/#{params[:azure_dns_name]}/deployments"
       @connection.query_azure(servicecall, "post", deployXML.to_xml)
+    end
+
+    # This parses endpoints from a RoleList-Role-InputEndpoint, NOT a RoleInstanceList-RoleInstance-InstanceEndpoint
+    # Refactor: make this an object rather than a hash..?
+    def parse_endpoint(inputendpoint_xml)
+      hash = Hash.new
+      %w{LoadBalancedEndpointSetName LocalPort Name Port Protocol EnableDirectServerReturn LoadBalancerName IdleTimeoutInMinutes}.each do |key|
+        hash[key] = xml_content(inputendpoint_xml, key, nil)
+      end
+      # Protocol could be in there twice... If we have two, pick the second one as the first is for the probe.
+      if inputendpoint_xml.css('Protocol').count > 1
+        hash['Protocol'] = inputendpoint_xml.css('Protocol')[1].content
+      end
+      probe = inputendpoint_xml.css('LoadBalancerProbe')
+      if probe
+        hash['LoadBalancerProbe'] = Hash.new
+        %w{Path Port Protocol IntervalInSeconds TimeoutInSeconds}.each do |key|
+          hash['LoadBalancerProbe'][key] = xml_content(probe, key, nil)
+        end
+      end
+      hash
     end
 
     def roles

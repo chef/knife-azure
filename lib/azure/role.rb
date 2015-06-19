@@ -204,12 +204,76 @@ class Azure
           hash['Vip'] = xml_content(endpoint, 'Vip')
           hash['PublicPort'] = xml_content(endpoint, 'PublicPort')
           hash['LocalPort'] = xml_content(endpoint, 'LocalPort')
+
           if xml_content(endpoint, 'Protocol') == 'tcp'
             @tcpports << hash
           else # == 'udp'
             @udpports << hash
           end
         end
+      end
+    end
+
+    # Expects endpoint_param_string to be in the form {localport}:{publicport}:{lb_set_name}:{lb_probe_path}
+    # Only localport is mandatory.
+    def parse_endpoint_from_params(protocol, azure_vm_name, endpoint_param_string)
+      fields = endpoint_param_string.split(':')
+      hash = Hash.new
+      hash['LocalPort'] = fields[0]
+      hash['Port'] = fields[1] || fields[0]
+      hash['LoadBalancerName'] = fields[2] if fields[2] != 'EXTERNAL' # TODO hackity hack.. Shouldn't use magic words.
+      hash['LoadBalancedEndpointSetName'] = fields[3]
+      hash['Protocol'] = protocol
+      hash['Name'] = "#{protocol.downcase}port_#{fields[0]}_#{azure_vm_name}"
+      if fields[2]
+        hash['LoadBalancerProbe'] = Hash.new
+        hash['LoadBalancerProbe']['Path'] = fields[4]
+        hash['LoadBalancerProbe']['Port'] = fields[0]
+        hash['LoadBalancerProbe']['Protocol'] = fields[4] ? 'HTTP' : protocol
+      end
+      hash
+    end
+
+    def find_deploy(params)
+      @connection.hosts.find(params[:azure_dns_name]).deploys[0] # TODO this relies on the 'production only' bug.
+    end
+
+    def add_endpoints_to_xml(xml, endpoints, params)
+      existing_endpoints = find_deploy(params).input_endpoints
+
+      endpoints.each do |ep|
+      
+        if existing_endpoints
+          existing_endpoints.each do |eep|
+            ep = eep if eep['LoadBalancedEndpointSetName'] && ep['LoadBalancedEndpointSetName'] && ( eep['LoadBalancedEndpointSetName'] == ep['LoadBalancedEndpointSetName'] )
+          end
+        end
+
+        if ep['Port'] == params[:port] && ep['Protocol'].downcase == 'tcp'
+          puts("Skipping tcp-endpoints: #{ep['LocalPort']} because this port is already in use by ssh/winrm endpoint in current VM.")
+          next
+        end
+
+        xml.InputEndpoint {
+          xml.LoadBalancedEndpointSetName ep['LoadBalancedEndpointSetName'] if ep['LoadBalancedEndpointSetName']
+          xml.LocalPort ep['LocalPort']
+          xml.Name ep['Name']
+          xml.Port ep['Port']
+          if ep['LoadBalancerProbe']
+            xml.LoadBalancerProbe {
+              xml.Path ep['LoadBalancerProbe']['Path'] if ep['LoadBalancerProbe']['Path']
+              xml.Port ep['LoadBalancerProbe']['Port']
+              xml.Protocol ep['LoadBalancerProbe']['Protocol']
+              xml.IntervalInSeconds ep['LoadBalancerProbe']['IntervalInSeconds'] if ep['LoadBalancerProbe']['IntervalInSeconds']
+              xml.TimeoutInSeconds ep['LoadBalancerProbe']['TimeoutInSeconds'] if ep['LoadBalancerProbe']['TimeoutInSeconds']
+            }
+          end
+          xml.Protocol ep['Protocol']
+          xml.EnableDirectServerReturn ep['EnableDirectServerReturn'] if ep['EnableDirectServerReturn']
+          xml.LoadBalancerName ep['LoadBalancerName'] if ep['LoadBalancerName']
+          xml.IdleTimeoutInMinutes ep['IdleTimeoutInMinutes'] if ep['IdleTimeoutInMinutes']
+        }
+
       end
     end
 
@@ -227,7 +291,6 @@ class Azure
           xml.RoleName {xml.text params[:azure_vm_name]}
           xml.OsVersion('i:nil' => 'true')
           xml.RoleType 'PersistentVMRole'
-          xml.VMImageName params[:azure_source_image] if params[:is_vm_image]
 
           xml.ConfigurationSets {
             if params[:os_type] == 'Linux'
@@ -376,43 +439,18 @@ class Azure
                   xml.Protocol 'TCP'
                 }
                 end
-
+                all_endpoints = Array.new
                 if params[:tcp_endpoints]
                   params[:tcp_endpoints].split(',').each do |endpoint|
-                    ports = endpoint.split(':')
-                    if !(ports.length > 1 && ports[1] == params[:port] || ports.length == 1 && ports[0] == params[:port])
-                      xml.InputEndpoint {
-                        xml.LocalPort ports[0]
-                        xml.Name 'tcpport_' + ports[0] + '_' + params[:azure_vm_name]
-                        if ports.length > 1
-                          xml.Port ports[1]
-                        else
-                          xml.Port ports[0]
-                        end
-                        xml.Protocol 'TCP'
-                      }
-                    else
-                      warn_message = ports.length > 1 ? "#{ports.join(':')} because this ports are" : "#{ports[0]} because this port is"
-                      puts("Skipping tcp-endpoints: #{warn_message} already in use by ssh/winrm endpoint in current VM.")
-                    end
+                    all_endpoints << parse_endpoint_from_params('TCP', params[:azure_vm_name], endpoint)
                   end
                 end
-
                 if params[:udp_endpoints]
                   params[:udp_endpoints].split(',').each do |endpoint|
-                    ports = endpoint.split(':')
-                    xml.InputEndpoint {
-                      xml.LocalPort ports[0]
-                      xml.Name 'udpport_' + ports[0] + '_' + params[:azure_vm_name]
-                      if ports.length > 1
-                        xml.Port ports[1]
-                      else
-                        xml.Port ports[0]
-                      end
-                      xml.Protocol 'UDP'
-                    }
+                    all_endpoints << parse_endpoint_from_params('UDP', params[:azure_vm_name], endpoint)
                   end
                 end
+                add_endpoints_to_xml(xml, all_endpoints, params) if all_endpoints.any?
               }
               if params[:azure_subnet_name]
                 xml.SubnetNames {
@@ -454,6 +492,8 @@ class Azure
           if params[:azure_availability_set]
             xml.AvailabilitySetName params[:azure_availability_set]
           end
+
+          xml.VMImageName params[:azure_source_image] if params[:is_vm_image]
 
           xml.Label Base64.encode64(params[:azure_vm_name]).strip
 
