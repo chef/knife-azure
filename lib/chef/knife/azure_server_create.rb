@@ -987,6 +987,8 @@ class Chef
 
       def get_chef_extension_private_params
         pri_config = Hash.new
+
+        # validator less bootstrap support for bootstrap protocol cloud-api
         if (Chef::Config[:validation_key] && !File.exist?(File.expand_path(Chef::Config[:validation_key])))
 
           if Chef::VERSION.split('.').first.to_i == 11
@@ -994,7 +996,6 @@ class Chef
             exit 1
           end
 
-          # validator less bootstrap support for bootstrap protocol cloud-api
           client_builder = Chef::Knife::Bootstrap::ClientBuilder.new(
             chef_config: Chef::Config,
             knife_config: config,
