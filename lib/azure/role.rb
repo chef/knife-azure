@@ -176,6 +176,24 @@ class Azure
     attr_accessor :winrmport
     attr_accessor :hostname, :tcpports, :udpports
 
+    TCP_ENDPOINTS_MAPPING = { '3389' => 'Remote Desktop',
+                              '5986' => 'PowerShell',
+                              '22' => 'SSH',
+                              '21' => 'FTP',
+                              '25' => 'SMTP',
+                              '53' => 'DNS',
+                              '80' => 'HTTP',
+                              '110' => 'POP3',
+                              '143' => 'IMAP',
+                              '389' => 'LDAP',
+                              '443' => 'HTTPs',
+                              '587' => 'SMTPS',
+                              '995' => 'POP3S',
+                              '993' => 'IMAPS',
+                              '1433' => 'MSSQL',
+                              '3306' => 'MySQL'
+                              }
+
     def initialize(connection)
       @connection = connection
     end
@@ -380,13 +398,15 @@ class Azure
                 if params[:tcp_endpoints]
                   params[:tcp_endpoints].split(',').each do |endpoint|
                     ports = endpoint.split(':')
-                    if !(ports.length > 1 && ports[1] == params[:port] || ports.length == 1 && ports[0] == params[:port])
+                    if (ports.length > 1 && !(ports[1].strip == params[:port])) || (ports.length == 1 && !(ports[0].strip == params[:port]))
                       xml.InputEndpoint {
                         xml.LocalPort ports[0]
-                        xml.Name 'tcpport_' + ports[0] + '_' + params[:azure_vm_name]
+                        name = "tcpport_#{ports[0]}_#{params[:azure_vm_name]}"
                         if ports.length > 1
+                          xml.Name TCP_ENDPOINTS_MAPPING.keys.include?(ports[1].strip) ? TCP_ENDPOINTS_MAPPING[ports[1].strip] : name
                           xml.Port ports[1]
                         else
+                          xml.Name TCP_ENDPOINTS_MAPPING.keys.include?(ports[0].strip) ? TCP_ENDPOINTS_MAPPING[ports[0].strip] : name
                           xml.Port ports[0]
                         end
                         xml.Protocol 'TCP'
