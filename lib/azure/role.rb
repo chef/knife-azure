@@ -398,21 +398,20 @@ class Azure
                 if params[:tcp_endpoints]
                   params[:tcp_endpoints].split(',').map(&:strip).each do |endpoint|
                     ports = endpoint.split(':').map(&:strip)
-                    if (ports.length > 1 && !(ports[1] == params[:port])) || (ports.length == 1 && !(ports[0] == params[:port]))
+                    index = ports.length > 1 ? 1 : 0
+                    if !(ports[index] == params[:port])
                       xml.InputEndpoint {
                         xml.LocalPort ports[0]
-                        name = "tcpport_#{ports[0]}_#{params[:azure_vm_name]}"
-                        if ports.length > 1
-                          xml.Name TCP_ENDPOINTS_MAPPING.keys.include?(ports[1]) ? TCP_ENDPOINTS_MAPPING[ports[1]] : name
-                          xml.Port ports[1]
+                        if TCP_ENDPOINTS_MAPPING.keys.include?(ports[index])
+                          xml.Name TCP_ENDPOINTS_MAPPING[ports[index]]
                         else
-                          xml.Name TCP_ENDPOINTS_MAPPING.keys.include?(ports[0]) ? TCP_ENDPOINTS_MAPPING[ports[0]] : name
-                          xml.Port ports[0]
+                          xml.Name "tcpport_#{ports[0]}_#{params[:azure_vm_name]}"
                         end
+                        xml.Port ports[index]
                         xml.Protocol 'TCP'
                       }
                     else
-                      warn_message = ports.length > 1 ? "#{ports.join(':')} because this ports are" : "#{ports[0]} because this port is"
+                      warn_message = ports.length > 1 ? "#{ports.join(':')} because this ports are" : "#{ports[index]} because this port is"
                       puts("Skipping tcp-endpoints: #{warn_message} already in use by ssh/winrm endpoint in current VM.")
                     end
                   end
