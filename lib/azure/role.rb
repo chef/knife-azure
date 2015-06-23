@@ -396,17 +396,17 @@ class Azure
                 end
 
                 if params[:tcp_endpoints]
-                  params[:tcp_endpoints].split(',').each do |endpoint|
-                    ports = endpoint.split(':')
-                    if (ports.length > 1 && !(ports[1].strip == params[:port])) || (ports.length == 1 && !(ports[0].strip == params[:port]))
+                  params[:tcp_endpoints].split(',').map(&:strip).each do |endpoint|
+                    ports = endpoint.split(':').map(&:strip)
+                    if (ports.length > 1 && !(ports[1] == params[:port])) || (ports.length == 1 && !(ports[0] == params[:port]))
                       xml.InputEndpoint {
                         xml.LocalPort ports[0]
                         name = "tcpport_#{ports[0]}_#{params[:azure_vm_name]}"
                         if ports.length > 1
-                          xml.Name TCP_ENDPOINTS_MAPPING.keys.include?(ports[1].strip) ? TCP_ENDPOINTS_MAPPING[ports[1].strip] : name
+                          xml.Name TCP_ENDPOINTS_MAPPING.keys.include?(ports[1]) ? TCP_ENDPOINTS_MAPPING[ports[1]] : name
                           xml.Port ports[1]
                         else
-                          xml.Name TCP_ENDPOINTS_MAPPING.keys.include?(ports[0].strip) ? TCP_ENDPOINTS_MAPPING[ports[0].strip] : name
+                          xml.Name TCP_ENDPOINTS_MAPPING.keys.include?(ports[0]) ? TCP_ENDPOINTS_MAPPING[ports[0]] : name
                           xml.Port ports[0]
                         end
                         xml.Protocol 'TCP'
