@@ -1,6 +1,5 @@
 require File.expand_path(File.dirname(__FILE__) + '/../spec_helper')
 require File.expand_path(File.dirname(__FILE__) + '/query_azure_mock')
-require 'pry'
 
 class Azure
   class Certificate
@@ -66,6 +65,30 @@ describe "roles" do
 
       deploy = @connection.deploys.create(params)
       expect(readFile('create_role.xml')).to eq(@receivedXML)
+    end
+
+    describe 'when tcp endpoints are present in mappings' do
+      it 'assigns the tcp endpoint name from the mappings' do
+        params = {
+          :azure_dns_name=>'service001',
+          :azure_api_host_name => 'management.core.windows.net',
+          :azure_vm_name=>'vm01',
+          :ssh_user=>'jetstream',
+          :ssh_password=>'jetstream1!',
+          :media_location_prefix=>'auxpreview104',
+          :azure_os_disk_name=>'disk004Test',
+          :azure_source_image=>'SUSE__OpenSUSE64121-03192012-en-us-15GB',
+          :azure_vm_size=>'ExtraSmall',
+          :tcp_endpoints=>'80:80, 3389:3389, 993:993, 44: 45',
+          :udp_endpoints=>'65:65,75',
+          :azure_storage_account=>'storageaccount001',
+          :bootstrap_proto=>'ssh',
+          :os_type=>'Linux',
+          :port=>'22'
+        }
+        deploy = @connection.deploys.create(params)
+        expect(readFile'tcp_endpoints_name.xml').to eq(@receivedXML)
+      end
     end
   end
   context 'create a new deployment' do

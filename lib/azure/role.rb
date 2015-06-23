@@ -176,6 +176,24 @@ class Azure
     attr_accessor :winrmport
     attr_accessor :hostname, :tcpports, :udpports
 
+    TCP_ENDPOINTS_MAPPING = { '3389' => 'Remote Desktop',
+                              '5986' => 'PowerShell',
+                              '22' => 'SSH',
+                              '21' => 'FTP',
+                              '25' => 'SMTP',
+                              '53' => 'DNS',
+                              '80' => 'HTTP',
+                              '110' => 'POP3',
+                              '143' => 'IMAP',
+                              '389' => 'LDAP',
+                              '443' => 'HTTPs',
+                              '587' => 'SMTPS',
+                              '995' => 'POP3S',
+                              '993' => 'IMAPS',
+                              '1433' => 'MSSQL',
+                              '3306' => 'MySQL'
+                              }
+
     def initialize(connection)
       @connection = connection
     end
@@ -378,21 +396,22 @@ class Azure
                 end
 
                 if params[:tcp_endpoints]
-                  params[:tcp_endpoints].split(',').each do |endpoint|
-                    ports = endpoint.split(':')
-                    if !(ports.length > 1 && ports[1] == params[:port] || ports.length == 1 && ports[0] == params[:port])
+                  params[:tcp_endpoints].split(',').map(&:strip).each do |endpoint|
+                    ports = endpoint.split(':').map(&:strip)
+                    index = ports.length > 1 ? 1 : 0
+                    if !(ports[index] == params[:port])
                       xml.InputEndpoint {
                         xml.LocalPort ports[0]
-                        xml.Name 'tcpport_' + ports[0] + '_' + params[:azure_vm_name]
-                        if ports.length > 1
-                          xml.Port ports[1]
+                        if TCP_ENDPOINTS_MAPPING.keys.include?(ports[index])
+                          xml.Name TCP_ENDPOINTS_MAPPING[ports[index]]
                         else
-                          xml.Port ports[0]
+                          xml.Name "tcpport_#{ports[0]}_#{params[:azure_vm_name]}"
                         end
+                        xml.Port ports[index]
                         xml.Protocol 'TCP'
                       }
                     else
-                      warn_message = ports.length > 1 ? "#{ports.join(':')} because this ports are" : "#{ports[0]} because this port is"
+                      warn_message = ports.length > 1 ? "#{ports.join(':')} because this ports are" : "#{ports[index]} because this port is"
                       puts("Skipping tcp-endpoints: #{warn_message} already in use by ssh/winrm endpoint in current VM.")
                     end
                   end
