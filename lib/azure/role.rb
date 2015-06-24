@@ -420,6 +420,9 @@ class Azure
               xml.ConfigurationSetType 'NetworkConfiguration'
               xml.InputEndpoints {
 
+                #1. bootstrap_proto = 'winrm' for windows => Set winrm port
+                #2. bootstrap_proto = 'ssh' for windows and linux => Set ssh port
+                #3. bootstrap_proto = 'cloud-api' for windows and linux => Set no port
                 if params[:os_type] == 'Windows' and params[:bootstrap_proto].downcase == 'winrm'
                   xml.InputEndpoint {
                   if params[:winrm_transport] == "ssl"
@@ -431,7 +434,7 @@ class Azure
                   xml.Port params[:port]
                   xml.Protocol 'TCP'
                 }
-                elsif params[:os_type] == 'Linux' and params[:bootstrap_proto].downcase == 'ssh'
+                elsif(params[:bootstrap_proto].downcase == 'ssh')
                   xml.InputEndpoint {
                   xml.LocalPort '22'
                   xml.Name 'SSH'
