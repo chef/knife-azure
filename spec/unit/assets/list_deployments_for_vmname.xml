@@ -51,6 +51,22 @@
               <Protocol>tcp</Protocol>
               <Vip>65.52.249.191</Vip>
             </InputEndpoint>
+            <InputEndpoint>
+              <LoadBalancedEndpointSetName>lb_set2</LoadBalancedEndpointSetName>
+              <LocalPort>443</LocalPort>
+              <Name>existing_lb</Name>
+              <Port>443</Port>
+              <LoadBalancerProbe>
+                <Path>/healthcheck2</Path>
+                <Port>443</Port>
+                <Protocol>http</Protocol>
+                <IntervalInSeconds>15</IntervalInSeconds>
+                <TimeoutInSeconds>31</TimeoutInSeconds>
+              </LoadBalancerProbe>
+              <Protocol>tcp</Protocol>
+              <Vip>23.102.63.187</Vip>
+              <EnableDirectServerReturn>false</EnableDirectServerReturn>
+            </InputEndpoint>
           </InputEndpoints>
           <SubnetNames/>
         </ConfigurationSet>

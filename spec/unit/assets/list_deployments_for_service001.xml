@@ -162,5 +162,15 @@
   <RollbackAllowed>true</RollbackAllowed>
   <CreatedTime>2012-04-17T22:01:10Z</CreatedTime>
   <LastModifiedTime>2012-04-23T23:52:09Z</LastModifiedTime>
+   <LoadBalancers>
+    <LoadBalancer>
+      <Name>lb_name</Name>
+      <FrontendIpConfiguration>
+        <Type>Private</Type>
+        <SubnetName>vnet1</SubnetName>
+        <StaticVirtualNetworkIPAddress>10.4.4.4</StaticVirtualNetworkIPAddress>
+      </FrontendIpConfiguration>
+    </LoadBalancer>
+  </LoadBalancers>
   <ExtendedProperties/>
 </Deployment>
