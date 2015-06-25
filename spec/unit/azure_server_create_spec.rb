@@ -554,7 +554,8 @@ describe Chef::Knife::AzureServerCreate do
         expect {@server_instance.run}.to raise_error
       end
 
-      it "port should be unique number when winrm-port not specified for winrm" do
+      it "port should be unique number when winrm-port not specified for winrm", :chef_lt_12_only do
+        Chef::Config[:knife][:winrm_port] = nil
         Chef::Config[:knife][:azure_dns_name] = 'service001'
         Chef::Config[:knife][:azure_vm_name] = 'newvm01'
         Chef::Config[:knife][:bootstrap_protocol] = 'winrm'
@@ -562,7 +563,7 @@ describe Chef::Knife::AzureServerCreate do
         Chef::Config[:knife][:winrm_password] = 'Jetstream123!'
         expect(@server_instance).to receive(:is_image_windows?).exactly(3).times.and_return(true)
         @server_params = @server_instance.create_server_def
-        expect(@server_params[:port]).to_not be == '5985'
+        expect(@server_params[:port]).not_to be == '5985'
       end
 
       it "port should be winrm-port value specified in the option" do
@@ -1041,6 +1042,33 @@ describe Chef::Knife::AzureServerCreate do
         expect(server_config).to include(:chef_extension_public_param)
         expect(JSON.parse(Base64.decode64(server_config[:chef_extension_public_param]))["runlist"]).to eq(Chef::Config[:knife][:run_list].first.to_json)
         expect(server_config).to include(:chef_extension_private_param)
+      end
+    end
+
+    context 'when validation key is not present', :chef_gte_12_only do
+      before do
+        allow(File).to receive(:exist?).and_return(false)
+        Chef::Config[:knife] = { chef_node_name: 'foo.example.com' }
+      end
+
+      it 'calls get chef extension private params and adds client pem in json object' do
+        allow_any_instance_of(Chef::Knife::Bootstrap::ClientBuilder).to receive(:run)
+        allow_any_instance_of(Chef::Knife::Bootstrap::ClientBuilder).to receive(:client_path)
+        allow(File).to receive(:read).and_return('foo')
+        pri_config = { client_pem: 'foo' }
+        expect(Base64).to receive(:encode64).with(pri_config.to_json)
+        @server_instance.get_chef_extension_private_params
+      end
+    end
+
+    context "when validation key is not present, using chef 11", :chef_lt_12_only do
+      before do
+        allow(File).to receive(:exist?).and_return(false)
+      end
+
+      it 'raises an exception if validation_key is not present in chef 11' do
+        expect(@server_instance.ui).to receive(:error)
+        expect { @server_instance.run }.to raise_error(SystemExit)
       end
     end
   end
