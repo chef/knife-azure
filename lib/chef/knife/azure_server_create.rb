@@ -740,8 +740,11 @@ class Chef
             bootstrap.config[:winrm_port] = port
             bootstrap.config[:auth_timeout] = locate_config_value(:auth_timeout)
             # Todo: we should skip cert generate in case when winrm_ssl_verify_mode=verify_none
-            bootstrap.config[:winrm_ssl_verify_mode] = locate_config_value(:winrm_ssl_verify_mode)
-
+            if locate_config_value(:winrm_transport) == "ssl" && locate_config_value(:thumbprint).nil? && locate_config_value(:winrm_ssl_verify_mode) == :verify_peer
+              bootstrap.config[:winrm_ssl_verify_mode] = :verify_none
+            else
+              bootstrap.config[:winrm_ssl_verify_mode] = locate_config_value(:winrm_ssl_verify_mode)
+            end
         elsif locate_config_value(:bootstrap_protocol) == 'ssh'
             bootstrap = Chef::Knife::BootstrapWindowsSsh.new
             bootstrap.config[:ssh_user] = locate_config_value(:ssh_user)
