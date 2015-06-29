@@ -405,7 +405,7 @@ class Azure
                         if TCP_ENDPOINTS_MAPPING.keys.include?(ports[index])
                           xml.Name TCP_ENDPOINTS_MAPPING[ports[index]]
                         else
-                          xml.Name "tcpport_#{ports[0]}_#{params[:azure_vm_name]}"
+                          xml.Name "TCPEndpoint_chef_#{ports[0]}"
                         end
                         xml.Port ports[index]
                         xml.Protocol 'TCP'

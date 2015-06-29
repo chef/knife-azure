@@ -54,7 +54,7 @@ describe "roles" do
         :azure_os_disk_name=>'disk004Test',
         :azure_source_image=>'SUSE__OpenSUSE64121-03192012-en-us-15GB',
         :azure_vm_size=>'ExtraSmall',
-        :tcp_endpoints=>'44:45,55:55',
+        tcp_endpoints: '80:80, 3389:3389, 993:993, 44: 45',
         :udp_endpoints=>'65:65,75',
         :azure_storage_account=>'storageaccount001',
         :bootstrap_proto=>'ssh',
@@ -63,34 +63,60 @@ describe "roles" do
 
       }
 
-      deploy = @connection.deploys.create(params)
+      @connection.deploys.create(params)
       expect(readFile('create_role.xml')).to eq(@receivedXML)
     end
+  end
 
-    describe 'when tcp endpoints are present in mappings' do
-      it 'assigns the tcp endpoint name from the mappings' do
-        params = {
-          :azure_dns_name=>'service001',
-          :azure_api_host_name => 'management.core.windows.net',
-          :azure_vm_name=>'vm01',
-          :ssh_user=>'jetstream',
-          :ssh_password=>'jetstream1!',
-          :media_location_prefix=>'auxpreview104',
-          :azure_os_disk_name=>'disk004Test',
-          :azure_source_image=>'SUSE__OpenSUSE64121-03192012-en-us-15GB',
-          :azure_vm_size=>'ExtraSmall',
-          :tcp_endpoints=>'80:80, 3389:3389, 993:993, 44: 45',
-          :udp_endpoints=>'65:65,75',
-          :azure_storage_account=>'storageaccount001',
-          :bootstrap_proto=>'ssh',
-          :os_type=>'Linux',
-          :port=>'22'
-        }
-        deploy = @connection.deploys.create(params)
-        expect(readFile'tcp_endpoints_name.xml').to eq(@receivedXML)
+  describe 'assign tcp endpoint name' do
+    before do
+      @params = {
+        azure_dns_name: 'service001',
+        azure_api_host_name: 'management.core.windows.net',
+        azure_vm_name: 'vm01',
+        ssh_user: 'jetstream',
+        ssh_password: 'jetstream1!',
+        media_location_prefix: 'auxpreview104',
+        azure_source_image: 'SUSE__OpenSUSE64121-03192012-en-us-15GB',
+        azure_vm_size: 'ExtraSmall',
+        azure_storage_account: 'storageaccount001',
+        bootstrap_proto: 'ssh'
+      }
+    end
+
+    context 'tcp_endpoint 80:80' do
+      it 'assigns tcp endpoint name HTTP' do
+        @params[:tcp_endpoint] = '80:80'
+        @connection.deploys.create(@params)
+        doc = Nokogiri::XML::Document.parse(@receivedXML)
+        doc.remove_namespaces!
+        doc.xpath('//InputEndpoints/InputEndpoint').each do |endpoint|
+          endpoint.children.each do |node|
+            if node.name == 'Name'
+              expect(node.children.text).to eq('HTTP')
+            end
+          end
+        end
+      end
+    end
+
+    context 'tcp_endpoint 44:45' do
+      it 'generates tcp endpoint name as TCPEndpoint_chef_<port_number>' do
+        @params[:tcp_endpoint] = '44:45'
+        @connection.deploys.create(@params)
+        doc = Nokogiri::XML::Document.parse(@receivedXML)
+        doc.remove_namespaces!
+        doc.xpath('//InputEndpoints/InputEndpoint').each do |endpoint|
+          endpoint.children.each do |node|
+            if node.name == 'Name'
+              expect(node.children.text).to eq('TCPEndpoint_chef_44')
+            end
+          end
+        end
       end
     end
   end
+
   context 'create a new deployment' do
     it 'should pass in expected body' do
       params = {
@@ -109,7 +135,7 @@ describe "roles" do
         :port=>'22'
       }
 
-      deploy = @connection.deploys.create(params)
+      @connection.deploys.create(params)
       expect(readFile('create_deployment.xml')).to eq(@receivedXML)
     end
     it 'create request with virtual network' do
@@ -131,7 +157,7 @@ describe "roles" do
         :azure_subnet_name=>'test-subnet'
       }
 
-      deploy = @connection.deploys.create(params)
+      @connection.deploys.create(params)
       expect(readFile('create_deployment_virtual_network.xml')).to eq(@receivedXML)
     end
 
@@ -152,7 +178,7 @@ describe "roles" do
         :port=>'22'
       }
 
-      deploy = @connection.deploys.create(params)
+      @connection.deploys.create(params)
       expect(readFile('create_deployment_key.xml')).to eq(@receivedXML)
     end
 
@@ -175,8 +201,8 @@ describe "roles" do
         :azure_domain_user=>'user2',
         :azure_domain_passwd=>'user2pass',
       }
-      deploy = @connection.deploys.create(params)
-      #this is a cheesy workaround to make equivalent-xml happy
+      @connection.deploys.create(params)
+      # this is a cheesy workaround to make equivalent-xml happy
       # write and then re-read the xml
       File.open(tmpFile('newDeployRcvd.xml'), 'w') {|f| f.write(@receivedXML) }
       File.open(tmpFile('newDeploySbmt.xml'), 'w') {|f| f.write(submittedXML.to_xml) }
@@ -205,7 +231,7 @@ describe "roles" do
           :winrm_max_memoryPerShell=>600
         }
 
-        deploy = @connection.deploys.create(params)
+        @connection.deploys.create(params)
         expect(readFile('create_deployment_winrm.xml')).to eq(@receivedXML)
       end
     end
