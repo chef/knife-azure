@@ -760,6 +760,13 @@ describe Chef::Knife::AzureServerCreate do
         @server_instance.run
         expect(@bootstrap.config[:winrm_authentication_protocol]).to be == 'negotiate'
       end
+      it "sets winrm_ssl_verify_mode to verify_none for ssl transport and missing thumbprint" do
+        Chef::Config[:knife][:winrm_transport] = 'ssl'
+        Chef::Config[:knife][:winrm_ssl_verify_mode] = :verify_peer
+        expect(@server_instance).to receive(:is_image_windows?).at_least(:twice).and_return(true)
+        @server_instance.run
+        expect(@bootstrap.config[:winrm_ssl_verify_mode]).to be == :verify_none
+      end
     end
   end
 
