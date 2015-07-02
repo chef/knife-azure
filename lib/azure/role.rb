@@ -176,9 +176,28 @@ class Azure
     attr_accessor :winrmport
     attr_accessor :hostname, :tcpports, :udpports
 
+      TCP_ENDPOINTS_MAPPING = { '3389' => 'Remote Desktop',
+                              '5986' => 'PowerShell',
+                              '22' => 'SSH',
+                              '21' => 'FTP',
+                              '25' => 'SMTP',
+                              '53' => 'DNS',
+                              '80' => 'HTTP',
+                              '110' => 'POP3',
+                              '143' => 'IMAP',
+                              '389' => 'LDAP',
+                              '443' => 'HTTPs',
+                              '587' => 'SMTPS',
+                              '995' => 'POP3S',
+                              '993' => 'IMAPS',
+                              '1433' => 'MSSQL',
+                              '3306' => 'MySQL'
+                              }
+
     def initialize(connection)
       @connection = connection
     end
+
     def parse(roleXML, hostedservicename, deployname)
       @name = xml_content(roleXML, 'RoleName')
       @status = xml_content(roleXML, 'InstanceStatus')
@@ -217,16 +236,20 @@ class Azure
     # Expects endpoint_param_string to be in the form {localport}:{publicport}:{lb_set_name}:{lb_probe_path}
     # Only localport is mandatory.
     def parse_endpoint_from_params(protocol, azure_vm_name, endpoint_param_string)
-      fields = endpoint_param_string.split(':')
-      hash = Hash.new
+      fields = endpoint_param_string.split(':').map(&:strip)
+      hash = {}
       hash['LocalPort'] = fields[0]
       hash['Port'] = fields[1] || fields[0]
-      hash['LoadBalancerName'] = fields[2] if fields[2] != 'EXTERNAL' # TODO hackity hack.. Shouldn't use magic words.
+      hash['LoadBalancerName'] = fields[2] if fields[2] != 'EXTERNAL' # TODO: hackity hack.. Shouldn't use magic words.
       hash['LoadBalancedEndpointSetName'] = fields[3]
       hash['Protocol'] = protocol
-      hash['Name'] = "#{protocol.downcase}port_#{fields[0]}_#{azure_vm_name}"
+      if TCP_ENDPOINTS_MAPPING.include?(hash['Port']) && protocol == 'TCP'
+        hash['Name'] = TCP_ENDPOINTS_MAPPING[hash['Port']]
+      else
+        hash['Name'] = "#{protocol}Endpoint_chef_#{fields[0]}"
+      end
       if fields[2]
-        hash['LoadBalancerProbe'] = Hash.new
+        hash['LoadBalancerProbe'] = {}
         hash['LoadBalancerProbe']['Path'] = fields[4]
         hash['LoadBalancerProbe']['Port'] = fields[0]
         hash['LoadBalancerProbe']['Protocol'] = fields[4] ? 'HTTP' : protocol
@@ -242,7 +265,7 @@ class Azure
       existing_endpoints = find_deploy(params).input_endpoints
 
       endpoints.each do |ep|
-      
+
         if existing_endpoints
           existing_endpoints.each do |eep|
             ep = eep if eep['LoadBalancedEndpointSetName'] && ep['LoadBalancedEndpointSetName'] && ( eep['LoadBalancedEndpointSetName'] == ep['LoadBalancedEndpointSetName'] )
@@ -273,7 +296,6 @@ class Azure
           xml.LoadBalancerName ep['LoadBalancerName'] if ep['LoadBalancerName']
           xml.IdleTimeoutInMinutes ep['IdleTimeoutInMinutes'] if ep['IdleTimeoutInMinutes']
         }
-
       end
     end
 
@@ -443,13 +465,14 @@ class Azure
                 }
                 end
                 all_endpoints = Array.new
+
                 if params[:tcp_endpoints]
-                  params[:tcp_endpoints].split(',').each do |endpoint|
+                  params[:tcp_endpoints].split(',').map(&:strip).each do |endpoint|
                     all_endpoints << parse_endpoint_from_params('TCP', params[:azure_vm_name], endpoint)
                   end
                 end
                 if params[:udp_endpoints]
-                  params[:udp_endpoints].split(',').each do |endpoint|
+                  params[:udp_endpoints].split(',').map(&:strip).each do |endpoint|
                     all_endpoints << parse_endpoint_from_params('UDP', params[:azure_vm_name], endpoint)
                   end
                 end
@@ -517,6 +540,7 @@ class Azure
       end
       builder.doc
     end
+
     def create(params, roleXML)
       servicecall = "hostedservices/#{params[:azure_dns_name]}/deployments" +
       "/#{params['deploy_name']}/roles"
