@@ -35,10 +35,10 @@ class Chef
         :description => 'Optional. The Virtual IP that will be used for the load balancer.'
 
       option :azure_subnet_name,
-        :long => '--azure-subnet_name SUBNET_NAME',
+        :long => '--azure-subnet-name SUBNET_NAME',
         :description => 'Required if static VIP is set. Specifies the subnet name '\
                         'the load balancer is located in.'
-      
+
       option :azure_dns_name,
         :long => "--azure-dns-name DNS_NAME",
         :description => "The DNS prefix name that will be used to add this load balancer to. This must be an existing service/deployment."
