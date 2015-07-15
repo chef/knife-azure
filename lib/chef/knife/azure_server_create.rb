@@ -740,11 +740,7 @@ class Chef
             bootstrap.config[:winrm_port] = port
             bootstrap.config[:auth_timeout] = locate_config_value(:auth_timeout)
             # Todo: we should skip cert generate in case when winrm_ssl_verify_mode=verify_none
-            if locate_config_value(:winrm_transport) == "ssl" && locate_config_value(:thumbprint).nil? && locate_config_value(:winrm_ssl_verify_mode) == :verify_peer
-              bootstrap.config[:winrm_ssl_verify_mode] = :verify_none
-            else
-              bootstrap.config[:winrm_ssl_verify_mode] = locate_config_value(:winrm_ssl_verify_mode)
-            end
+            bootstrap.config[:winrm_ssl_verify_mode] = locate_config_value(:winrm_ssl_verify_mode)
         elsif locate_config_value(:bootstrap_protocol) == 'ssh'
             bootstrap = Chef::Knife::BootstrapWindowsSsh.new
             bootstrap.config[:ssh_user] = locate_config_value(:ssh_user)
@@ -832,6 +828,11 @@ class Chef
             ui.error("Must specify both --azure-domain-user and --azure-domain-passwd.")
             exit 1
           end
+        end
+
+        if locate_config_value(:winrm_transport) == "ssl" && locate_config_value(:thumbprint).nil? && ( locate_config_value(:winrm_ssl_verify_mode).nil? || locate_config_value(:winrm_ssl_verify_mode) == :verify_peer )
+          ui.error("For SSL transport must specify --winrm-ssl-verify-mode option to 'verify_none' OR specify --thumbprint option.")
+          exit 1
         end
       end
 

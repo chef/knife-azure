@@ -147,6 +147,15 @@ describe Chef::Knife::AzureServerCreate do
           expect {@server_instance.run}.to raise_error
         end
       end
+
+      context "when winrm-transport ssl and missing thumbprint" do
+        it "raise error on :winrm_ssl_verify_mode verify_peer" do
+          Chef::Config[:knife][:winrm_transport] = 'ssl'
+          Chef::Config[:knife][:winrm_ssl_verify_mode] = :verify_peer
+          expect(@server_instance.ui).to receive(:error)
+          expect {@server_instance.run}.to raise_error
+        end
+      end
     end
 
     context "timeout parameters" do
@@ -759,13 +768,6 @@ describe Chef::Knife::AzureServerCreate do
         expect(@server_instance).to receive(:is_image_windows?).at_least(:twice).and_return(true)
         @server_instance.run
         expect(@bootstrap.config[:winrm_authentication_protocol]).to be == 'negotiate'
-      end
-      it "sets winrm_ssl_verify_mode to verify_none for ssl transport and missing thumbprint" do
-        Chef::Config[:knife][:winrm_transport] = 'ssl'
-        Chef::Config[:knife][:winrm_ssl_verify_mode] = :verify_peer
-        expect(@server_instance).to receive(:is_image_windows?).at_least(:twice).and_return(true)
-        @server_instance.run
-        expect(@bootstrap.config[:winrm_ssl_verify_mode]).to be == :verify_none
       end
     end
   end
