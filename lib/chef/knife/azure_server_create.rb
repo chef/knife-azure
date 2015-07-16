@@ -831,7 +831,7 @@ class Chef
         end
 
         if locate_config_value(:winrm_transport) == "ssl" && locate_config_value(:thumbprint).nil? && ( locate_config_value(:winrm_ssl_verify_mode).nil? || locate_config_value(:winrm_ssl_verify_mode) == :verify_peer )
-          ui.error("For SSL transport must specify --winrm-ssl-verify-mode option to 'verify_none' OR specify --thumbprint option.")
+          ui.error("The SSL transport was specified without the --thumbprint option. Specify a thumbprint, or alternatively set the --winrm-ssl-verify-mode option to 'verify_none' to skip verification.")
           exit 1
         end
       end
