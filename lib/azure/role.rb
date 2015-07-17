@@ -365,9 +365,9 @@ class Azure
                     end
                     xml.WinRM {
                       xml.Listeners {
-                       if params[:ssl_cert_fingerprint]
+                       if params[:winrm_transport] == "ssl" || params[:ssl_cert_fingerprint]
                         xml.Listener {
-                          xml.CertificateThumbprint params[:ssl_cert_fingerprint]
+                          xml.CertificateThumbprint params[:ssl_cert_fingerprint] if params[:ssl_cert_fingerprint]
                           xml.Protocol 'Https'
                         }
                         else

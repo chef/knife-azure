@@ -147,6 +147,15 @@ describe Chef::Knife::AzureServerCreate do
           expect {@server_instance.run}.to raise_error
         end
       end
+
+      context "when winrm-transport ssl and missing thumbprint" do
+        it "raise error on :winrm_ssl_verify_mode verify_peer" do
+          Chef::Config[:knife][:winrm_transport] = 'ssl'
+          Chef::Config[:knife][:winrm_ssl_verify_mode] = :verify_peer
+          expect(@server_instance.ui).to receive(:error)
+          expect {@server_instance.run}.to raise_error
+        end
+      end
     end
 
     context "timeout parameters" do
