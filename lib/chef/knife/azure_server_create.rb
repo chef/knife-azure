@@ -20,6 +20,7 @@
 
 require 'chef/knife/azure_base'
 require 'chef/knife/winrm_base'
+require 'chef/knife/bootstrap_windows_base'
 require 'securerandom'
 
 class Chef
@@ -28,6 +29,7 @@ class Chef
 
       include Knife::AzureBase
       include Knife::WinrmBase
+      include Knife::BootstrapWindowsBase
 
       deps do
         require 'readline'
@@ -47,6 +49,12 @@ class Chef
       banner "knife azure server create (options)"
 
       attr_accessor :initial_sleep_delay
+
+      option :forward_agent,
+        :short => "-A",
+        :long => "--forward-agent",
+        :description =>  "Enable SSH agent forwarding",
+        :boolean => true
 
       option :bootstrap_protocol,
         :long => "--bootstrap-protocol protocol",
@@ -745,6 +753,7 @@ class Chef
             bootstrap = Chef::Knife::BootstrapWindowsSsh.new
             bootstrap.config[:ssh_user] = locate_config_value(:ssh_user)
             bootstrap.config[:ssh_password] = locate_config_value(:ssh_password)
+            bootstrap.config[:forward_agent] = locate_config_value(:forward_agent)
             bootstrap.config[:ssh_port] = port
             bootstrap.config[:identity_file] = locate_config_value(:identity_file)
             bootstrap.config[:host_key_verify] = locate_config_value(:host_key_verify)
@@ -756,6 +765,8 @@ class Chef
         bootstrap.config[:chef_node_name] = config[:chef_node_name] || server.name
         bootstrap.config[:encrypted_data_bag_secret] = locate_config_value(:encrypted_data_bag_secret)
         bootstrap.config[:encrypted_data_bag_secret_file] = locate_config_value(:encrypted_data_bag_secret_file)
+        bootstrap.config[:msi_url] = locate_config_value(:msi_url)
+        bootstrap.config[:install_as_service] = locate_config_value(:install_as_service)
         bootstrap_common_params(bootstrap, server)
       end
 
@@ -764,6 +775,7 @@ class Chef
         bootstrap.name_args = [fqdn]
         bootstrap.config[:ssh_user] = locate_config_value(:ssh_user)
         bootstrap.config[:ssh_password] = locate_config_value(:ssh_password)
+        bootstrap.config[:forward_agent] = locate_config_value(:forward_agent)
         bootstrap.config[:ssh_port] = port
         bootstrap.config[:identity_file] = locate_config_value(:identity_file)
         bootstrap.config[:chef_node_name] = locate_config_value(:chef_node_name) || server.name
@@ -1048,7 +1060,7 @@ class Chef
             !locate_config_value(:winrm_password).nil?
           config[:ssh_password] = locate_config_value(:winrm_password)
         end
-        # unset identity_file and set kerberos_keytab_file, override identity_file
+        # unset identity_file and set _file, override identity_file
         if locate_config_value(:identity_file).nil? &&
             !locate_config_value(:kerberos_keytab_file).nil?
           config[:identity_file] = locate_config_value(:kerberos_keytab_file)
