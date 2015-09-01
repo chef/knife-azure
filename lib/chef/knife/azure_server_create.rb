@@ -775,7 +775,6 @@ class Chef
         bootstrap.name_args = [fqdn]
         bootstrap.config[:ssh_user] = locate_config_value(:ssh_user)
         bootstrap.config[:ssh_password] = locate_config_value(:ssh_password)
-        bootstrap.config[:forward_agent] = locate_config_value(:forward_agent)
         bootstrap.config[:ssh_port] = port
         bootstrap.config[:identity_file] = locate_config_value(:identity_file)
         bootstrap.config[:chef_node_name] = locate_config_value(:chef_node_name) || server.name

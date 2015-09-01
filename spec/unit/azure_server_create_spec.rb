@@ -168,8 +168,8 @@ describe Chef::Knife::AzureServerCreate do
         #Set params to non-default values
         Chef::Config[:knife][:azure_vm_startup_timeout] = 5
         Chef::Config[:knife][:azure_vm_ready_timeout] = 10
-        expect(@server_instance.locate_config_value(:azure_vm_startup_timeout).to_i).to eq(Chef::Config[:knife][:azure_vm_startup_timeout])
-        expect(@server_instance.locate_config_value(:azure_vm_ready_timeout).to_i).to eq(Chef::Config[:knife][:azure_vm_ready_timeout])
+        expect(@server_instance.send(:locate_config_value, :azure_vm_startup_timeout).to_i).to eq(Chef::Config[:knife][:azure_vm_startup_timeout])
+        expect(@server_instance.send(:locate_config_value, :azure_vm_ready_timeout).to_i).to eq(Chef::Config[:knife][:azure_vm_ready_timeout])
       end
     end
 
