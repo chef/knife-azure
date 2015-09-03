@@ -769,6 +769,20 @@ describe Chef::Knife::AzureServerCreate do
         @server_instance.run
         expect(@bootstrap.config[:winrm_authentication_protocol]).to be == 'negotiate'
       end
+
+      it "sets 'msi_url' correctly" do
+        Chef::Config[:knife][:msi_url] = "https://opscode-omnibus-packages.s3.amazonaws.com/windows/2008r2/x86_64/chef-client-12.3.0-1.msi"
+        allow(@server_instance).to receive(:is_image_windows?).and_return(true)
+        @server_instance.run
+        expect(@bootstrap.config[:msi_url]).to be == "https://opscode-omnibus-packages.s3.amazonaws.com/windows/2008r2/x86_64/chef-client-12.3.0-1.msi"
+      end
+
+      it "sets 'install_as_service' correctly" do
+        Chef::Config[:knife][:install_as_service] = true
+        allow(@server_instance).to receive(:is_image_windows?).and_return(true)
+        @server_instance.run
+        expect(@bootstrap.config[:install_as_service]).to eq(true)
+      end
     end
   end
 
