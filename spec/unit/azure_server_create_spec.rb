@@ -168,8 +168,8 @@ describe Chef::Knife::AzureServerCreate do
         #Set params to non-default values
         Chef::Config[:knife][:azure_vm_startup_timeout] = 5
         Chef::Config[:knife][:azure_vm_ready_timeout] = 10
-        expect(@server_instance.locate_config_value(:azure_vm_startup_timeout).to_i).to eq(Chef::Config[:knife][:azure_vm_startup_timeout])
-        expect(@server_instance.locate_config_value(:azure_vm_ready_timeout).to_i).to eq(Chef::Config[:knife][:azure_vm_ready_timeout])
+        expect(@server_instance.send(:locate_config_value, :azure_vm_startup_timeout).to_i).to eq(Chef::Config[:knife][:azure_vm_startup_timeout])
+        expect(@server_instance.send(:locate_config_value, :azure_vm_ready_timeout).to_i).to eq(Chef::Config[:knife][:azure_vm_ready_timeout])
       end
     end
 
@@ -769,6 +769,20 @@ describe Chef::Knife::AzureServerCreate do
         @server_instance.run
         expect(@bootstrap.config[:winrm_authentication_protocol]).to be == 'negotiate'
       end
+
+      it "sets 'msi_url' correctly" do
+        Chef::Config[:knife][:msi_url] = "https://opscode-omnibus-packages.s3.amazonaws.com/windows/2008r2/x86_64/chef-client-12.3.0-1.msi"
+        allow(@server_instance).to receive(:is_image_windows?).and_return(true)
+        @server_instance.run
+        expect(@bootstrap.config[:msi_url]).to be == "https://opscode-omnibus-packages.s3.amazonaws.com/windows/2008r2/x86_64/chef-client-12.3.0-1.msi"
+      end
+
+      it "sets 'install_as_service' correctly" do
+        Chef::Config[:knife][:install_as_service] = true
+        allow(@server_instance).to receive(:is_image_windows?).and_return(true)
+        @server_instance.run
+        expect(@bootstrap.config[:install_as_service]).to eq(true)
+      end
     end
   end
 
@@ -779,6 +793,10 @@ describe Chef::Knife::AzureServerCreate do
     end
 
     context "windows instance:" do
+      before do
+        Chef::Config[:knife][:forward_agent] = true
+      end  
+
       it "successful bootstrap" do
         pending "OC-8384-support ssh for windows vm's in knife-azure"
         expect(@server_instance).to receive(:is_image_windows?).exactly(3).times.and_return(true)
@@ -787,6 +805,10 @@ describe Chef::Knife::AzureServerCreate do
         expect(@server_instance).to receive(:wait_until_virtual_machine_ready).exactly(1).times.and_return(true)
         expect(@bootstrap).to receive(:run)
         @server_instance.run
+      end
+
+      it "sets 'forward_agent' correctly" do
+        expect(@server_instance.send(:locate_config_value,:forward_agent)).to be(true)
       end
     end
 
