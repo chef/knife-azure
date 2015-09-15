@@ -272,6 +272,11 @@ class Azure
           end
         end
 
+        if ep['Port'] == params[:port] && ep['Protocol'].downcase == 'tcp'
+          puts("Skipping tcp-endpoints: #{ep['LocalPort']} because this port is already in use by ssh/winrm endpoint in current VM.")
+          next
+        end
+
         xml.InputEndpoint {
           xml.LoadBalancedEndpointSetName ep['LoadBalancedEndpointSetName'] if ep['LoadBalancedEndpointSetName']
           xml.LocalPort ep['LocalPort']
