@@ -678,6 +678,7 @@ class Chef
             Chef::Log.fatal("server not created")
             exit 1
           end
+
           port = server.sshport
 
           print ui.color("Waiting for sshd on #{fqdn}:#{port}", :magenta)
@@ -716,7 +717,7 @@ class Chef
         bootstrap.config[:first_boot_attributes] = locate_config_value(:json_attributes) || {}
         bootstrap.config[:bootstrap_version] = locate_config_value(:bootstrap_version)
         bootstrap.config[:distro] = locate_config_value(:distro) || default_bootstrap_template
-        # setting bootstrap_template value to template_file for backward
+        # setting bootstrap_template value to template_file for backward 
         bootstrap.config[:template_file] = locate_config_value(:template_file) || locate_config_value(:bootstrap_template)
         bootstrap.config[:node_ssl_verify_mode] = locate_config_value(:node_ssl_verify_mode)
         bootstrap.config[:node_verify_api_cert] = locate_config_value(:node_verify_api_cert)
@@ -874,13 +875,13 @@ class Chef
         }
         # If user is connecting a new VM to an existing dns, then
         # the VM needs to have a unique public port. Logic below takes care of this.
-        if !is_image_windows? && locate_config_value(:bootstrap_protocol) == 'ssh'
+        if !is_image_windows? or locate_config_value(:bootstrap_protocol) == 'ssh'
           if locate_config_value(:azure_connect_to_existing_dns)
             port = locate_config_value(:ssh_port) || Random.rand(64000) + 1000
           else
             port = locate_config_value(:ssh_port) || '22'
           end
-        elsif is_image_windows? && locate_config_value(:bootstrap_protocol) == 'winrm'
+        else
           if locate_config_value(:azure_connect_to_existing_dns)
             port = locate_config_value(:winrm_port) || Random.rand(64000) + 1000
           else
