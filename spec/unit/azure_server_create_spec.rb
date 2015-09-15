@@ -230,19 +230,6 @@ describe Chef::Knife::AzureServerCreate do
         end
       end
 
-      it "skip user specified tcp-endpoints if its ports already use by ssh endpoint" do
-        # Default external port for ssh endpoint is 22.
-        @server_instance.config[:tcp_endpoints] = "12:22"
-        expect(@server_instance).to receive(:is_image_windows?).at_least(:twice).and_return(false)
-        Chef::Config[:knife][:azure_dns_name] = 'vmname' # service name to be used as vm name
-        @server_instance.run
-        testxml = Nokogiri::XML(@receivedXML)
-        testxml.css('InputEndpoint Protocol:contains("TCP")').each do | port |
-          # Test data in @server_instance.config[:tcp_endpoints]:=> "12:22" this endpoints external port 22 is already use by ssh endpoint. So it should skip endpoint "12:22".
-          expect(port.parent.css("LocalPort").text).to_not eq("12")
-        end
-      end
-
       it "advanced create" do
         # set all params
         Chef::Config[:knife][:azure_dns_name] = 'service001'
@@ -314,18 +301,18 @@ describe Chef::Knife::AzureServerCreate do
         expect(lb_set2_ep['LoadBalancerProbe']['Port']).to be == '443'
         expect(lb_set2_ep['LoadBalancerProbe']['Protocol']).to be == 'HTTP'
       end
-      
+
       it "re-uses existing load balanced endpoints" do
         Chef::Config[:knife][:azure_dns_name] = 'vmname'
         @server_instance.config[:tcp_endpoints] = "443:443:EXTERNAL:lb_set2:/healthcheck"
         expect(@server_instance).to receive(:is_image_windows?).at_least(:twice).and_return(false)
-        
+
         @server_instance.run
         testxml = Nokogiri::XML(@receivedXML)
         endpoints = testxml.css('InputEndpoint')
 
         expect(endpoints.count).to be  == 2
-        
+
         # Convert it to a hash as it's easier to test.
         eps = []
         endpoints.each do | ep |
@@ -795,7 +782,7 @@ describe Chef::Knife::AzureServerCreate do
     context "windows instance:" do
       before do
         Chef::Config[:knife][:forward_agent] = true
-      end  
+      end
 
       it "successful bootstrap" do
         pending "OC-8384-support ssh for windows vm's in knife-azure"
