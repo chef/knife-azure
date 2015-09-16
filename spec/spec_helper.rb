@@ -26,6 +26,11 @@ require 'fileutils'
 require "securerandom"
 require 'knife-azure/version'
 
+require 'test/knife-utils/test_bed'
+require 'resource_spec_helper'
+require 'server_command_common_spec_helper'
+
+require 'pry'
 
 def temp_dir
   @_temp_dir ||= Dir.mktmpdir
@@ -70,8 +75,13 @@ module AzureSpecHelper
   end
 end
 
-def is_config_present
-  if ! ENV['RUN_INTEGRATION_TESTS']
+def config_present?
+  env = nil
+  if File.exist?(File.expand_path('../integration/config/environment.yml', __FILE__))
+   env = YAML.load(File.read(File.expand_path('../integration/config/environment.yml', __FILE__)))
+  end
+
+  if env && ! env['RUN_INTEGRATION_TESTS']
     puts("\nPlease set RUN_INTEGRATION_TESTS environment variable to run integration tests")
     return false
   end
@@ -79,11 +89,9 @@ def is_config_present
   unset_env_var = []
   unset_config_options = []
   is_config = true
-  config_file_exist = File.exist?(File.expand_path("../integration/config/environment.yml", __FILE__))
-  azure_config = YAML.load(File.read(File.expand_path("../integration/config/environment.yml", __FILE__))) if config_file_exist
 
   %w(AZURE_PUBLISH_SETTINGS_FILE AZURE_MGMT_CERT AZURE_SUBSCRIPTION_ID AZURE_API_HOST_NAME).each do |az_env_var|
-    if ENV[az_env_var].nil?
+    if env[az_env_var].nil?
       unset_env_var <<  az_env_var
       is_config = false
     end
@@ -95,7 +103,7 @@ def is_config_present
 
 
   %w(AZ_SSH_USER  AZ_SSH_PASSWORD AZ_WINDOWS_SSH_USER AZ_WINDOWS_SSH_PASSWORD AZ_WINRM_USER AZ_WINRM_PASSWORD AZ_LINUX_IMAGE AZ_LINUX_VM_SIZE AZ_INVALID_VM_SIZE AZ_WINDOWS_VM_SIZE AZ_WINDOWS_IMAGE AZ_WINDOWS_SSH_IMAGE  AZURE_SERVICE_LOCATION).each do |os_config_opt|
-    option_value = ENV[os_config_opt] || (azure_config[os_config_opt] if azure_config)
+    option_value = ENV[os_config_opt] || (env[os_config_opt] if env)
     if option_value.nil?
       unset_config_options << os_config_opt
       is_config = false
@@ -110,7 +118,7 @@ def is_config_present
 end
 
 def get_gem_file_name
-  "knife-azure-" + Knife::Azure::VERSION + ".gem"
+  "knife-azure-#{Knife::Azure::VERSION}.gem"
 end
 
 def find_instance_id(instance_name, file)
@@ -122,7 +130,7 @@ def find_instance_id(instance_name, file)
 end
 
 def delete_instance_cmd(vm_name)
-  "knife azure server delete #{vm_name}  --yes"
+  "knife azure server delete #{vm_name} --yes"
 end
 
 def create_node_name(name)
