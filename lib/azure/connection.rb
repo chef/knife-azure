@@ -69,7 +69,7 @@ class Azure
           ret_val = Nokogiri::XML response.body
           Chef::Log.debug ret_val.to_xml
           error_code, error_message = error_from_response_xml(ret_val)
-          Chef::Log.warn error_code + ' : ' + error_message if error_code.length > 0
+          Chef::Log.debug error_code + ' : ' + error_message if error_code.length > 0
         else
           Chef::Log.warn 'http error: ' + response.code
         end
@@ -80,7 +80,7 @@ class Azure
       status = 'InProgress'
       Chef::Log.info 'Waiting while status returns InProgress'
       while status == 'InProgress'
-        response = @rest.query_for_completion()       
+        response = @rest.query_for_completion()
         ret_val = Nokogiri::XML response.body
         status = xml_content(ret_val,'Status')
         if status == 'InProgress'
@@ -90,7 +90,7 @@ class Azure
           Chef::Log.debug 'not InProgress : ' + ret_val.to_xml
         else
           error_code, error_message = error_from_response_xml(ret_val)
-          Chef::Log.warn status + error_code + ' : ' + error_message if error_code.length > 0
+          Chef::Log.debug status + error_code + ' : ' + error_message if error_code.length > 0
         end
       end
       ret_val

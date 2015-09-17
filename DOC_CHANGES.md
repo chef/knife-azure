@@ -6,9 +6,9 @@ Example Doc Change:
 Description of the required change.
 -->
 
-# knife-azure 1.5.0 doc changes
+# knife-azure 1.5.1 doc changes
 
-## Azure China Support via `--azure-api-host-name` configuration
+## Azure China support via `--azure-api-host-name` configuration
 All `knife-azure` commands can use Azure's China cloud by specifying the
 management API endpoint for that cloud,
 `management.core.chinacloudapi.cn` using the `--azure-api-host-name`
@@ -19,17 +19,69 @@ option. As an example:
 Note that the Azure subscription in your `knife` configuration must
 support using the API endpoint you specify.
 
-
 ## `server create` subcommand changes
 
 Updates to the `knife azure server create` subcommand center primarily
 around improved security and additional VM configuration.
 
-### --winrm-ssl-verify-mode
+### Compatibility with bootstrap flags from `knife bootstrap`
+Recent versions of The `knife bootstrap` (built into Chef Client) and
+`knife bootstrap windows` (from the `knife-windows` plugin)
+subcommands support additional options for bootstrapping nodes that
+were not supported in previous releases of `knife-azure`.
 
-`knife-azure`'s `server create` subcommand  supports bootstrap using
-the `WinRM` protocol. If the `--winrm-transport` option for the
-command is set to `ssl`, the new Azure VM will be confifgured with a
+#### Validatorless bootstrap
+
+The `knife-azure` plug-in supports validatorless bootstrap. This
+includes the addition of three new options useful for that scenario:
+
+* --boostrap-vault-file
+* --boostrap-vault-item
+* --boostrap-vault-json
+
+Their use with the `knife azure server create` subcommand is the same
+as that documented for
+[knife bootstrap](https://docs.chef.io/install_bootstrap.html).
+
+#### SSH agent forwarding: `--forward-agent`
+The `--forward-agent` option provides the same SSH agent forwarding
+behavior found in `knife bootstrap` for bootstraps resulting from
+`knife azure server create` invocations.
+
+#### WinRM security options
+`knife-azure`'s `server create` subcommand supports bootstrap via
+the `WinRM` protocol. The following options from `knife-windows` are also
+available to the `server create` subcommand:
+
+* `--winrm-authentication-protocol`
+* `--winrm-ssl-verify-mode`
+
+Their behaviors are documented for the
+[knife-windows](https://github.com/chef/knife-windows/blob/v1.0.0.rc.1/DOC_CHANGES.md)
+subcommand.
+
+Note that with this change, the default authentication used for WinRM
+communication specified by the `--winrm-authentication-protocol`
+option is the `negotiate` protocol, which is different than that used
+by previous versions of `knife-azure`. This may lead to some
+compatibility issues when using WinRM's plaintxt transport
+(`--winrm-transport` set to the default of `plaintext`) running from `knife azure server create`
+from an operating system other than Windows.
+
+To avoid problems with the `negotiate` protocol on a non-Windows
+system, configure `--winrm-transport` to `ssl` to use SSL which also
+improves the robustness against information disclosure or tampering
+attacks.
+
+You may also revert to previous authentication behavior by specifying `basic` for the
+`--winrm-authentication-protocol` option. More details on this change
+can be found in [documentation}(https://github.com/chef/knife-windows/blob/v1.0.0.rc.1/DOC_CHANGES.md#winrm-authentication-protocol-defaults-to-negotiate-regardless-of-name-formats) for `knife-windows`.
+
+##### WinRM SSL peer verification with --winrm-ssl-verify-mode
+
+If the `--winrm-transport` option for the
+command is set to `ssl` when bootstrapping a Windows node with the
+WinRM protocol, the new Azure VM will be confifgured with a
 `WinRM` endpoint that uses SSL to secure communication, and the
 subcommand will also utilize SSL to communicate with that endpoint (or, alternatively, a
 different listener configured out-of-band from the `knife` subcommand), and validate the identity of the server using a
@@ -48,12 +100,20 @@ during testing, you can specify the `knife[:winrm_ssl_verify_mode]` option in
 override the default behavior and skip the verification of the remote system
 -- there is no need to specify the `:ca_trust_file` option in this case.
 
-Here's an example that disables peer verification:
+Here's an example that uses SSL and disables peer verification:
 
     knife azure server create -I $MY_WIN_IMAGE -x 'myuser' -P $PASSWORDVAR -t ssl --winrm-ssl-verify-mode verify_none
 
 This option should be used carefully since disabling the verification of the
 remote system's certificate can subject knife commands to spoofing attacks.
+
+#### Chef Client installation options on Windows
+The following options are available for Windows systems:
+
+* `--msi-url URL`: Location of the Chef Client MSI. The default
+  templates will prefer to download from this location. The MSI will
+  be downloaded from chef.io if not provided.
+* `--install-as-service`: Install chef-client as a service on Windows systems
 
 ### Additional options for `cloud-api` bootstrap (Azure Chef extension)
 
@@ -119,7 +179,7 @@ Removing the extension will also uninstall Chef Client itself whether or not
 this flag is set.
 
 #### WinRM memory and timeout configuration
-The `--winrm-max-memory-pershell` and `--winrm-max-timeout` configure
+The `--winrm-max-memory-per-shell` and `--winrm-max-timeout` configure
 the `MaxMemoryPerShellMB` and `MaxTimeoutms` WinRM stack's command
 execution settings on a remote Windows node being bootstrapped. These
 settings for Windows VM's only instruct Azure to configure the VM's memory and timeout limits for remote
@@ -136,7 +196,7 @@ defaults for these limits, and configuration of the limits was
 required to make Chef Client runs over WinRM succeed for resource /
 time-intensive runlists.
 
-As an example, setting `--winrm-max-memorypershell` to 4000000
+As an example, setting `--winrm-max-memory-per-shell` to 4000000
 megabytes and `--winrm-max-timeout` to 1200000 microseconds allows the `knife azure server create` command's remote
 bootstrap commands to consume 4 gigabytes of memory and take 20
 minutes. Use of these commands is
@@ -154,7 +214,6 @@ For detailed information on these limits, visit the entries for
 The `server create` subcommand supports joining the Windows VM created
 by the command to an Active Directory domain. The following options enable configuration of a new system's
 domain membership:
-
 
 * `--azure-domain-name DOMAIN_NAME`: *Optional*. Specifies the domain
   name to join.

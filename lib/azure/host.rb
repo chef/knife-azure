@@ -56,7 +56,7 @@ class Azure
       ret_val = @connection.query_azure("hostedservices/#{name}")
       error_code, error_message = error_from_response_xml(ret_val) if ret_val
       if ret_val.nil? || error_code.length > 0
-        Chef::Log.warn('Unable to find hosted(cloud) service:' + error_code + ' : ' + error_message) if ret_val
+        Chef::Log.debug('Unable to find hosted(cloud) service:' + error_code + ' : ' + error_message) if ret_val
         false
       else
         true
