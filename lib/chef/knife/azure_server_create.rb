@@ -327,10 +327,10 @@ class Chef
 
       option :winrm_max_timeout,
         :long => "--winrm-max-timeout MINUTES",
-        :description => "Set winrm max timeout in minutes"
+        :description => "Set winrm maximum command timeout in minutes, useful for long bootstraps"
 
-      option :winrm_max_memoryPerShell,
-        :long => "--winrm-max-memoryPerShell MB",
+      option :winrm_max_memorypershell,
+        :long => "--winrm-max-memory-per-shell",
         :description => "Set winrm max memory per shell in MB"
 
       option :delete_chef_extension_config,
@@ -681,7 +681,7 @@ class Chef
 
           port = server.sshport
 
-          print "#{ui.color("Waiting for sshd on #{fqdn}:#{port}", :magenta)}"
+          print ui.color("Waiting for sshd on #{fqdn}:#{port}", :magenta)
 
           print(".") until tcp_test_ssh(fqdn,port) {
             sleep @initial_sleep_delay ||= 10
@@ -871,7 +871,7 @@ class Chef
           :cert_password => locate_config_value(:cert_passphrase),
           :winrm_transport => locate_config_value(:winrm_transport),
           :winrm_max_timeout => locate_config_value(:winrm_max_timeout).to_i * 60 * 1000, #converting minutes to milliseconds
-          :winrm_max_memoryPerShell => locate_config_value(:winrm_max_memoryPerShell)
+          :winrm_max_memoryPerShell => locate_config_value(:winrm_max_memory_per_shell)
         }
         # If user is connecting a new VM to an existing dns, then
         # the VM needs to have a unique public port. Logic below takes care of this.
