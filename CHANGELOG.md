@@ -4,12 +4,13 @@
 * [knife-azure #218](https://github.com/chef/knife-azure/pull/218) Fixed azure_availability_set related issue
 
 ## Release: 1.5.0 (2015/05/20)
+* [knife-azure #228](https://github.com/chef/knife-azure/pull/228) Support for validatorless bootstrap, other Chef 12 bootstrap options
+* [knife-azure #199](https://github.com/chef/knife-azure/issues/199) Azure China Support
 * [knife-azure #213](https://github.com/chef/knife-azure/pull/213) Typo in fetch_thumbprint method
 * [knife-azure #215](https://github.com/chef/knife-azure/pull/215) Added --delete-chef-config option in knife azure server create
 * [knife-azure #204](https://github.com/chef/knife-azure/pull/204) Properly configure WinRM for bootstrapping; Fixes [#203](https://github.com/chef/knife-azure/pull/203)
 * [knife-azure #197](https://github.com/chef/knife-azure/pull/197) Add custom json attributes to chef extension
 * [knife-azure #211](https://github.com/chef/knife-azure/pull/211) Allow user to specify chef extension version by using knife_rb
-* [knife-azure #202](https://github.com/chef/knife-azure/pull/202) knife-windows 1.0.0+ compat fixes
 * [knife-azure #198](https://github.com/chef/knife-azure/pull/198) Adding winrm_ssl_verify_mode to bootstrap config
 * [knife-azure #196](https://github.com/chef/knife-azure/pull/196) Update Rubies; remove Chef-unsupported versions from matrix
 * [knife-azure #195](https://github.com/chef/knife-azure/pull/195) Showing thumbprint with Server show command
@@ -27,7 +28,7 @@
 * [knife-azure #160](https://github.com/chef/knife-azure/pull/160) Support for adding winrm SSL certificate, for winrm ssl communication
 * [knife-azure #157](https://github.com/chef/knife-azure/pull/157) Add integration tests
 * [knife-azure #162](https://github.com/chef/knife-azure/pull/162) Documentation fix to remove extraneous dash and use real example of VM image
-* [knife-azure #153](https://github.com/chef/knife-azure/pull/153) Resource extension support through knife-azure plugin -- cloud-api bootstrap without network transport
+* [knife-azure #153](https://github.com/chef/knife-azure/pull/153) Resource extension support through knife-azure plugin --cloud-api bootstrap without network transport
 * [knife-azure 146](https://github.com/chef/knife-azure/pull/146) Virtual machine state 'provisioning' not reached after 5 minutes
 
 ## Release: 1.3.0 (2014/07/31)
