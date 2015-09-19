@@ -19,7 +19,7 @@ option. As an example:
 Note that the Azure subscription in your `knife` configuration must
 support using the API endpoint you specify.
 
-## `server create` subcommand changes
+## Changes to `server create` subcommand
 
 Updates to the `knife azure server create` subcommand center primarily
 around improved security and additional VM configuration.
@@ -35,9 +35,9 @@ were not supported in previous releases of `knife-azure`.
 The `knife-azure` plug-in supports validatorless bootstrap. This
 includes the addition of three new options useful for that scenario:
 
-* --boostrap-vault-file
-* --boostrap-vault-item
-* --boostrap-vault-json
+* `--boostrap-vault-file`
+* `--boostrap-vault-item`
+* `--boostrap-vault-json`
 
 Their use with the `knife azure server create` subcommand is the same
 as that documented for
@@ -64,7 +64,7 @@ Note that with this change, the default authentication used for WinRM
 communication specified by the `--winrm-authentication-protocol`
 option is the `negotiate` protocol, which is different than that used
 by previous versions of `knife-azure`. This may lead to some
-compatibility issues when using WinRM's plaintxt transport
+compatibility issues when using WinRM's plaintext transport
 (`--winrm-transport` set to the default of `plaintext`) running from `knife azure server create`
 from an operating system other than Windows.
 
@@ -81,7 +81,7 @@ can be found in [documentation}(https://github.com/chef/knife-windows/blob/v1.0.
 
 If the `--winrm-transport` option for the
 command is set to `ssl` when bootstrapping a Windows node with the
-WinRM protocol, the new Azure VM will be confifgured with a
+WinRM protocol, the new Azure VM will be configured with a
 `WinRM` endpoint that uses SSL to secure communication, and the
 subcommand will also utilize SSL to communicate with that endpoint (or, alternatively, a
 different listener configured out-of-band from the `knife` subcommand), and validate the identity of the server using a
@@ -102,10 +102,48 @@ override the default behavior and skip the verification of the remote system
 
 Here's an example that uses SSL and disables peer verification:
 
-    knife azure server create -I $MY_WIN_IMAGE -x 'myuser' -P $PASSWORDVAR -t ssl --winrm-ssl-verify-mode verify_none
+    knife azure server create -I $MY_WIN_IMAGE -x 'myuser' -P $PASSWD -t ssl --winrm-ssl-verify-mode verify_none
 
 This option should be used carefully since disabling the verification of the
 remote system's certificate can subject knife commands to spoofing attacks.
+
+#### WinRM memory and timeout configuration
+The `--winrm-max-memory-per-shell` and `--winrm-max-timeout` configure
+the `MaxMemoryPerShellMB` and `MaxTimeoutms` WinRM stack's command
+execution settings on a remote Windows node being bootstrapped. These
+settings for Windows VM's only instruct Azure to configure the VM's memory and timeout limits for remote
+commands executed via the WinRM protocol before attempting to
+bootstrap the node. The settings' effects on WinRM configuration persist beyond bootstrapping
+regardless whether bootstrapping succeeds or fails.
+
+These limits affect how much memory
+recipes executed during the bootstrap process's Chef client run may consume and how much time the
+bootstrap takes. This can cause bootstraps to fail in unpredictable
+ways, and leave nodes in a partially converged state. While most
+recipes will not encounter issues if these options are not configured,
+versions of Windows prior to Windows Server 2012 R2 had much lower
+defaults for these limits, and configuration of the limits was
+required to make Chef Client runs over WinRM succeed for resource /
+time-intensive runlists.
+
+As an example, setting `--winrm-max-memory-per-shell` to 4000000
+megabytes and `--winrm-max-timeout` to 1200000 microseconds allows the `knife azure server create` command's remote
+bootstrap commands to consume 4 gigabytes of memory and take 20
+minutes.
+
+Use of these options is usually not necessary, but some
+recipes executed during the bootstrap may consume unusually large
+amounts of memory or take an atypically long amount of time, so they
+should only be configured if testing of particular cookbooks during
+WinRM bootstrap reveals them to be necessary.
+
+Note that these settings do not affect bootstraps conducted using the
+`cloud-api` setting for `--bootstrap-protocol`, which does not use
+WinRM, though the settings will still affect WinRM configuration for
+that VM.
+
+For detailed information on these limits, visit the entries for
+`MaxMemoryPerShellMB` and `MaxTimeoutms` in [Microsoft's WinRM documentation](https://msdn.microsoft.com/en-us/library/aa384372(v=vs.85).aspx).
 
 #### Chef Client installation options on Windows
 The following options are available for Windows systems:
@@ -128,15 +166,15 @@ When creating an Azure node via the `server create` subcommand with the configur
 * `validation_client_name`
 * `node_verify_api_cert`
 
-#### `--custom-json-attr` for `cloud-api` bootstrap
+#### Option `--custom-json-attr` for `cloud-api` bootstrap
 
 The `custom-json-attr` option allows for the specification of
 arbitrary JSON that can be passed to the Azure Resource Manager
-extension used to bootstrap Chef on the node. For documenation on the
+extension used to bootstrap Chef on the node. For documentation on the
 structure of the JSON and options that may be specified, see the
 [README](https://github.com/chef-partners/azure-chef-extension) for the Azure Chef extension.
 
-#### `--azure-chef-extension-version` flag
+#### Option `--azure-chef-extension-version`
 This option allows the user to specify a particular version of the
 Azure Resource Manager Chef extension. This is useful when testing
 extension versions deployed internally to a subscription or in the
@@ -164,50 +202,19 @@ Here are the equivalent PowerShell (Windows only) commands using the [Azure Powe
     Get-AzureVMAvailableExtension -allversions -ExtensionName LinuxChefClient -Publisher Chef.Bootstrap.WindowsAzure | format-table
     Get-AzureVMAvailableExtension -allversions -ExtensionName ChefClient -Publisher Chef.Bootstrap.WindowsAzure | format-table
 
-#### `--auto-update-client` flag
+#### Option `--auto-update-client`
 Set the `--auto-update-client` flag to enable Azure's VM guest agent to automatically update
 the extension on the VM, and most likely update Chef itself to a new version, every time a new Chef
 extension is published (currently every Chef release). The flag is
 disabled by default.
 
-#### `--delete-chef-config` for Azure Chef extension uninstallation
+#### Option `--delete-chef-config` for Azure Chef extension uninstallation
 By default, if the Chef extension is removed from the VM (via Azure
 CLI tools or via Azure's API), the Chef configuration files remain on
 the system. Setting this flag when creating the VM will ensure that
 the configuration is removed if the Chef extension is removed.
 Removing the extension will also uninstall Chef Client itself whether or not
 this flag is set.
-
-#### WinRM memory and timeout configuration
-The `--winrm-max-memory-per-shell` and `--winrm-max-timeout` configure
-the `MaxMemoryPerShellMB` and `MaxTimeoutms` WinRM stack's command
-execution settings on a remote Windows node being bootstrapped. These
-settings for Windows VM's only instruct Azure to configure the VM's memory and timeout limits for remote
-commands executed via the WinRM protocol before attempting to
-bootstrap the node.
-
-These limits affect how much memory
-recipes executed during the bootstrap process's Chef client run may consume and how much time the
-bootstrap takes. This can cause bootstraps to fail in unpredictable
-ways, and leave nodes in a partially converged state. While most
-recipes will not encounter issues if these options are not configured,
-versions of Windows prior to Windows Server 2012 R2 had much lower
-defaults for these limits, and configuration of the limits was
-required to make Chef Client runs over WinRM succeed for resource /
-time-intensive runlists.
-
-As an example, setting `--winrm-max-memory-per-shell` to 4000000
-megabytes and `--winrm-max-timeout` to 1200000 microseconds allows the `knife azure server create` command's remote
-bootstrap commands to consume 4 gigabytes of memory and take 20
-minutes. Use of these commands is
-
-Note that these settings do not affect bootstraps conducted using the
-`cloud-api` setting for `--bootstrap-protocol`, which does not use
-WinRM, though the settings will still affect WinRM configuration for
-that VM.
-
-For detailed information on these limits, visit the entries for
-`MaxMemoryPerShellMB` and `MaxTimeoutms` in [Microsoft's WinRM documentation](https://msdn.microsoft.com/en-us/library/aa384372(v=vs.85).aspx).
 
 ### Domain join capability for `server create` subcommand
 
@@ -228,9 +235,5 @@ the `--azure-domain-name` option, the user must specify this option using the us
   is being joined. Example: `OU=operations,dc=contoso,dc=com`
 * `--azure-domain-user DOMAIN_USER_NAME`: Specifies the username of a domain user with access to join the system to the domain.
 * `--azure-domain-passwd DOMAIN_PASSWD`: Specifies the password for the user specified through the `--azure-domain-passwd` option.
-
-
-
-
 
 

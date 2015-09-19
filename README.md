@@ -48,14 +48,17 @@ location in your knife.rb:
       $ knife azure server list
 
       # Create and bootstrap a Windows VM over winrm (winrm is the default for Windows)
-      $ knife azure server create --azure-dns-name MyNewServerName --azure-vm-size Medium -I a699494373c04fc0bc8f2bb1389d6106__Windows-Server-2012-R2-201412.01-en.us-127GB.vhd --azure-service-location 'West US' --winrm-user myuser --winrm-password 'mypassword'
+      $ knife azure server create --azure-dns-name MyNewServerName --azure-vm-size Medium -I a699494373c04fc0bc8f2bb1389d6106__Windows-Server-2012-R2-20150825-en.us-127GB.vhd --azure-service-location 'West US' --winrm-user myuser --winrm-password 'mypassword'
+
+      # Create and bootstrap a Windows VM over winrm using SSL (winrm is the default for Windows)
+      $ knife azure server create --azure-dns-name MyNewServerName --azure-vm-size Medium -I a699494373c04fc0bc8f2bb1389d6106__Windows-Server-2012-R2-20150825-en.us-127GB.vhd --azure-service-location 'West US' --winrm-user myuser --winrm-password 'mypassword' --winrm-transport ssl --winrm-ssl-verify-mode verify_none
 
       # Create and bootstrap an Ubuntu VM over ssh
       $ knife azure server create -N MyNewNode --azure-vm-size Medium -I b39f27a8b8c64d52b05eac6a62ebad85__Ubuntu-14_04_1-LTS-amd64-server-20140927-en-us-30GB -m 'West US' --ssh-user myuser --identity-file ~/.ssh/myprivatekey_rsa
 
       # Create and bootstrap an Windows VM through the Azure API --
       # No winrm or ssh transport or Internet access required
-      $ knife azure server create --azure-dns-name MyNewServerName --azure-vm-size Medium -I a699494373c04fc0bc8f2bb1389d6106__Windows-Server-2012-R2-201412.01-en.us-127GB.vhd --azure-service-location 'West US' --winrm-user myuser --winrm-password 'mypassword' --bootstrap-protocol cloud-api
+      $ knife azure server create --azure-dns-name MyNewServerName --azure-vm-size Medium -I a699494373c04fc0bc8f2bb1389d6106__Windows-Server-2012-R2-20150825-en.us-127GB.vhd --azure-service-location 'West US' --winrm-user myuser --winrm-password 'mypassword' --bootstrap-protocol cloud-api
 
       # Delete a server and purge it from the Chef server
       $ knife azure server delete MyNewNode --purge -y
@@ -89,7 +92,7 @@ This subcommand provisions a new server in Azure and then performs a Chef bootst
 
 #### Windows Bootstrapping Requirements
 knife-azure depends on knife-windows: https://github.com/chef/knife-windows
-to bootstrap Windows machines via winrm (Basic, NTLM and Kerberos authentication) or ssh.
+to bootstrap Windows machines via WinRM (Basic, NTLM and Kerberos authentication) or ssh.
 
 The distro/template to be used for bootstrapping is: https://github.com/chef/knife-windows/blob/master/lib/chef/knife/bootstrap/windows-chef-client-msi.erb
 
@@ -205,20 +208,23 @@ Note that the load balancing set will be created if it does not exist. If it exi
 
 #### Options for Bootstrapping a Windows Node in Azure
 
-    :bootstrap_protocol           Default is winrm for a windows image
-    :winrm_password               The WinRM password
-    :winrm_port                   The WinRM port, by default this is 5985
-    :winrm_transport              The WinRM transport type.  valid choices are [ssl, plaintext]
-    :kerberos_keytab_file         The Kerberos keytab file used for authentication
-    :kerberos_realm               The Kerberos realm used for authentication
-    :kerberos_service             The Kerberos service used for authentication
-    :ca_trust_file                The Certificate Authority (CA) trust file used for SSL transport
+    :bootstrap_protocol            Default is winrm for a windows image
+    :winrm_password                The WinRM password
+    :winrm_authentication_protocol Defaults to negotiate, supports kerberos, can be set to basic for debugging
+    :winrm_transport               Defaults to plaintext, use ssl for improved privacy
+    :winrm_port                    Defaults to 5985 plaintext transport, or 5986 for SSL
+    :ca_trust_file                 The CA certificate file to use to verify the server when using SSL
+    :winrm_ssl_verify_mode         Defaults to verify_peer, use verify_none to skip validation of the server certificate during testing
+    :kerberos_keytab_file          The Kerberos keytab file used for authentication
+    :kerberos_realm                The Kerberos realm used for authentication
+    :kerberos_service              The Kerberos service used for authentication
+
 
 #### Options to configure WinRM for Bootstrapping a Windows Node
 Theses options are useful if you have long-running run-lists and if the chef run might use a lot of memory. In most cases people don't need to set these, but if they see certain timeout or memory related errors during bootstrap, particularly on Win2k8r2, it may make sense to move these beyond the default.
 
-    :winrm_max_timeout           Set winrm max timeout in minutes
-    :winrm_max_memoryPerShell    Set winrm max memory per shell in MB
+    :winrm_max_timeout             Set winrm max timeout in minutes
+    :winrm_max_memoryPerShell      Set winrm max memory per shell in MB
 
     Command:
     knife azure server create
