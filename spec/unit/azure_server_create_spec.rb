@@ -314,18 +314,18 @@ describe Chef::Knife::AzureServerCreate do
         expect(lb_set2_ep['LoadBalancerProbe']['Port']).to be == '443'
         expect(lb_set2_ep['LoadBalancerProbe']['Protocol']).to be == 'HTTP'
       end
-      
+
       it "re-uses existing load balanced endpoints" do
         Chef::Config[:knife][:azure_dns_name] = 'vmname'
         @server_instance.config[:tcp_endpoints] = "443:443:EXTERNAL:lb_set2:/healthcheck"
         expect(@server_instance).to receive(:is_image_windows?).at_least(:twice).and_return(false)
-        
+
         @server_instance.run
         testxml = Nokogiri::XML(@receivedXML)
         endpoints = testxml.css('InputEndpoint')
 
         expect(endpoints.count).to be  == 2
-        
+
         # Convert it to a hash as it's easier to test.
         eps = []
         endpoints.each do | ep |
@@ -605,6 +605,7 @@ describe Chef::Knife::AzureServerCreate do
       end
 
       it "port should be ssh-port value specified in the option" do
+        Chef::Config[:knife][:bootstrap_protocol] = 'ssh'
         Chef::Config[:knife][:ssh_user] = 'azureuser'
         Chef::Config[:knife][:ssh_password] = 'Jetstream123!'
         Chef::Config[:knife][:ssh_port] = '24'
@@ -614,6 +615,7 @@ describe Chef::Knife::AzureServerCreate do
       end
 
       it "port should be 22 if user specified --ssh-port 22" do
+        Chef::Config[:knife][:bootstrap_protocol] = 'ssh'
         Chef::Config[:knife][:ssh_user] = 'azureuser'
         Chef::Config[:knife][:ssh_password] = 'Jetstream123!'
         Chef::Config[:knife][:ssh_port] = '22'
@@ -795,7 +797,7 @@ describe Chef::Knife::AzureServerCreate do
     context "windows instance:" do
       before do
         Chef::Config[:knife][:forward_agent] = true
-      end  
+      end
 
       it "successful bootstrap" do
         pending "OC-8384-support ssh for windows vm's in knife-azure"
