@@ -6,7 +6,7 @@ Example Doc Change:
 Description of the required change.
 -->
 
-# knife-azure 1.5.1 doc changes
+# knife-azure 1.5.2 doc changes
 
 ## Azure China support via `--azure-api-host-name` configuration
 All `knife-azure` commands can use Azure's China cloud by specifying the
@@ -48,17 +48,14 @@ The `--forward-agent` option provides the same SSH agent forwarding
 behavior found in `knife bootstrap` for bootstraps resulting from
 `knife azure server create` invocations.
 
-#### WinRM security options
+#### WinRM security `--winrm-authentication-protocol` option
 `knife-azure`'s `server create` subcommand supports bootstrap via
-the `WinRM` protocol. The following options from `knife-windows` are also
-available to the `server create` subcommand:
-
-* `--winrm-authentication-protocol`
-* `--winrm-ssl-verify-mode`
-
-Their behaviors are documented for the
-[knife-windows](https://github.com/chef/knife-windows/blob/v1.0.0.rc.1/DOC_CHANGES.md)
-subcommand.
+the `WinRM` remote command protocol. The
+`--winrm-authentication-protocol` option controls authentication to
+the remote system (the bootstrapped node). This option's behavior is
+covered in the
+[knife-windows](https://github.com/chef/knife-windows/blob/v1.0.0/DOC_CHANGES.md)
+subcommand documentation which has identically named option.
 
 Note that with this change, the default authentication used for WinRM
 communication specified by the `--winrm-authentication-protocol`
@@ -75,7 +72,7 @@ attacks.
 
 You may also revert to previous authentication behavior by specifying `basic` for the
 `--winrm-authentication-protocol` option. More details on this change
-can be found in [documentation}(https://github.com/chef/knife-windows/blob/v1.0.0.rc.1/DOC_CHANGES.md#winrm-authentication-protocol-defaults-to-negotiate-regardless-of-name-formats) for `knife-windows`.
+can be found in [documentation](https://github.com/chef/knife-windows/blob/v1.0.0/DOC_CHANGES.md#winrm-authentication-protocol-defaults-to-negotiate-regardless-of-name-formats) for `knife-windows`.
 
 ##### WinRM SSL peer verification with --winrm-ssl-verify-mode
 
@@ -148,10 +145,20 @@ For detailed information on these limits, visit the entries for
 #### Chef Client installation options on Windows
 The following options are available for Windows systems:
 
-* `--msi-url URL`: Location of the Chef Client MSI. The default
-  templates will prefer to download from this location. The MSI will
-  be downloaded from chef.io if not provided.
-* `--install-as-service`: Install chef-client as a service on Windows systems
+* `--msi-url URL`: Optional. Used to override the location from which Chef
+  Client is downloaded. If not specified, Chef Client is downloaded
+  from the Internet -- this option allows downloading from a private network
+  location for instance.
+* `--install-as-service`: Install chef-client as a service on Windows
+  systems
+* `--bootstrap-install-command`: Optional. Instead of downloading Chef
+  Client and installing it using a default installation command,
+  bootstrap will invoke this command. If an image already has
+  Chef Client installed, this command can be specified as empty
+  (`''`), in which case no installation will be done and the rest of
+  bootstrap will proceed as if it's already installed.
+
+For more detail, see the [knife-windows documentation](https://docs.chef.io/plugin_knife_windows.html).
 
 ### Additional options for `cloud-api` bootstrap (Azure Chef extension)
 
