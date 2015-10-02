@@ -1,7 +1,9 @@
 # knife-azure Change Log
 
-## Last release: 1.5.1 (2015/05/25)
-* [knife-azure #218](https://github.com/chef/knife-azure/pull/218) Fixed azure_availability_set related issue
+## Last release: 1.5.2 (2015/10/01)
+
+* [knife-azure #218](https://github.com/chef/knife-azure/pull/218) Fixed azure\_availability\_set related issue
+* [knife-azure #238](https://github.com/chef/knife-azure/pull/238) Fixed ssh tcp endpoint issue for cloud-api
 
 ## Release: 1.5.0 (2015/05/20)
 * [knife-azure #228](https://github.com/chef/knife-azure/pull/228) Support for validatorless bootstrap, other Chef 12 bootstrap options
