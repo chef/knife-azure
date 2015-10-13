@@ -107,8 +107,16 @@ class Azure
         addr_space = Nokogiri::XML::Node.new('AddressSpace', response)
         addr_prefix = Nokogiri::XML::Node.new('AddressPrefix', response)
         addr_prefix.content = params[:azure_address_space]
+        saddr_prefix = Nokogiri::XML::Node.new('AddressPrefix', response)
+        saddr_prefix.content = params[:azure_address_space]
+        subnets = Nokogiri::XML::Node.new('Subnets', response)
+        subnet = Nokogiri::XML::Node.new('Subnet', response)
+        subnet['name'] = params[:azure_subnet_name]
+        subnet.children = saddr_prefix
+        subnets.children = subnet
+        vnet.add_child(subnets)
         addr_space.children = addr_prefix
-        vnet.children = addr_space
+        vnet.add_child(addr_space)
         vnets.last.add_next_sibling(vnet) if add
         puts("Updating existing Virtual Network: #{params[:azure_vnet_name]}...")
       end
