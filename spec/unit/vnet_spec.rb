@@ -50,6 +50,7 @@ describe 'vnets' do
         azure_vnet_name: 'vnname',
         azure_ag_name: 'new-agname',
         azure_address_space: '192.168.0.0/20',
+        azure_subnet_name: 'new-sb',
       }
       @connection.vnets.create(params)
       expect(@postname).to eq('networking/media')

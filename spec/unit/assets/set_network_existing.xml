@@ -24,11 +24,8 @@
         </Subnets>
       </VirtualNetworkSite>
       <VirtualNetworkSite name="vnname" AffinityGroup="new-agname">
-        <AddressSpace>
-          <AddressPrefix>10.0.0.0/16</AddressPrefix>
-          <AddressPrefix>172.16.0.0/20</AddressPrefix>
-        </AddressSpace>
-      <Subnets><Subnet name=""><AddressPrefix>192.168.0.0/20</AddressPrefix></Subnet></Subnets><AddressSpace><AddressPrefix>192.168.0.0/20</AddressPrefix></AddressSpace></VirtualNetworkSite>
+        <AddressSpace><AddressPrefix>192.168.0.0/20</AddressPrefix></AddressSpace>
+      <Subnets><Subnet name="new-sb"><AddressPrefix>192.168.0.0/20</AddressPrefix></Subnet></Subnets></VirtualNetworkSite>
     </VirtualNetworkSites>
   </VirtualNetworkConfiguration>
 </NetworkConfiguration>

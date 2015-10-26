@@ -25,7 +25,6 @@
       </VirtualNetworkSite>
       <VirtualNetworkSite name="vnname" AffinityGroup="agname">
         <AddressSpace>
-          <AddressPrefix>10.0.0.0/16</AddressPrefix>
           <AddressPrefix>172.16.0.0/20</AddressPrefix>
         </AddressSpace>
       </VirtualNetworkSite><VirtualNetworkSite name="new-vn" AffinityGroup="someag"><Subnets><Subnet name="new-sb"><AddressPrefix>10.0.0.0/16</AddressPrefix></Subnet></Subnets><AddressSpace><AddressPrefix>10.0.0.0/16</AddressPrefix></AddressSpace></VirtualNetworkSite>
