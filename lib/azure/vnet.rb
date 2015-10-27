@@ -104,16 +104,16 @@ class Azure
         vnet = Nokogiri::XML::Node.new('VirtualNetworkSite', response) if add
         vnet['name'] = params[:azure_vnet_name]
         vnet['AffinityGroup'] = params[:azure_ag_name]
-        if add || !vnet.at_css('AddressSpace')
+        if add || !vnet.at_css('AddressSpace')    ## create a new AddressSpace block in XML if VNet or AddressSpace block does not already exist
           addr_space = Nokogiri::XML::Node.new('AddressSpace', response)
-        else
+        else    ## retrieve object of existing AddressSpace if VNet or AddressSpace already exist
           addr_space = vnet.at_css('AddressSpace')
         end
         addr_prefix = Nokogiri::XML::Node.new('AddressPrefix', response)
         addr_prefix.content = params[:azure_address_space]
-        if add || !vnet.at_css('Subnets')
+        if add || !vnet.at_css('Subnets')   ## create a new Subnets block in XML if VNet or Subnets block does not already exist
           subnets = Nokogiri::XML::Node.new('Subnets', response)
-        else
+        else    ## retrieve object of existing Subnets if VNet or Subnets already exist
           subnets = vnet.at_css('Subnets')
         end
         saddr_prefix = Nokogiri::XML::Node.new('AddressPrefix', response)
