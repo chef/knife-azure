@@ -104,11 +104,27 @@ class Azure
         vnet = Nokogiri::XML::Node.new('VirtualNetworkSite', response) if add
         vnet['name'] = params[:azure_vnet_name]
         vnet['AffinityGroup'] = params[:azure_ag_name]
-        addr_space = Nokogiri::XML::Node.new('AddressSpace', response)
+        if add || !vnet.at_css('AddressSpace')    ## create a new AddressSpace block in XML if VNet or AddressSpace block does not already exist
+          addr_space = Nokogiri::XML::Node.new('AddressSpace', response)
+        else    ## retrieve object of existing AddressSpace if VNet or AddressSpace already exist
+          addr_space = vnet.at_css('AddressSpace')
+        end
         addr_prefix = Nokogiri::XML::Node.new('AddressPrefix', response)
         addr_prefix.content = params[:azure_address_space]
+        if add || !vnet.at_css('Subnets')   ## create a new Subnets block in XML if VNet or Subnets block does not already exist
+          subnets = Nokogiri::XML::Node.new('Subnets', response)
+        else    ## retrieve object of existing Subnets if VNet or Subnets already exist
+          subnets = vnet.at_css('Subnets')
+        end
+        saddr_prefix = Nokogiri::XML::Node.new('AddressPrefix', response)
+        saddr_prefix.content = params[:azure_address_space]
+        subnet = Nokogiri::XML::Node.new('Subnet', response)
+        subnet['name'] = params[:azure_subnet_name]
+        subnet.children = saddr_prefix
+        subnets.children = subnet
+        vnet.add_child(subnets) if add || !vnet.at_css('Subnets')
         addr_space.children = addr_prefix
-        vnet.children = addr_space
+        vnet.add_child(addr_space) if add || !vnet.at_css('AddressSpace')
         vnets.last.add_next_sibling(vnet) if add
         puts("Updating existing Virtual Network: #{params[:azure_vnet_name]}...")
       end
