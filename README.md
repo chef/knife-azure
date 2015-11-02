@@ -14,7 +14,7 @@ via:
 
 This plugin is distributed as a Ruby Gem. To install it, run:
 
-    gem install knife-azure
+    chef gem install knife-azure
 
 Depending on your system's configuration, you may need to run this command
 with root/administrator privileges.
