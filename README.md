@@ -7,14 +7,14 @@ delete, and enumerate
 resources to be managed by Chef.
 
 ## Installation
-Be sure you are running the latest version of Chef, which can be installed
+Be sure you are running the latest version of Chef DK, which can be installed
 via:
 
-    gem install chef
+    https://downloads.chef.io/chef-dk/
 
 This plugin is distributed as a Ruby Gem. To install it, run:
 
-    gem install knife-azure
+    chef gem install knife-azure
 
 Depending on your system's configuration, you may need to run this command
 with root/administrator privileges.
