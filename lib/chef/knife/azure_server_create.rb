@@ -355,6 +355,10 @@ class Chef
         :long => "--azure-domain-passwd DOMAIN_PASSWD",
         :description => "Optional. Specifies the password for domain user who has access to join the domain."
 
+      option :azure_extension_client_config,
+        :long => "--azure-extension-client-config CLIENT_PATH",
+        :description => "Optional. Path to client.rb file that gets copied over the azure-chef-extension. "
+
       def strip_non_ascii(string)
         string.gsub(/[^0-9a-z ]/i, '')
       end
@@ -983,7 +987,12 @@ class Chef
 
       def get_chef_extension_public_params
         pub_config = Hash.new
-        pub_config[:client_rb] = "chef_server_url \t #{Chef::Config[:chef_server_url].to_json}\nvalidation_client_name\t#{Chef::Config[:validation_client_name].to_json}"
+        if(locate_config_value(:azure_extension_client_config))
+          pub_config[:client_rb] = File.read(locate_config_value(:azure_extension_client_config))
+        else
+          pub_config[:client_rb] = "chef_server_url \t #{Chef::Config[:chef_server_url].to_json}\nvalidation_client_name\t#{Chef::Config[:validation_client_name].to_json}"
+        end
+
         pub_config[:runlist] = locate_config_value(:run_list).empty? ? "" : locate_config_value(:run_list).join(",").to_json
         pub_config[:autoUpdateClient] = locate_config_value(:auto_update_client) ? "true" : "false"
         pub_config[:deleteChefConfig] = locate_config_value(:delete_chef_extension_config) ? "true" : "false"
