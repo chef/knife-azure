@@ -9,5 +9,5 @@ group :development do
   gem 'rake'
   gem 'mixlib-shellout'
   gem 'activesupport'
-  gem 'byebug'
+  gem 'byebug', '~>6.0.2'
 end
