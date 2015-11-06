@@ -948,11 +948,9 @@ class Chef
         end
 
         server_def[:is_vm_image] = connection.images.is_vm_image(locate_config_value(:azure_source_image))
+        server_def[:azure_domain_name] = locate_config_value(:azure_domain_name) if locate_config_value(:azure_domain_name)
 
-        if locate_config_value(:azure_domain_name)
-          server_def[:azure_domain_name] = locate_config_value(:azure_domain_name)
-          server_def[:azure_domain_user] = locate_config_value(:azure_domain_user)
-        elsif locate_config_value(:azure_domain_user)
+        if locate_config_value(:azure_domain_user)
           # extract domain name since it should be part of username
           case locate_config_value(:azure_domain_user)
           when /(\S+)\\(.+)/  # format - fully-qualified-DNS-domain\username
