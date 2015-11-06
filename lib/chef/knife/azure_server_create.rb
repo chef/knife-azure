@@ -960,9 +960,7 @@ class Chef
             server_def[:azure_domain_name] = $2
             server_def[:azure_domain_user] = $1
           else
-            # Format error.
-            ui.error("Format error for --azure-domain-user option. Supported format are user principal name (UPN) format (user@fully-qualified-DNS-domain) or the fully-qualified-DNS-domain\\username format")
-            exit 1
+            server_def[:azure_domain_user] = locate_config_value(:azure_domain_user)
           end
         end
         server_def[:azure_domain_passwd] = locate_config_value(:azure_domain_passwd)
