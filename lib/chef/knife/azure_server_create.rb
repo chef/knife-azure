@@ -1014,7 +1014,6 @@ class Chef
         pub_config[:bootstrap_options][:bootstrap_version] = locate_config_value(:bootstrap_version) if locate_config_value(:bootstrap_version)
         pub_config[:bootstrap_options][:node_ssl_verify_mode] = locate_config_value(:node_ssl_verify_mode) if locate_config_value(:node_ssl_verify_mode)
         pub_config[:bootstrap_options][:bootstrap_proxy] = locate_config_value(:bootstrap_proxy) if locate_config_value(:bootstrap_proxy)
-        pub_config[:bootstrap_options][:bootstrap_no_proxy] = locate_config_value(:bootstrap_no_proxy) if locate_config_value(:bootstrap_no_proxy)
         Base64.encode64(pub_config.to_json)
       end
 
