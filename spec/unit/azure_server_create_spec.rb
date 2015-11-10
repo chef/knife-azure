@@ -998,6 +998,14 @@ describe Chef::Knife::AzureServerCreate do
         expect(Base64).to receive(:encode64).with(public_config)
         @server_instance.get_chef_extension_public_params
       end
+
+      it "sets bootstrapVersion variable in public_config" do
+        @server_instance.config[:bootstrap_version] = '12.4.2'
+        public_config = "{\"client_rb\":\"chef_server_url \\t \\\"https://localhost:443\\\"\\nvalidation_client_name\\t\\\"chef-validator\\\"\",\"runlist\":\"\\\"getting-started\\\"\",\"autoUpdateClient\":\"false\",\"deleteChefConfig\":\"false\",\"custom_json_attr\":{},\"bootstrap_options\":{\"chef_server_url\":\"https://localhost:443\",\"validation_client_name\":\"chef-validator\",\"bootstrap_version\":\"12.4.2\"}}"
+
+        expect(Base64).to receive(:encode64).with(public_config)
+        @server_instance.get_chef_extension_public_params
+      end
     end
 
     context "get azure chef extension version" do
