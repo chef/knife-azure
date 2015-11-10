@@ -139,6 +139,11 @@ class Chef
         :description => "Verify the SSL cert for HTTPS requests to the Chef server API.",
         :boolean     => true
 
+      option :bootstrap_proxy,
+            :long => "--bootstrap-proxy PROXY_URL",
+            :description => "The proxy server for the node being bootstrapped",
+            :proc => Proc.new { |p| Chef::Config[:knife][:bootstrap_proxy] = p }
+
       option :bootstrap_no_proxy,
         :long => "--bootstrap-no-proxy [NO_PROXY_URL|NO_PROXY_IP]",
         :description => "Do not proxy locations for the node being bootstrapped; this option is used internally by Opscode",
@@ -1007,6 +1012,8 @@ class Chef
         pub_config[:bootstrap_options][:validation_client_name] = Chef::Config[:validation_client_name] if Chef::Config[:validation_client_name]
         pub_config[:bootstrap_options][:node_verify_api_cert] = locate_config_value(:node_verify_api_cert) ? "true" : "false" if config.key?(:node_verify_api_cert)
         pub_config[:bootstrap_options][:bootstrap_version] = locate_config_value(:bootstrap_version) if locate_config_value(:bootstrap_version)
+        pub_config[:bootstrap_options][:node_ssl_verify_mode] = locate_config_value(:node_ssl_verify_mode) if locate_config_value(:node_ssl_verify_mode)
+        pub_config[:bootstrap_options][:bootstrap_proxy] = locate_config_value(:bootstrap_proxy) if locate_config_value(:bootstrap_proxy)
         Base64.encode64(pub_config.to_json)
       end
 
