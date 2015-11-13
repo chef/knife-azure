@@ -354,7 +354,9 @@ class Chef
 
       option :azure_domain_user,
         :long => "--azure-domain-user DOMAIN_USER_NAME",
-        :description => "Optional. Specifies the username who has access to join the domain."
+        :description => 'Optional. Specifies the username who has access to join the domain.
+          Supported format: username(if domain is already specified in --azure-domain-name option),
+          fully-qualified-DNS-domain\username, user@fully-qualified-DNS-domain'
 
       option :azure_domain_passwd,
         :long => "--azure-domain-passwd DOMAIN_PASSWD",
@@ -954,12 +956,18 @@ class Chef
           # extract domain name since it should be part of username
           case locate_config_value(:azure_domain_user)
           when /(\S+)\\(.+)/  # format - fully-qualified-DNS-domain\username
-            server_def[:azure_domain_name] = $1
+            server_def[:azure_domain_name] = $1 if locate_config_value(:azure_domain_name).nil?
+            server_def[:azure_user_domain_name] = $1
             server_def[:azure_domain_user] = $2
           when /(.+)@(\S+)/  # format - user@fully-qualified-DNS-domain
-            server_def[:azure_domain_name] = $2
+            server_def[:azure_domain_name] = $2 if locate_config_value(:azure_domain_name).nil?
+            server_def[:azure_user_domain_name] = $2
             server_def[:azure_domain_user] = $1
           else
+            if locate_config_value(:azure_domain_name).nil?
+              ui.error('--azure-domain-name should be specified if --azure-domain-user is not in one of the following formats: fully-qualified-DNS-domain\username, user@fully-qualified-DNS-domain')
+              exit 1
+            end
             server_def[:azure_domain_user] = locate_config_value(:azure_domain_user)
           end
         end
