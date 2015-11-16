@@ -276,6 +276,16 @@ We have also added cloud-api support for Centos now, for this you just need to s
 
 `--delete-chef-extension-config` determines if Chef configuration files should be removed when Azure removes the Chef resource extension from the VM or not. This option is only valid for the 'cloud-api' bootstrap protocol. The default value is false. This is useful when `update` and `uninstall` commands are run for the extension on the VM created.
 
+#### Azure Server Create with Domain Join
+Following options are used for creating server with domain join
+
+    :azure_domain_name      Specifies the domain name to join. If the domains name is not specified, --azure-domain-user must specify the user principal name (UPN) format (user@fully-qualified-DNS-domain) or the fully-qualified-DNS-domain\\username format
+    :azure_domain_user      Specifies the username who has access to join the domain.Supported format: username(if domain is already specified in --azure-domain-name option),fully-qualified-DNS-domain\username, user@fully-qualified-DNS-domain
+    :azure_domain_passwd    Specifies the password for domain user who has access to join the domain
+
+    Command:
+    knife azure server create -I a699494373c04fc0bc8f2bb1389d6106__Windows-Server-2012-Datacenter-20151022-en.us-127GB.vhd --azure-vm-size Medium  -x 'azure' -P 'admin@123' --azure-domain-passwd 'admin@123' --azure-domain-user 'some.domain.com\user' --azure-domain-name 'some.domain.com' -c '~\chef-repo\.chef\knife.rb' --azure-network-name 'mynetwork' --azure-subnet-name 'subnet1' --azure-service-location 'West US'
+
 
 ### Azure Server Delete Subcommand
 Deletes an existing server in the currently configured Azure account. By
