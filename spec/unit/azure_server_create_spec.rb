@@ -96,7 +96,7 @@ describe Chef::Knife::AzureServerCreate do
     end
   end
 
-  describe "parameter test:" do
+  describe "parameter test:", :windows_only do
     context "compulsory parameters" do
       it "azure_subscription_id" do
         Chef::Config[:knife].delete(:azure_subscription_id)
