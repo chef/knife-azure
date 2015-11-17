@@ -884,22 +884,6 @@ class Chef
           :winrm_max_timeout => locate_config_value(:winrm_max_timeout).to_i * 60 * 1000, #converting minutes to milliseconds
           :winrm_max_memoryPerShell => locate_config_value(:winrm_max_memory_per_shell)
         }
-        # If user is connecting a new VM to an existing dns, then
-        # the VM needs to have a unique public port. Logic below takes care of this.
-        if is_image_windows? && locate_config_value(:bootstrap_protocol) == 'winrm'
-          if locate_config_value(:azure_connect_to_existing_dns)
-            port = locate_config_value(:winrm_port) || Random.rand(64000) + 1000
-          else
-            port = locate_config_value(:winrm_port) || '5985'
-          end
-        elsif locate_config_value(:bootstrap_protocol) == 'ssh'
-          if locate_config_value(:azure_connect_to_existing_dns)
-            port = locate_config_value(:ssh_port) || Random.rand(64000) + 1000
-          else
-            port = locate_config_value(:ssh_port) || '22'
-          end
-        end
-        server_def[:port] = port
 
         if locate_config_value(:bootstrap_protocol) == 'cloud-api'
           server_def[:chef_extension] = get_chef_extension_name
@@ -936,10 +920,16 @@ class Chef
             end
           end
         end
+
+        azure_connect_to_existing_dns = locate_config_value(:azure_connect_to_existing_dns)
         if is_image_windows?
           server_def[:os_type] = 'Windows'
           server_def[:admin_password] = locate_config_value(:winrm_password)
           server_def[:bootstrap_proto] = locate_config_value(:bootstrap_protocol)
+          if locate_config_value(:bootstrap_protocol) == 'winrm'
+              port = locate_config_value(:winrm_port) || '5985'
+              port = locate_config_value(:winrm_port) || Random.rand(64000) + 1000 if azure_connect_to_existing_dns
+          end
         else
           server_def[:os_type] = 'Linux'
           server_def[:bootstrap_proto] = (locate_config_value(:bootstrap_protocol) == 'winrm') ? 'ssh' : locate_config_value(:bootstrap_protocol)
@@ -947,7 +937,11 @@ class Chef
           server_def[:ssh_password] = locate_config_value(:ssh_password)
           server_def[:identity_file] = locate_config_value(:identity_file)
           server_def[:identity_file_passphrase] = locate_config_value(:identity_file_passphrase)
+          port = locate_config_value(:ssh_port) || '22'
+          port = locate_config_value(:ssh_port) || Random.rand(64000) + 1000 if azure_connect_to_existing_dns
         end
+
+        server_def[:port] = port
 
         server_def[:is_vm_image] = connection.images.is_vm_image(locate_config_value(:azure_source_image))
         server_def[:azure_domain_name] = locate_config_value(:azure_domain_name) if locate_config_value(:azure_domain_name)
@@ -1075,6 +1069,7 @@ class Chef
       private
 
       def ssh_override_winrm
+        puts "In ssh_override_winrm"
         # unchanged ssh_user and changed winrm_user, override ssh_user
         if locate_config_value(:ssh_user).eql?(options[:ssh_user][:default]) &&
             !locate_config_value(:winrm_user).eql?(options[:winrm_user][:default])
