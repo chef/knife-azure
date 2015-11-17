@@ -22,7 +22,7 @@ describe Chef::Knife::AzureAgCreate do
   it 'should fail missing args.' do
     expect(@server_instance.connection.ags).to_not receive(:create)
     expect(@server_instance.ui).to receive(:error).twice
-    expect { @server_instance.run }.to raise_error
+    expect { @server_instance.run }.to raise_error(SystemExit)
   end
 
   it 'should succeed.' do
