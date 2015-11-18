@@ -921,15 +921,10 @@ class Chef
           end
         end
 
-        azure_connect_to_existing_dns = locate_config_value(:azure_connect_to_existing_dns)
         if is_image_windows?
           server_def[:os_type] = 'Windows'
           server_def[:admin_password] = locate_config_value(:winrm_password)
           server_def[:bootstrap_proto] = locate_config_value(:bootstrap_protocol)
-          if locate_config_value(:bootstrap_protocol) == 'winrm'
-              port = locate_config_value(:winrm_port) || '5985'
-              port = locate_config_value(:winrm_port) || Random.rand(64000) + 1000 if azure_connect_to_existing_dns
-          end
         else
           server_def[:os_type] = 'Linux'
           server_def[:bootstrap_proto] = (locate_config_value(:bootstrap_protocol) == 'winrm') ? 'ssh' : locate_config_value(:bootstrap_protocol)
@@ -937,6 +932,13 @@ class Chef
           server_def[:ssh_password] = locate_config_value(:ssh_password)
           server_def[:identity_file] = locate_config_value(:identity_file)
           server_def[:identity_file_passphrase] = locate_config_value(:identity_file_passphrase)
+        end
+
+        azure_connect_to_existing_dns = locate_config_value(:azure_connect_to_existing_dns)
+        if is_image_windows? && server_def[:bootstrap_proto] == 'winrm'
+          port = locate_config_value(:winrm_port) || '5985'
+          port = locate_config_value(:winrm_port) || Random.rand(64000) + 1000 if azure_connect_to_existing_dns
+        elsif server_def[:bootstrap_proto] == 'ssh'
           port = locate_config_value(:ssh_port) || '22'
           port = locate_config_value(:ssh_port) || Random.rand(64000) + 1000 if azure_connect_to_existing_dns
         end
@@ -1069,7 +1071,6 @@ class Chef
       private
 
       def ssh_override_winrm
-        puts "In ssh_override_winrm"
         # unchanged ssh_user and changed winrm_user, override ssh_user
         if locate_config_value(:ssh_user).eql?(options[:ssh_user][:default]) &&
             !locate_config_value(:winrm_user).eql?(options[:winrm_user][:default])
