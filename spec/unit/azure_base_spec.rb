@@ -74,12 +74,12 @@ describe Chef::Knife::AzureBase do
 
 			it "- should raise error if invalid publish settings provided" do
 				Chef::Config[:knife][:azure_publish_settings_file] = get_publish_settings_file_path("azureInvalid.publishsettings")
-				expect {@dummy.validate!}.to raise_error
+				expect {@dummy.validate!}.to raise_error(SystemExit)
 			end
 
 			it "- should raise error if publish settings file does not exists" do
 				Chef::Config[:knife][:azure_publish_settings_file] = get_publish_settings_file_path("azureNotAvailable.publishsettings")
-				expect {@dummy.validate!}.to raise_error
+				expect {@dummy.validate!}.to raise_error(SystemExit)
 			end
 		end
 	end

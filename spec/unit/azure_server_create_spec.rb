@@ -55,96 +55,50 @@ describe Chef::Knife::AzureServerCreate do
       it "azure_subscription_id" do
         Chef::Config[:knife].delete(:azure_subscription_id)
         expect(@server_instance.ui).to receive(:error)
-        expect {@server_instance.run}.to raise_error
+        expect {@server_instance.run}.to raise_error(SystemExit)
       end
 
       it "azure_mgmt_cert" do
         Chef::Config[:knife].delete(:azure_mgmt_cert)
         expect(@server_instance.ui).to receive(:error)
-        expect {@server_instance.run}.to raise_error
+        expect {@server_instance.run}.to raise_error(SystemExit)
       end
 
       it "azure_api_host_name" do
         Chef::Config[:knife].delete(:azure_api_host_name)
         expect(@server_instance.ui).to receive(:error)
-        expect {@server_instance.run}.to raise_error
+        expect {@server_instance.run}.to raise_error(SystemExit)
       end
 
       it "azure_source_image" do
         Chef::Config[:knife].delete(:azure_source_image)
         expect(@server_instance.ui).to receive(:error)
-        expect {@server_instance.run}.to raise_error
+        expect {@server_instance.run}.to raise_error(SystemExit)
       end
 
       it "azure_vm_size" do
         Chef::Config[:knife].delete(:azure_vm_size)
         expect(@server_instance.ui).to receive(:error)
-        expect {@server_instance.run}.to raise_error
+        expect {@server_instance.run}.to raise_error(NoMethodError)
       end
 
       it "azure_service_location and azure_affinity_group not allowed" do
         Chef::Config[:knife][:azure_affinity_group] = 'test-affinity'
         expect(@server_instance.ui).to receive(:error)
-        expect {@server_instance.run}.to raise_error
+        expect {@server_instance.run}.to raise_error(SystemExit)
       end
 
       it "azure_service_location or azure_affinity_group must be provided" do
         Chef::Config[:knife].delete(:azure_service_location)
         expect(@server_instance.ui).to receive(:error)
-        expect {@server_instance.run}.to raise_error
-      end
-    end
-  end
-
-  describe "parameter test:" do
-    context "compulsory parameters" do
-      it "azure_subscription_id" do
-        Chef::Config[:knife].delete(:azure_subscription_id)
-        expect(@server_instance.ui).to receive(:error)
-        expect {@server_instance.run}.to raise_error
-      end
-
-      it "azure_mgmt_cert" do
-        Chef::Config[:knife].delete(:azure_mgmt_cert)
-        expect(@server_instance.ui).to receive(:error)
-        expect {@server_instance.run}.to raise_error
-      end
-
-      it "azure_api_host_name" do
-        Chef::Config[:knife].delete(:azure_api_host_name)
-        expect(@server_instance.ui).to receive(:error)
-        expect {@server_instance.run}.to raise_error
-      end
-
-      it "azure_source_image" do
-        Chef::Config[:knife].delete(:azure_source_image)
-        expect(@server_instance.ui).to receive(:error)
-        expect {@server_instance.run}.to raise_error
-      end
-
-      it "azure_vm_size" do
-        Chef::Config[:knife].delete(:azure_vm_size)
-        expect(@server_instance.ui).to receive(:error)
-        expect {@server_instance.run}.to raise_error
-      end
-
-      it "azure_service_location and azure_affinity_group not allowed" do
-        Chef::Config[:knife][:azure_affinity_group] = 'test-affinity'
-        expect(@server_instance.ui).to receive(:error)
-        expect {@server_instance.run}.to raise_error
-      end
-
-      it "azure_service_location or azure_affinity_group must be provided" do
-        Chef::Config[:knife].delete(:azure_service_location)
-        expect(@server_instance.ui).to receive(:error)
-        expect {@server_instance.run}.to raise_error
+        expect {@server_instance.run}.to raise_error(SystemExit)
       end
 
       context "when winrm authentication protocol invalid" do
         it "raise error" do
           Chef::Config[:knife][:winrm_authentication_protocol] = "invalide"
           expect(@server_instance.ui).to receive(:error)
-          expect {@server_instance.run}.to raise_error
+          expect {@server_instance.run}.to raise_error(SystemExit)
         end
       end
 
@@ -153,7 +107,7 @@ describe Chef::Knife::AzureServerCreate do
           Chef::Config[:knife][:winrm_transport] = 'ssl'
           Chef::Config[:knife][:winrm_ssl_verify_mode] = :verify_peer
           expect(@server_instance.ui).to receive(:error)
-          expect {@server_instance.run}.to raise_error
+          expect {@server_instance.run}.to raise_error(SystemExit)
         end
       end
     end
@@ -375,30 +329,6 @@ describe Chef::Knife::AzureServerCreate do
         Chef::Config[:knife][:azure_dns_name] = 'vmname'
         expect(@server_instance).to receive(:msg_server_summary)
         @server_instance.run
-      end
-
-      it 'create with automatic certificates creation if winrm-transport=ssl' do
-        pending "with automatic certificates creation if winrm-transport=ssl"
-        # set all params
-        Chef::Config[:knife][:azure_dns_name] = 'service001'
-        Chef::Config[:knife][:azure_vm_name] = 'vm002'
-        Chef::Config[:knife][:winrm_user] = 'opscodechef'
-        Chef::Config[:knife][:winrm_password] = 'Opscode123'
-        Chef::Config[:knife][:winrm_transport] = 'ssl'
-
-        #Temp directory for certificate path and \n for domain name and certificate passphrase
-        dir = Dir.mktmpdir
-        expect(@server_instance.connection.certificates).to receive(:create_ssl_certificate).with(Chef::Config[:knife][:azure_dns_name]).and_call_original
-        allow(STDIN).to receive(:gets).and_return(dir,"cloudapp.net","\n")
-        @server_instance.run
-
-        #check if certificates are created
-        expect(File).to exist(File.join(dir, "winrm.pfx"))
-        expect(File).to exist(File.join(dir, "winrm.b64"))
-        expect(File).to exist(File.join(dir, "winrm.pem"))
-
-        #Delete temp directory
-        FileUtils.remove_entry_secure dir
       end
 
       context "Domain join:" do

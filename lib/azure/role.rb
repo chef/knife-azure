@@ -305,6 +305,7 @@ class Azure
     end
 
     def setup(params)
+      azure_user_domain_name = params[:azure_user_domain_name] || params[:azure_domain_name]
       builder = Nokogiri::XML::Builder.new do |xml|
         xml.PersistentVMRole(
           'xmlns'=>'http://schemas.microsoft.com/windowsazure',
@@ -345,7 +346,7 @@ class Azure
                 if params[:azure_domain_name]
                   xml.DomainJoin {
                     xml.Credentials {
-                      xml.Domain params[:azure_domain_name]
+                      xml.Domain azure_user_domain_name
                      xml.Username params[:azure_domain_user]
                     xml.Password params[:azure_domain_passwd]
                    }
