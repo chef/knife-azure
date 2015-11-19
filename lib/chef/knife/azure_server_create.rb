@@ -1044,6 +1044,16 @@ class Chef
         else
           pri_config[:validation_key] = File.read(Chef::Config[:validation_key])
         end
+
+        # SSL cert bootstrap support
+        if locate_config_value(:cert_path)
+          if File.exist?(File.expand_path(locate_config_value(:cert_path)))
+            pri_config[:chef_server_crt] = File.read(locate_config_value(:cert_path))
+          else
+            ui.error('Specified SSL certificate does not exist.')
+            exit 1
+          end
+        end
         Base64.encode64(pri_config.to_json)
       end
 
