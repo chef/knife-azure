@@ -1032,6 +1032,37 @@ describe Chef::Knife::AzureServerCreate do
       end
     end
 
+    context 'when SSL certificate file option is passed but file does not exist physically' do
+      before do
+        allow_any_instance_of(Chef::Knife::Bootstrap::ClientBuilder).to receive(:run)
+        allow_any_instance_of(Chef::Knife::Bootstrap::ClientBuilder).to receive(:client_path)
+        allow(File).to receive(:exist?).and_return(false)
+        allow(File).to receive(:read).and_return('foo')
+        @server_instance.config[:cert_path] = '~/my_cert.crt'
+      end
+
+      it 'raises an error and exits' do
+        expect(@server_instance.ui).to receive(:error).with('Specified SSL certificate does not exist.')
+        @server_instance.get_chef_extension_private_params
+      end
+    end
+
+    context 'when SSL certificate file option is passed and file exist physically' do
+      before do
+        allow_any_instance_of(Chef::Knife::Bootstrap::ClientBuilder).to receive(:run)
+        allow_any_instance_of(Chef::Knife::Bootstrap::ClientBuilder).to receive(:client_path)
+        allow(File).to receive(:exist?).and_return(true)
+        allow(File).to receive(:read).and_return('foo')
+        @server_instance.config[:cert_path] = '~/my_cert.crt'
+      end
+
+      it "copies SSL certificate contents into chef_server_crt attribute of extension's private params" do
+        pri_config = { validation_key: 'foo', chef_server_crt: 'foo' }
+        expect(Base64).to receive(:encode64).with(pri_config.to_json)
+        @server_instance.get_chef_extension_private_params
+      end
+    end
+
     context "when validation key is not present, using chef 11", :chef_lt_12_only do
       before do
         allow(File).to receive(:exist?).and_return(false)
