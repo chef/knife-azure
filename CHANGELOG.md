@@ -1,5 +1,17 @@
 # knife-azure Change Log
 
+## 1.6.0.rc.0 (2015/11/23)
+
+   * [knife-azure #249](https://github.com/chef/knife-azure/issues/249) params[:port] doesn't default correctly to 22 when bootstrapping over ssh, causing an xml error
+   * [knife-azure #261](https://github.com/chef/knife-azure/pull/261) Added SSL certificate bootstrap support for cloud-api
+   * [knife-azure #254](https://github.com/chef/knife-azure/issues/254) Unable to join servers to Active Directory due to username parsing ambiguity on command-line
+   * [knife-azure #253](https://github.com/chef/knife-azure/pull/253) Configure node\_ssl\_verify\_mode during cloud-api extension bootstrap
+   * [knife-azure #246](https://github.com/chef/knife-azure/pull/246) Support for chef-client version specification during cloud-api bootstrap
+   * [knife-azure #255](https://github.com/chef/knife-azure/pull/255) Support for specifying a custom client.rb during cloud-api bootstrap
+   * [knife-azure #247](https://github.com/chef/knife-azure/pull/247) README: recommend installing chef-dk rather than chef-client to use knife-azure
+   * [knife-azure #244](https://github.com/chef/knife-azure/pull/244) Correctly configure subnet for vnet in server create
+   * [knife-azure #245](https://github.com/chef/knife-azure/pull/245) README: Document CentOS support for cloud-api extension bootstrap
+
 ## Last release: 1.5.2 (2015/10/01)
 
 * [knife-azure #218](https://github.com/chef/knife-azure/pull/218) Fixed azure\_availability\_set related issue
@@ -13,7 +25,7 @@
 * [knife-azure #204](https://github.com/chef/knife-azure/pull/204) Properly configure WinRM for bootstrapping; Fixes [#203](https://github.com/chef/knife-azure/pull/203)
 * [knife-azure #197](https://github.com/chef/knife-azure/pull/197) Add custom json attributes to chef extension
 * [knife-azure #211](https://github.com/chef/knife-azure/pull/211) Allow user to specify chef extension version by using knife_rb
-* [knife-azure #198](https://github.com/chef/knife-azure/pull/198) Adding winrm_ssl_verify_mode to bootstrap config
+* [knife-azure #198](https://github.com/chef/knife-azure/pull/198) Adding winrm\_ssl\_verify_mode to bootstrap config
 * [knife-azure #196](https://github.com/chef/knife-azure/pull/196) Update Rubies; remove Chef-unsupported versions from matrix
 * [knife-azure #195](https://github.com/chef/knife-azure/pull/195) Showing thumbprint with Server show command
 * [knife-azure #188](https://github.com/chef/knife-azure/pull/188) Winrm port should not be configured if --bootstrap-protocol=cloud-api
