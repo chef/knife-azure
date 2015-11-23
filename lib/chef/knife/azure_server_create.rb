@@ -364,7 +364,7 @@ class Chef
 
       option :azure_extension_client_config,
         :long => "--azure-extension-client-config CLIENT_PATH",
-        :description => "Optional. Path to client.rb file that gets copied over the azure-chef-extension. "
+        :description => "Optional. Path to a client.rb file for use by the bootstrapped node. Only honored when --bootstrap-protocol is set to `cloud-api`."
 
       def strip_non_ascii(string)
         string.gsub(/[^0-9a-z ]/i, '')
