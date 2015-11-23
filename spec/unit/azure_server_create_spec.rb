@@ -445,14 +445,14 @@ describe Chef::Knife::AzureServerCreate do
     context "#cleanup_and_exit" do
       it "service leak cleanup" do
         expect(@server_instance.ui).to receive(:warn).with("Cleaning up resources...")
-        expect {@server_instance.cleanup_and_exit("hosted_srvc", "storage_srvc")}.to raise_error
+        expect {@server_instance.cleanup_and_exit("hosted_srvc", "storage_srvc")}.to raise_error(NoMethodError)
       end
 
       it "service leak cleanup with nil params" do
         expect(@server_instance.ui).to receive(:warn).with("Cleaning up resources...")
         expect(@server_instance.connection.hosts).to_not receive(:delete)
         expect(@server_instance.connection.storageaccounts).to_not receive(:delete)
-        expect {@server_instance.cleanup_and_exit(nil, nil)}.to raise_error
+        expect {@server_instance.cleanup_and_exit(nil, nil)}.to raise_error(SystemExit)
       end
 
       it "service leak cleanup with valid params" do
@@ -464,7 +464,7 @@ describe Chef::Knife::AzureServerCreate do
         expect(@server_instance.connection.hosts).to receive(:delete).with("hosted_srvc").and_return(ret_val)
         expect(@server_instance.connection.storageaccounts).to receive(:delete).with("storage_srvc").and_return(ret_val)
 
-        expect {@server_instance.cleanup_and_exit("hosted_srvc", "storage_srvc")}.to raise_error
+        expect {@server_instance.cleanup_and_exit("hosted_srvc", "storage_srvc")}.to raise_error(SystemExit)
       end
 
       it "display proper warn messages on cleanup fails" do
@@ -477,7 +477,7 @@ describe Chef::Knife::AzureServerCreate do
         expect(@server_instance.connection.hosts).to receive(:delete).with("hosted_srvc").and_return(ret_val)
         expect(@server_instance.connection.storageaccounts).to receive(:delete).with("storage_srvc").and_return(ret_val)
 
-        expect {@server_instance.cleanup_and_exit("hosted_srvc", "storage_srvc")}.to raise_error
+        expect {@server_instance.cleanup_and_exit("hosted_srvc", "storage_srvc")}.to raise_error(SystemExit)
       end
     end
 
@@ -490,7 +490,7 @@ describe Chef::Knife::AzureServerCreate do
         Chef::Config[:knife][:azure_dns_name] = 'does-not-exist'
         Chef::Config[:knife][:ssh_user] = 'azureuser'
         Chef::Config[:knife][:ssh_password] = 'Jetstream123!'
-        expect {@server_instance.run}.to raise_error
+        expect {@server_instance.run}.to raise_error(NoMethodError)
       end
 
       it "port should be unique number when winrm-port not specified for winrm", :chef_lt_12_only do
@@ -644,13 +644,13 @@ describe Chef::Knife::AzureServerCreate do
     it "winrm_user cannot be 'administrator'" do
       expect(@server_instance).to receive(:is_image_windows?).twice.and_return(true)
       Chef::Config[:knife][:winrm_user] = 'administrator'
-      expect {@server_instance.create_server_def}.to raise_error
+      expect {@server_instance.create_server_def}.to raise_error(SystemExit)
     end
 
     it "winrm_user cannot be 'admin*'" do
       expect(@server_instance).to receive(:is_image_windows?).twice.and_return(true)
       Chef::Config[:knife][:winrm_user] = 'Admin12'
-      expect {@server_instance.create_server_def}.to raise_error
+      expect {@server_instance.create_server_def}.to raise_error(SystemExit)
     end
 
     context "bootstrap node" do
@@ -729,15 +729,15 @@ describe Chef::Knife::AzureServerCreate do
         Chef::Config[:knife][:forward_agent] = true
       end
 
-      it "successful bootstrap" do
-        pending "OC-8384-support ssh for windows vm's in knife-azure"
-        expect(@server_instance).to receive(:is_image_windows?).exactly(3).times.and_return(true)
-        @bootstrap = Chef::Knife::BootstrapWindowsSsh.new
-        allow(Chef::Knife::BootstrapWindowsSsh).to receive(:new).and_return(@bootstrap)
-        expect(@server_instance).to receive(:wait_until_virtual_machine_ready).exactly(1).times.and_return(true)
-        expect(@bootstrap).to receive(:run)
-        @server_instance.run
-      end
+      # it "successful bootstrap" do
+      #   pending "OC-8384-support ssh for windows vm's in knife-azure"
+      #   expect(@server_instance).to receive(:is_image_windows?).exactly(3).times.and_return(true)
+      #   @bootstrap = Chef::Knife::BootstrapWindowsSsh.new
+      #   allow(Chef::Knife::BootstrapWindowsSsh).to receive(:new).and_return(@bootstrap)
+      #   expect(@server_instance).to receive(:wait_until_virtual_machine_ready).exactly(1).times.and_return(true)
+      #   expect(@bootstrap).to receive(:run)
+      #   @server_instance.run
+      # end
 
       it "sets 'forward_agent' correctly" do
         expect(@server_instance.send(:locate_config_value,:forward_agent)).to be(true)
@@ -875,7 +875,7 @@ describe Chef::Knife::AzureServerCreate do
         @server_instance.config[:auto_update_client] = true
         @server_instance.config[:delete_chef_extension_config] = true
         allow(@server_instance.ui).to receive(:error)
-        expect {@server_instance.run}.to raise_error
+        expect {@server_instance.run}.to raise_error(SystemExit)
       end
     end
   end
