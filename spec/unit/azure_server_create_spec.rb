@@ -502,7 +502,7 @@ describe Chef::Knife::AzureServerCreate do
         Chef::Config[:knife][:winrm_password] = 'Jetstream123!'
         expect(@server_instance).to receive(:is_image_windows?).exactly(3).times.and_return(true)
         @server_params = @server_instance.create_server_def
-        expect(@server_params[:port]).not_to be == '5985'
+        expect(@server_params[:port]).to be == '5985'
       end
 
       it "port should be winrm-port value specified in the option" do
@@ -1043,7 +1043,7 @@ describe Chef::Knife::AzureServerCreate do
 
       it 'raises an error and exits' do
         expect(@server_instance.ui).to receive(:error).with('Specified SSL certificate does not exist.')
-        @server_instance.get_chef_extension_private_params
+        expect { @server_instance.get_chef_extension_private_params }.to raise_error(SystemExit)
       end
     end
 
