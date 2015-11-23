@@ -729,16 +729,6 @@ describe Chef::Knife::AzureServerCreate do
         Chef::Config[:knife][:forward_agent] = true
       end
 
-      # it "successful bootstrap" do
-      #   pending "OC-8384-support ssh for windows vm's in knife-azure"
-      #   expect(@server_instance).to receive(:is_image_windows?).exactly(3).times.and_return(true)
-      #   @bootstrap = Chef::Knife::BootstrapWindowsSsh.new
-      #   allow(Chef::Knife::BootstrapWindowsSsh).to receive(:new).and_return(@bootstrap)
-      #   expect(@server_instance).to receive(:wait_until_virtual_machine_ready).exactly(1).times.and_return(true)
-      #   expect(@bootstrap).to receive(:run)
-      #   @server_instance.run
-      # end
-
       it "sets 'forward_agent' correctly" do
         expect(@server_instance.send(:locate_config_value,:forward_agent)).to be(true)
       end
