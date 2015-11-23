@@ -642,13 +642,13 @@ describe Chef::Knife::AzureServerCreate do
     end
 
     it "winrm_user cannot be 'administrator'" do
-      expect(@server_instance).to receive(:is_image_windows?).twice.and_return(true)
+      expect(@server_instance).to receive(:is_image_windows?).and_return(true)
       Chef::Config[:knife][:winrm_user] = 'administrator'
       expect {@server_instance.create_server_def}.to raise_error
     end
 
     it "winrm_user cannot be 'admin*'" do
-      expect(@server_instance).to receive(:is_image_windows?).twice.and_return(true)
+      expect(@server_instance).to receive(:is_image_windows?).and_return(true)
       Chef::Config[:knife][:winrm_user] = 'Admin12'
       expect {@server_instance.create_server_def}.to raise_error
     end
