@@ -445,14 +445,14 @@ describe Chef::Knife::AzureServerCreate do
     context "#cleanup_and_exit" do
       it "service leak cleanup" do
         expect(@server_instance.ui).to receive(:warn).with("Cleaning up resources...")
-        expect {@server_instance.cleanup_and_exit("hosted_srvc", "storage_srvc")}.to raise_error
+        expect {@server_instance.cleanup_and_exit("hosted_srvc", "storage_srvc")}.to raise_error(NoMethodError)
       end
 
       it "service leak cleanup with nil params" do
         expect(@server_instance.ui).to receive(:warn).with("Cleaning up resources...")
         expect(@server_instance.connection.hosts).to_not receive(:delete)
         expect(@server_instance.connection.storageaccounts).to_not receive(:delete)
-        expect {@server_instance.cleanup_and_exit(nil, nil)}.to raise_error
+        expect {@server_instance.cleanup_and_exit(nil, nil)}.to raise_error(SystemExit)
       end
 
       it "service leak cleanup with valid params" do
@@ -464,7 +464,7 @@ describe Chef::Knife::AzureServerCreate do
         expect(@server_instance.connection.hosts).to receive(:delete).with("hosted_srvc").and_return(ret_val)
         expect(@server_instance.connection.storageaccounts).to receive(:delete).with("storage_srvc").and_return(ret_val)
 
-        expect {@server_instance.cleanup_and_exit("hosted_srvc", "storage_srvc")}.to raise_error
+        expect {@server_instance.cleanup_and_exit("hosted_srvc", "storage_srvc")}.to raise_error(SystemExit)
       end
 
       it "display proper warn messages on cleanup fails" do
@@ -477,7 +477,7 @@ describe Chef::Knife::AzureServerCreate do
         expect(@server_instance.connection.hosts).to receive(:delete).with("hosted_srvc").and_return(ret_val)
         expect(@server_instance.connection.storageaccounts).to receive(:delete).with("storage_srvc").and_return(ret_val)
 
-        expect {@server_instance.cleanup_and_exit("hosted_srvc", "storage_srvc")}.to raise_error
+        expect {@server_instance.cleanup_and_exit("hosted_srvc", "storage_srvc")}.to raise_error(SystemExit)
       end
     end
 
@@ -490,7 +490,7 @@ describe Chef::Knife::AzureServerCreate do
         Chef::Config[:knife][:azure_dns_name] = 'does-not-exist'
         Chef::Config[:knife][:ssh_user] = 'azureuser'
         Chef::Config[:knife][:ssh_password] = 'Jetstream123!'
-        expect {@server_instance.run}.to raise_error
+        expect {@server_instance.run}.to raise_error(NoMethodError)
       end
 
       it "port should be unique number when winrm-port not specified for winrm", :chef_lt_12_only do
@@ -502,7 +502,7 @@ describe Chef::Knife::AzureServerCreate do
         Chef::Config[:knife][:winrm_password] = 'Jetstream123!'
         expect(@server_instance).to receive(:is_image_windows?).exactly(3).times.and_return(true)
         @server_params = @server_instance.create_server_def
-        expect(@server_params[:port]).not_to be == '5985'
+        expect(@server_params[:port]).to be == '5985'
       end
 
       it "port should be winrm-port value specified in the option" do
@@ -644,13 +644,13 @@ describe Chef::Knife::AzureServerCreate do
     it "winrm_user cannot be 'administrator'" do
       expect(@server_instance).to receive(:is_image_windows?).and_return(true)
       Chef::Config[:knife][:winrm_user] = 'administrator'
-      expect {@server_instance.create_server_def}.to raise_error
+      expect {@server_instance.create_server_def}.to raise_error(SystemExit)
     end
 
     it "winrm_user cannot be 'admin*'" do
       expect(@server_instance).to receive(:is_image_windows?).and_return(true)
       Chef::Config[:knife][:winrm_user] = 'Admin12'
-      expect {@server_instance.create_server_def}.to raise_error
+      expect {@server_instance.create_server_def}.to raise_error(SystemExit)
     end
 
     context "bootstrap node" do
@@ -727,16 +727,6 @@ describe Chef::Knife::AzureServerCreate do
     context "windows instance:" do
       before do
         Chef::Config[:knife][:forward_agent] = true
-      end
-
-      it "successful bootstrap" do
-        pending "OC-8384-support ssh for windows vm's in knife-azure"
-        expect(@server_instance).to receive(:is_image_windows?).exactly(3).times.and_return(true)
-        @bootstrap = Chef::Knife::BootstrapWindowsSsh.new
-        allow(Chef::Knife::BootstrapWindowsSsh).to receive(:new).and_return(@bootstrap)
-        expect(@server_instance).to receive(:wait_until_virtual_machine_ready).exactly(1).times.and_return(true)
-        expect(@bootstrap).to receive(:run)
-        @server_instance.run
       end
 
       it "sets 'forward_agent' correctly" do
@@ -875,7 +865,7 @@ describe Chef::Knife::AzureServerCreate do
         @server_instance.config[:auto_update_client] = true
         @server_instance.config[:delete_chef_extension_config] = true
         allow(@server_instance.ui).to receive(:error)
-        expect {@server_instance.run}.to raise_error
+        expect {@server_instance.run}.to raise_error(SystemExit)
       end
     end
   end
@@ -1027,6 +1017,37 @@ describe Chef::Knife::AzureServerCreate do
         allow_any_instance_of(Chef::Knife::Bootstrap::ClientBuilder).to receive(:client_path)
         allow(File).to receive(:read).and_return('foo')
         pri_config = { client_pem: 'foo' }
+        expect(Base64).to receive(:encode64).with(pri_config.to_json)
+        @server_instance.get_chef_extension_private_params
+      end
+    end
+
+    context 'when SSL certificate file option is passed but file does not exist physically' do
+      before do
+        allow_any_instance_of(Chef::Knife::Bootstrap::ClientBuilder).to receive(:run)
+        allow_any_instance_of(Chef::Knife::Bootstrap::ClientBuilder).to receive(:client_path)
+        allow(File).to receive(:exist?).and_return(false)
+        allow(File).to receive(:read).and_return('foo')
+        @server_instance.config[:cert_path] = '~/my_cert.crt'
+      end
+
+      it 'raises an error and exits' do
+        expect(@server_instance.ui).to receive(:error).with('Specified SSL certificate does not exist.')
+        expect { @server_instance.get_chef_extension_private_params }.to raise_error(SystemExit)
+      end
+    end
+
+    context 'when SSL certificate file option is passed and file exist physically' do
+      before do
+        allow_any_instance_of(Chef::Knife::Bootstrap::ClientBuilder).to receive(:run)
+        allow_any_instance_of(Chef::Knife::Bootstrap::ClientBuilder).to receive(:client_path)
+        allow(File).to receive(:exist?).and_return(true)
+        allow(File).to receive(:read).and_return('foo')
+        @server_instance.config[:cert_path] = '~/my_cert.crt'
+      end
+
+      it "copies SSL certificate contents into chef_server_crt attribute of extension's private params" do
+        pri_config = { validation_key: 'foo', chef_server_crt: 'foo' }
         expect(Base64).to receive(:encode64).with(pri_config.to_json)
         @server_instance.get_chef_extension_private_params
       end
