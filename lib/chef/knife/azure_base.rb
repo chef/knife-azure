@@ -123,6 +123,10 @@ class Chef
         end
         if(locate_config_value(:azure_publish_settings_file) != nil)
           parse_publish_settings_file(locate_config_value(:azure_publish_settings_file))
+        elsif RUBY_PLATFORM =~ /mswin32/
+          if File.exist?('~/.azure/azureProfile.json')
+            parse_azure_profile
+          end
         end
         keys.each do |k|
           pretty_key = k.to_s.gsub(/_/, ' ').gsub(/\w+/){ |w| (w =~ /(ssh)|(aws)/i) ? w.upcase  : w.capitalize }
@@ -160,6 +164,36 @@ class Chef
           ui.error("Incorrect publish settings file - " + filename)
           exit 1
         end
+      end
+
+      def parse_azure_profile
+        azure_profile = File.read('~/.azure/azureProfile.json')
+        azure_profile = JSON.parse(azure_profile)
+        default_subscription = get_default_subscription(azure_profile)
+        Chef::Config[:knife][:azure_subscription_id] = default_subscription['id']
+        mgmt_key = default_subscription['managementCertificate']['key']
+        mgmt_cert = default_subscription['managementCertificate']['cert']
+        Chef::Config[:knife][:azure_mgmt_cert] = mgmt_cert.to_pem + mgmt_key.to_pem
+      end
+
+      def get_default_subscription(azure_profile)
+        last_subscription = nil
+        azure_profile['subscriptions'].each do |subscription|
+          if subscription['isDefault']
+            Chef::Log.info("Default subscription \'#{subscription['name']}\'' selected.")
+            return subscription
+          end
+
+          last_subscription ||= subscription
+        end
+
+        if last_subscription
+          Chef::Log.info("Last subscription \'#{subscription['name']}\' selected as default.")
+        else
+          Chef::Log.info('No subscriptions found.')
+          exit 1
+        end
+        last_subscription
       end
 
       def find_file(name)
