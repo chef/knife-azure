@@ -123,9 +123,10 @@ class Chef
         end
         if(locate_config_value(:azure_publish_settings_file) != nil)
           parse_publish_settings_file(locate_config_value(:azure_publish_settings_file))
-        elsif RUBY_PLATFORM =~ /mswin32/
-          if File.exist?('~/.azure/azureProfile.json')
-            parse_azure_profile
+        else
+          azureprofile_file = '~/.azure/azureProfile.json'
+          if File.exist?(File.expand_path(azureprofile_file))
+            parse_azure_profile(azureprofile_file)
           end
         end
         keys.each do |k|
@@ -166,34 +167,42 @@ class Chef
         end
       end
 
-      def parse_azure_profile
-        azure_profile = File.read('~/.azure/azureProfile.json')
-        azure_profile = JSON.parse(azure_profile)
-        default_subscription = get_default_subscription(azure_profile)
-        Chef::Config[:knife][:azure_subscription_id] = default_subscription['id']
-        mgmt_key = default_subscription['managementCertificate']['key']
-        mgmt_cert = default_subscription['managementCertificate']['cert']
-        Chef::Config[:knife][:azure_mgmt_cert] = mgmt_cert.to_pem + mgmt_key.to_pem
+      def parse_azure_profile(filename)
+        require 'openssl'
+        require 'uri'
+        begin
+          azure_profile = File.read(File.expand_path(filename))
+          azure_profile = JSON.parse(azure_profile)
+          default_subscription = get_default_subscription(azure_profile)
+          Chef::Config[:knife][:azure_subscription_id] = default_subscription['id']
+          mgmt_key = OpenSSL::PKey::RSA.new(default_subscription['managementCertificate']['key']).to_pem
+          mgmt_cert = OpenSSL::X509::Certificate.new(default_subscription['managementCertificate']['cert']).to_pem
+          Chef::Config[:knife][:azure_mgmt_cert] = mgmt_key + mgmt_cert
+          Chef::Config[:knife][:azure_api_host_name] = URI(default_subscription['managementEndpointUrl']).host
+        rescue
+          ui.error("Incorrect azure profile file - " + filename)
+          exit 1
+        end
       end
 
       def get_default_subscription(azure_profile)
-        last_subscription = nil
+        first_subscription_as_default = nil
         azure_profile['subscriptions'].each do |subscription|
           if subscription['isDefault']
             Chef::Log.info("Default subscription \'#{subscription['name']}\'' selected.")
             return subscription
           end
 
-          last_subscription ||= subscription
+          first_subscription_as_default ||= subscription
         end
 
-        if last_subscription
-          Chef::Log.info("Last subscription \'#{subscription['name']}\' selected as default.")
+        if first_subscription_as_default
+          Chef::Log.info("First subscription \'#{subscription['name']}\' selected as default.")
         else
           Chef::Log.info('No subscriptions found.')
           exit 1
         end
-        last_subscription
+        first_subscription_as_default
       end
 
       def find_file(name)
