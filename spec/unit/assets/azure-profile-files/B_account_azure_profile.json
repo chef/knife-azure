@@ -1,0 +1,17 @@
+{
+    "environments": [],
+    "subscriptions": [
+        {
+            "id": "B_subscription_id",
+            "name": "B_subscription_name",
+            "managementCertificate": {
+                "key": "-----BEGIN RSA PRIVATE KEY-----\nMIIEogIBAAKCAQEAsDwzIKrmhn5Ip8FlSWYh1SyXEWjF6bdqJyMTxRLoEJ9fxgXG\r\nWpUySs0ASKSZRvYJlo3cfVaYmDEAQhuvhvnuJxOOL+8fboZ/Tx+OBc7VkLsW2Y4d\r\nqyNYF5rEVrIIGdArTBTuUB/ZjCMCTu+YNhGpEqmA69bLWt8TjkjJa2BnjI0M8xmU\r\nrfeet3wiXp1fQCzLeB1cGfmWkkp+bWkX77sHUUIRfv0RMkoDKiI5m5mkirZf1xmW\r\n5g19RYVY2PJ0dYs3dPJEgbVGep3NFVCw9Xd6lPVtjJXbrTOOZgXHDy4ys/uiTrI7\r\nQlS57WkNatSfnxuPtf0VmSgNKKgFrkceoIpeXQIDAQABAoIBABKyKDhgePkun3WQ\r\nejbJq3AqfVI++7P6HbxOJ9RB17WfurDOvwawCjhOPCf4sjwJcOX0Yb44OBL5K85X\r\nkozuqbmihPSH2R1IDmxt7AqosRZcCqYEwhf8NWW3qPmLhHl8kINPOyLr5g/MTPvj\r\nxhGCWR3eNouOa19WCASRqzCFdya9SN+TabbR5o7Zs5Pk0zLv2WBJ0yfduk3K4n2t\r\n50SNxM2NChcsMjhAVc0SVSOgHENPn0rhhyuqlzbishBQcPcQqPtGZmjxX3OmOOwr\r\n+MLw9Dr9xQfoT/ahR/TsGr4tWPUNByEh812Aa4In0paYWVvJp3BzM0ABLNYGSYTi\r\nBsg6jl8CgYEA1bG3vByen0qpgFb80Xsq2p4qT5U7vRDBqDX6oziGXMy7OXpzjSFw\r\nG5kxIuIxZL1o/T4L10ODsYFMG42YHGlCNT8la/0WPiNLQiq7wq24ASpHh/dNnozz\r\nTIb/v4dhemKDJW+TEehGpTm9eoD4bQkZm73rixpICEPOpO2YCrjAnPMCgYEA0yAC\r\n9xo5/6xwvwXmb+qQQxF38GFJeD3nwGp88nGJ238jYmJiUtZzWvevx0irbwvrzg+I\r\nZfyAX8VCBe7k+/Us22clIuvW24deKDiElaeV+GpUWLw1QxyPU+yul1gTcuCFm6E9\r\nmCrNg62ssB2mzvYAERdAQoVXCAjpOleAkP8Qq28CgYACEuNxk+WGLjdO44k4jzVv\r\nQbGvbAdUYmE+vKdeBiJnrCT0/dc5O2XXHrl3WTKZg60NKBj9Uc5pXpPagJlFTVAz\r\nLBW04pPgrn8AeWGxFfZ/LGXdT+0U6NFDoNvChBHSGjqjll2bAuIMoG7STYYbqMby\r\n1/j9NJgWXHIY76VWFUzpOQKBgGkHhNIfBvltdM1jBwdoHopu90brbxxVV6R+lVgb\r\nKaS7dAPuw9FIBC0eCSFPwpFE0fM6APYTjl2WiUjgVqQNjVo8ztm3j7S4fBvwOe0l\r\naNMjOoDGaIzReXAbz6NU2qAMmAsbRMQdjw3R6ZXXunM9KD1YXsx4/xntLPGsNDZt\r\n3YIbAoGAQd5E0fDnxmoAJAS5945DPXsY4w2J6SUtz1aC2ZgmYgpxdSol0TUa9Qdg\r\nIXUnTQXFPIJpSBso+hsGy0KGqnM4jgTAFFWGdJBTSBW0E5r4yeczIfOCTozQNCnF\r\noUQDlVyVuXMLHNIVKMp/XjIcDFWjS4bygNNvzkCLyyAQo/YABcM=\r\n-----END RSA PRIVATE KEY-----\n",
+                "cert": "-----BEGIN CERTIFICATE-----\nMIICxDCCAaygAwIBAgIQbDgeYVSQ/YRJu8RLGFwyGzANBgkqhkiG9w0BAQUFADAe\r\nMRwwGgYDVQQDExNXaW5kb3dzIEF6dXJlIFRvb2xzMB4XDTEzMDUxNDA4NDM0NloX\r\nDTE0MDUxNDA4NDM0NlowHjEcMBoGA1UEAxMTV2luZG93cyBBenVyZSBUb29sczCC\r\nASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBALA8MyCq5oZ+SKfBZUlmIdUs\r\nlxFoxem3aicjE8US6BCfX8YFxlqVMkrNAEikmUb2CZaN3H1WmJgxAEIbr4b57icT\r\nji/vH26Gf08fjgXO1ZC7FtmOHasjWBeaxFayCBnQK0wU7lAf2YwjAk7vmDYRqRKp\r\ngOvWy1rfE45IyWtgZ4yNDPMZlK33nrd8Il6dX0Asy3gdXBn5lpJKfm1pF++7B1FC\r\nEX79ETJKAyoiOZuZpIq2X9cZluYNfUWFWNjydHWLN3TyRIG1RnqdzRVQsPV3epT1\r\nbYyV260zjmYFxw8uMrP7ok6yO0JUue1pDWrUn58bj7X9FZkoDSioBa5HHqCKXl0C\r\nAwEAATANBgkqhkiG9w0BAQUFAAOCAQEAOI7zWit8fWx/0VCKm4IhpXoTgUSaiSZe\r\nOqC9zvNdVnYc5HejGGPwMirUlIWN8DgY33gW32DV7oIMVKQZ6YIzv9XEBSsmPUum\r\no6ykAkWRig/hHiJOmjbUG8wwwS+3yjyF8C8VSmdZek4lIIdVY9HvSJyrfAGrE99U\r\nOpnOYLotN8mDRTdNBgvs0kie5S7nIaOnpQYFLLAPmDaCCsndzIu6kxIxKac+cSQ0\r\noyqN60erKRvCHiz2OGOJ73FQX8e4yR5HXMxDwqte3BzY/Hr8IHx31Q84De+OUnVe\r\nI0XWVEP+J/OLXbx8mT09klcPP7lq74OK66tm2LJQhJzrBEpZm8COxQ==\n-----END CERTIFICATE-----\n"
+            },
+            "isDefault": true,
+            "registeredProviders": [],
+            "environmentName": "B_env_name",
+            "managementEndpointUrl": "https://B.endpoint.net/"
+        }
+    ]
+}

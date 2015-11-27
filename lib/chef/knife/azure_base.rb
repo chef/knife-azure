@@ -124,7 +124,7 @@ class Chef
         if(locate_config_value(:azure_publish_settings_file) != nil)
           parse_publish_settings_file(locate_config_value(:azure_publish_settings_file))
         else
-          azureprofile_file = '~/.azure/azureProfile.json'
+          azureprofile_file = get_azure_profile_file_path
           if File.exist?(File.expand_path(azureprofile_file))
             parse_azure_profile(azureprofile_file)
           end
@@ -165,6 +165,10 @@ class Chef
           ui.error("Incorrect publish settings file - " + filename)
           exit 1
         end
+      end
+
+      def get_azure_profile_file_path
+        '~/.azure/azureProfile.json'
       end
 
       def parse_azure_profile(filename)
