@@ -1,5 +1,9 @@
 # Knife Azure
 
+[![Gem Version](https://badge.fury.io/rb/knife-azure.svg)](https://rubygems.org/gems/knife-azure)
+[![Build Status](https://travis-ci.org/chef/knife-azure.svg?branch=master)](https://travis-ci.org/chef/knife-azure)
+
+
 ## Description
 A [knife] (http://docs.chef.io/knife.html) plugin to create,
 delete, and enumerate
@@ -14,7 +18,9 @@ via:
 
 This plugin is distributed as a Ruby Gem. To install it, run:
 
-    chef gem install knife-azure
+```bash
+chef gem install knife-azure
+```
 
 Depending on your system's configuration, you may need to run this command
 with root/administrator privileges.
