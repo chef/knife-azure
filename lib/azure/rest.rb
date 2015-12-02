@@ -35,8 +35,9 @@ module AzureAPI
                     params = '',
                     services = true)
       svc_str = services ? '/services' : ''
-      request_url =
-        "https://#{@host_name}/#{@subscription_id}#{svc_str}/#{service_name}"
+      parsed_uri = URI.parse("#{@host_name}/#{@subscription_id}#{svc_str}/#{service_name}")
+      scheme = !parsed_uri.scheme ? "https://" : ""
+      request_url = "#{scheme}#{@host_name}/#{@subscription_id}#{svc_str}/#{service_name}"
       print '.'
       response = http_query(request_url, verb, body, params)
       if response.code.to_i == 307
