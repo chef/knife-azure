@@ -35,8 +35,8 @@ module AzureAPI
                     params = '',
                     services = true)
       svc_str = services ? '/services' : ''
-      parsed_uri = URI.parse("#{@host_name}/#{@subscription_id}#{svc_str}/#{service_name}")
-      scheme = !parsed_uri.scheme ? "https://" : ""
+      uri = URI.parse("#{@host_name}/#{@subscription_id}#{svc_str}/#{service_name}")
+      scheme = !uri.scheme ? "https://" : ""
       request_url = "#{scheme}#{@host_name}/#{@subscription_id}#{svc_str}/#{service_name}"
       print '.'
       response = http_query(request_url, verb, body, params)
@@ -59,7 +59,9 @@ module AzureAPI
     end
 
     def query_for_completion()
-      request_url = "https://#{@host_name}/#{@subscription_id}/operations/#{@last_request_id}"
+      uri = URI.parse("#{@host_name}/#{@subscription_id}/operations/#{@last_request_id}")
+      scheme = !uri.scheme ? "https://" : ""
+      request_url = "#{scheme}#{@host_name}/#{@subscription_id}/operations/#{@last_request_id}"
       response = http_query(request_url, 'get', '', '')
       if response.code.to_i == 307
         Chef::Log.debug "Redirect to #{response['Location']}"
