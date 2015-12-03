@@ -29,6 +29,11 @@ class Azure
       certificate = Certificate.new(@connection)
       certificate.add_certificate certificate_data, certificate_password, certificate_format, dns_name
     end
+    def get_certificate(thumbprint, dns_name)
+      certificate = Certificate.new(@connection)
+      data = certificate.get_service_certificate(thumbprint, dns_name)
+      data.text
+    end
 
     def create_ssl_certificate(azure_dns_name)
       cert_params = { output_file: 'winrm', key_length: 2048, cert_validity: 24,
@@ -55,6 +60,10 @@ class Azure
       add_certificate @cert_data, 'knifeazure', 'pfx', params[:azure_dns_name]
       # Return the fingerprint to be used while adding role
       @fingerprint
+    end
+
+    def get_service_certificate(thumbprint, dns_name)
+      @connection.query_azure("hostedservices/#{dns_name}/certificates/sha1-#{thumbprint}")
     end
 
     def generate_public_key_certificate_data (params)

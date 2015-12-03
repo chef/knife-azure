@@ -543,6 +543,11 @@ class Chef
         deploy.find_role(locate_config_value(:azure_vm_name))
       end
 
+      def get_default_winrm_cert_thumbprint
+        role = connection.query_azure("hostedservices/#{locate_config_value(:azure_dns_name)}/deployments/#{locate_config_value(:azure_dns_name)}/roles/#{locate_config_value(:azure_vm_name)}")
+        role.at_css("DefaultWinRmCertificateThumbprint").text
+      end
+
       def tcp_test_winrm(ip_addr, port)
         hostname = ip_addr
         socket = TCPSocket.new(hostname, port)
@@ -651,6 +656,15 @@ class Chef
 
         msg_server_summary(server)
 
+        # when winrm_transport = ssl
+        # displays default WinRm CertificateThumbprint
+        # gets WinRM SSL certificate from role
+        if locate_config_value(:winrm_transport) == "ssl"
+          msg_pair('DefaultWinRmCertificateThumbprint', get_default_winrm_cert_thumbprint) if get_default_winrm_cert_thumbprint && !locate_config_value(:ssl_cert_fingerprint)
+
+          get_winrm_ssl_cert_file
+        end
+
         bootstrap_exec(server) unless locate_config_value(:bootstrap_protocol) == 'cloud-api'
       end
 
@@ -659,7 +673,11 @@ class Chef
       end
 
       def bootstrap_exec(server)
-        fqdn = server.publicipaddress
+        if locate_config_value(:winrm_transport) == "ssl" && locate_config_value(:thumbprint).nil? && ( locate_config_value(:winrm_ssl_verify_mode).nil? || locate_config_value(:winrm_ssl_verify_mode) == :verify_peer )
+          fqdn = server.hostedservicename + ".cloudapp.net"
+        else
+          fqdn = server.publicipaddress
+        end
 
         if is_image_windows?
           if locate_config_value(:bootstrap_protocol) == 'ssh'
@@ -851,11 +869,6 @@ class Chef
             exit 1
           end
         end
-
-        if locate_config_value(:winrm_transport) == "ssl" && locate_config_value(:thumbprint).nil? && ( locate_config_value(:winrm_ssl_verify_mode).nil? || locate_config_value(:winrm_ssl_verify_mode) == :verify_peer )
-          ui.error("The SSL transport was specified without the --thumbprint option. Specify a thumbprint, or alternatively set the --winrm-ssl-verify-mode option to 'verify_none' to skip verification.")
-          exit 1
-        end
       end
 
       def create_server_def
@@ -970,6 +983,31 @@ class Chef
         server_def[:azure_domain_passwd] = locate_config_value(:azure_domain_passwd)
         server_def[:azure_domain_ou_dn] = locate_config_value(:azure_domain_ou_dn)
         server_def
+      end
+
+      # get certificate from role and save to local
+      def get_winrm_ssl_cert_file(file_path="winrm_ssl_cert.cer")
+        # get cloud service certificate data
+        certificate_data = get_service_certificate
+
+        # creates cert file
+        line_length = 63
+        offset = 0
+        File.open(file_path, 'w') do |f2|
+          f2.puts("-----BEGIN CERTIFICATE-----")
+          while offset < certificate_data.length do
+            remaining = certificate_data.length-offset
+            length = remaining < line_length ? remaining : line_length
+            f2.puts certificate_data[offset..offset+length]
+            offset = line_length + offset
+          end
+          f2.puts("-----END CERTIFICATE-----")
+        end
+      end
+
+      def get_service_certificate
+        thumbprint = locate_config_value(:ssl_cert_fingerprint) ? locate_config_value(:ssl_cert_fingerprint) : get_default_winrm_cert_thumbprint
+        connection.certificates.get_certificate(thumbprint, locate_config_value(:azure_dns_name))
       end
 
       def get_chef_extension_name
