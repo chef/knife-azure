@@ -37,6 +37,16 @@ The plug-in also accepts authentication information specified using an
 alternative set of options -- see the section on "Alternative Management
 Certificate Specification" for details.
 
+The plug-in can also read Azure account and credentials from the `Azure Profile` if Knife does not have the entry for `publish_settings_file`.
+An `Azure Profile` is a `JSON` file with subscription and environment information in it. Its default location is `~/.azure/azureProfile.json`.
+
+The Azure Profile file can be created and manipulated using the [Azure CLI](http://azure.microsoft.com/en-us/documentation/articles/virtual-machines-command-line-tools/). You can
+also refer [Azure Xplat-CLI](https://github.com/Azure/azure-xplat-cli#use-publish-settings-file-management-certificate-authentication).
+
+If Azure Profile file has entries for multiple subscriptions then you can choose the default using `azure account set <subscription_name>`. The same default subscription will
+be picked up that you have configured.
+
+
 ## Basic Examples
 The following examples assume that you've configured the publishsettings file
 location in your knife.rb:
