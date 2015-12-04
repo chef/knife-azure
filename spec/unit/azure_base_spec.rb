@@ -83,4 +83,126 @@ describe Chef::Knife::AzureBase do
 			end
 		end
 	end
+
+	describe "azure base tests - for azure profile" do
+	  before(:each) do
+	    Chef::Config[:knife][:azure_mgmt_cert] = nil
+	  end
+
+	  context "when publishSettings file specified in knife.rb has A account and azureProfile file has B account" do
+	  	before do
+	  	  Chef::Config[:knife][:azure_publish_settings_file] = get_publish_settings_file_path("A_account.publishsettings")
+	  	  allow(@dummy).to receive(:get_azure_profile_file_path).and_return(File.dirname(__FILE__) + "/assets/azure-profile-files/B_account_azure_profile.json")
+	  	end
+
+	  	it "selects A account of publishSettings file" do
+	  	  @dummy.validate!
+	  	  expect(Chef::Config[:knife][:azure_api_host_name]).to eq('A.endpoint.net')
+	  	  expect(Chef::Config[:knife][:azure_subscription_id]).to eq('A_subscription_id')
+	  	end
+	  end
+
+	  context "when publishSettings file specified in knife.rb has B account and azureProfile file has A account" do
+	  	before do
+	  	  Chef::Config[:knife][:azure_publish_settings_file] = get_publish_settings_file_path("B_account.publishsettings")
+	  	  allow(@dummy).to receive(:get_azure_profile_file_path).and_return(File.dirname(__FILE__) + "/assets/azure-profile-files/A_account_azure_profile.json")
+	  	end
+
+	  	it "selects B account of publishSettings file" do
+	  	  @dummy.validate!
+	  	  expect(Chef::Config[:knife][:azure_api_host_name]).to eq('B.endpoint.net')
+	  	  expect(Chef::Config[:knife][:azure_subscription_id]).to eq('B_subscription_id')
+	  	end
+	  end
+
+	  context "when publishSettings file is not specified in knife.rb and azureProfile file has A account" do
+	  	before do
+	  	  Chef::Config[:knife][:azure_publish_settings_file] = nil
+	  	  allow(@dummy).to receive(:get_azure_profile_file_path).and_return(File.dirname(__FILE__) + "/assets/azure-profile-files/A_account_azure_profile.json")
+	  	end
+
+	  	it "selects A account of azureProfile file" do
+	  	  @dummy.validate!
+	  	  expect(Chef::Config[:knife][:azure_api_host_name]).to eq('A.endpoint.net')
+	  	  expect(Chef::Config[:knife][:azure_subscription_id]).to eq('A_subscription_id')
+	  	end
+	  end
+
+	  context "when publishSettings file is not specified in knife.rb and azureProfile file has B account" do
+	  	before do
+	  	  Chef::Config[:knife][:azure_publish_settings_file] = nil
+	  	  allow(@dummy).to receive(:get_azure_profile_file_path).and_return(File.dirname(__FILE__) + "/assets/azure-profile-files/B_account_azure_profile.json")
+	  	end
+
+	  	it "selects B account of azureProfile file" do
+	  	  @dummy.validate!
+	  	  expect(Chef::Config[:knife][:azure_api_host_name]).to eq('B.endpoint.net')
+	  	  expect(Chef::Config[:knife][:azure_subscription_id]).to eq('B_subscription_id')
+	  	end
+	  end
+
+	  context "when neither publishSettings file is specified in knife.rb nor azureProfile file exist" do
+	  	before do
+	  	  Chef::Config[:knife][:azure_publish_settings_file] = nil
+	  	  allow(@dummy).to receive(:get_azure_profile_file_path).and_return(File.dirname(__FILE__) + "/assets/azure-profile-files/C_account_azure_profile.json")
+	  	end
+
+	  	it "gives error and exits" do
+	  	  expect { @dummy.validate! }.to raise_error SystemExit
+	  	end
+	  end
+
+	  context "when publishSettings file is not specified in knife.rb and azureProfile file has both A and B account with B as the default account" do
+	  	before do
+	  	  Chef::Config[:knife][:azure_publish_settings_file] = nil
+	  	  allow(@dummy).to receive(:get_azure_profile_file_path).and_return(File.dirname(__FILE__) + "/assets/azure-profile-files/A_Bd_account_azure_profile.json")
+	  	end
+
+	  	it "selects B account of azureProfile file" do
+	  	  @dummy.validate!
+	  	  expect(Chef::Config[:knife][:azure_api_host_name]).to eq('B.endpoint.net')
+	  	  expect(Chef::Config[:knife][:azure_subscription_id]).to eq('B_subscription_id')
+	  	end
+	  end
+
+	  context "when publishSettings file is not specified in knife.rb and azureProfile file has both A and B account with A as the default account" do
+	  	before do
+	  	  Chef::Config[:knife][:azure_publish_settings_file] = nil
+	  	  allow(@dummy).to receive(:get_azure_profile_file_path).and_return(File.dirname(__FILE__) + "/assets/azure-profile-files/Ad_B_account_azure_profile.json")
+	  	end
+
+	  	it "selects A account of azureProfile file" do
+	  	  @dummy.validate!
+	  	  expect(Chef::Config[:knife][:azure_api_host_name]).to eq('A.endpoint.net')
+	  	  expect(Chef::Config[:knife][:azure_subscription_id]).to eq('A_subscription_id')
+	  	end
+	  end
+
+	  context "when publishSettings file specified in knife.rb has A account and azureProfile file has both A and B account with B as the default account" do
+	  	before do
+	  	  Chef::Config[:knife][:azure_publish_settings_file] = get_publish_settings_file_path("A_account.publishsettings")
+	  	  allow(@dummy).to receive(:get_azure_profile_file_path).and_return(File.dirname(__FILE__) + "/assets/azure-profile-files/A_Bd_account_azure_profile.json")
+	  	end
+
+	  	it "selects A account of publishSettings file" do
+	  	  @dummy.validate!
+	  	  expect(Chef::Config[:knife][:azure_api_host_name]).to eq('A.endpoint.net')
+	  	  expect(Chef::Config[:knife][:azure_subscription_id]).to eq('A_subscription_id')
+	  	end
+	  end
+
+	  context "when publishSettings file specified in knife.rb has B account and azureProfile file has both A and B account with A as the default account" do
+	  	before do
+	  	  Chef::Config[:knife][:azure_publish_settings_file] = get_publish_settings_file_path("B_account.publishsettings")
+	  	  allow(@dummy).to receive(:get_azure_profile_file_path).and_return(File.dirname(__FILE__) + "/assets/azure-profile-files/Ad_B_account_azure_profile.json")
+	  	end
+
+	  	it "selects B account of publishSettings file" do
+	  	  @dummy.validate!
+	  	  expect(Chef::Config[:knife][:azure_api_host_name]).to eq('B.endpoint.net')
+	  	  expect(Chef::Config[:knife][:azure_subscription_id]).to eq('B_subscription_id')
+	  	end
+	  end
+
+	end
 end
