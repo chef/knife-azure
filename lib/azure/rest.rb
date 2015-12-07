@@ -107,6 +107,7 @@ module AzureAPI
       request.body = body
       request
     end
+
     def showResponse(response)
       puts "=== response body ==="
       puts response.body
