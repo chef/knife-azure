@@ -286,6 +286,19 @@ We have also added cloud-api support for Centos now, for this you just need to s
 
 `--delete-chef-extension-config` determines if Chef configuration files should be removed when Azure removes the Chef resource extension from the VM or not. This option is only valid for the 'cloud-api' bootstrap protocol. The default value is false. This is useful when `update` and `uninstall` commands are run for the extension on the VM created.
 
+It's possible to pass bootstrap options to the extension which get specified in `client.rb` file on the VM. Following options can be passed:
+
+    --environment
+    --node-name
+    --secret-file
+    --server
+    --validation-client-name
+    --[no-]node-verify-api-cert
+    --bootstrap-version
+    --node-ssl-verify-mode
+    --bootstrap-proxy
+
+
 #### Azure Server Create with Domain Join
 Following options are used for creating server with domain join
 
