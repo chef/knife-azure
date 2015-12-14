@@ -344,6 +344,12 @@ class Chef
         :default => false,
         :description => "Determines whether Chef configuration files removed when Azure removes the Chef resource extension from the VM. This option is only valid for the 'cloud-api' bootstrap protocol. The default is false."
 
+      option :uninstall_chef_client,
+        :long => "--uninstall-chef-client",
+        :boolean => true,
+        :default => false,
+        :description => "Determines whether Chef Client will be un-installed from the VM or not. This option is only valid for the 'cloud-api' bootstrap protocol. The default value is false."
+
       option :azure_domain_name,
         :long => "--azure-domain-name DOMAIN_NAME",
         :description => "Optional. Specifies the domain name to join. If the domains name is not specified, --azure-domain-user must specify the user principal name (UPN) format (user@fully-qualified-DNS-domain) or the fully-qualified-DNS-domain\\username format"
@@ -599,9 +605,10 @@ class Chef
         Chef::Log.info("validating...")
         validate!
 
-        if (locate_config_value(:auto_update_client) ||  locate_config_value(:delete_chef_extension_config))  &&  (locate_config_value(:bootstrap_protocol) != 'cloud-api')
+        if (locate_config_value(:auto_update_client) ||  locate_config_value(:delete_chef_extension_config) || locate_config_value(:uninstall_chef_client))  &&  (locate_config_value(:bootstrap_protocol) != 'cloud-api')
           ui.error("--auto-update-client option works with --bootstrap-protocol cloud-api") if locate_config_value(:auto_update_client)
           ui.error("--delete-chef-extension-config option works with --bootstrap-protocol cloud-api") if locate_config_value(:delete_chef_extension_config)
+          ui.error("--uninstall-chef-client option works with --bootstrap-protocol cloud-api") if locate_config_value(:uninstall_chef_client)
           exit 1
         end
 
@@ -1001,6 +1008,7 @@ class Chef
         pub_config[:runlist] = locate_config_value(:run_list).empty? ? "" : locate_config_value(:run_list).join(",").to_json
         pub_config[:autoUpdateClient] = locate_config_value(:auto_update_client) ? "true" : "false"
         pub_config[:deleteChefConfig] = locate_config_value(:delete_chef_extension_config) ? "true" : "false"
+        pub_config[:uninstallChefClient] = locate_config_value(:uninstall_chef_client) ? "true" : "false"
         pub_config[:custom_json_attr] = locate_config_value(:json_attributes) || {}
 
         # bootstrap attributes
