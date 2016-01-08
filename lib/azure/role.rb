@@ -233,7 +233,7 @@ class Azure
       end
     end
 
-    # Expects endpoint_param_string to be in the form {localport}:{publicport}:{lb_set_name}:{lb_probe_path}
+    # Expects endpoint_param_string to be in the form {localport}:{publicport}:{lb_set_name}:{lb_probe_path}:{lb_probe_port}
     # Only localport is mandatory.
     def parse_endpoint_from_params(protocol, azure_vm_name, endpoint_param_string)
       fields = endpoint_param_string.split(':').map(&:strip)
@@ -251,7 +251,7 @@ class Azure
       if fields[2]
         hash['LoadBalancerProbe'] = {}
         hash['LoadBalancerProbe']['Path'] = fields[4]
-        hash['LoadBalancerProbe']['Port'] = fields[0]
+        hash['LoadBalancerProbe']['Port'] = fields[5] || fields[0]
         hash['LoadBalancerProbe']['Protocol'] = fields[4] ? 'HTTP' : protocol
       end
       hash

@@ -205,14 +205,14 @@ These options may also be configured from knife.rb, as in this example:
 #### Endpoint configuration
 
 Endpoints are configured using tcp-endpoints and udp-endpoints. This is a string in the form:
-{localPort}:{publicPort}:{load_balancer_set_name}:{load_balancer_probe_path}
+{localPort}:{publicPort}:{load_balancer_set_name}:{load_balancer_probe_path}:{load_balancer_probe_port}
 
 Examples:
 
     knife[:tcp-endpoints]='80'                            # Allow Port 80 inbound
     knife[:tcp-endpoints]='80:8080'                       # Allow Port 80 inbound and map it to local port 8080
     knife[:tcp-endpoints]='80:8080:web-set'               # Allow Port 80 and add it to the load balancing set called 'web-set'
-    knife[:tcp-endpoints]='80:8080:web-set:/healthcheck'  # Allow Port 80, add it to the load balancing set, and use an HTTP probe at path "/healthcheck"
+    knife[:tcp-endpoints]='80:8080:web-set:/healthcheck:81'  # Allow Port 80, add it to the load balancing set, and use an HTTP probe at path "/healthcheck" running on port 81.
 
 Note that the load balancing set will be created if it does not exist. If it exists within another VM in the cloud service, it will re-use those values for the probe.
 
