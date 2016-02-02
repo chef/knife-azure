@@ -350,6 +350,12 @@ class Chef
         :default => false,
         :description => "Determines whether Chef Client will be un-installed from the VM or not. This option is only valid for the 'cloud-api' bootstrap protocol. The default value is false."
 
+      option :validator_less,
+        :long => "--validator-less",
+        :boolean => true,
+        :default => false,
+        :description => "Determines whether node bootstrap will be with validator or validator-less. This option is only valid for the 'cloud-api' bootstrap protocol. The default value is false."
+
       option :azure_domain_name,
         :long => "--azure-domain-name DOMAIN_NAME",
         :description => "Optional. Specifies the domain name to join. If the domains name is not specified, --azure-domain-user must specify the user principal name (UPN) format (user@fully-qualified-DNS-domain) or the fully-qualified-DNS-domain\\username format"
@@ -609,6 +615,7 @@ class Chef
           ui.error("--auto-update-client option works with --bootstrap-protocol cloud-api") if locate_config_value(:auto_update_client)
           ui.error("--delete-chef-extension-config option works with --bootstrap-protocol cloud-api") if locate_config_value(:delete_chef_extension_config)
           ui.error("--uninstall-chef-client option works with --bootstrap-protocol cloud-api") if locate_config_value(:uninstall_chef_client)
+          ui.error("--validator-less option works with --bootstrap-protocol cloud-api") if locate_config_value(:validator_less)
           exit 1
         end
 
@@ -1009,6 +1016,7 @@ class Chef
         pub_config[:autoUpdateClient] = locate_config_value(:auto_update_client) ? "true" : "false"
         pub_config[:deleteChefConfig] = locate_config_value(:delete_chef_extension_config) ? "true" : "false"
         pub_config[:uninstallChefClient] = locate_config_value(:uninstall_chef_client) ? "true" : "false"
+        pub_config[:validatorLess] = locate_config_value(:validator_less) ? "true" : "false"
         pub_config[:custom_json_attr] = locate_config_value(:json_attributes) || {}
 
         # bootstrap attributes
