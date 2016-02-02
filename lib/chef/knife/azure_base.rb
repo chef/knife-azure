@@ -19,6 +19,7 @@
 
 require 'chef/knife'
 require File.expand_path('../../../azure/connection', __FILE__)
+require 'azure/service_management/ASM_interface'
 
 class Chef
   class Knife
@@ -76,6 +77,7 @@ class Chef
           exit 1
         end
       end
+
       def connection
         @connection ||= begin
                           connection = Azure::Connection.new(
@@ -85,6 +87,17 @@ class Chef
                             :verify_ssl_cert => locate_config_value(:verify_ssl_cert)
                           )
                         end
+      end
+
+      def service
+        @service ||= begin
+                      service = Azure::ServiceManagement::ASMInterface.new(
+                      :azure_subscription_id => locate_config_value(:azure_subscription_id),
+                      :azure_mgmt_cert => locate_config_value(:azure_mgmt_cert),
+                      :azure_api_host_name => locate_config_value(:azure_api_host_name),
+                      :verify_ssl_cert => locate_config_value(:verify_ssl_cert)
+                    )
+        end
       end
 
       def locate_config_value(key)
