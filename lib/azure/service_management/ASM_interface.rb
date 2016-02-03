@@ -20,11 +20,12 @@ require 'azure/azure_interface'
 require 'azure/service_management/rest'
 require 'azure/service_management/connection'
 
-require 'pry'
 class Azure
   class ServiceManagement
     class ASMInterface < AzureInterface
       include AzureAPI
+
+      attr_accessor :connection
 
       def initialize(params = {})
         @rest = Rest.new(params)
@@ -32,15 +33,15 @@ class Azure
       end
 
       def list_images
-        @connection.images.all
+        connection.images.all
       end
 
       def list_servers
-        @connection.roles.all
+        connection.roles.all
       end
 
       def find_server(params)
-        server = @connection.roles.find(name, params = { :azure_dns_name => locate_config_value(:azure_dns_name) })
+        server = connection.roles.find(name, params = { :azure_dns_name => locate_config_value(:azure_dns_name) })
         unless server
           ui.warn("Server #{name} does not exist")
           return
