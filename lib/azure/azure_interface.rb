@@ -40,5 +40,37 @@ class Azure
     def list_images
       AzureInterface.api_not_implemented(self)
     end
+
+    def show_server
+      AzureInterface.api_not_implemented(self)
+    end
+
+    def create_vnet
+      AzureInterface.api_not_implemented(self)
+    end
+
+    def list_vnet
+      AzureInterface.api_not_implemented(self)
+    end
+
+    def list_internal_lb
+      AzureInterface.api_not_implemented(self)
+    end
+
+    def create_internal_lb
+      AzureInterface.api_not_implemented(self)
+    end
+
+    def list_affinity_group
+      AzureInterface.api_not_implemented(self)
+    end
+
+    def create_affinity_group
+      AzureInterface.api_not_implemented(self)
+    end
+
+    def find_server
+      AzureInterface.api_not_implemented(self)
+    end
   end
 end
