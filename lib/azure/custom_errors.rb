@@ -16,29 +16,20 @@
 # limitations under the License.
 #
 
-require 'azure/custom_errors'
+module CustomErrors
+  class InterfaceNotImplementedError < NoMethodError
+  end
 
-class Azure
-  class AzureInterface
-    include CustomErrors
+  def self.included(klass)
+    klass.send(:include, CustomErrors::Methods)
+    klass.send(:extend, CustomErrors::Methods)
+  end
 
-    def initialize(options = {})
-    end
-
-    def create_server
-      AzureInterface.api_not_implemented(self)
-    end
-
-    def list_servers
-      AzureInterface.api_not_implemented(self)
-    end
-
-    def delete_server
-      AzureInterface.api_not_implemented(self)
-    end
-
-    def list_images
-      AzureInterface.api_not_implemented(self)
+  module Methods
+     def api_not_implemented(klass)
+      caller.first.match(/in \`(.+)\'/)
+      method_name = $1
+      raise CustomErrors::InterfaceNotImplementedError.new("#{klass.class.name} needs to implement '#{method_name}' for interface #{self.name}!")
     end
   end
 end
