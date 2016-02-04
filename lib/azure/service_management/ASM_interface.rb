@@ -40,15 +40,12 @@ class Azure
         connection.roles.all
       end
 
-      def find_server(params)
-        server = connection.roles.find(name, params = { :azure_dns_name => locate_config_value(:azure_dns_name) })
-        unless server
-          ui.warn("Server #{name} does not exist")
-          return
-        end
+      def find_server(params = {})
+        server = connection.roles.find(params[:name], params = { :azure_dns_name => params[:azure_dns_name] })
       end
 
-      def delete_server
+      def delete_server(params = {})
+        connection.roles.delete(params)
       end
     end
   end

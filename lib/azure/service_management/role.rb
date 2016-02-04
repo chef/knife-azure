@@ -75,8 +75,8 @@ class Azure
       find(name) != nil
     end
 
-    def delete(name, params)
-      role = find(name)
+    def delete(params)
+      role = find(params[:name])
       if role != nil
         roleXML = nil
         roleXML = @connection.query_azure("hostedservices/#{role.hostedservicename}", "get", "", "embed-detail=true")
