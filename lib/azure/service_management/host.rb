@@ -26,8 +26,6 @@ class Azure
     # force_load should be true when there is something in local cache and we want to reload
     # first call is always load.
     def load(force_load = false)
-      # require 'pry'
-      # binding.pry
       if not @hosted_services || force_load
         @hosted_services = begin
           hosted_services = Hash.new

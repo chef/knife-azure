@@ -16,7 +16,6 @@
 # limitations under the License.
 #
 require 'securerandom'
-require 'pry'
 
 class Azure
   class Roles
@@ -28,7 +27,6 @@ class Azure
     end
     # do not use this unless you want a list of all roles(vms) in your subscription
     def all
-      # binding.pry
       @roles = Array.new
       @connection.deploys.all.each do |deploy|
         deploy.roles.each do |role|

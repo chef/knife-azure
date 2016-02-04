@@ -16,7 +16,6 @@
 # limitations under the License.
 #
 
-require 'pry'
 class Azure
   class ServiceManagement
     class Images
