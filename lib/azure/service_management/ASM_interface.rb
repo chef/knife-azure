@@ -47,6 +47,10 @@ class Azure
       def delete_server(params = {})
         connection.roles.delete(params)
       end
+
+      def show_server name
+        connection.roles.find name
+      end
     end
   end
 end
