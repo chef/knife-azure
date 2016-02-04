@@ -22,7 +22,7 @@ describe Chef::Knife::AzureImageList do
 
     end
 
-    stub_list_images(@server_instance.service)
+    stub_query_azure(@server_instance.service.connection)
     allow(@server_instance).to receive(:items).and_return(:true)
     allow(@server_instance).to receive(:puts)
   end

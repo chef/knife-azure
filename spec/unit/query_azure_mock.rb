@@ -8,29 +8,8 @@ module QueryAzureMock
     stub_query_azure (@connection)
   end
 
-  def mock_list_images
-    create_service
-    stub_list_images(@service)
-  end
-
   def create_connection
     @connection = Azure::Connection.new(TEST_PARAMS)
-  end
-
-  def create_service
-    @service = Azure::ServiceManagement::ASMInterface.new(TEST_PARAMS)
-  end
-
-  def stub_list_images(service)
-    stub_query_azure(service.connection)
-  end
-
-  def stub_delete_server(service)
-    stub_query_azure(service.connection)
-  end
-
-  def stub_show_server(service)
-    stub_query_azure(service.connection)
   end
 
   def lookup_resource_in_test_xml(lookup_name, lookup_pty, tag, in_file)
