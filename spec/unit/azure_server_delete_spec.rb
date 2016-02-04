@@ -22,7 +22,7 @@ describe Chef::Knife::AzureServerDelete do
         Chef::Config[:knife][key] = value
       end
 
-    stub_delete_server(@server_instance.service)
+    stub_query_azure(@server_instance.service.connection)
 
     allow(@server_instance).to receive(:confirm).and_return(:true)
 
