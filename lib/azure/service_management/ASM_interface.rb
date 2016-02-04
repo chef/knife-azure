@@ -51,6 +51,10 @@ class Azure
       def show_server name
         connection.roles.find name
       end
+
+      def list_internal_lb
+        connection.lbs.all
+      end
     end
   end
 end

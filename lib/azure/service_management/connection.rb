@@ -20,6 +20,7 @@ require 'azure/service_management/image'
 require 'azure/service_management/role'
 require 'azure/service_management/deploy'
 require 'azure/service_management/host'
+require 'azure/service_management/loadbalancer'
 
 class Azure
   class ServiceManagement
@@ -33,6 +34,7 @@ class Azure
         @deploys  = Deploys.new(self)
         @hosts = Hosts.new(self)
         @rest = rest
+        @lbs = Loadbalancers.new(self)
       end
 
       def query_azure(service_name,
