@@ -60,13 +60,8 @@ class Azure
         connection.lbs.create(params)
       end
 
-      def list_vnets the_list
-        connection.vnets.all.each do |vnet|
-          %w(name affinity_group state).each do |attr|
-            the_list << vnet.send(attr).to_s
-          end
-        end
-        the_list
+      def list_vnets
+        connection.vnets.all
       end
 
       def create_vnet(params = {})
