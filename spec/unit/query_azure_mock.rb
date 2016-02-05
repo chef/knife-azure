@@ -37,6 +37,10 @@ module QueryAzureMock
     stub_query_azure(service.connection)
   end
 
+  def stub_create_internal_lb(service)
+    stub_query_azure(service.connection)
+  end
+
   def lookup_resource_in_test_xml(lookup_name, lookup_pty, tag, in_file)
     dataXML = Nokogiri::XML readFile(in_file)
     itemsXML = dataXML.css(tag)

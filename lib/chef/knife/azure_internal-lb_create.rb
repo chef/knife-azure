@@ -59,7 +59,7 @@ class Chef
           azure_dns_name: locate_config_value(:azure_dns_name)
         }
 
-        rsp = connection.lbs.create(params)
+        rsp = service.create_internal_lb(params)
         print "\n"
         if rsp.at_css('Status').nil?
           if rsp.at_css('Code').nil? || rsp.at_css('Message').nil?

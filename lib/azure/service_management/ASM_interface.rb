@@ -55,6 +55,10 @@ class Azure
       def list_internal_lb
         connection.lbs.all
       end
+
+      def create_internal_lb(params = {})
+        connection.lbs.create(params)
+      end
     end
   end
 end
