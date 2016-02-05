@@ -51,6 +51,14 @@ class Azure
       def show_server name
         connection.roles.find name
       end
+
+      def list_internal_lb
+        connection.lbs.all
+      end
+
+      def create_internal_lb(params = {})
+        connection.lbs.create(params)
+      end
     end
   end
 end

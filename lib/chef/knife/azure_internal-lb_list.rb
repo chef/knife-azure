@@ -39,7 +39,8 @@ class Chef
         cols = %w{Name Service Subnet VIP}
 
         the_list = cols.map { |col| ui.color(col, :bold) }
-        connection.lbs.all.each do |lb|
+        list_lbs = service.list_internal_lb
+        list_lbs.each do |lb|
           cols.each { |attr| the_list << lb.send(attr.downcase).to_s }
         end
 
