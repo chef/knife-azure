@@ -25,7 +25,7 @@ class Azure
     def initialize(options = {})
     end
 
-    def create_server
+    def create_server(params = {})
       AzureInterface.api_not_implemented(self)
     end
 
@@ -33,7 +33,7 @@ class Azure
       AzureInterface.api_not_implemented(self)
     end
 
-    def delete_server
+    def delete_server(server_name)
       AzureInterface.api_not_implemented(self)
     end
 
@@ -41,11 +41,11 @@ class Azure
       AzureInterface.api_not_implemented(self)
     end
 
-    def show_server
+    def show_server(server_name)
       AzureInterface.api_not_implemented(self)
     end
 
-    def create_vnet
+    def create_vnet(params = {})
       AzureInterface.api_not_implemented(self)
     end
 
@@ -57,7 +57,7 @@ class Azure
       AzureInterface.api_not_implemented(self)
     end
 
-    def create_internal_lb
+    def create_internal_lb(params = {})
       AzureInterface.api_not_implemented(self)
     end
 
@@ -65,11 +65,11 @@ class Azure
       AzureInterface.api_not_implemented(self)
     end
 
-    def create_affinity_group
+    def create_affinity_group(params = {})
       AzureInterface.api_not_implemented(self)
     end
 
-    def find_server
+    def find_server(server_name)
       AzureInterface.api_not_implemented(self)
     end
   end
