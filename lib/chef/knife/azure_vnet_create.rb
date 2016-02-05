@@ -65,7 +65,7 @@ class Chef
           azure_subnet_name: locate_config_value(:azure_subnet_name) || "Subnet-#{Random.rand(10)}"
         }
 
-        rsp = connection.vnets.create(params)
+        rsp = service.create_vnet(params)
         print "\n"
         if rsp.at_css('Status').nil?
           if rsp.at_css('Code').nil? || rsp.at_css('Message').nil?
