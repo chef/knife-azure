@@ -21,10 +21,7 @@ require 'azure/service_management/role'
 require 'azure/service_management/deploy'
 require 'azure/service_management/host'
 require 'azure/service_management/loadbalancer'
-<<<<<<< HEAD
 require 'azure/service_management/utility'
-=======
->>>>>>> 8d55a0e0ea424375a71ad3f9fac7285b7314bf06
 
 class Azure
   class ServiceManagement
