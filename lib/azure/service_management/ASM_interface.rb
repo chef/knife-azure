@@ -67,6 +67,14 @@ class Azure
       def create_vnet(params = {})
         connection.vnets.create(params)
       end
+
+      def list_ags
+        connection.ags.all
+      end
+
+      def create_ag(params = {})
+        connection.ags.create(params)
+      end
     end
   end
 end

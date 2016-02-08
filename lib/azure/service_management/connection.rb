@@ -23,6 +23,7 @@ require 'azure/service_management/host'
 require 'azure/service_management/loadbalancer'
 require 'azure/service_management/vnet'
 require 'azure/service_management/utility'
+require 'azure/service_management/ag'
 
 class Azure
   class ServiceManagement
@@ -39,6 +40,7 @@ class Azure
         @rest = rest
         @lbs = Loadbalancer.new(self)
         @vnets = Vnets.new(self)
+        @ags = AGs.new(self)
       end
 
       def query_azure(service_name,
