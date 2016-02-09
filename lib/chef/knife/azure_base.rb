@@ -68,8 +68,8 @@ class Chef
       end
 
       def is_image_windows?
-        images = connection.images
-        target_image = images.all.select { |i| i.name == locate_config_value(:azure_source_image) }
+        images = service.list_images
+        target_image = images.select { |i| i.name == locate_config_value(:azure_source_image) }
         unless target_image[0].nil?
           return target_image[0].os == 'Windows'
         else

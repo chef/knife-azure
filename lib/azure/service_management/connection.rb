@@ -24,6 +24,8 @@ require 'azure/service_management/loadbalancer'
 require 'azure/service_management/vnet'
 require 'azure/service_management/utility'
 require 'azure/service_management/ag'
+require 'azure/service_management/storageaccount'
+require 'azure/service_management/certificate'
 
 class Azure
   class ServiceManagement
@@ -41,6 +43,8 @@ class Azure
         @lbs = Loadbalancer.new(self)
         @vnets = Vnets.new(self)
         @ags = AGs.new(self)
+        @storageaccounts = StorageAccounts.new(self)
+        @certificates = Certificates.new(self)
       end
 
       def query_azure(service_name,
