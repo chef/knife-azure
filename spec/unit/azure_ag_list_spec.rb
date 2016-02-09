@@ -20,7 +20,7 @@ describe Chef::Knife::AzureAgList do
         }.each do |key, value|
       Chef::Config[:knife][key] = value
     end
-    stub_query_azure(@server_instance.connection)
+    stub_list_ags(@server_instance.service)
     allow(@server_instance).to receive(:items).and_return(:true)
     allow(@server_instance).to receive(:puts)
   end
