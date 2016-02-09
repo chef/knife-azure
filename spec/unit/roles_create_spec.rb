@@ -20,8 +20,19 @@ describe "roles" do
   include AzureSpecHelper
   include QueryAzureMock
   before do
-    setup_query_azure_mock
+    @server_instance = Chef::Knife::AzureServerCreate.new
+    {
+      :azure_subscription_id => 'azure_subscription_id',
+      :azure_mgmt_cert => @cert_file,
+      :azure_api_host_name => 'preview.core.windows-int.net'
+    }.each do |key, value|
+      Chef::Config[:knife][key] = value
+    end
+
+    stub_query_azure (@server_instance.service.connection)
+    @connection = @server_instance.service.connection
   end
+
   context 'delete a role' do
     context 'when the role is not the only one in a deployment' do
       it 'should pass in correct name, verb, and body' do

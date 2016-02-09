@@ -372,19 +372,9 @@ class Chef
         :long => "--azure-extension-client-config CLIENT_PATH",
         :description => "Optional. Path to a client.rb file for use by the bootstrapped node. Only honored when --bootstrap-protocol is set to `cloud-api`."
 
-      def strip_non_ascii(string)
-        string.gsub(/[^0-9a-z ]/i, '')
-      end
-
-      def random_string(len=10)
-        (0...len).map{65.+(rand(25)).chr}.join
-      end
 
       def wait_until_virtual_machine_ready(retry_interval_in_seconds = 30)
-
         vm_status = nil
-
-        puts
 
         begin
           azure_vm_startup_timeout = locate_config_value(:azure_vm_startup_timeout).to_i
@@ -399,7 +389,7 @@ class Chef
             end
           end
 
-          msg_server_summary(get_role_server())
+          msg_server_summary(service.get_role_server(locate_config_value(:azure_dns_name), locate_config_value(:azure_vm_name)))
 
           if locate_config_value(:bootstrap_protocol) == "cloud-api"
             extension_status = wait_for_resource_extension_state(:wagent_provisioning, 5, retry_interval_in_seconds)
@@ -483,7 +473,7 @@ class Chef
       end
 
       def get_virtual_machine_status()
-        role = get_role_server()
+        role = service.get_role_server(locate_config_value(:azure_dns_name), locate_config_value(:azure_vm_name))
         unless role.nil?
           Chef::Log.debug("Role status is #{role.status.to_s}")
           if  "ReadyRole".eql? role.status.to_s
@@ -498,8 +488,8 @@ class Chef
       end
 
       def get_extension_status()
-        deployment_name = connection.deploys.get_deploy_name_for_hostedservice(locate_config_value(:azure_dns_name))
-        deployment = connection.query_azure("hostedservices/#{locate_config_value(:azure_dns_name)}/deployments/#{deployment_name}")
+        deployment_name = service.deployment_name(locate_config_value(:azure_dns_name))
+        deployment = service.deployment("hostedservices/#{locate_config_value(:azure_dns_name)}/deployments/#{deployment_name}")
         extension_status = Hash.new
 
         if deployment.at_css('Deployment Name') != nil
@@ -544,10 +534,6 @@ class Chef
         return extension_status
       end
 
-      def get_role_server
-        deploy = connection.deploys.queryDeploy(locate_config_value(:azure_dns_name))
-        deploy.find_role(locate_config_value(:azure_vm_name))
-      end
 
       def tcp_test_winrm(ip_addr, port)
         hostname = ip_addr
@@ -621,41 +607,9 @@ class Chef
           config[:azure_vm_name] = locate_config_value(:azure_dns_name)
         end
 
-        remove_hosted_service_on_failure = locate_config_value(:azure_dns_name)
-        if connection.hosts.exists?(locate_config_value(:azure_dns_name))
-          remove_hosted_service_on_failure = nil
-        end
-
-        #If Storage Account is not specified, check if the geographic location has one to re-use
-        if not locate_config_value(:azure_storage_account)
-          storage_accts = connection.storageaccounts.all
-          storage = storage_accts.find { |storage_acct| storage_acct.location.to_s == locate_config_value(:azure_service_location) }
-          if not storage
-            config[:azure_storage_account] = [strip_non_ascii(locate_config_value(:azure_vm_name)), random_string].join.downcase
-            remove_storage_service_on_failure = config[:azure_storage_account]
-          else
-            remove_storage_service_on_failure = nil
-            config[:azure_storage_account] = storage.name.to_s
-          end
-        else
-          if connection.storageaccounts.exists?(locate_config_value(:azure_storage_account))
-            remove_storage_service_on_failure = nil
-          else
-            remove_storage_service_on_failure = locate_config_value(:azure_storage_account)
-          end
-        end
-
-        begin
-          connection.deploys.create(create_server_def)
-          wait_until_virtual_machine_ready()
-          server = get_role_server()
-        rescue Exception => e
-          Chef::Log.error("Failed to create the server -- exception being rescued: #{e.to_s}")
-          backtrace_message = "#{e.class}: #{e}\n#{e.backtrace.join("\n")}"
-          Chef::Log.debug("#{backtrace_message}")
-          cleanup_and_exit(remove_hosted_service_on_failure, remove_storage_service_on_failure)
-        end
-
+        service.create_server(create_server_def)
+        wait_until_virtual_machine_ready()
+        server = service.get_role_server(locate_config_value(:azure_dns_name), locate_config_value(:azure_vm_name))
         msg_server_summary(server)
 
         bootstrap_exec(server) unless locate_config_value(:bootstrap_protocol) == 'cloud-api'
@@ -729,7 +683,6 @@ class Chef
       end
 
       def bootstrap_common_params(bootstrap, server)
-
         bootstrap.config[:run_list] = config[:run_list]
         bootstrap.config[:prerelease] = config[:prerelease]
         bootstrap.config[:first_boot_attributes] = locate_config_value(:json_attributes) || {}
@@ -846,7 +799,7 @@ class Chef
           exit 1
         end
 
-        if !(connection.images.exists?(locate_config_value(:azure_source_image)))
+        if !(service.valid_image?(locate_config_value(:azure_source_image)))
           ui.error("Image provided is invalid")
           exit 1
         end
@@ -952,7 +905,7 @@ class Chef
 
         server_def[:port] = port
 
-        server_def[:is_vm_image] = connection.images.is_vm_image(locate_config_value(:azure_source_image))
+        server_def[:is_vm_image] = service.vm_image?(locate_config_value(:azure_source_image))
         server_def[:azure_domain_name] = locate_config_value(:azure_domain_name) if locate_config_value(:azure_domain_name)
 
         if locate_config_value(:azure_domain_user)
@@ -992,7 +945,7 @@ class Chef
         if locate_config_value(:azure_chef_extension_version)
           Chef::Config[:knife][:azure_chef_extension_version]
         else
-          extensions = @connection.query_azure("resourceextensions/#{get_chef_extension_publisher}/#{get_chef_extension_name}")
+          extensions = service.get_extension(get_chef_extension_name, get_chef_extension_publisher)
           extensions.css("Version").max.text.split(".").first + ".*"
         end
       end
@@ -1059,21 +1012,6 @@ class Chef
           end
         end
         Base64.encode64(pri_config.to_json)
-      end
-
-      def cleanup_and_exit(remove_hosted_service_on_failure, remove_storage_service_on_failure)
-        ui.warn("Cleaning up resources...")
-
-        if remove_hosted_service_on_failure
-          ret_val = connection.hosts.delete(remove_hosted_service_on_failure)
-          ret_val.content.empty? ? ui.warn("Deleted created DNS: #{remove_hosted_service_on_failure}.") : ui.warn("Deletion failed for created DNS:#{remove_hosted_service_on_failure}. " + ret_val.text)
-        end
-
-        if remove_storage_service_on_failure
-          ret_val = connection.storageaccounts.delete(remove_storage_service_on_failure)
-          ret_val.content.empty? ? ui.warn("Deleted created Storage Account: #{remove_storage_service_on_failure}.") : ui.warn("Deletion failed for created Storage Account: #{remove_storage_service_on_failure}. " + ret_val.text)
-        end
-        exit 1
       end
 
       private
