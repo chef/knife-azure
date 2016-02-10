@@ -1,14 +1,5 @@
 $LOAD_PATH.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
-require 'rspec'
-require 'equivalent-xml'
-require 'azure/connection'
-require 'azure/rest'
-require 'azure/host'
-require 'azure/image'
-require 'azure/deploy'
-require 'azure/role'
-require 'azure/disk'
-require 'azure/utility'
+
 
 require 'chef/knife/azure_ag_create'
 require 'chef/knife/azure_ag_list'

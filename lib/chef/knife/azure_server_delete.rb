@@ -140,8 +140,6 @@ class Chef
             ui.warn("Deleted server #{server.name}")
 
             if config[:purge]
-              require 'pry'
-              binding.pry
               thing_to_delete = config[:chef_node_name] || name
               destroy_item(Chef::Node, thing_to_delete, "node")
               destroy_item(Chef::ApiClient, thing_to_delete, "client")

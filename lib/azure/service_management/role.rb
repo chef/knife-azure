@@ -16,6 +16,7 @@
 # limitations under the License.
 #
 require 'securerandom'
+require 'azure/service_management/utility'
 
 class Azure
   class Roles
@@ -75,8 +76,8 @@ class Azure
       find(name) != nil
     end
 
-    def delete(name, params)
-      role = find(name)
+    def delete(params)
+      role = find(params[:name])
       if role != nil
         roleXML = nil
         roleXML = @connection.query_azure("hostedservices/#{role.hostedservicename}", "get", "", "embed-detail=true")
@@ -529,7 +530,7 @@ class Azure
             xml.OSVirtualHardDisk {
               disk_name = params[:azure_os_disk_name] || "disk_" + SecureRandom.uuid
               xml.DiskName disk_name
-              domain_suffix = params[:azure_api_host_name].scan(/core.*/)[0]
+              domain_suffix = params[:azure_api_host_name] ? params[:azure_api_host_name].scan(/core.*/)[0] : ''
               xml.MediaLink 'http://' + params[:azure_storage_account] + '.blob.' + domain_suffix + '/vhds/' + disk_name + '.vhd'
               xml.SourceImageName params[:azure_source_image]
             }

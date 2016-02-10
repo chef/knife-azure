@@ -6,7 +6,17 @@ describe 'vnets' do
   include QueryAzureMock
 
   before 'setup connection' do
-    setup_query_azure_mock
+    @server_instance = Chef::Knife::AzureServerCreate.new
+    {
+      :azure_subscription_id => 'azure_subscription_id',
+      :azure_mgmt_cert => @cert_file,
+      :azure_api_host_name => 'preview.core.windows-int.net'
+    }.each do |key, value|
+      Chef::Config[:knife][key] = value
+    end
+
+    stub_query_azure (@server_instance.service.connection)
+    @connection = @server_instance.service.connection
   end
 
   context 'mock with actually retrieved values' do

@@ -21,7 +21,7 @@ describe Chef::Knife::AzureInternalLbCreate do
   end
 
   it 'should fail missing args.' do
-    expect(@server_instance.connection.lbs).to_not receive(:create)
+    expect(@server_instance.service.connection.lbs).to_not receive(:create)
     expect(@server_instance.ui).to receive(:error)
     expect { @server_instance.run }.to raise_error(SystemExit)
   end

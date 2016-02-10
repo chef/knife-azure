@@ -3,20 +3,6 @@ require 'pry'
 
 module QueryAzureMock
   include AzureUtility
-  def setup_query_azure_mock
-    create_connection
-    stub_query_azure (@connection)
-  end
-
-  def mock_list_images
-    create_service
-    stub_list_images(@service)
-  end
-
-  def create_connection
-    @connection = Azure::Connection.new(TEST_PARAMS)
-  end
-
   def create_service
     @service = Azure::ServiceManagement::ASMInterface.new(TEST_PARAMS)
   end
