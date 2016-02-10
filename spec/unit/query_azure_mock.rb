@@ -7,42 +7,6 @@ module QueryAzureMock
     @service = Azure::ServiceManagement::ASMInterface.new(TEST_PARAMS)
   end
 
-  def stub_list_images(service)
-    stub_query_azure(service.connection)
-  end
-
-  def stub_delete_server(service)
-    stub_query_azure(service.connection)
-  end
-
-  def stub_show_server(service)
-    stub_query_azure(service.connection)
-  end
-
-  def stub_list_internal_lb(service)
-    stub_query_azure(service.connection)
-  end
-
-  def stub_create_internal_lb(service)
-    stub_query_azure(service.connection)
-  end
-
-  def stub_list_vnets(service)
-    stub_query_azure(service.connection)
-  end
-
-  def stub_create_vnet(service)
-    stub_query_azure(service.connection)
-  end
-
-  def stub_list_ags(service)
-    stub_query_azure(service.connection)
-  end
-
-  def stub_create_ag(service)
-    stub_query_azure(service.connection)
-  end
-
   def lookup_resource_in_test_xml(lookup_name, lookup_pty, tag, in_file)
     dataXML = Nokogiri::XML readFile(in_file)
     itemsXML = dataXML.css(tag)

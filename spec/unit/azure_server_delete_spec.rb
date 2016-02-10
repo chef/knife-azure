@@ -22,7 +22,8 @@ describe Chef::Knife::AzureServerDelete do
         Chef::Config[:knife][key] = value
       end
 
-    stub_delete_server(@server_instance.service)
+    @connection = @server_instance.service.connection
+    stub_query_azure(@connection)
 
     allow(@server_instance).to receive(:confirm).and_return(:true)
 
@@ -44,9 +45,9 @@ describe Chef::Knife::AzureServerDelete do
     @server_instance.name_args = ['role001']
     expect(@server_instance.ui).to receive(:warn).twice
     expect(@server_instance.service).to receive(:delete_server).and_call_original
-    expect(@server_instance.service.connection).to receive(:query_azure).with("hostedservices/service001/deployments/deployment001/roles/role001", "delete")
+    expect(@connection).to receive(:query_azure).with("hostedservices/service001/deployments/deployment001/roles/role001", "delete")
     # comp=media deletes associated vhd
-    expect(@server_instance.service.connection).to receive(:query_azure).with("disks/deployment001-role002-0-201241722728", "delete", "", "comp=media", true)
+    expect(@connection).to receive(:query_azure).with("disks/deployment001-role002-0-201241722728", "delete", "", "comp=media", true)
     @server_instance.run
   end
 
@@ -56,10 +57,10 @@ describe Chef::Knife::AzureServerDelete do
     @server_instance.name_args = ['role001']
     expect(@server_instance.ui).to receive(:warn).twice
     expect(@server_instance.service).to receive(:delete_server).and_call_original
-    expect(@server_instance.service.connection).to receive(:query_azure).with("hostedservices/service001/deployments/deployment001/roles/role001", "delete")
-    expect(@server_instance.service.connection).to receive(:query_azure).with("disks/deployment001-role002-0-201241722728", "get")
+    expect(@connection).to receive(:query_azure).with("hostedservices/service001/deployments/deployment001/roles/role001", "delete")
+    expect(@connection).to receive(:query_azure).with("disks/deployment001-role002-0-201241722728", "get")
     # absent comp=media param preserve vhd disk and delete os disk
-    expect(@server_instance.service.connection).to receive(:query_azure).with("disks/deployment001-role002-0-201241722728", "delete")
+    expect(@connection).to receive(:query_azure).with("disks/deployment001-role002-0-201241722728", "delete")
     @server_instance.run
   end
 
@@ -70,7 +71,7 @@ describe Chef::Knife::AzureServerDelete do
     expect(@server_instance.ui).to receive(:warn).twice
     expect(@server_instance.service).to receive(:delete_server).and_call_original
     # comp=media deletes cloud service, role and associated disks
-    expect(@server_instance.service.connection).to receive(:query_azure).with("hostedservices/service002", "delete", "", "comp=media", false)
+    expect(@connection).to receive(:query_azure).with("hostedservices/service002", "delete", "", "comp=media", false)
     @server_instance.run
   end
 
@@ -82,7 +83,7 @@ describe Chef::Knife::AzureServerDelete do
     expect(@server_instance.ui).to receive(:warn).twice
     expect(@server_instance.service).to receive(:delete_server).and_call_original
     # comp=media deletes role and associated disks
-    expect(@server_instance.service.connection).to receive(:query_azure).with("hostedservices/service002/deployments/testrequest", "delete", "", "comp=media", false)
+    expect(@connection).to receive(:query_azure).with("hostedservices/service002/deployments/testrequest", "delete", "", "comp=media", false)
     @server_instance.run
   end
 
@@ -101,7 +102,7 @@ describe Chef::Knife::AzureServerDelete do
     @server_instance.name_args = ['role001']
     expect(@server_instance.ui).to receive(:warn).twice
     expect(@server_instance.service).to receive(:delete_server).and_call_original
-    expect(@server_instance.service.connection.hosts).to_not receive(:delete)
+    expect(@connection.hosts).to_not receive(:delete)
     @server_instance.run
   end
 
@@ -110,7 +111,7 @@ describe Chef::Knife::AzureServerDelete do
     Chef::Config[:knife][:preserve_azure_dns_name] = true
     expect(@server_instance.ui).to receive(:warn).twice
     expect(@server_instance.service).to receive(:delete_server).and_call_original
-    expect(@server_instance.service.connection.hosts).to_not receive(:delete)
+    expect(@connection.hosts).to_not receive(:delete)
     @server_instance.run
   end
 
@@ -124,7 +125,7 @@ describe Chef::Knife::AzureServerDelete do
     expect(@server_instance.service).to receive(:delete_server).and_call_original
 
     # test correct params are passed to azure API.
-    expect(@server_instance.service.connection).to receive(:query_azure).with("hostedservices/#{Chef::Config[:knife][:azure_dns_name]}/deployments/deployment001/roles/#{test_hostname}", "delete")
+    expect(@connection).to receive(:query_azure).with("hostedservices/#{Chef::Config[:knife][:azure_dns_name]}/deployments/deployment001/roles/#{test_hostname}", "delete")
 
     @server_instance.run
   end
@@ -139,9 +140,9 @@ describe Chef::Knife::AzureServerDelete do
     expect(@server_instance.service).to receive(:delete_server).exactly(3).times.and_call_original
 
     # test correct calls are made to azure API.
-    expect(@server_instance.service.connection).to receive(:query_azure).with("hostedservices/#{Chef::Config[:knife][:azure_dns_name]}/deployments/deployment001", "delete")
-    expect(@server_instance.service.connection).to receive(:query_azure).with("hostedservices/#{Chef::Config[:knife][:azure_dns_name]}/deployments/deployment001/roles/#{test_hostnames[1]}", "delete")
-    expect(@server_instance.service.connection).to receive(:query_azure).with("hostedservices/#{Chef::Config[:knife][:azure_dns_name]}/deployments/deployment001/roles/#{test_hostnames[0]}", "delete")
+    expect(@connection).to receive(:query_azure).with("hostedservices/#{Chef::Config[:knife][:azure_dns_name]}/deployments/deployment001", "delete")
+    expect(@connection).to receive(:query_azure).with("hostedservices/#{Chef::Config[:knife][:azure_dns_name]}/deployments/deployment001/roles/#{test_hostnames[1]}", "delete")
+    expect(@connection).to receive(:query_azure).with("hostedservices/#{Chef::Config[:knife][:azure_dns_name]}/deployments/deployment001/roles/#{test_hostnames[0]}", "delete")
 
     @server_instance.run
   end
@@ -152,8 +153,8 @@ describe Chef::Knife::AzureServerDelete do
     @server_instance.name_args = [test_hostname]
     Chef::Config[:knife][:preserve_azure_os_disk] = true
     expect(@server_instance.service).to receive(:delete_server).exactly(:once).and_call_original
-    expect(@server_instance.service.connection).to receive(:query_azure).with("hostedservices/#{Chef::Config[:knife][:azure_dns_name]}/deployments/deployment001/roles/#{test_hostname}", "delete").exactly(:once)
-    expect(@server_instance.service.connection).to_not receive(:query_azure).with("disks/#{test_diskname}", "delete")
+    expect(@connection).to receive(:query_azure).with("hostedservices/#{Chef::Config[:knife][:azure_dns_name]}/deployments/deployment001/roles/#{test_hostname}", "delete").exactly(:once)
+    expect(@connection).to_not receive(:query_azure).with("disks/#{test_diskname}", "delete")
     @server_instance.run
   end
 
@@ -163,7 +164,7 @@ describe Chef::Knife::AzureServerDelete do
     test_diskname = 'deployment001-role002-0-201241722728'
     @server_instance.name_args = [test_hostname]
     expect(@server_instance.service).to receive(:delete_server).exactly(1).and_call_original
-    expect(@server_instance.service.connection).to receive(:query_azure).with("disks/#{test_diskname}", "delete", "", "comp=media", true)
+    expect(@connection).to receive(:query_azure).with("disks/#{test_diskname}", "delete", "", "comp=media", true)
     @server_instance.run
   end
 
@@ -173,7 +174,7 @@ describe Chef::Knife::AzureServerDelete do
     Chef::Config[:knife][:preserve_azure_vhd] = true
     @server_instance.name_args = [test_hostname]
     expect(@server_instance.service).to receive(:delete_server).exactly(1).and_call_original
-    expect(@server_instance.service.connection).to receive(:query_azure).with("disks/#{test_diskname}", "delete")
+    expect(@connection).to receive(:query_azure).with("disks/#{test_diskname}", "delete")
     @server_instance.run
   end
 
@@ -186,12 +187,12 @@ describe Chef::Knife::AzureServerDelete do
 
     it "should be deleted when --delete-azure-storage-account is set." do
       Chef::Config[:knife][:delete_azure_storage_account] = true
-      expect(@server_instance.service.connection).to receive(:query_azure).with("storageservices/#{@test_storage_account}", "delete")
+      expect(@connection).to receive(:query_azure).with("storageservices/#{@test_storage_account}", "delete")
       @server_instance.run
     end
 
     it "should not be deleted  when --delete-azure-storage-account is not set." do
-      expect(@server_instance.service.connection).to_not receive(:query_azure).with("storageservices/#{@test_storage_account}", "delete")
+      expect(@connection).to_not receive(:query_azure).with("storageservices/#{@test_storage_account}", "delete")
       @server_instance.run
     end
   end
@@ -203,8 +204,8 @@ describe Chef::Knife::AzureServerDelete do
     @server_instance.name_args = [test_hostname]
     test_storage_account = 'auxpreview104imagestore'
     test_diskname = 'deployment001-role002-0-201241722728'
-    expect(@server_instance.service.connection).to_not receive(:query_azure).with("disks/#{test_diskname}", "delete")
-    expect(@server_instance.service.connection).to_not receive(:query_azure).with("storageservices/#{test_storage_account}", "delete")
+    expect(@connection).to_not receive(:query_azure).with("disks/#{test_diskname}", "delete")
+    expect(@connection).to_not receive(:query_azure).with("storageservices/#{test_storage_account}", "delete")
     expect(@server_instance.ui).to receive(:warn).with("Cannot delete storage account while keeping OS Disk. Please set any one option.")
     expect(lambda { @server_instance.validate_disk_and_storage }).to raise_error(SystemExit)
   end

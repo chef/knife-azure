@@ -15,13 +15,14 @@ describe Chef::Knife::AzureInternalLbCreate do
         Chef::Config[:knife][key] = value
       end
 
-    stub_create_internal_lb(@server_instance.service)
+    @connection = @server_instance.service.connection
+    stub_query_azure(@connection)
     allow(@server_instance).to receive(:puts)
     allow(@server_instance).to receive(:print)
   end
 
   it 'should fail missing args.' do
-    expect(@server_instance.service.connection.lbs).to_not receive(:create)
+    expect(@connection.lbs).to_not receive(:create)
     expect(@server_instance.ui).to receive(:error)
     expect { @server_instance.run }.to raise_error(SystemExit)
   end

@@ -14,7 +14,7 @@ describe "images" do
       Chef::Config[:knife][key] = value
     end
 
-    stub_query_azure (@server_instance.service.connection)
+    stub_query_azure(@server_instance.service.connection)
     @connection = @server_instance.service.connection
   end
 
