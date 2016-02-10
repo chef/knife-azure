@@ -17,10 +17,13 @@
 #
 
 require 'azure/custom_errors'
+require 'azure/helpers'
+
 
 class Azure
   class AzureInterface
     include CustomErrors
+    include Helpers
 
     def initialize(options = {})
     end

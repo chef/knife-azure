@@ -32,7 +32,8 @@ describe Chef::Knife::AzureServerCreate do
       Chef::Config[:knife][key] = value
     end
 
-    stub_query_azure (@server_instance.connection)
+    stub_query_azure (@server_instance.service.connection)
+    @connection = @server_instance.service.connection
     allow(@server_instance).to receive(:tcp_test_ssh).and_return(true)
     allow(@server_instance).to receive(:tcp_test_winrm).and_return(true)
     @server_instance.initial_sleep_delay = 0
@@ -79,7 +80,7 @@ describe Chef::Knife::AzureServerCreate do
       it "azure_vm_size" do
         Chef::Config[:knife].delete(:azure_vm_size)
         expect(@server_instance.ui).to receive(:error)
-        expect {@server_instance.run}.to raise_error(NoMethodError)
+        expect {@server_instance.run}.to raise_error(SystemExit)
       end
 
       it "azure_service_location and azure_affinity_group not allowed" do
@@ -444,40 +445,30 @@ describe Chef::Knife::AzureServerCreate do
 
     context "#cleanup_and_exit" do
       it "service leak cleanup" do
-        expect(@server_instance.ui).to receive(:warn).with("Cleaning up resources...")
-        expect {@server_instance.cleanup_and_exit("hosted_srvc", "storage_srvc")}.to raise_error(NoMethodError)
+        expect {@server_instance.service.cleanup_and_exit("hosted_srvc", "storage_srvc")}.to raise_error(NoMethodError)
       end
 
       it "service leak cleanup with nil params" do
-        expect(@server_instance.ui).to receive(:warn).with("Cleaning up resources...")
-        expect(@server_instance.connection.hosts).to_not receive(:delete)
-        expect(@server_instance.connection.storageaccounts).to_not receive(:delete)
-        expect {@server_instance.cleanup_and_exit(nil, nil)}.to raise_error(SystemExit)
+        expect(@server_instance.service.connection.hosts).to_not receive(:delete)
+        expect(@server_instance.service.connection.storageaccounts).to_not receive(:delete)
+        expect {@server_instance.service.cleanup_and_exit(nil, nil)}.to raise_error(SystemExit)
       end
 
       it "service leak cleanup with valid params" do
         ret_val = Object.new
         ret_val.define_singleton_method(:content){""}
-        expect(@server_instance.ui).to receive(:warn).with("Cleaning up resources...")
-        expect(@server_instance.ui).to receive(:warn).with("Deleted created DNS: hosted_srvc.")
-        expect(@server_instance.ui).to receive(:warn).with("Deleted created Storage Account: storage_srvc.")
-        expect(@server_instance.connection.hosts).to receive(:delete).with("hosted_srvc").and_return(ret_val)
-        expect(@server_instance.connection.storageaccounts).to receive(:delete).with("storage_srvc").and_return(ret_val)
-
-        expect {@server_instance.cleanup_and_exit("hosted_srvc", "storage_srvc")}.to raise_error(SystemExit)
+        expect(@server_instance.service.connection.hosts).to receive(:delete).with("hosted_srvc").and_return(ret_val)
+        expect(@server_instance.service.connection.storageaccounts).to receive(:delete).with("storage_srvc").and_return(ret_val)
+        expect {@server_instance.service.cleanup_and_exit("hosted_srvc", "storage_srvc")}.to raise_error(SystemExit)
       end
 
       it "display proper warn messages on cleanup fails" do
         ret_val = Object.new
         ret_val.define_singleton_method(:content){ "ConflictError" }
         ret_val.define_singleton_method(:text){ "ConflictError" }
-        expect(@server_instance.ui).to receive(:warn).with("Cleaning up resources...")
-        expect(@server_instance.ui).to receive(:warn).with("Deletion failed for created DNS:hosted_srvc. ConflictError")
-        expect(@server_instance.ui).to receive(:warn).with("Deletion failed for created Storage Account: storage_srvc. ConflictError")
-        expect(@server_instance.connection.hosts).to receive(:delete).with("hosted_srvc").and_return(ret_val)
-        expect(@server_instance.connection.storageaccounts).to receive(:delete).with("storage_srvc").and_return(ret_val)
-
-        expect {@server_instance.cleanup_and_exit("hosted_srvc", "storage_srvc")}.to raise_error(SystemExit)
+        expect(@server_instance.service.connection.hosts).to receive(:delete).with("hosted_srvc").and_return(ret_val)
+        expect(@server_instance.service.connection.storageaccounts).to receive(:delete).with("storage_srvc").and_return(ret_val)
+        expect {@server_instance.service.cleanup_and_exit("hosted_srvc", "storage_srvc")}.to raise_error(SystemExit)
       end
     end
 
@@ -660,21 +651,6 @@ describe Chef::Knife::AzureServerCreate do
         expect(@bootstrap).to receive(:run)
       end
 
-      it "sets param <azure_storage_account> from azure_vm_name" do
-        Chef::Config[:knife].delete(:azure_storage_account)
-        expect(@server_instance).to receive(:is_image_windows?).at_least(:twice).and_return(true)
-        @server_instance.run
-        expect(@server_instance.config[:azure_storage_account]).to match(/\Avm002/)
-      end
-
-      it "sets param <azure_storage_account> from storage name" do
-        Chef::Config[:knife].delete(:azure_storage_account)
-        expect(@server_instance).to receive(:is_image_windows?).at_least(:twice).and_return(true)
-        Chef::Config[:knife][:azure_service_location] = 'service-location'
-        @server_instance.run
-        expect(@server_instance.config[:azure_storage_account]).to match(/storage-service-name/)
-      end
-
       it "successful bootstrap of windows instance" do
         expect(@server_instance).to receive(:is_image_windows?).exactly(5).times.and_return(true)
         expect(@server_instance).to receive(:wait_until_virtual_machine_ready).exactly(1).times.and_return(true)
@@ -782,8 +758,8 @@ describe Chef::Knife::AzureServerCreate do
           @bootstrap = Chef::Knife::Bootstrap.new
           allow(Chef::Knife::Bootstrap).to receive(:new).and_return(@bootstrap)
           expect(@bootstrap).to receive(:run)
-          allow(@server_instance.connection.certificates).to receive(:generate_public_key_certificate_data).and_return("cert_data")
-          expect(@server_instance.connection.certificates).to receive(:create)
+          allow(@server_instance.service.connection.certificates).to receive(:generate_public_key_certificate_data).and_return("cert_data")
+          expect(@server_instance.service.connection.certificates).to receive(:create)
           @server_instance.run
         end
       end
@@ -974,7 +950,7 @@ describe Chef::Knife::AzureServerCreate do
         end
         expect(@server_instance).to_not receive(:bootstrap_exec)
 
-        allow(@server_instance.connection).to receive(:query_azure).and_return(version.doc)
+        allow(@server_instance.service.connection).to receive(:query_azure).and_return(version.doc)
         expect(@server_instance).to receive(:get_chef_extension_public_params)
         expect(@server_instance).to receive(:get_chef_extension_private_params)
         expect(@server_instance).to receive(:is_image_windows?).exactly(4).times.and_return(true)
@@ -1009,7 +985,7 @@ describe Chef::Knife::AzureServerCreate do
           }
         end
         expect(@server_instance).to_not receive(:bootstrap_exec)
-        allow(@server_instance.connection).to receive(:query_azure).and_return(version.doc)
+        allow(@server_instance.service.connection).to receive(:query_azure).and_return(version.doc)
         expect(@server_instance).to receive(:get_chef_extension_private_params)
         expect(@server_instance).to receive(:is_image_windows?).exactly(4).times.and_return(false)
         server_config = @server_instance.create_server_def
