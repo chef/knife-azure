@@ -19,6 +19,7 @@
 
 require 'chef/knife'
 require 'azure/service_management/ASM_interface'
+require 'azure/resource_management/ARM_interface'
 
 class Chef
   class Knife
@@ -63,6 +64,12 @@ class Chef
             :long => "--azure-publish-settings-file FILENAME",
             :description => "Your Azure Publish Settings File",
             :proc => Proc.new { |key| Chef::Config[:knife][:azure_publish_settings_file] = key }
+
+          option :azure_api_mode,
+            :long => "--azure-api-mode MODE",
+            :description => "The API mode to be used. Supported input ARM|ASM. Default is ASM.",
+            :proc => Proc.new { |key| Chef::Config[:knife][:azure_api_mode] = key },
+            :default => "ASM"
         end
       end
 
@@ -78,13 +85,30 @@ class Chef
       end
 
       def service
-        @service ||= begin
-                      service = Azure::ServiceManagement::ASMInterface.new(
-                      :azure_subscription_id => locate_config_value(:azure_subscription_id),
-                      :azure_mgmt_cert => locate_config_value(:azure_mgmt_cert),
-                      :azure_api_host_name => locate_config_value(:azure_api_host_name),
-                      :verify_ssl_cert => locate_config_value(:verify_ssl_cert)
-                    )
+        if(locate_config_value(:azure_api_mode) == "ASM")
+          validate!
+          @service ||= begin
+                        service = Azure::ServiceManagement::ASMInterface.new(
+                        :azure_subscription_id => locate_config_value(:azure_subscription_id),
+                        :azure_mgmt_cert => locate_config_value(:azure_mgmt_cert),
+                        :azure_api_host_name => locate_config_value(:azure_api_host_name),
+                        :verify_ssl_cert => locate_config_value(:verify_ssl_cert)
+                      )
+                      end
+        elsif(locate_config_value(:azure_api_mode) == "ARM")
+          validate!([:azure_subscription_id,
+                   :azure_tenant_id,
+                   :azure_client_id,
+                   :azure_client_secret])
+
+          @service ||= begin
+                        service = Azure::ResourceManagement::ARMInterface.new(
+                          :azure_subscription_id => locate_config_value(:azure_subscription_id),
+                          :azure_tenant_id => locate_config_value(:azure_tenant_id),
+                          :azure_client_id => locate_config_value(:azure_client_id),
+                          :azure_client_secret => locate_config_value(:azure_client_secret)
+                          )
+                      end
         end
         @service.ui = ui
         @service
@@ -130,9 +154,12 @@ class Chef
       # validate compulsory params
       def validate!(keys=[:azure_subscription_id, :azure_mgmt_cert, :azure_api_host_name])
         errors = []
-        if(locate_config_value(:azure_mgmt_cert) != nil)
-          config[:azure_mgmt_cert] = File.read find_file(locate_config_value(:azure_mgmt_cert))
+        if(locate_config_value(:azure_api_mode) == "ASM")
+          if(locate_config_value(:azure_mgmt_cert) != nil)
+            config[:azure_mgmt_cert] = File.read find_file(locate_config_value(:azure_mgmt_cert))
+          end
         end
+
         if(locate_config_value(:azure_publish_settings_file) != nil)
           parse_publish_settings_file(locate_config_value(:azure_publish_settings_file))
         else
@@ -141,6 +168,7 @@ class Chef
             parse_azure_profile(azureprofile_file)
           end
         end
+
         keys.each do |k|
           if locate_config_value(k).nil?
             errors << "You did not provide a valid '#{pretty_key(k)}' value. Please set knife[:#{k}] in your knife.rb or pass as an option."
