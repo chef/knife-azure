@@ -104,6 +104,7 @@ class Azure
       end
       @connection.roles.find_in_hosted_service(params[:azure_vm_name], params[:azure_dns_name])
     end
+
     def delete(rolename)
     end
 

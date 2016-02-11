@@ -14,13 +14,15 @@ describe Chef::Knife::AzureInternalLbCreate do
       }.each do |key, value|
         Chef::Config[:knife][key] = value
       end
-    stub_query_azure(@server_instance.connection)
+
+    @connection = @server_instance.service.connection
+    stub_query_azure(@connection)
     allow(@server_instance).to receive(:puts)
     allow(@server_instance).to receive(:print)
   end
 
   it 'should fail missing args.' do
-    expect(@server_instance.connection.lbs).to_not receive(:create)
+    expect(@connection.lbs).to_not receive(:create)
     expect(@server_instance.ui).to receive(:error)
     expect { @server_instance.run }.to raise_error(SystemExit)
   end
@@ -30,7 +32,7 @@ describe Chef::Knife::AzureInternalLbCreate do
     Chef::Config[:knife][:azure_lb_static_vip] = '10.3.3.3'
     Chef::Config[:knife][:azure_subnet_name] = 'vnet'
     Chef::Config[:knife][:azure_dns_name] = 'vmname'
-    expect(@server_instance.connection.lbs).to receive(:create).with(
+    expect(@server_instance.service.connection.lbs).to receive(:create).with(
       azure_load_balancer: 'new-lb',
       azure_lb_static_vip: '10.3.3.3',
       azure_subnet_name: 'vnet',

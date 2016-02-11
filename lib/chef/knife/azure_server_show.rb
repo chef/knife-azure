@@ -34,7 +34,7 @@ class Chef
         validate!
 
         @name_args.each do |name|
-          role = connection.roles.find name
+          role = service.show_server name
           puts ''
           if (role)
             details = Array.new

@@ -26,12 +26,14 @@ describe Chef::Knife::AzureBase do
 				Chef::Config[:knife][:azure_api_host_name] = nil
 				Chef::Config[:knife][:azure_subscription_id] = nil
 			end
+
 			def validate_cert()
 				expect(Chef::Config[:knife][:azure_mgmt_cert]).to include("-----BEGIN CERTIFICATE-----")
 				expect(Chef::Config[:knife][:azure_mgmt_cert]).to include("-----END CERTIFICATE-----")
 				expect(Chef::Config[:knife][:azure_mgmt_cert]).to include("-----BEGIN RSA PRIVATE KEY-----")
 				expect(Chef::Config[:knife][:azure_mgmt_cert]).to include("-----END RSA PRIVATE KEY-----")
 			end
+
 			it "- should continue to regular flow if publish settings file not provided" do
 				Chef::Config[:knife][:azure_api_host_name] = "preview.core.windows-int.net"
 				Chef::Config[:knife][:azure_subscription_id] = "azure_subscription_id"

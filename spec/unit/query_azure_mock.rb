@@ -1,14 +1,10 @@
 require File.expand_path(File.dirname(__FILE__) + '/../spec_helper')
+require 'pry'
 
 module QueryAzureMock
   include AzureUtility
-  def setup_query_azure_mock
-    create_connection
-    stub_query_azure (@connection)
-  end
-
-  def create_connection
-    @connection = Azure::Connection.new(TEST_PARAMS)
+  def create_service
+    @service = Azure::ServiceManagement::ASMInterface.new(TEST_PARAMS)
   end
 
   def lookup_resource_in_test_xml(lookup_name, lookup_pty, tag, in_file)
@@ -27,7 +23,7 @@ module QueryAzureMock
     retval
   end
 
-  def stub_query_azure (connection)
+  def stub_query_azure(connection)
     @getname = ''
     @getverb = ''
     @getbody = ''

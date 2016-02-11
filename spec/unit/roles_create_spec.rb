@@ -20,12 +20,23 @@ describe "roles" do
   include AzureSpecHelper
   include QueryAzureMock
   before do
-    setup_query_azure_mock
+    @server_instance = Chef::Knife::AzureServerCreate.new
+    {
+      :azure_subscription_id => 'azure_subscription_id',
+      :azure_mgmt_cert => @cert_file,
+      :azure_api_host_name => 'preview.core.windows-int.net'
+    }.each do |key, value|
+      Chef::Config[:knife][key] = value
+    end
+
+    stub_query_azure (@server_instance.service.connection)
+    @connection = @server_instance.service.connection
   end
+
   context 'delete a role' do
     context 'when the role is not the only one in a deployment' do
       it 'should pass in correct name, verb, and body' do
-        @connection.roles.delete('vm002', {:preserve_azure_os_disk => true});
+        @connection.roles.delete({ name:'vm002', preserve_azure_os_disk: true })
         expect(@deletename).to be == 'hostedservices/service001/deployments/deployment001/roles/vm002'
         expect(@deleteverb).to be == 'delete'
         expect(@deletebody).to be nil
@@ -36,7 +47,7 @@ describe "roles" do
   context 'delete a role' do
     context 'when the role is the only one in a deployment' do
       it 'should pass in correct name, verb, and body' do
-        @connection.roles.delete('vm01', {:preserve_azure_os_disk => true});
+        @connection.roles.delete({ name:'vm01', preserve_azure_os_disk: true })
         expect(@deletename).to be == 'hostedservices/service002/deployments/testrequest'
         expect(@deleteverb).to be == 'delete'
         expect(@deletebody).to be nil

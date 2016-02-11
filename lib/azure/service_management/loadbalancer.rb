@@ -17,7 +17,9 @@
 #
 
 class Azure
-  class Loadbalancers
+  class Loadbalancer
+    include AzureUtility
+    attr_accessor :name, :service, :subnet, :vip
 
     def initialize(connection)
       @connection = connection
@@ -43,22 +45,6 @@ class Azure
 
     def find(name)
       load[name]
-    end
-
-    def create(params)
-      lb = Loadbalancer.new(@connection)
-      lb.create(params)
-    end
-  end
-end
-
-class Azure
-  class Loadbalancer
-    include AzureUtility
-    attr_accessor :name, :service, :subnet, :vip
-
-    def initialize(connection)
-      @connection = connection
     end
 
     def parse(lbXML, hostedservicename)

@@ -43,10 +43,10 @@ class Chef
         $stdout.sync = true
 
         validate!
+        items = service.list_images
 
         image_labels = !locate_config_value(:show_all_fields) ? ['Name', 'OS', 'Location'] : ['Name', 'Category', 'Label', 'OS', 'Location']
         image_list =  image_labels.map {|label| ui.color(label, :bold)}
-        items = connection.images.all
 
         image_items = image_labels.map {|item| item.downcase }
         items.each do |image|

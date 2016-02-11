@@ -39,7 +39,10 @@ class Chef
         cols = %w{Name Location Description}
 
         the_list = cols.map { |col| ui.color(col, :bold) }
-        connection.ags.all.each do |ag|
+
+        ags = service.list_ags
+
+        ags.each do |ag|
           cols.each { |attr| the_list << ag.send(attr.downcase).to_s }
         end
 
