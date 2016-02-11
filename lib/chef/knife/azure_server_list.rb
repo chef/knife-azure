@@ -30,12 +30,18 @@ class Chef
 
       def run
         $stdout.sync = true
+        items = service.list_servers
 
-        validate!
+        if(locate_config_value(:azure_api_mode) == "ASM")
+          display_asm_output items
+        elsif(locate_config_value(:azure_api_mode) == "ARM")
+          display_arm_output items
+        end
+      end
 
+      def display_asm_output items
         server_labels = ['DNS Name', 'VM Name', 'Status', 'IP Address', 'SSH Port', 'WinRM Port' ]
         server_list =  server_labels.map {|label| ui.color(label, :bold)}
-        items = service.list_servers
 
         items.each do |server|
           server_list << server.hostedservicename.to_s+".cloudapp.net"  # Info about the DNS name at http://msdn.microsoft.com/en-us/library/ee460806.aspx
@@ -57,6 +63,30 @@ class Chef
         end
         puts ''
         puts ui.list(server_list, :uneven_columns_across, 6)
+      end
+
+      def display_arm_output items
+        server_labels = ['VM Name', 'Location', 'Provisioning State', 'OS Type']
+        server_list =  server_labels.map {|label| ui.color(label, :bold)}
+
+        items.each do |server|
+          server_list << server.name.to_s
+          server_list << server.location.to_s
+          server_list << begin
+                           state = server.properties.provisioning_state.to_s.downcase
+                           case state
+                           when 'shutting-down','terminated','stopping','stopped'
+                             ui.color(state, :red)
+                           when 'pending'
+                             ui.color(state, :yellow)
+                           else
+                             ui.color('ready', :green)
+                           end
+                         end
+          server_list << server.properties.storage_profile.os_disk.os_type.to_s
+        end
+        puts ''
+        puts ui.list(server_list, :uneven_columns_across, 4)
       end
     end
   end
