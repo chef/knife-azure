@@ -29,12 +29,18 @@ class Chef
       banner "knife azure server list (options)"
 
       def run
-        $stdout.sync = true
-        items = service.list_servers
+        $stdout.sync = true        
 
         if(locate_config_value(:azure_api_mode) == "ASM")
+          validate!
+          items = service.list_servers
           display_asm_output items
         elsif(locate_config_value(:azure_api_mode) == "ARM")
+          validate!([:azure_subscription_id,
+                   :azure_tenant_id,
+                   :azure_client_id,
+                   :azure_client_secret])
+          items = service.list_servers
           display_arm_output items
         end
       end

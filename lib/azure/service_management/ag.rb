@@ -16,7 +16,7 @@
 # limitations under the License.
 #
 
-class Azure
+module Azure
   class AGs
     def initialize(connection)
       @connection = connection
@@ -58,7 +58,7 @@ class Azure
   end
 end
 
-class Azure
+module Azure
   class AG
     attr_accessor :name, :label, :description, :location
 

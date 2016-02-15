@@ -20,7 +20,7 @@ require 'azure/azure_interface'
 require 'azure/service_management/rest'
 require 'azure/service_management/connection'
 
-class Azure
+module Azure
   class ServiceManagement
     class ASMInterface < AzureInterface
       include AzureAPI

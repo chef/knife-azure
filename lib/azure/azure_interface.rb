@@ -20,7 +20,7 @@ require 'azure/custom_errors'
 require 'azure/helpers'
 
 
-class Azure
+module Azure
   class AzureInterface
     include CustomErrors
     include Helpers
