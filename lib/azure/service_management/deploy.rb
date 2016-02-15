@@ -16,7 +16,7 @@
 # limitations under the License.
 #
 
-class Azure
+module Azure
   class Deploys
     include AzureUtility
     def initialize(connection)

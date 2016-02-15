@@ -16,7 +16,7 @@
 # limitations under the License.
 #
 
-class Azure
+module Azure
   class Vnets
     def initialize(connection)
       @connection = connection
@@ -53,7 +53,7 @@ class Azure
   end
 end
 
-class Azure
+module Azure
   class Vnet
     attr_accessor :name, :affinity_group, :state
 

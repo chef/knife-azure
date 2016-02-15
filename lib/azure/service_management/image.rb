@@ -16,7 +16,7 @@
 # limitations under the License.
 #
 
-class Azure
+module Azure
   class Images
     def initialize(connection)
       @connection=connection
@@ -76,7 +76,7 @@ class Azure
   end
 end
 
-class Azure
+module Azure
   class Image
     attr_accessor :category, :label
     attr_accessor :name, :os, :eula, :description, :location

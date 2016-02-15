@@ -28,7 +28,7 @@ require 'azure/service_management/storageaccount'
 require 'azure/service_management/certificate'
 require 'azure/service_management/disk'
 
-class Azure
+module Azure
   class ServiceManagement
     class Connection
       include AzureUtility

@@ -16,7 +16,7 @@
 require 'azure/azure_interface'
 require "azure_mgmt_compute"
 
-class Azure
+module Azure
   class ResourceManagement
     class ARMInterface < AzureInterface
       include AzureAPI

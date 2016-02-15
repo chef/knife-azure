@@ -16,7 +16,7 @@
 # limitations under the License.
 #
 
-class Azure
+module Azure
   class StorageAccounts
     include AzureUtility
     def initialize(connection)
@@ -82,7 +82,7 @@ class Azure
   end
 end
 
-class Azure
+module Azure
   class StorageAccount
     include AzureUtility
     attr_accessor :name, :location
