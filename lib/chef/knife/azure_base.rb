@@ -86,7 +86,6 @@ class Chef
 
       def service
         if(locate_config_value(:azure_api_mode) == "ASM")
-          validate!
           @service ||= begin
                         service = Azure::ServiceManagement::ASMInterface.new(
                         :azure_subscription_id => locate_config_value(:azure_subscription_id),
@@ -96,11 +95,6 @@ class Chef
                       )
                       end
         elsif(locate_config_value(:azure_api_mode) == "ARM")
-          validate!([:azure_subscription_id,
-                   :azure_tenant_id,
-                   :azure_client_id,
-                   :azure_client_secret])
-
           @service ||= begin
                         service = Azure::ResourceManagement::ARMInterface.new(
                           :azure_subscription_id => locate_config_value(:azure_subscription_id),

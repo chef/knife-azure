@@ -16,7 +16,7 @@
 # limitations under the License.
 #
 
-class Azure
+module Azure
   class Disks
     def initialize(connection)
       @connection=connection
@@ -51,7 +51,7 @@ class Azure
   end
 end
 
-class Azure
+module Azure
   class Disk
     attr_accessor :name, :attached
     def initialize(disk)
