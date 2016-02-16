@@ -7,21 +7,20 @@ describe Chef::Knife::AzureServerDelete do
 
   before do
     @server_instance = Chef::Knife::AzureServerDelete.new
-
-    {
-      :azure_subscription_id => 'azure_subscription_id',
-      :azure_mgmt_cert => @cert_file,
-      :azure_api_host_name => 'preview.core.windows-int.net',
-      :name => 'vm01',
-      :azure_service_location => 'West Europe',
-      :azure_source_image => 'azure_source_image',
-      :azure_vm_size => 'Small',
-      :azure_dns_name => 'service001',
-      :azure_storage_account => 'ka001testeurope'
+      {
+        :azure_subscription_id => 'azure_subscription_id',
+        :azure_mgmt_cert => @cert_file,
+        :azure_api_host_name => 'preview.core.windows-int.net',
+        :name => 'vm01',
+        :azure_service_location => 'West Europe',
+        :azure_source_image => 'azure_source_image',
+        :azure_vm_size => 'Small',
+        :azure_dns_name => 'service001',
+        :azure_storage_account => 'ka001testeurope'
       }.each do |key, value|
-        Chef::Config[:knife][key] = value
-      end
-
+          Chef::Config[:knife][key] = value
+        end
+    Chef::Config[:knife][:azure_api_mode] = "ASM"
     @connection = @server_instance.service.connection
     stub_query_azure(@connection)
 
