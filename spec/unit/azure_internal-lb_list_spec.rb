@@ -17,9 +17,10 @@ describe Chef::Knife::AzureInternalLbList do
         :azure_vm_name => 'vm01',
         :azure_storage_account => 'ka001testeurope',
         :azure_vm_size => 'Small'
-        }.each do |key, value|
-      Chef::Config[:knife][key] = value
-    end
+      }.each do |key, value|
+          Chef::Config[:knife][key] = value
+        end
+    Chef::Config[:knife][:azure_api_mode] = "ASM"
     stub_query_azure(@server_instance.service.connection)
     allow(@server_instance).to receive(:items).and_return(:true)
     allow(@server_instance).to receive(:puts)
