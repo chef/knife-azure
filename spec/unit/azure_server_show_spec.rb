@@ -6,7 +6,7 @@ describe Chef::Knife::AzureAgList do
   include QueryAzureMock
   before do
     @server_instance = create_instance(Chef::Knife::AzureServerShow)
-    Chef::Config[:knife][:azure_api_mode] = "ASM"
+    Chef::Config[:knife][:azure_api_mode] = "asm"
     stub_query_azure(@server_instance.service.connection)
     allow(@server_instance).to receive(:puts)
   end
