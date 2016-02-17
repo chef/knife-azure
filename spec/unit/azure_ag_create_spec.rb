@@ -7,7 +7,7 @@ describe Chef::Knife::AzureAgCreate do
 
   before do
     @server_instance = create_instance(Chef::Knife::AzureAgCreate)
-    Chef::Config[:knife][:azure_api_mode] = "ASM"
+    Chef::Config[:knife][:azure_api_mode] = "asm"
     @connection = @server_instance.service.connection
     stub_query_azure(@connection)
     allow(@server_instance).to receive(:puts)
