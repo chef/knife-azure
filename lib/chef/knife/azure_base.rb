@@ -67,9 +67,9 @@ class Chef
 
           option :azure_api_mode,
             :long => "--azure-api-mode MODE",
-            :description => "The API mode to be used. Supported input ARM|ASM. Default is ASM.",
-            :proc => Proc.new { |key| Chef::Config[:knife][:azure_api_mode] = key },
-            :default => "ASM"
+            :description => "The API mode to be used. Supported input arm|asm. Default is asm.",
+            :proc => Proc.new { |key| key.downcase },
+            :default => "asm"
         end
       end
 
@@ -85,7 +85,7 @@ class Chef
       end
 
       def service
-        if(locate_config_value(:azure_api_mode) == "ASM")
+        if(locate_config_value(:azure_api_mode) == "asm")
           @service ||= begin
                         service = Azure::ServiceManagement::ASMInterface.new(
                         :azure_subscription_id => locate_config_value(:azure_subscription_id),
@@ -94,7 +94,7 @@ class Chef
                         :verify_ssl_cert => locate_config_value(:verify_ssl_cert)
                       )
                       end
-        elsif(locate_config_value(:azure_api_mode) == "ARM")
+        elsif(locate_config_value(:azure_api_mode) == "arm")
           @service ||= begin
                         service = Azure::ResourceManagement::ARMInterface.new(
                           :azure_subscription_id => locate_config_value(:azure_subscription_id),
@@ -148,7 +148,7 @@ class Chef
       # validate compulsory params
       def validate!(keys=[:azure_subscription_id, :azure_mgmt_cert, :azure_api_host_name])
         errors = []
-        if(locate_config_value(:azure_api_mode) == "ASM")
+        if(locate_config_value(:azure_api_mode) == "asm")
           if(locate_config_value(:azure_mgmt_cert) != nil)
             config[:azure_mgmt_cert] = File.read find_file(locate_config_value(:azure_mgmt_cert))
           end
