@@ -17,7 +17,6 @@
 # limitations under the License.
 #
 
-require 'highline'
 require 'chef/knife'
 require 'azure/service_management/ASM_interface'
 
