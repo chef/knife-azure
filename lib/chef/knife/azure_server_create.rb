@@ -589,7 +589,15 @@ class Chef
         storage = nil
 
         Chef::Log.info("validating...")
-        validate!
+        validate!([
+              :azure_subscription_id,
+              :azure_mgmt_cert,
+              :azure_api_host_name,
+              :azure_source_image,
+              :azure_vm_size,
+        ])
+
+        validate_params!
 
         if (locate_config_value(:auto_update_client) ||  locate_config_value(:delete_chef_extension_config) || locate_config_value(:uninstall_chef_client))  &&  (locate_config_value(:bootstrap_protocol) != 'cloud-api')
           ui.error("--auto-update-client option works with --bootstrap-protocol cloud-api") if locate_config_value(:auto_update_client)
@@ -762,15 +770,7 @@ class Chef
         bootstrap_common_params(bootstrap, server)
       end
 
-      def validate!
-        super([
-              :azure_subscription_id,
-              :azure_mgmt_cert,
-              :azure_api_host_name,
-              :azure_source_image,
-              :azure_vm_size,
-        ])
-
+      def validate_params!
         if locate_config_value(:winrm_password) and (locate_config_value(:winrm_password).length <= 6 and locate_config_value(:winrm_password).length >= 72)
           ui.error("The supplied password must be 6-72 characters long and meet password complexity requirements")
           exit 1

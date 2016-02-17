@@ -27,28 +27,10 @@ class Chef
 
       banner 'knife azure vnet list (options)'
 
-      def hl
-        @highline ||= HighLine.new
-      end
-
       def run
         $stdout.sync = true
-
         validate!
-
-        cols = ['Name', 'Affinity Group', 'State']
-        the_list = cols.map { |col| ui.color(col, :bold) }
-        
-        vnets = service.list_vnets
-
-        vnets.each do |vnet|
-          %w(name affinity_group state).each do |attr|
-            the_list << vnet.send(attr).to_s
-          end
-        end
-        
-        puts "\n"
-        puts hl.list(the_list, :uneven_columns_across, cols.size)
+        service.list_vnets
       end
     end
   end

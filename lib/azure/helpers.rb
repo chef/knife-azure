@@ -26,5 +26,13 @@ class Azure
     def strip_non_ascii(string)
       string.gsub(/[^0-9a-z ]/i, '')
     end
+
+    def display_list(ui=nil, columns=[], rows=[])
+      columns = columns.map{ |col| ui.color(col, :bold) }
+      count = columns.count
+      rows = columns.concat(rows)
+      puts ''
+      puts ui.list(rows, :uneven_columns_across, count)
+    end
   end
 end

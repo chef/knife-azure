@@ -26,7 +26,7 @@ describe Chef::Knife::AzureAgList do
   end
 
     it 'should display Name, Location, and Description columns.' do
-      expect(@server_instance.hl).to receive(:list).with(
+      expect(@server_instance.ui).to receive(:list).with(
         ['Name', 'Location', 'Description',
          'agname', 'West US', 'agdesc',
          'jm-affinity-group', 'West US', '',

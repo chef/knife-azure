@@ -27,27 +27,10 @@ class Chef
 
       banner 'knife azure ag list (options)'
 
-      def hl
-        @highline ||= HighLine.new
-      end
-
       def run
         $stdout.sync = true
-
         validate!
-
-        cols = %w{Name Location Description}
-
-        the_list = cols.map { |col| ui.color(col, :bold) }
-
-        ags = service.list_ags
-
-        ags.each do |ag|
-          cols.each { |attr| the_list << ag.send(attr.downcase).to_s }
-        end
-
-        puts "\n"
-        puts hl.list(the_list, :uneven_columns_across, cols.size)
+        service.list_affinity_groups
       end
     end
   end

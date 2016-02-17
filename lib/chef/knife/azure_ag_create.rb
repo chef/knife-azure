@@ -58,7 +58,7 @@ class Chef
           azure_location: locate_config_value(:azure_service_location),
         }
 
-        rsp = service.create_ag(params)
+        rsp = service.create_affinity_group(params)
         print "\n"
         if rsp.at_css('Status').nil?
           if rsp.at_css('Code').nil? || rsp.at_css('Message').nil?

@@ -17,6 +17,7 @@
 # limitations under the License.
 #
 
+require 'highline'
 require 'chef/knife'
 require 'azure/service_management/ASM_interface'
 
@@ -86,6 +87,8 @@ class Chef
                       :verify_ssl_cert => locate_config_value(:verify_ssl_cert)
                     )
         end
+        @service.ui = ui
+        @service
       end
 
       def locate_config_value(key)
@@ -117,6 +120,15 @@ class Chef
         puts "\n"
       end
 
+      def pretty_key(key)
+        key.to_s.gsub(/_/, ' ').gsub(/\w+/){ |w| (w =~ /(ssh)|(aws)/i) ? w.upcase  : w.capitalize }
+      end
+
+      # validate command pre-requisites (cli options)
+      def validate_params!
+      end
+
+      # validate compulsory params
       def validate!(keys=[:azure_subscription_id, :azure_mgmt_cert, :azure_api_host_name])
         errors = []
         if(locate_config_value(:azure_mgmt_cert) != nil)
@@ -131,9 +143,8 @@ class Chef
           end
         end
         keys.each do |k|
-          pretty_key = k.to_s.gsub(/_/, ' ').gsub(/\w+/){ |w| (w =~ /(ssh)|(aws)/i) ? w.upcase  : w.capitalize }
           if locate_config_value(k).nil?
-            errors << "You did not provide a valid '#{pretty_key}' value. Please set knife[:#{k}] in your knife.rb or pass as an option."
+            errors << "You did not provide a valid '#{pretty_key(k)}' value. Please set knife[:#{k}] in your knife.rb or pass as an option."
           end
         end
         if errors.each{|e| ui.error(e)}.any?
@@ -224,7 +235,6 @@ class Chef
         end
         file
       end
-
     end
   end
 end
