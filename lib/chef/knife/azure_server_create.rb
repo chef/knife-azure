@@ -589,20 +589,22 @@ class Chef
         storage = nil
 
         Chef::Log.info("validating...")
-        validate!
+        validate!([
+              :azure_subscription_id,
+              :azure_mgmt_cert,
+              :azure_api_host_name,
+              :azure_source_image,
+              :azure_vm_size,
+        ])
 
-        if (locate_config_value(:auto_update_client) ||  locate_config_value(:delete_chef_extension_config) || locate_config_value(:uninstall_chef_client))  &&  (locate_config_value(:bootstrap_protocol) != 'cloud-api')
-          ui.error("--auto-update-client option works with --bootstrap-protocol cloud-api") if locate_config_value(:auto_update_client)
-          ui.error("--delete-chef-extension-config option works with --bootstrap-protocol cloud-api") if locate_config_value(:delete_chef_extension_config)
-          ui.error("--uninstall-chef-client option works with --bootstrap-protocol cloud-api") if locate_config_value(:uninstall_chef_client)
-          exit 1
-        end
+        validate_params!
 
         ssh_override_winrm if %w(ssh cloud-api).include?(locate_config_value(:bootstrap_protocol)) and !is_image_windows?
 
         Chef::Log.info("creating...")
 
         config[:azure_dns_name] = get_dns_name(locate_config_value(:azure_dns_name))
+
         if not locate_config_value(:azure_vm_name)
           config[:azure_vm_name] = locate_config_value(:azure_dns_name)
         end
@@ -762,15 +764,7 @@ class Chef
         bootstrap_common_params(bootstrap, server)
       end
 
-      def validate!
-        super([
-              :azure_subscription_id,
-              :azure_mgmt_cert,
-              :azure_api_host_name,
-              :azure_source_image,
-              :azure_vm_size,
-        ])
-
+      def validate_params!
         if locate_config_value(:winrm_password) and (locate_config_value(:winrm_password).length <= 6 and locate_config_value(:winrm_password).length >= 72)
           ui.error("The supplied password must be 6-72 characters long and meet password complexity requirements")
           exit 1
@@ -814,6 +808,13 @@ class Chef
 
         if locate_config_value(:winrm_transport) == "ssl" && locate_config_value(:thumbprint).nil? && ( locate_config_value(:winrm_ssl_verify_mode).nil? || locate_config_value(:winrm_ssl_verify_mode) == :verify_peer )
           ui.error("The SSL transport was specified without the --thumbprint option. Specify a thumbprint, or alternatively set the --winrm-ssl-verify-mode option to 'verify_none' to skip verification.")
+          exit 1
+        end
+
+        if (locate_config_value(:auto_update_client) ||  locate_config_value(:delete_chef_extension_config) || locate_config_value(:uninstall_chef_client))  &&  (locate_config_value(:bootstrap_protocol) != 'cloud-api')
+          ui.error("--auto-update-client option works with --bootstrap-protocol cloud-api") if locate_config_value(:auto_update_client)
+          ui.error("--delete-chef-extension-config option works with --bootstrap-protocol cloud-api") if locate_config_value(:delete_chef_extension_config)
+          ui.error("--uninstall-chef-client option works with --bootstrap-protocol cloud-api") if locate_config_value(:uninstall_chef_client)
           exit 1
         end
       end
@@ -933,11 +934,11 @@ class Chef
       end
 
       def get_chef_extension_name
-        extension_name = is_image_windows? ? "ChefClient" : "LinuxChefClient"
+        is_image_windows? ? "ChefClient" : "LinuxChefClient"
       end
 
       def get_chef_extension_publisher
-        publisher = "Chef.Bootstrap.WindowsAzure"
+        "Chef.Bootstrap.WindowsAzure"
       end
 
       # get latest version

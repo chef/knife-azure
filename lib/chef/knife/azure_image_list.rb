@@ -18,7 +18,6 @@
 # limitations under the License.
 #
 
-require 'highline'
 require File.expand_path('../azure_base', __FILE__)
 
 class Chef
@@ -35,9 +34,6 @@ class Chef
         :boolean => true,
         :description => "Show all the fields of the images"
 
-      def h
-        @highline ||= HighLine.new
-      end
 
       def run
         $stdout.sync = true
@@ -54,7 +50,7 @@ class Chef
         end
 
         puts "\n"
-        puts h.list(image_list, :uneven_columns_across, !locate_config_value(:show_all_fields) ? 3 : 5)
+        puts ui.list(image_list, :uneven_columns_across, !locate_config_value(:show_all_fields) ? 3 : 5)
 
       end
     end

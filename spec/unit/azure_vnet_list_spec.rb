@@ -18,7 +18,7 @@ describe Chef::Knife::AzureAgList do
   end
 
   it 'should display Name, Affinity Group, and State columns.' do
-    expect(@server_instance.hl).to receive(:list).with(
+    expect(@server_instance.ui).to receive(:list).with(
       ['Name', 'Affinity Group', 'State',
        'jm-vnet-test', 'jm-affinity-group', 'Created',
        'vnet-test-2', 'test', 'Created',

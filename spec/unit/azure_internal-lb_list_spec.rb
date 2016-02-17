@@ -26,7 +26,7 @@ describe Chef::Knife::AzureInternalLbList do
   end
 
     it 'should display Name, Service, Subnet, and VIP columns.' do
-      expect(@server_instance.hl).to receive(:list).with(
+      expect(@server_instance.ui).to receive(:list).with(
         ['Name', 'Service', 'Subnet', 'VIP',
          'lb_name', 'service001', 'vnet1', '10.4.4.4'
         ],

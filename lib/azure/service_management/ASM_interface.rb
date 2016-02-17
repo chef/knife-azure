@@ -38,7 +38,28 @@ class Azure
       end
 
       def list_servers
-        connection.roles.all
+        servers = connection.roles.all
+        cols = ['DNS Name', 'VM Name', 'Status', 'IP Address', 'SSH Port', 'WinRM Port' ]
+        rows = []
+        servers.each do |server|
+          rows << server.hostedservicename.to_s+".cloudapp.net"  # Info about the DNS name at http://msdn.microsoft.com/en-us/library/ee460806.aspx
+          rows << server.name.to_s
+          rows << begin
+                           state = server.status.to_s.downcase
+                           case state
+                           when 'shutting-down','terminated','stopping','stopped'
+                             ui.color(state, :red)
+                           when 'pending'
+                             ui.color(state, :yellow)
+                           else
+                             ui.color('ready', :green)
+                           end
+                         end
+          rows << server.publicipaddress.to_s
+          rows << server.sshport.to_s
+          rows << server.winrmport.to_s
+        end
+        display_list(ui, cols, rows)
       end
 
       def find_server(params = {})
@@ -54,7 +75,13 @@ class Azure
       end
 
       def list_internal_lb
-        connection.lbs.all
+        lbs = connection.lbs.all
+        cols = %w{Name Service Subnet VIP}
+        rows = []
+        lbs.each do |lb|
+          cols.each { |col| rows << lb.send(col.downcase).to_s }
+        end
+        display_list(ui, cols, rows)
       end
 
       def create_internal_lb(params = {})
@@ -62,18 +89,30 @@ class Azure
       end
 
       def list_vnets
-        connection.vnets.all
+        vnets = connection.vnets.all
+        cols = ['Name', 'Affinity Group', 'State']
+        rows = []
+        vnets.each do |vnet|
+          %w(name affinity_group state).each{ |col| rows << vnet.send(col).to_s }
+        end
+        display_list(ui, cols, rows)
       end
 
       def create_vnet(params = {})
         connection.vnets.create(params)
       end
 
-      def list_ags
-        connection.ags.all
+      def list_affinity_groups
+        affinity_groups = connection.ags.all
+        cols = %w{Name Location Description}
+        rows = []
+        affinity_groups.each do |affinity_group|
+          cols.each { |col| rows << affinity_group.send(col.downcase).to_s }
+        end
+        display_list(ui, cols, rows)
       end
 
-      def create_ag(params = {})
+      def create_affinity_group(params = {})
         connection.ags.create(params)
       end
 

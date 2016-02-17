@@ -25,6 +25,8 @@ class Azure
     include CustomErrors
     include Helpers
 
+    attr_accessor :ui
+
     def initialize(options = {})
     end
 
@@ -52,7 +54,7 @@ class Azure
       AzureInterface.api_not_implemented(self)
     end
 
-    def list_vnet
+    def list_vnets
       AzureInterface.api_not_implemented(self)
     end
 
@@ -64,7 +66,7 @@ class Azure
       AzureInterface.api_not_implemented(self)
     end
 
-    def list_affinity_group
+    def list_affinity_groups
       AzureInterface.api_not_implemented(self)
     end
 
