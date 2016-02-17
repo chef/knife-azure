@@ -43,7 +43,28 @@ module Azure
         begin
           promise = compute_management_client.virtual_machines.list_all
           result = promise.value!
-          vms = result.body.value
+          servers = result.body.value
+
+          cols = ['VM Name', 'Location', 'Provisioning State', 'OS Type']
+          rows =  []
+
+          servers.each do |server|
+            rows << server.name.to_s
+            rows << server.location.to_s
+            rows << begin
+                             state = server.properties.provisioning_state.to_s.downcase
+                             case state
+                             when 'shutting-down','terminated','stopping','stopped'
+                               ui.color(state, :red)
+                             when 'pending'
+                               ui.color(state, :yellow)
+                             else
+                               ui.color('ready', :green)
+                             end
+                           end
+            rows << server.properties.storage_profile.os_disk.os_type.to_s
+          end
+          display_list(ui, cols, rows)
         rescue => error
           puts "#{error.class} and #{error.message}"
         end
