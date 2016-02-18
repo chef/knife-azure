@@ -103,7 +103,7 @@ class Chef
       end
 
       def run
-        validate!
+        validate_asm_keys!
         validate_disk_and_storage
         @name_args.each do |name|
 

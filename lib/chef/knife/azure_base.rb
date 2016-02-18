@@ -145,13 +145,33 @@ class Chef
       def validate_params!
       end
 
-      # validate compulsory params
-      def validate!(keys=[:azure_subscription_id, :azure_mgmt_cert, :azure_api_host_name])
+      # validates keys
+      def validate!(keys)
         errors = []
-        if(locate_config_value(:azure_api_mode) == "asm")
-          if(locate_config_value(:azure_mgmt_cert) != nil)
-            config[:azure_mgmt_cert] = File.read find_file(locate_config_value(:azure_mgmt_cert))
+        keys.each do |k|
+          if locate_config_value(k).nil?
+            errors << "You did not provide a valid '#{pretty_key(k)}' value. Please set knife[:#{k}] in your knife.rb or pass as an option."
           end
+        end
+        if errors.each{|e| ui.error(e)}.any?
+          exit 1
+        end
+      end
+
+      # validates ARM mandatory keys
+      def validate_arm_keys!(*keys)
+        mandatory_keys = [:azure_tenant_id, :azure_subscription_id, :azure_client_id, :azure_client_keys]
+        keys.concat(mandatory_keys)
+        validate!(keys)
+      end
+
+      # validate ASM mandatory keys
+      def validate_asm_keys!(*keys)
+        mandatory_keys = [:azure_subscription_id, :azure_mgmt_cert, :azure_api_host_name]
+        keys.concat(mandatory_keys)
+
+        if(locate_config_value(:azure_mgmt_cert) != nil)
+          config[:azure_mgmt_cert] = File.read find_file(locate_config_value(:azure_mgmt_cert))
         end
 
         if(locate_config_value(:azure_publish_settings_file) != nil)
@@ -162,16 +182,7 @@ class Chef
             errors = parse_azure_profile(azureprofile_file, errors)
           end
         end
-
-        keys.each do |k|
-          if locate_config_value(k).nil?
-            errors << "You did not provide a valid '#{pretty_key(k)}' value. Please set knife[:#{k}] in your knife.rb or pass as an option."
-          end
-        end
-
-        if errors.each{|e| ui.error(e)}.any?
-          exit 1
-        end
+        validate!(keys)
       end
 
       def parse_publish_settings_file(filename)
