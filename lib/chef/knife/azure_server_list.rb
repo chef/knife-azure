@@ -32,12 +32,9 @@ class Chef
         $stdout.sync = true
 
         if(locate_config_value(:azure_api_mode) == "asm")
-          validate!
+          validate_asm_keys!
         elsif(locate_config_value(:azure_api_mode) == "arm")
-          validate!([:azure_subscription_id,
-                    :azure_tenant_id,
-                    :azure_client_id,
-                    :azure_client_secret])
+          validate_arm_keys!
         end
 
         service.list_servers

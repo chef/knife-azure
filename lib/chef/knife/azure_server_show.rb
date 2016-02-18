@@ -31,7 +31,7 @@ class Chef
       def run
         $stdout.sync = true
 
-        validate!
+        validate_asm_keys!
 
         @name_args.each do |name|
           role = service.show_server name

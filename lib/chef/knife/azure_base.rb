@@ -145,13 +145,33 @@ class Chef
       def validate_params!
       end
 
-      # validate compulsory params
-      def validate!(keys=[:azure_subscription_id, :azure_mgmt_cert, :azure_api_host_name])
+      # validates keys
+      def validate!(keys)
         errors = []
-        if(locate_config_value(:azure_api_mode) == "asm")
-          if(locate_config_value(:azure_mgmt_cert) != nil)
-            config[:azure_mgmt_cert] = File.read find_file(locate_config_value(:azure_mgmt_cert))
+        keys.each do |k|
+          if locate_config_value(k).nil?
+            errors << "You did not provide a valid '#{pretty_key(k)}' value. Please set knife[:#{k}] in your knife.rb or pass as an option."
           end
+        end
+        if errors.each{|e| ui.error(e)}.any?
+          exit 1
+        end
+      end
+
+      # validates ARM mandatory keys
+      def validate_arm_keys!(*keys)
+        mandatory_keys = [:azure_tenant_id, :azure_subscription_id, :azure_client_id, :azure_client_keys]
+        keys.concat(mandatory_keys)
+        validate!(keys)
+      end
+
+      # validate ASM mandatory keys
+      def validate_asm_keys!(*keys)
+        mandatory_keys = [:azure_subscription_id, :azure_mgmt_cert, :azure_api_host_name]
+        keys.concat(mandatory_keys)
+
+        if(locate_config_value(:azure_mgmt_cert) != nil)
+          config[:azure_mgmt_cert] = File.read find_file(locate_config_value(:azure_mgmt_cert))
         end
 
         if(locate_config_value(:azure_publish_settings_file) != nil)
@@ -163,14 +183,7 @@ class Chef
           end
         end
 
-        keys.each do |k|
-          if locate_config_value(k).nil?
-            errors << "You did not provide a valid '#{pretty_key(k)}' value. Please set knife[:#{k}] in your knife.rb or pass as an option."
-          end
-        end
-        if errors.each{|e| ui.error(e)}.any?
-          exit 1
-        end
+        validate!(keys)
       end
 
       def parse_publish_settings_file(filename)
@@ -208,14 +221,16 @@ class Chef
         require 'openssl'
         require 'uri'
         begin
-          azure_profile = File.read(File.expand_path(filename))
-          azure_profile = JSON.parse(azure_profile)
-          default_subscription = get_default_subscription(azure_profile)
-          Chef::Config[:knife][:azure_subscription_id] = default_subscription['id']
-          mgmt_key = OpenSSL::PKey::RSA.new(default_subscription['managementCertificate']['key']).to_pem
-          mgmt_cert = OpenSSL::X509::Certificate.new(default_subscription['managementCertificate']['cert']).to_pem
-          Chef::Config[:knife][:azure_mgmt_cert] = mgmt_key + mgmt_cert
-          Chef::Config[:knife][:azure_api_host_name] = URI(default_subscription['managementEndpointUrl']).host
+          if locate_config_value(:azure_api_mode) == "asm"
+            azure_profile = File.read(File.expand_path(filename))
+            azure_profile = JSON.parse(azure_profile)
+            default_subscription = get_default_subscription(azure_profile)
+            Chef::Config[:knife][:azure_subscription_id] = default_subscription['id']
+            mgmt_key = OpenSSL::PKey::RSA.new(default_subscription['managementCertificate']['key']).to_pem
+            mgmt_cert = OpenSSL::X509::Certificate.new(default_subscription['managementCertificate']['cert']).to_pem
+            Chef::Config[:knife][:azure_mgmt_cert] = mgmt_key + mgmt_cert
+            Chef::Config[:knife][:azure_api_host_name] = URI(default_subscription['managementEndpointUrl']).host
+          end
         rescue
           ui.error("Incorrect azure profile file - " + filename)
           exit 1
