@@ -223,6 +223,7 @@ class Chef
         azure_profile = JSON.parse(azure_profile)
         default_subscription = get_default_subscription(azure_profile)
         if default_subscription.has_key?('id') && default_subscription.has_key?('managementCertificate') && default_subscription.has_key?('managementEndpointUrl')
+
           Chef::Config[:knife][:azure_subscription_id] = default_subscription['id']
           mgmt_key = OpenSSL::PKey::RSA.new(default_subscription['managementCertificate']['key']).to_pem
           mgmt_cert = OpenSSL::X509::Certificate.new(default_subscription['managementCertificate']['cert']).to_pem
