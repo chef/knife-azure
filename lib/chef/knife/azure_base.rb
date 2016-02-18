@@ -221,16 +221,14 @@ class Chef
         require 'openssl'
         require 'uri'
         begin
-          if locate_config_value(:azure_api_mode) == "asm"
-            azure_profile = File.read(File.expand_path(filename))
-            azure_profile = JSON.parse(azure_profile)
-            default_subscription = get_default_subscription(azure_profile)
-            Chef::Config[:knife][:azure_subscription_id] = default_subscription['id']
-            mgmt_key = OpenSSL::PKey::RSA.new(default_subscription['managementCertificate']['key']).to_pem
-            mgmt_cert = OpenSSL::X509::Certificate.new(default_subscription['managementCertificate']['cert']).to_pem
-            Chef::Config[:knife][:azure_mgmt_cert] = mgmt_key + mgmt_cert
-            Chef::Config[:knife][:azure_api_host_name] = URI(default_subscription['managementEndpointUrl']).host
-          end
+          azure_profile = File.read(File.expand_path(filename))
+          azure_profile = JSON.parse(azure_profile)
+          default_subscription = get_default_subscription(azure_profile)
+          Chef::Config[:knife][:azure_subscription_id] = default_subscription['id']
+          mgmt_key = OpenSSL::PKey::RSA.new(default_subscription['managementCertificate']['key']).to_pem
+          mgmt_cert = OpenSSL::X509::Certificate.new(default_subscription['managementCertificate']['cert']).to_pem
+          Chef::Config[:knife][:azure_mgmt_cert] = mgmt_key + mgmt_cert
+          Chef::Config[:knife][:azure_api_host_name] = URI(default_subscription['managementEndpointUrl']).host
         rescue
           ui.error("Incorrect azure profile file - " + filename)
           exit 1
