@@ -35,6 +35,7 @@ describe Chef::Knife::AzureBase do
 			end
 
 			it "- should continue to regular flow if publish settings file not provided" do
+				allow(@dummy).to receive(:get_azure_profile_file_path).and_return(File.dirname(__FILE__) + "/assets/azure-profile-files/C_account_azure_arm_profile.json")
 				Chef::Config[:knife][:azure_api_host_name] = "preview.core.windows-int.net"
 				Chef::Config[:knife][:azure_subscription_id] = "azure_subscription_id"
 				@dummy.validate!
@@ -108,6 +109,9 @@ describe Chef::Knife::AzureBase do
 	  	before do
 	  	  Chef::Config[:knife][:azure_publish_settings_file] = get_publish_settings_file_path("B_account.publishsettings")
 	  	  allow(@dummy).to receive(:get_azure_profile_file_path).and_return(File.dirname(__FILE__) + "/assets/azure-profile-files/A_account_azure_profile.json")
+	  	  Chef::Config[:knife][:azure_api_host_name] = 'preview.core.windows-int.net'
+				Chef::Config[:knife][:azure_subscription_id] = 'azure_subscription_id'
+				Chef::Config[:knife][:azure_mgmt_cert] = @cert_file
 	  	end
 
 	  	it "selects B account of publishSettings file" do
@@ -120,6 +124,9 @@ describe Chef::Knife::AzureBase do
 	  context "when publishSettings file is not specified in knife.rb and azureProfile file has A account" do
 	  	before do
 	  	  Chef::Config[:knife][:azure_publish_settings_file] = nil
+	  	  Chef::Config[:knife][:azure_api_host_name] = nil
+				Chef::Config[:knife][:azure_subscription_id] = nil
+				Chef::Config[:knife][:azure_mgmt_cert] = nil
 	  	  allow(@dummy).to receive(:get_azure_profile_file_path).and_return(File.dirname(__FILE__) + "/assets/azure-profile-files/A_account_azure_profile.json")
 	  	end
 
@@ -133,6 +140,10 @@ describe Chef::Knife::AzureBase do
 	  context "when publishSettings file is not specified in knife.rb and azureProfile file has B account" do
 	  	before do
 	  	  Chef::Config[:knife][:azure_publish_settings_file] = nil
+
+	  	  Chef::Config[:knife][:azure_api_host_name] = nil
+				Chef::Config[:knife][:azure_subscription_id] = nil
+				Chef::Config[:knife][:azure_mgmt_cert] = nil
 	  	  allow(@dummy).to receive(:get_azure_profile_file_path).and_return(File.dirname(__FILE__) + "/assets/azure-profile-files/B_account_azure_profile.json")
 	  	end
 
@@ -157,6 +168,10 @@ describe Chef::Knife::AzureBase do
 	  context "when publishSettings file is not specified in knife.rb and azureProfile file has both A and B account with B as the default account" do
 	  	before do
 	  	  Chef::Config[:knife][:azure_publish_settings_file] = nil
+
+	  	  Chef::Config[:knife][:azure_api_host_name] = nil
+				Chef::Config[:knife][:azure_subscription_id] = nil
+				Chef::Config[:knife][:azure_mgmt_cert] = nil
 	  	  allow(@dummy).to receive(:get_azure_profile_file_path).and_return(File.dirname(__FILE__) + "/assets/azure-profile-files/A_Bd_account_azure_profile.json")
 	  	end
 
@@ -170,6 +185,9 @@ describe Chef::Knife::AzureBase do
 	  context "when publishSettings file is not specified in knife.rb and azureProfile file has both A and B account with A as the default account" do
 	  	before do
 	  	  Chef::Config[:knife][:azure_publish_settings_file] = nil
+	  	  Chef::Config[:knife][:azure_api_host_name] = nil
+				Chef::Config[:knife][:azure_subscription_id] = nil
+				Chef::Config[:knife][:azure_mgmt_cert] = nil
 	  	  allow(@dummy).to receive(:get_azure_profile_file_path).and_return(File.dirname(__FILE__) + "/assets/azure-profile-files/Ad_B_account_azure_profile.json")
 	  	end
 
