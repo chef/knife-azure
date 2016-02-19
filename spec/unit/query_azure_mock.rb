@@ -24,6 +24,8 @@ module QueryAzureMock
     @server_instance = object.new
       {
         azure_subscription_id: 'azure_subscription_id',
+        azure_mgmt_cert: @cert_file,
+        azure_api_host_name: 'preview.core.windows-int.net',
         azure_tenant_id: 'azure_tenant_id',
         azure_client_id: 'azure_client_id',
         azure_client_secret: 'azure_client_secret'
