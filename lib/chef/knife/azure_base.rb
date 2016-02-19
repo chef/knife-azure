@@ -160,7 +160,8 @@ class Chef
 
       # validates ARM mandatory keys
       def validate_arm_keys!(*keys)
-        mandatory_keys = [:azure_tenant_id, :azure_subscription_id, :azure_client_id, :azure_client_keys]
+        parse_publish_settings_file(locate_config_value(:azure_publish_settings_file)) if(locate_config_value(:azure_publish_settings_file) != nil)
+        mandatory_keys = [:azure_tenant_id, :azure_subscription_id, :azure_client_id, :azure_client_secret]
         keys.concat(mandatory_keys)
         validate!(keys)
       end
