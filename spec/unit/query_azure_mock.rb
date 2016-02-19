@@ -20,6 +20,20 @@ module QueryAzureMock
     @server_instance
   end
 
+  def create_arm_instance(object)
+    @server_instance = object.new
+      {
+        azure_subscription_id: 'azure_subscription_id',
+        azure_tenant_id: 'azure_tenant_id',
+        azure_client_id: 'azure_client_id',
+        azure_client_secret: 'azure_client_secret'
+      }.each do |key, value|
+          Chef::Config[:knife][key] = value
+        end
+
+    @server_instance
+  end
+
   def lookup_resource_in_test_xml(lookup_name, lookup_pty, tag, in_file)
     dataXML = Nokogiri::XML readFile(in_file)
     itemsXML = dataXML.css(tag)
