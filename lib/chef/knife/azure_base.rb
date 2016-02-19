@@ -133,19 +133,22 @@ class Chef
         if(locate_config_value(:azure_mgmt_cert) != nil)
           config[:azure_mgmt_cert] = File.read find_file(locate_config_value(:azure_mgmt_cert))
         end
-        if(locate_config_value(:azure_publish_settings_file) != nil)
+
+        if (locate_config_value(:azure_publish_settings_file) != nil)
           parse_publish_settings_file(locate_config_value(:azure_publish_settings_file))
-        else
+        elsif locate_config_value(:azure_subscription_id).nil? && locate_config_value(:azure_mgmt_cert).nil? && locate_config_value(:azure_api_host_name).nil?
           azureprofile_file = get_azure_profile_file_path
           if File.exist?(File.expand_path(azureprofile_file))
-            parse_azure_profile(azureprofile_file)
+            errors = parse_azure_profile(azureprofile_file, errors)
           end
         end
+
         keys.each do |k|
           if locate_config_value(k).nil?
             errors << "You did not provide a valid '#{pretty_key(k)}' value. Please set knife[:#{k}] in your knife.rb or pass as an option."
           end
         end
+
         if errors.each{|e| ui.error(e)}.any?
           exit 1
         end
@@ -182,22 +185,22 @@ class Chef
         '~/.azure/azureProfile.json'
       end
 
-      def parse_azure_profile(filename)
+      def parse_azure_profile(filename, errors)
         require 'openssl'
         require 'uri'
-        begin
-          azure_profile = File.read(File.expand_path(filename))
-          azure_profile = JSON.parse(azure_profile)
-          default_subscription = get_default_subscription(azure_profile)
+        azure_profile = File.read(File.expand_path(filename))
+        azure_profile = JSON.parse(azure_profile)
+        default_subscription = get_default_subscription(azure_profile)
+        if default_subscription.has_key?('id') && default_subscription.has_key?('managementCertificate') && default_subscription.has_key?('managementEndpointUrl')
           Chef::Config[:knife][:azure_subscription_id] = default_subscription['id']
           mgmt_key = OpenSSL::PKey::RSA.new(default_subscription['managementCertificate']['key']).to_pem
           mgmt_cert = OpenSSL::X509::Certificate.new(default_subscription['managementCertificate']['cert']).to_pem
           Chef::Config[:knife][:azure_mgmt_cert] = mgmt_key + mgmt_cert
           Chef::Config[:knife][:azure_api_host_name] = URI(default_subscription['managementEndpointUrl']).host
-        rescue
-          ui.error("Incorrect azure profile file - " + filename)
-          exit 1
+        else
+          errors << "Check if values set for 'id', 'managementCertificate', 'managementEndpointUrl' in -> #{filename} for 'defaultSubscription'. \n  OR "
         end
+        errors
       end
 
       def get_default_subscription(azure_profile)
