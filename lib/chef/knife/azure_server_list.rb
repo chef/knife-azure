@@ -39,30 +39,6 @@ class Chef
 
         service.list_servers
       end
-
-      def display_arm_output items
-        server_labels = ['VM Name', 'Location', 'Provisioning State', 'OS Type']
-        server_list =  server_labels.map {|label| ui.color(label, :bold)}
-
-        items.each do |server|
-          server_list << server.name.to_s
-          server_list << server.location.to_s
-          server_list << begin
-                           state = server.properties.provisioning_state.to_s.downcase
-                           case state
-                           when 'shutting-down','terminated','stopping','stopped'
-                             ui.color(state, :red)
-                           when 'pending'
-                             ui.color(state, :yellow)
-                           else
-                             ui.color('ready', :green)
-                           end
-                         end
-          server_list << server.properties.storage_profile.os_disk.os_type.to_s
-        end
-        puts ''
-        puts ui.list(server_list, :uneven_columns_across, 4)
-      end
     end
   end
 end
