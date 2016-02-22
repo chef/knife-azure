@@ -70,7 +70,7 @@ module Azure
         connection.roles.delete(params)
       end
 
-      def show_server name
+      def show_server(name, resource_group = "")
         connection.roles.find name
       end
 

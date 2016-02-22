@@ -28,11 +28,30 @@ class Chef
 
       banner "knife azure server show SERVER [SERVER]"
 
+       option :resource_group,
+         :long => "--resource-group RESOURCE_NAME",
+         :description => "Optional. Specifies the resource group of server. If not specified then server name is considered as resource group"
+       
+
       def run
         $stdout.sync = true
+        if(locate_config_value(:azure_api_mode) == "asm")
+          validate_asm_keys!
+        elsif(locate_config_value(:azure_api_mode) == "arm")
+          validate_arm_keys!
+          
+          if locate_config_value(:resource_group)   
+            resource_group = locate_config_value(:resource_group)
+          else
+            resource_group = @name_args[0]
+          end 
+          
+          service.show_server(@name_args[0], resource_group)
 
-        validate_asm_keys!
+        end  
 
+
+        if(locate_config_value(:azure_api_mode) == "asm") 
         @name_args.each do |name|
           role = service.show_server name
           puts ''
@@ -91,6 +110,9 @@ class Chef
             end
           end
         end
+      end #
+
+      
       end
     end
   end
