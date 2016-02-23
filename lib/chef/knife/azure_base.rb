@@ -67,13 +67,17 @@ class Chef
       end
 
       def is_image_windows?
-        images = service.list_images
-        target_image = images.select { |i| i.name == locate_config_value(:azure_source_image) }
-        unless target_image[0].nil?
-          return target_image[0].os == 'Windows'
+        if(locate_config_value(:azure_api_mode) == "arm")
+          locate_config_value(:azure_image_reference_offer) =~ /WindowsServer.*/
         else
-          ui.error("Invalid image. Use the command \"knife azure image list\" to verify the image name")
-          exit 1
+          images = service.list_images
+          target_image = images.select { |i| i.name == locate_config_value(:azure_source_image) }
+          unless target_image[0].nil?
+            return target_image[0].os == 'Windows'
+          else
+            ui.error("Invalid image. Use the command \"knife azure image list\" to verify the image name")
+            exit 1
+          end
         end
       end
 
