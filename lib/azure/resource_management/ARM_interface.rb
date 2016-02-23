@@ -69,6 +69,46 @@ module Azure
           puts "#{error.class} and #{error.message}"
         end
       end
+
+      def delete_server(resource_group_name, vm_name, custom_headers=nil)
+        begin
+          promise = compute_management_client.virtual_machines.get(resource_group_name, vm_name, expand =nil, custom_headers)
+          if promise.value! && promise.value!.body.name == vm_name
+            puts "Found VM ...."
+
+            # puts "VM Name: #{promise.value!.body.name}"
+            # puts "VM Size: #{promise.value!.body.properties.hardware_profile.vm_size}"
+            # puts "VM OS: #{promise.value!.body.properties.storage_profile.os_disk.os_type}"
+
+            puts "\n"
+            msg_pair(ui, 'VM Name', promise.value!.body.name)
+            msg_pair(ui, 'VM Size', promise.value!.body.properties.hardware_profile.vm_size)
+            msg_pair(ui, 'VM OS', promise.value!.body.properties.storage_profile.os_disk.os_type)
+            puts "\n"
+
+            begin
+              ui.confirm("Do you really want to delete this server")
+            rescue SystemExit   # Need to handle this as confirming with N/n raises SystemExit exception
+              server = nil      # Cleanup is implicitly performed in other cloud plugins
+              exit!
+            end
+
+            puts "Deleting ......"
+
+            promise = compute_management_client.virtual_machines.delete(resource_group_name, vm_name, custom_headers = nil)
+
+            puts promise.value!.body
+
+            puts "\n"
+            puts "Deleted server #{vm_name}"
+          end
+        rescue => error
+          puts error.message
+          if promise.reason
+            puts promise.reason.body
+          end
+        end
+      end
     end
   end
 end
