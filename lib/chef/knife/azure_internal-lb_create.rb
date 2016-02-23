@@ -47,10 +47,7 @@ class Chef
         $stdout.sync = true
 
         Chef::Log.info('validating...')
-        validate!([:azure_subscription_id,
-                   :azure_mgmt_cert,
-                   :azure_api_host_name,
-                   :azure_load_balancer])
+        validate_asm_keys!(:azure_load_balancer)
 
         params = {
           azure_load_balancer: locate_config_value(:azure_load_balancer),

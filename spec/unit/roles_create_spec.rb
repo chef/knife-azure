@@ -1,7 +1,7 @@
 require File.expand_path(File.dirname(__FILE__) + '/../spec_helper')
 require File.expand_path(File.dirname(__FILE__) + '/query_azure_mock')
 
-class Azure
+module Azure
   class Certificate
     class Random
       def self.rand(var)

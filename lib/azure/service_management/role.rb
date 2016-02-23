@@ -18,7 +18,7 @@
 require 'securerandom'
 require 'azure/service_management/utility'
 
-class Azure
+module Azure
   class Roles
     include AzureUtility
     attr_accessor :connection, :roles

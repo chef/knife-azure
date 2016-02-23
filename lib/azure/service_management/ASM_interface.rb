@@ -20,7 +20,7 @@ require 'azure/azure_interface'
 require 'azure/service_management/rest'
 require 'azure/service_management/connection'
 
-class Azure
+module Azure
   class ServiceManagement
     class ASMInterface < AzureInterface
       include AzureAPI
@@ -67,7 +67,32 @@ class Azure
       end
 
       def delete_server(params = {})
+        server = find_server({name: params[:name], azure_dns_name: params[:azure_dns_name]})
+
+        if not server
+          ui.warn("Server #{name} does not exist")
+          return
+        end
+
+        puts "\n"
+        msg_pair(ui, 'DNS Name', server.hostedservicename + ".cloudapp.net")
+        msg_pair(ui, 'VM Name', server.name)
+        msg_pair(ui, 'Size', server.size)
+        msg_pair(ui, 'Public Ip Address', server.publicipaddress)
+        puts "\n"
+
+        begin
+          confirm("Do you really want to delete this server")
+        rescue SystemExit   # Need to handle this as confirming with N/n raises SystemExit exception
+          server = nil      # Cleanup is implicitly performed in other cloud plugins
+          exit!
+        end
+
         connection.roles.delete(params)
+
+
+        puts '\n'
+        ui.warn("Deleted server #{server.name}")
       end
 
       def show_server name

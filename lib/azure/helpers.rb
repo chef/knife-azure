@@ -16,7 +16,7 @@
 # limitations under the License.
 #
 
-class Azure
+module Azure
   module Helpers
 
     def random_string(len=10)
@@ -34,5 +34,12 @@ class Azure
       puts ''
       puts ui.list(rows, :uneven_columns_across, count)
     end
+
+    def msg_pair(ui=nil, label=nil, value=nil, color=:cyan)
+      if value && !value.to_s.empty?
+        puts "#{ui.color(label, color)}: #{value}"
+      end
+    end
+
   end
 end

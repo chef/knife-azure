@@ -16,7 +16,7 @@
 # limitations under the License.
 #
 
-class Azure
+module Azure
   class Certificates
     def initialize(connection)
       @connection=connection
@@ -39,7 +39,7 @@ class Azure
   end
 end
 
-class Azure
+module Azure
   class Certificate
     attr_accessor :connection
     attr_accessor :cert_data, :fingerprint, :certificate_version
