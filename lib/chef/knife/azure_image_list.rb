@@ -38,7 +38,7 @@ class Chef
       def run
         $stdout.sync = true
 
-        validate!
+        validate_asm_keys!
         items = service.list_images
 
         image_labels = !locate_config_value(:show_all_fields) ? ['Name', 'OS', 'Location'] : ['Name', 'Category', 'Label', 'OS', 'Location']

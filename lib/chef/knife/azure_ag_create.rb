@@ -46,11 +46,8 @@ class Chef
         $stdout.sync = true
 
         Chef::Log.info('validating...')
-        validate!([:azure_subscription_id,
-                   :azure_mgmt_cert,
-                   :azure_api_host_name,
-                   :azure_affinity_group,
-                   :azure_service_location])
+        validate_asm_keys!(:azure_affinity_group,
+                   :azure_service_location)
 
         params = {
           azure_ag_name: locate_config_value(:azure_affinity_group),

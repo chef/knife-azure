@@ -20,7 +20,7 @@ require 'azure/custom_errors'
 require 'azure/helpers'
 
 
-class Azure
+module Azure
   class AzureInterface
     include CustomErrors
     include Helpers
@@ -46,7 +46,7 @@ class Azure
       AzureInterface.api_not_implemented(self)
     end
 
-    def show_server(server_name)
+    def show_server(server_name, resource_group = "")
       AzureInterface.api_not_implemented(self)
     end
 

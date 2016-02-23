@@ -16,7 +16,7 @@
 # limitations under the License.
 #
 
-class Azure
+module Azure
   class Hosts
     include AzureUtility
     def initialize(connection)
@@ -94,7 +94,7 @@ class Azure
   end
 end
 
-class Azure
+module Azure
   class Host
     include AzureUtility
     attr_accessor :connection, :name, :url, :label

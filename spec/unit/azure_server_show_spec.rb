@@ -5,17 +5,9 @@ describe Chef::Knife::AzureAgList do
   include AzureSpecHelper
   include QueryAzureMock
   before do
-    @server_instance = Chef::Knife::AzureServerShow.new
-      {
-        :azure_subscription_id => 'azure_subscription_id',
-        :azure_mgmt_cert => @cert_file,
-        :azure_api_host_name => 'preview.core.windows-int.net',
-        }.each do |key, value|
-      Chef::Config[:knife][key] = value
-    end
-
+    @server_instance = create_instance(Chef::Knife::AzureServerShow)
+    Chef::Config[:knife][:azure_api_mode] = "asm"
     stub_query_azure(@server_instance.service.connection)
-
     allow(@server_instance).to receive(:puts)
   end
 
