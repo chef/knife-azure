@@ -144,7 +144,7 @@ describe Chef::Knife::AzureServerCreate do
       it "quick create" do
         expect(@server_instance).to receive(:is_image_windows?).at_least(:twice).and_return(false)
         Chef::Config[:knife][:azure_dns_name] = 'vmname' # service name to be used as vm name
-        expect(@server_instance).to receive(:get_dns_name)
+        expect(@server_instance).to receive(:get_dns_or_rgrp_name)
         @server_instance.run
         expect(@server_instance.config[:azure_vm_name]).to be == "vmname"
         testxml = Nokogiri::XML(@receivedXML)
@@ -160,7 +160,7 @@ describe Chef::Knife::AzureServerCreate do
         Chef::Config[:knife][:winrm_user] = 'opscodechef'
         Chef::Config[:knife][:winrm_password] = 'Opscode123'
         Chef::Config[:knife][:bootstrap_protocol] = 'winrm'
-        expect(@server_instance).to receive(:get_dns_name)
+        expect(@server_instance).to receive(:get_dns_or_rgrp_name)
         @server_instance.run
         expect(@server_instance.config[:azure_vm_name]).to be == "vmname"
         testxml = Nokogiri::XML(@receivedXML)
@@ -429,8 +429,8 @@ describe Chef::Knife::AzureServerCreate do
       it "generate unique dns name" do
         dns_name = []
         5.times do
-          # send() to access private get_dns_name method of @server_instance
-          dns = @server_instance.send(:get_dns_name, Chef::Config[:knife][:azure_dns_name])
+          # send() to access private get_dns_or_rgrp_name method of @server_instance
+          dns = @server_instance.send(:get_dns_or_rgrp_name, Chef::Config[:knife][:azure_dns_name])
           expect(dns_name).to_not include(dns)
           dns_name.push(dns)
         end
@@ -438,7 +438,7 @@ describe Chef::Knife::AzureServerCreate do
 
       it "include vmname in dnsname if --azure-vm-name specified" do
         Chef::Config[:knife][:azure_vm_name] = "vmname"
-        dns = @server_instance.send(:get_dns_name, Chef::Config[:knife][:azure_dns_name])
+        dns = @server_instance.send(:get_dns_or_rgrp_name, Chef::Config[:knife][:azure_dns_name])
         expect(dns).to include("vmname")
       end
     end
