@@ -71,7 +71,71 @@ module Azure
       end
 
       def show_server(name, resource_group = "")
-        connection.roles.find name
+        begin
+          role = connection.roles.find name
+          
+          puts ''
+          if (role)
+            details = Array.new
+            details << ui.color('Role name', :bold, :cyan)
+            details << role.name
+            details << ui.color('Status', :bold, :cyan)
+            details << role.status
+            details << ui.color('Size', :bold, :cyan)
+            details << role.size
+            details << ui.color('Hosted service name', :bold, :cyan)
+            details << role.hostedservicename
+            details << ui.color('Deployment name', :bold, :cyan)
+            details << role.deployname
+            details << ui.color('Host name', :bold, :cyan)
+            details << role.hostname
+            unless role.sshport.nil?
+              details << ui.color('SSH port', :bold, :cyan)
+              details << role.sshport
+            end
+            unless role.winrmport.nil?
+              details << ui.color('WinRM port', :bold, :cyan)
+              details << role.winrmport
+            end
+            details << ui.color('Public IP', :bold, :cyan)
+            details << role.publicipaddress
+            unless role.thumbprint.empty?
+              details << ui.color('Thumbprint', :bold, :cyan)
+              details << role.thumbprint
+            end
+            puts ui.list(details, :columns_across, 2)
+            if role.tcpports.length > 0 || role.udpports.length > 0
+              details.clear
+              details << ui.color('Ports open', :bold, :cyan)
+              details << ui.color('Local port', :bold, :cyan)
+              details << ui.color('IP', :bold, :cyan)
+              details << ui.color('Public port', :bold, :cyan)
+              if role.tcpports.length > 0
+                role.tcpports.each do |port|
+                  details << 'tcp'
+                  details << port['LocalPort']
+                  details << port['Vip']
+                  details << port['PublicPort']
+                end
+              end
+              if role.udpports.length > 0
+                role.udpports.each do |port|
+                  details << 'udp'
+                  details << port['LocalPort']
+                  details << port['Vip']
+                  details << port['PublicPort']
+                end
+              end
+              puts ui.list(details, :columns_across, 4)
+            end
+          else
+            puts "No VMs found"  
+          end
+
+        rescue => error
+          puts "#{error.class} and #{error.message}"
+        end
+
       end
 
       def list_internal_lb
