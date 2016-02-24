@@ -32,6 +32,8 @@ describe Chef::Knife::AzureServerCreate do
       Chef::Config[:knife][key] = value
     end
 
+    @arm_server_instance = create_arm_instance(Chef::Knife::AzureServerCreate)
+
     stub_query_azure (@server_instance.service.connection)
     @connection = @server_instance.service.connection
     allow(@server_instance).to receive(:tcp_test_ssh).and_return(true)
@@ -111,6 +113,70 @@ describe Chef::Knife::AzureServerCreate do
           expect {@server_instance.run}.to raise_error(SystemExit)
         end
       end
+
+      context "when --azure-api-mode is arm" do
+        before do
+          Chef::Config[:knife][:azure_api_mode] = 'arm'
+        end
+
+        it "azure_subscription_id" do
+          Chef::Config[:knife].delete(:azure_subscription_id)
+          expect(@arm_server_instance.ui).to receive(:error)
+          expect {@arm_server_instance.run}.to raise_error(SystemExit)
+        end
+
+        it "azure_tenant_id" do
+          Chef::Config[:knife].delete(:azure_tenant_id)
+          expect(@arm_server_instance.ui).to receive(:error)
+          expect {@arm_server_instance.run}.to raise_error(SystemExit)
+        end
+
+        it "azure_client_id" do
+          Chef::Config[:knife].delete(:azure_client_id)
+          expect(@arm_server_instance.ui).to receive(:error)
+          expect {@arm_server_instance.run}.to raise_error(SystemExit)
+        end
+
+        it "azure_client_secret" do
+          Chef::Config[:knife].delete(:azure_client_secret)
+          expect(@arm_server_instance.ui).to receive(:error)
+          expect {@arm_server_instance.run}.to raise_error(SystemExit)
+        end
+
+        it "azure_image_reference_publisher" do
+          Chef::Config[:knife].delete(:azure_image_reference_publisher)
+          expect(@arm_server_instance.ui).to receive(:error)
+          expect {@arm_server_instance.run}.to raise_error(SystemExit)
+        end
+
+        it "azure_image_reference_offer" do
+          Chef::Config[:knife].delete(:azure_image_reference_offer)
+          expect(@arm_server_instance.ui).to receive(:error)
+          expect {@arm_server_instance.run}.to raise_error(SystemExit)
+        end
+
+        it "azure_image_reference_sku" do
+          Chef::Config[:knife].delete(:azure_image_reference_sku)
+          expect(@arm_server_instance.ui).to receive(:error)
+          expect {@arm_server_instance.run}.to raise_error(SystemExit)
+        end
+
+        it "azure_image_reference_version" do
+          Chef::Config[:knife].delete(:azure_image_reference_version)
+          expect(@arm_server_instance.ui).to receive(:error)
+          expect {@arm_server_instance.run}.to raise_error(SystemExit)
+        end
+
+        it "azure_service_location" do
+          Chef::Config[:knife].delete(:azure_service_location)
+          expect(@arm_server_instance.ui).to receive(:error)
+          expect {@arm_server_instance.run}.to raise_error(SystemExit)
+        end
+
+        after do
+          Chef::Config[:knife].delete(:azure_api_mode)
+        end
+      end
     end
 
     context "timeout parameters" do
@@ -125,6 +191,106 @@ describe Chef::Knife::AzureServerCreate do
         Chef::Config[:knife][:azure_vm_ready_timeout] = 10
         expect(@server_instance.send(:locate_config_value, :azure_vm_startup_timeout).to_i).to eq(Chef::Config[:knife][:azure_vm_startup_timeout])
         expect(@server_instance.send(:locate_config_value, :azure_vm_ready_timeout).to_i).to eq(Chef::Config[:knife][:azure_vm_ready_timeout])
+      end
+    end
+
+    context "optional parameters for ARM" do
+      context "not given by user" do
+        before do
+          Chef::Config[:knife][:azure_api_mode] = 'arm'
+          Chef::Config[:knife][:azure_vm_name] = 'test-vm'
+          @vm_name_with_no_special_chars = 'testvm'
+          Chef::Config[:knife][:ssh_password] = 'ssh_password'
+          @azure_vm_size_default_value = 'Small'
+        end
+
+        it "azure_storage_account not provided by user so vm_name gets assigned to it" do
+          Chef::Config[:knife].delete(:azure_storage_account)
+          @server_params = @arm_server_instance.create_server_def
+          expect(@server_params[:azure_storage_account]).to be == @vm_name_with_no_special_chars
+        end
+
+        it "azure_os_disk_name not provided by user so vm_name gets assigned to it" do
+          Chef::Config[:knife].delete(:azure_os_disk_name)
+          @server_params = @arm_server_instance.create_server_def
+          expect(@server_params[:azure_os_disk_name]).to be == @vm_name_with_no_special_chars
+        end
+
+        it "azure_network_name not provided by user so vm_name gets assigned to it" do
+          Chef::Config[:knife].delete(:azure_network_name)
+          @server_params = @arm_server_instance.create_server_def
+          expect(@server_params[:azure_network_name]).to be == 'test-vm'
+        end
+
+        it "azure_subnet_name not provided by user so vm_name gets assigned to it" do
+          Chef::Config[:knife].delete(:azure_subnet_name)
+          @server_params = @arm_server_instance.create_server_def
+          expect(@server_params[:azure_subnet_name]).to be == 'test-vm'
+        end
+
+        it "azure_vm_size not provided by user so default value gets assigned to it" do
+          Chef::Config[:knife].delete(:azure_vm_size)
+          @server_params = @arm_server_instance.create_server_def
+          expect(@server_params[:azure_vm_size]).to be == @azure_vm_size_default_value
+        end
+
+        after do
+          Chef::Config[:knife].delete(:azure_api_mode)
+          Chef::Config[:knife].delete(:azure_vm_name)
+          Chef::Config[:knife].delete(:ssh_password)
+        end
+      end
+
+      context "given by user" do
+        before do
+          Chef::Config[:knife][:azure_api_mode] = 'arm'
+          Chef::Config[:knife][:azure_vm_name] = 'test-vm'
+          @vm_name_with_no_special_chars = 'testvm'
+          Chef::Config[:knife][:ssh_password] = 'ssh_password'
+          Chef::Config[:knife][:azure_storage_account] = 'azure_storage_account'
+          @storage_account_name_with_no_special_chars = 'azurestorageaccount'
+          Chef::Config[:knife][:azure_os_disk_name] = 'azure_os_disk_name'
+          @os_disk_name_with_no_special_chars = 'azureosdiskname'
+          Chef::Config[:knife][:azure_network_name] = 'azure_network_name'
+          Chef::Config[:knife][:azure_subnet_name] = 'azure_subnet_name'
+          Chef::Config[:knife][:azure_vm_size] = 'Medium'
+        end
+
+        it "azure_storage_account provided by user so vm_name does not get assigned to it" do
+          @server_params = @arm_server_instance.create_server_def
+          expect(@server_params[:azure_storage_account]).to be == @storage_account_name_with_no_special_chars
+        end
+
+        it "azure_os_disk_name provided by user so vm_name does not get assigned to it" do
+          @server_params = @arm_server_instance.create_server_def
+          expect(@server_params[:azure_os_disk_name]).to be == @os_disk_name_with_no_special_chars
+        end
+
+        it "azure_network_name provided by user so vm_name does not get assigned to it" do
+          @server_params = @arm_server_instance.create_server_def
+          expect(@server_params[:azure_network_name]).to be == 'azure_network_name'
+        end
+
+        it "azure_subnet_name provided by user so vm_name does not get assigned to it" do
+          @server_params = @arm_server_instance.create_server_def
+          expect(@server_params[:azure_subnet_name]).to be == 'azure_subnet_name'
+        end
+
+        it "azure_vm_size provided by user so default value does not get assigned to it" do
+          @server_params = @arm_server_instance.create_server_def
+          expect(@server_params[:azure_vm_size]).to be == 'Medium'
+        end
+
+        after do
+          Chef::Config[:knife].delete(:azure_api_mode)
+          Chef::Config[:knife].delete(:azure_vm_name)
+          Chef::Config[:knife].delete(:ssh_password)
+          Chef::Config[:knife].delete(:azure_storage_account)
+          Chef::Config[:knife].delete(:azure_os_disk_name)
+          Chef::Config[:knife].delete(:azure_network_name)
+          Chef::Config[:knife].delete(:azure_subnet_name)
+          Chef::Config[:knife].delete(:azure_vm_size)
+        end
       end
     end
 
@@ -387,6 +553,37 @@ describe Chef::Knife::AzureServerCreate do
           expect(xml_content(testxml, 'DomainJoin MachineObjectOU')).to eq("OU=HR,dc=opscode,dc=com")
           expect(xml_content(testxml, 'JoinDomain')).to eq('testad.com')
         end
+      end
+    end
+
+    context "server create options for ARM mode" do
+      before do
+        Chef::Config[:knife][:azure_api_mode] = 'arm'
+        Chef::Config[:knife][:ssh_password] = 'ssh_password'
+        allow(@arm_server_instance).to receive(:bootstrap_exec)
+      end
+
+      it "azure_vm_name given but azure_resource_group_name not given by user so azure_vm_name gets assigned to azure_resource_group_name" do
+        Chef::Config[:knife][:azure_vm_name] = 'test-vm'
+        Chef::Config[:knife].delete(:azure_resource_group_name)
+        expect(@arm_server_instance).to receive(:get_dns_or_rgrp_name).with(nil).and_return('test-vm')
+        @arm_server_instance.run
+        expect(@arm_server_instance.config[:azure_resource_group_name]).to be == 'test-vm'
+      end
+
+      it "azure_resource_group_name given but azure_vm_name not given by user so azure_resource_group_name gets assigned to azure_vm_name" do
+        Chef::Config[:knife][:azure_resource_group_name] = 'test-rgrp'
+        Chef::Config[:knife].delete(:azure_vm_name)
+        expect(@arm_server_instance).to receive(:get_dns_or_rgrp_name).with('test-rgrp').and_return('test-rgrp')
+        @arm_server_instance.run
+        expect(@arm_server_instance.config[:azure_vm_name]).to be == 'test-rgrp'
+      end
+
+      after do
+        Chef::Config[:knife].delete(:azure_api_mode)
+        Chef::Config[:knife].delete(:ssh_password)
+        Chef::Config[:knife].delete(:azure_resource_group_name)
+        Chef::Config[:knife].delete(:azure_vm_name)
       end
     end
 

@@ -221,7 +221,8 @@ class Chef
         :short => "-m LOCATION",
         :long => "--azure-service-location LOCATION",
         :description => "Required if not using an Affinity Group. Specifies the geographic location - the name of the data center location that is valid for your subscription.
-                                      Eg: West US, East US, East Asia, Southeast Asia, North Europe, West Europe"
+                                      Eg: West US, East US, East Asia, Southeast Asia, North Europe, West Europe",
+        :proc        => Proc.new { |lo| Chef::Config[:knife][:azure_service_location] = lo }
 
       option :azure_affinity_group,
         :short => "-a GROUP",
@@ -291,7 +292,8 @@ class Chef
         :short => "-z SIZE",
         :long => "--azure-vm-size SIZE",
         :description => "Optional. Size of virtual machine (ExtraSmall, Small, Medium, Large, ExtraLarge)",
-        :default => 'Small'
+        :default => 'Small',
+        :proc => Proc.new { |si| Chef::Config[:knife][:azure_vm_size] = si }
 
       option :azure_availability_set,
              :long => "--azure-availability-set NAME",
@@ -662,7 +664,12 @@ class Chef
           bootstrap_exec(server) unless locate_config_value(:bootstrap_protocol) == 'cloud-api'
         elsif(locate_config_value(:azure_api_mode) == "arm")
           Chef::Log.warn("ARM commands are still in development phase...Current implementation supports server creation with basic options.")
-          validate_arm_keys!
+          validate_arm_keys!(
+            :azure_image_reference_publisher,
+            :azure_image_reference_offer,
+            :azure_image_reference_sku,
+            :azure_image_reference_version
+          )
 
           Chef::Log.info("creating...")
 
