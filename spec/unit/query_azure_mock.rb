@@ -26,7 +26,11 @@ module QueryAzureMock
         azure_subscription_id: 'azure_subscription_id',
         azure_tenant_id: 'azure_tenant_id',
         azure_client_id: 'azure_client_id',
-        azure_client_secret: 'azure_client_secret'
+        azure_client_secret: 'azure_client_secret',
+        azure_image_reference_publisher: 'azure_image_reference_publisher',
+        azure_image_reference_offer: 'azure_image_reference_offer',
+        azure_image_reference_sku: 'azure_image_reference_sku',
+        azure_image_reference_version: 'azure_image_reference_version'
       }.each do |key, value|
           Chef::Config[:knife][key] = value
         end

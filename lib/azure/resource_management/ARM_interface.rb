@@ -178,7 +178,13 @@ module Azure
         resource_group.name = params[:azure_resource_group_name]
         resource_group.location = params[:azure_service_location]
 
-        resource_group = resource_client.resource_groups.create_or_update(resource_group.name, resource_group).value!.body
+        begin
+          resource_group = resource_client.resource_groups.create_or_update(resource_group.name, resource_group).value!.body
+        rescue Exception => e
+          Chef::Log.error("Failed to create the Resource Group -- exception being rescued: #{e.to_s}")
+          backtrace_message = "#{e.class}: #{e}\n#{e.backtrace.join("\n")}"
+          Chef::Log.debug("#{backtrace_message}")
+        end
 
         resource_group
       end
@@ -227,7 +233,13 @@ module Azure
         vm_params.properties = vm_props
         vm_params.location = params[:azure_service_location]
 
-        virtual_machine = compute_client.virtual_machines.create_or_update(params[:azure_resource_group_name], vm_params.name, vm_params).value!.body
+        begin
+          virtual_machine = compute_client.virtual_machines.create_or_update(params[:azure_resource_group_name], vm_params.name, vm_params).value!.body
+        rescue Exception => e
+          Chef::Log.error("Failed to create the Virtual Machine -- exception being rescued: #{e.to_s}")
+          backtrace_message = "#{e.class}: #{e}\n#{e.backtrace.join("\n")}"
+          Chef::Log.debug("#{backtrace_message}")
+        end
 
         virtual_machine
       end
@@ -271,7 +283,13 @@ module Azure
         storage_params.properties = storage_props
         storage_props.account_type = storage_account_type
 
-        storage = storage_client.storage_accounts.create(resource_group_name, storage_params.name, storage_params).value!.body
+        begin
+          storage = storage_client.storage_accounts.create(resource_group_name, storage_params.name, storage_params).value!.body
+        rescue Exception => e
+          Chef::Log.error("Failed to create the Storage Account -- exception being rescued: #{e.to_s}")
+          backtrace_message = "#{e.class}: #{e}\n#{e.backtrace.join("\n")}"
+          Chef::Log.debug("#{backtrace_message}")
+        end
         storage.name = storage_account_name    ## response for storage creation does not contain name in it ##
   
         storage
@@ -357,7 +375,14 @@ module Azure
         vnet_props.address_space = address_space
         vnet_params.properties = vnet_props
 
-        vnet = network_client.virtual_networks.create_or_update(resource_group_name, vnet_params.name, vnet_params).value!.body
+        begin
+          vnet = network_client.virtual_networks.create_or_update(resource_group_name, vnet_params.name, vnet_params).value!.body
+        rescue Exception => e
+          Chef::Log.error("Failed to create the Virtual Network -- exception being rescued: #{e.to_s}")
+          backtrace_message = "#{e.class}: #{e}\n#{e.backtrace.join("\n")}"
+          Chef::Log.debug("#{backtrace_message}")
+        end
+
         vnet
       end
 
@@ -369,7 +394,14 @@ module Azure
         sbn_params.properties = sbn_prop
         sbn_prop.address_prefix = '10.0.1.0/24'
 
-        sbn = network_client.subnets.create_or_update(resource_group_name, virtual_network.name, sbn_params.name, sbn_params).value!.body
+        begin
+          sbn = network_client.subnets.create_or_update(resource_group_name, virtual_network.name, sbn_params.name, sbn_params).value!.body
+        rescue Exception => e
+          Chef::Log.error("Failed to create the Subnet -- exception being rescued: #{e.to_s}")
+          backtrace_message = "#{e.class}: #{e}\n#{e.backtrace.join("\n")}"
+          Chef::Log.debug("#{backtrace_message}")
+        end
+
         sbn
       end
 
@@ -405,7 +437,14 @@ module Azure
         network_interface.name = vm_name
         network_interface.properties = network_interface_props_format
   
-        nic = network_client.network_interfaces.create_or_update(resource_group_name, network_interface.name, network_interface).value!.body
+        begin
+          nic = network_client.network_interfaces.create_or_update(resource_group_name, network_interface.name, network_interface).value!.body
+        rescue Exception => e
+          Chef::Log.error("Failed to create the Network Interface -- exception being rescued: #{e.to_s}")
+          backtrace_message = "#{e.class}: #{e}\n#{e.backtrace.join("\n")}"
+          Chef::Log.debug("#{backtrace_message}")
+        end
+
         nic
       end
 
@@ -418,11 +457,17 @@ module Azure
         public_ip.location = service_location
         public_ip.properties = public_ip_props
 
-        public_ip_address = network_client.public_ip_addresses.create_or_update(
-          resource_group_name,
-          public_ip.name,
-          public_ip
-        ).value!.body
+        begin
+          public_ip_address = network_client.public_ip_addresses.create_or_update(
+            resource_group_name,
+            public_ip.name,
+            public_ip
+          ).value!.body
+        rescue Exception => e
+          Chef::Log.error("Failed to create the Public IP Address -- exception being rescued: #{e.to_s}")
+          backtrace_message = "#{e.class}: #{e}\n#{e.backtrace.join("\n")}"
+          Chef::Log.debug("#{backtrace_message}")
+        end
         
         public_ip_address
       end
@@ -433,11 +478,18 @@ module Azure
         network_security_group.name = vm_name
         network_security_group.location = service_location
         network_security_group.properties = network_security_group_prop_format
-        nsg = network_client.network_security_groups.create_or_update(
-          resource_group_name,
-          network_security_group.name,
-          network_security_group
-        ).value!.body
+
+        begin
+          nsg = network_client.network_security_groups.create_or_update(
+            resource_group_name,
+            network_security_group.name,
+            network_security_group
+          ).value!.body
+        rescue Exception => e
+          Chef::Log.error("Failed to create the Network Security Group -- exception being rescued: #{e.to_s}")
+          backtrace_message = "#{e.class}: #{e}\n#{e.backtrace.join("\n")}"
+          Chef::Log.debug("#{backtrace_message}")
+        end
         
         security_rule = add_default_security_rule(
           network_client,
@@ -474,12 +526,19 @@ module Azure
         security_rule = SecurityRule.new
         security_rule.name = vm_name
         security_rule.properties = security_rule_props
-        security_rule = network_client.security_rules.create_or_update(
-          resource_group_name,
-          network_security_group.name,
-          security_rule.name,
-          security_rule
-        ).value!.body  
+
+        begin
+          security_rule = network_client.security_rules.create_or_update(
+            resource_group_name,
+            network_security_group.name,
+            security_rule.name,
+            security_rule
+          ).value!.body
+        rescue Exception => e
+          Chef::Log.error("Failed to create the Security Rule -- exception being rescued: #{e.to_s}")
+          backtrace_message = "#{e.class}: #{e}\n#{e.backtrace.join("\n")}"
+          Chef::Log.debug("#{backtrace_message}")
+        end
 
         security_rule
       end
