@@ -89,7 +89,35 @@ module Azure
           end
           display_list(ui, cols, rows)
         rescue => error
-          puts "#{error.class} and #{error.message}"
+          ui.error "#{error.class} and #{error.message}"
+        end
+      end
+
+       def delete_server(resource_group_name, vm_name, custom_headers=nil)
+        promise = compute_management_client.virtual_machines.get(resource_group_name, vm_name, expand =nil, custom_headers)
+        if promise.value! && promise.value!.body.name == vm_name
+          puts "\n"
+          msg_pair(ui, 'VM Name', promise.value!.body.name)
+          msg_pair(ui, 'VM Size', promise.value!.body.properties.hardware_profile.vm_size)
+          msg_pair(ui, 'VM OS', promise.value!.body.properties.storage_profile.os_disk.os_type)
+          puts "\n"
+
+          begin
+            ui.confirm('Do you really want to delete this server')
+          rescue SystemExit   # Need to handle this as confirming with N/n raises SystemExit exception
+            server = nil      # Cleanup is implicitly performed in other cloud plugins
+            exit!
+          end
+
+          ui.info 'Deleting ......'
+
+          promise = compute_management_client.virtual_machines.delete(resource_group_name, vm_name, custom_headers = nil)
+
+          puts "\n"
+          ui.warn "Deleted server #{vm_name}"
+        else
+          puts promise
+          raise promise.reason.body
         end
       end
 
