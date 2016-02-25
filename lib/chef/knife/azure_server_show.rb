@@ -26,7 +26,7 @@ class Chef
 
       include Knife::AzureBase
 
-      banner "knife azure server show SERVER [SERVER]"
+      banner "knife azure server show SERVER [SERVER]" 
 
       def run
         $stdout.sync = true
@@ -36,7 +36,6 @@ class Chef
           @name_args.each do |name|
             service.show_server name
           end
-
         end  
 
       end
