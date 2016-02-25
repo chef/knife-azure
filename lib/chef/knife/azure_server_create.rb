@@ -589,13 +589,7 @@ class Chef
         storage = nil
 
         Chef::Log.info("validating...")
-        validate!([
-              :azure_subscription_id,
-              :azure_mgmt_cert,
-              :azure_api_host_name,
-              :azure_source_image,
-              :azure_vm_size,
-        ])
+        validate_asm_keys!(:azure_source_image)
 
         validate_params!
 

@@ -16,7 +16,7 @@
 # limitations under the License.
 #
 
-class Azure
+module Azure
   class Loadbalancer
     include AzureUtility
     attr_accessor :name, :service, :subnet, :vip

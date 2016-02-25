@@ -13,6 +13,8 @@ require 'chef/knife/azure_server_list'
 require 'chef/knife/azure_vnet_create'
 require 'chef/knife/azure_vnet_list'
 
+require 'chef/knife/azurerm_server_list'
+
 require 'fileutils'
 require "securerandom"
 require 'knife-azure/version'

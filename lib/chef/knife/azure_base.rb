@@ -80,12 +80,12 @@ class Chef
       def service
         @service ||= begin
                       service = Azure::ServiceManagement::ASMInterface.new(
-                      :azure_subscription_id => locate_config_value(:azure_subscription_id),
-                      :azure_mgmt_cert => locate_config_value(:azure_mgmt_cert),
-                      :azure_api_host_name => locate_config_value(:azure_api_host_name),
-                      :verify_ssl_cert => locate_config_value(:verify_ssl_cert)
-                    )
-        end
+                        :azure_subscription_id => locate_config_value(:azure_subscription_id),
+                        :azure_mgmt_cert => locate_config_value(:azure_mgmt_cert),
+                        :azure_api_host_name => locate_config_value(:azure_api_host_name),
+                        :verify_ssl_cert => locate_config_value(:verify_ssl_cert)
+                      )
+                    end
         @service.ui = ui
         @service
       end
@@ -127,14 +127,29 @@ class Chef
       def validate_params!
       end
 
-      # validate compulsory params
-      def validate!(keys=[:azure_subscription_id, :azure_mgmt_cert, :azure_api_host_name])
+      # validates keys
+      def validate!(keys)
         errors = []
+        keys.each do |k|
+          if locate_config_value(k).nil?
+            errors << "You did not provide a valid '#{pretty_key(k)}' value. Please set knife[:#{k}] in your knife.rb or pass as an option."
+          end
+        end
+        if errors.each{|e| ui.error(e)}.any?
+          exit 1
+        end
+      end
+
+      # validate ASM mandatory keys
+      def validate_asm_keys!(*keys)
+        mandatory_keys = [:azure_subscription_id, :azure_mgmt_cert, :azure_api_host_name]
+        keys.concat(mandatory_keys)
+
         if(locate_config_value(:azure_mgmt_cert) != nil)
           config[:azure_mgmt_cert] = File.read find_file(locate_config_value(:azure_mgmt_cert))
         end
 
-        if (locate_config_value(:azure_publish_settings_file) != nil)
+        if(locate_config_value(:azure_publish_settings_file) != nil)
           parse_publish_settings_file(locate_config_value(:azure_publish_settings_file))
         elsif locate_config_value(:azure_subscription_id).nil? && locate_config_value(:azure_mgmt_cert).nil? && locate_config_value(:azure_api_host_name).nil?
           azureprofile_file = get_azure_profile_file_path
@@ -142,16 +157,7 @@ class Chef
             errors = parse_azure_profile(azureprofile_file, errors)
           end
         end
-
-        keys.each do |k|
-          if locate_config_value(k).nil?
-            errors << "You did not provide a valid '#{pretty_key(k)}' value. Please set knife[:#{k}] in your knife.rb or pass as an option."
-          end
-        end
-
-        if errors.each{|e| ui.error(e)}.any?
-          exit 1
-        end
+        validate!(keys)
       end
 
       def parse_publish_settings_file(filename)
@@ -192,6 +198,7 @@ class Chef
         azure_profile = JSON.parse(azure_profile)
         default_subscription = get_default_subscription(azure_profile)
         if default_subscription.has_key?('id') && default_subscription.has_key?('managementCertificate') && default_subscription.has_key?('managementEndpointUrl')
+
           Chef::Config[:knife][:azure_subscription_id] = default_subscription['id']
           mgmt_key = OpenSSL::PKey::RSA.new(default_subscription['managementCertificate']['key']).to_pem
           mgmt_cert = OpenSSL::X509::Certificate.new(default_subscription['managementCertificate']['cert']).to_pem

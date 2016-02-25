@@ -38,14 +38,14 @@ describe Chef::Knife::AzureBase do
 				allow(@dummy).to receive(:get_azure_profile_file_path).and_return(File.dirname(__FILE__) + "/assets/azure-profile-files/C_account_azure_arm_profile.json")
 				Chef::Config[:knife][:azure_api_host_name] = "preview.core.windows-int.net"
 				Chef::Config[:knife][:azure_subscription_id] = "azure_subscription_id"
-				@dummy.validate!
+				@dummy.validate_asm_keys!
 				expect(Chef::Config[:knife][:azure_api_host_name]).to be == "preview.core.windows-int.net"
 				expect(Chef::Config[:knife][:azure_subscription_id]).to be == "azure_subscription_id"
 			end
 
 			it "- should validate extract parameters" do
 				Chef::Config[:knife][:azure_publish_settings_file] = get_publish_settings_file_path("azureValid.publishsettings")
-				@dummy.validate!
+				@dummy.validate_asm_keys!
 				expect(Chef::Config[:knife][:azure_api_host_name]).to be == 'management.core.windows.net'
 				expect(Chef::Config[:knife][:azure_subscription_id]).to be == 'id1'
 				validate_cert()
@@ -68,7 +68,7 @@ describe Chef::Knife::AzureBase do
 			it "- should validate settings file and subscrition id" do
 				@dummy.config[:azure_subscription_id] = "azure_subscription_id"
 				Chef::Config[:knife][:azure_publish_settings_file] = get_publish_settings_file_path("azureValid.publishsettings")
-				@dummy.validate!
+				@dummy.validate_asm_keys!
 				expect(Chef::Config[:knife][:azure_api_host_name]).to be == 'management.core.windows.net'
 				expect(@dummy.config[:azure_subscription_id]).to be == 'azure_subscription_id'
 				expect(Chef::Config[:knife][:azure_subscription_id]).to be == 'id1'
@@ -77,12 +77,12 @@ describe Chef::Knife::AzureBase do
 
 			it "- should raise error if invalid publish settings provided" do
 				Chef::Config[:knife][:azure_publish_settings_file] = get_publish_settings_file_path("azureInvalid.publishsettings")
-				expect {@dummy.validate!}.to raise_error(SystemExit)
+				expect {@dummy.validate_asm_keys!}.to raise_error(SystemExit)
 			end
 
 			it "- should raise error if publish settings file does not exists" do
 				Chef::Config[:knife][:azure_publish_settings_file] = get_publish_settings_file_path("azureNotAvailable.publishsettings")
-				expect {@dummy.validate!}.to raise_error(SystemExit)
+				expect {@dummy.validate_asm_keys!}.to raise_error(SystemExit)
 			end
 		end
 	end
@@ -99,7 +99,7 @@ describe Chef::Knife::AzureBase do
 	  	end
 
 	  	it "selects A account of publishSettings file" do
-	  	  @dummy.validate!
+	  	  @dummy.validate_asm_keys!
 	  	  expect(Chef::Config[:knife][:azure_api_host_name]).to eq('A.endpoint.net')
 	  	  expect(Chef::Config[:knife][:azure_subscription_id]).to eq('A_subscription_id')
 	  	end
@@ -115,7 +115,7 @@ describe Chef::Knife::AzureBase do
 	  	end
 
 	  	it "selects B account of publishSettings file" do
-	  	  @dummy.validate!
+	  		@dummy.validate_asm_keys!
 	  	  expect(Chef::Config[:knife][:azure_api_host_name]).to eq('B.endpoint.net')
 	  	  expect(Chef::Config[:knife][:azure_subscription_id]).to eq('B_subscription_id')
 	  	end
@@ -131,7 +131,7 @@ describe Chef::Knife::AzureBase do
 	  	end
 
 	  	it "selects A account of azureProfile file" do
-	  	  @dummy.validate!
+	  	  @dummy.validate_asm_keys!
 	  	  expect(Chef::Config[:knife][:azure_api_host_name]).to eq('A.endpoint.net')
 	  	  expect(Chef::Config[:knife][:azure_subscription_id]).to eq('A_subscription_id')
 	  	end
@@ -148,7 +148,7 @@ describe Chef::Knife::AzureBase do
 	  	end
 
 	  	it "selects B account of azureProfile file" do
-	  	  @dummy.validate!
+	  	  @dummy.validate_asm_keys!
 	  	  expect(Chef::Config[:knife][:azure_api_host_name]).to eq('B.endpoint.net')
 	  	  expect(Chef::Config[:knife][:azure_subscription_id]).to eq('B_subscription_id')
 	  	end
@@ -161,7 +161,7 @@ describe Chef::Knife::AzureBase do
 	  	end
 
 	  	it "gives error and exits" do
-	  	  expect { @dummy.validate! }.to raise_error SystemExit
+	  	  expect { @dummy.validate_asm_keys! }.to raise_error SystemExit
 	  	end
 	  end
 
@@ -176,7 +176,7 @@ describe Chef::Knife::AzureBase do
 	  	end
 
 	  	it "selects B account of azureProfile file" do
-	  	  @dummy.validate!
+	  	  @dummy.validate_asm_keys!
 	  	  expect(Chef::Config[:knife][:azure_api_host_name]).to eq('B.endpoint.net')
 	  	  expect(Chef::Config[:knife][:azure_subscription_id]).to eq('B_subscription_id')
 	  	end
@@ -192,7 +192,7 @@ describe Chef::Knife::AzureBase do
 	  	end
 
 	  	it "selects A account of azureProfile file" do
-	  	  @dummy.validate!
+	  	  @dummy.validate_asm_keys!
 	  	  expect(Chef::Config[:knife][:azure_api_host_name]).to eq('A.endpoint.net')
 	  	  expect(Chef::Config[:knife][:azure_subscription_id]).to eq('A_subscription_id')
 	  	end
@@ -205,7 +205,7 @@ describe Chef::Knife::AzureBase do
 	  	end
 
 	  	it "selects A account of publishSettings file" do
-	  	  @dummy.validate!
+	  	  @dummy.validate_asm_keys!
 	  	  expect(Chef::Config[:knife][:azure_api_host_name]).to eq('A.endpoint.net')
 	  	  expect(Chef::Config[:knife][:azure_subscription_id]).to eq('A_subscription_id')
 	  	end
@@ -218,7 +218,7 @@ describe Chef::Knife::AzureBase do
 	  	end
 
 	  	it "selects B account of publishSettings file" do
-	  	  @dummy.validate!
+	  	  @dummy.validate_asm_keys!
 	  	  expect(Chef::Config[:knife][:azure_api_host_name]).to eq('B.endpoint.net')
 	  	  expect(Chef::Config[:knife][:azure_subscription_id]).to eq('B_subscription_id')
 	  	end

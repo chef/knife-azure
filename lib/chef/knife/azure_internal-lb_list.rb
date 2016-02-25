@@ -29,7 +29,7 @@ class Chef
 
       def run
         $stdout.sync = true
-        validate!
+        validate_asm_keys!
         service.list_internal_lb
       end
     end

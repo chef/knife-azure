@@ -173,7 +173,7 @@ describe Chef::Knife::AzureServerCreate do
       it "generate unique OS DiskName" do
         os_disks = []
         allow(@bootstrap).to receive(:run)
-        allow(@server_instance).to receive(:validate!)
+        allow(@server_instance).to receive(:validate_asm_keys!)
         Chef::Config[:knife][:azure_dns_name] = 'vmname'
 
         5.times do

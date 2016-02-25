@@ -51,12 +51,7 @@ class Chef
         $stdout.sync = true
 
         Chef::Log.info('validating...')
-        validate!([:azure_subscription_id,
-                   :azure_mgmt_cert,
-                   :azure_api_host_name,
-                   :azure_network_name,
-                   :azure_affinity_group,
-                   :azure_address_space])
+        validate_asm_keys!(:azure_network_name, :azure_affinity_group, :azure_address_space)
 
         params = {
           azure_vnet_name: locate_config_value(:azure_network_name),

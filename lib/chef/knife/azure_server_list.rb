@@ -30,7 +30,7 @@ class Chef
 
       def run
         $stdout.sync = true
-        validate!
+        validate_asm_keys!
         service.list_servers
       end
     end
