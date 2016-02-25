@@ -100,6 +100,52 @@ class Chef
           exit 1
         end
       end
+
+      def parse_publish_settings_file(filename)
+        require 'nokogiri'
+        require 'base64'
+        require 'openssl'
+        require 'uri'
+        begin
+          doc = Nokogiri::XML(File.open(find_file(filename)))
+          profile = doc.at_css("PublishProfile")
+          subscription = profile.at_css("Subscription")
+          #check given PublishSettings XML file format.Currently PublishSettings file have two different XML format
+          if profile.attribute("SchemaVersion").nil?
+            management_cert = OpenSSL::PKCS12.new(Base64.decode64(profile.attribute("ManagementCertificate").value))
+            Chef::Config[:knife][:azure_api_host_name] = URI(profile.attribute("Url").value).host
+          elsif profile.attribute("SchemaVersion").value == "2.0"
+            management_cert = OpenSSL::PKCS12.new(Base64.decode64(subscription.attribute("ManagementCertificate").value))
+            Chef::Config[:knife][:azure_api_host_name] = URI(subscription.attribute("ServiceManagementUrl").value).host
+          else
+            ui.error("Publish settings file Schema not supported - " + filename)
+          end
+          Chef::Config[:knife][:azure_mgmt_cert] = management_cert.certificate.to_pem + management_cert.key.to_pem
+          Chef::Config[:knife][:azure_subscription_id] = doc.at_css("Subscription").attribute("Id").value
+        rescue=> error
+          puts "#{error.class} and #{error.message}"
+          exit 1
+        end
+      end
+
+      def find_file(name)
+        config_dir = Chef::Knife.chef_config_dir
+        if File.exist? name
+          file = name
+        elsif config_dir && File.exist?(File.join(config_dir, name))
+          file = File.join(config_dir, name)
+        elsif File.exist?(File.join(ENV['HOME'], '.chef', name))
+          file = File.join(ENV['HOME'], '.chef', name)
+        else
+          ui.error('Unable to find file - ' + name)
+          exit 1
+        end
+        file
+      end
+
+      def pretty_key(key)
+        key.to_s.gsub(/_/, ' ').gsub(/\w+/){ |w| (w =~ /(ssh)|(aws)/i) ? w.upcase  : w.capitalize }
+      end
     end
   end
 end
