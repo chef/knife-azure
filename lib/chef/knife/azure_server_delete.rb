@@ -78,16 +78,6 @@ class Chef
         :default => false,
         :description => "Wait for server deletion. Default is false"
 
-      option :azure_resource_group_name,
-        :short => "-g RESOURCE_GROUP_NAME",
-        :long => "--azure-resource-group-name RESOURCE_GROUP_NAME",
-        :description => "ARM option. Provide resource group name for server-delete."
-
-      option :azure_vm_name,
-        :long => "--azure-vm-name NAME",
-        :description => "Required for advanced server delete option.
-                         Specifies the name for the virtual machine. The name must be unique within the deployment. The azure vm name cannot be more than 15 characters long"
-
       # Extracted from Chef::Knife.delete_object, because it has a
       # confirmation step built in... By specifying the '--purge'
       # flag (and also explicitly confirming the server destruction!)
@@ -113,41 +103,18 @@ class Chef
       end
 
       def run
-        if (locate_config_value(:azure_api_mode) == 'asm')
-          validate_asm_keys!
-          validate_disk_and_storage
-          @name_args.each do |name|
-            begin
-              service.delete_server( { name: name, preserve_azure_os_disk: locate_config_value(:preserve_azure_os_disk),
-                                      preserve_azure_vhd: locate_config_value(:preserve_azure_vhd),
-                                      preserve_azure_dns_name: locate_config_value(:preserve_azure_dns_name),
-                                      delete_azure_storage_account: locate_config_value(:delete_azure_storage_account),
-                                       wait: locate_config_value(:wait) } )
-
-              if config[:purge]
-                thing_to_delete = config[:chef_node_name] || name
-                destroy_item(Chef::Node, thing_to_delete, "node")
-                destroy_item(Chef::ApiClient, thing_to_delete, "client")
-              else
-                ui.warn("Corresponding node and client for the #{name} server were not deleted and remain registered with the Chef Server")
-              end
-
-            rescue Exception => ex
-              ui.error("#{ex.message}")
-              ui.error("#{ex.backtrace.join("\n")}")
-            end
-          end
-        elsif (locate_config_value(:azure_api_mode) == 'arm')
+        validate_asm_keys!
+        validate_disk_and_storage
+        @name_args.each do |name|
           begin
-            validate_arm_keys!
-
-            resource_group_name = locate_config_value(:azure_resource_group_name)
-            vm_name = locate_config_value(:azure_vm_name)
-
-            service.delete_server(resource_group_name, vm_name, custom_headers = nil)
+            service_asm.delete_server( { name: name, preserve_azure_os_disk: locate_config_value(:preserve_azure_os_disk),
+                                    preserve_azure_vhd: locate_config_value(:preserve_azure_vhd),
+                                    preserve_azure_dns_name: locate_config_value(:preserve_azure_dns_name),
+                                    delete_azure_storage_account: locate_config_value(:delete_azure_storage_account),
+                                     wait: locate_config_value(:wait) } )
 
             if config[:purge]
-              node_to_delete = config[:chef_node_name] || locate_config_value(:chef_node_name)
+              node_to_delete = config[:chef_node_name] || name
               if node_to_delete
                 destroy_item(Chef::Node, node_to_delete, 'node')
                 destroy_item(Chef::ApiClient, node_to_delete, 'client')
@@ -155,23 +122,15 @@ class Chef
                 ui.warn("Node name to purge not provided. Corresponding client node will remain on Chef Server.")
               end
             else
-              ui.warn("Corresponding node and client for the #{vm_name} server were not deleted and remain registered with the Chef Server")
+              ui.warn("Corresponding node and client for the #{name} server were not deleted and remain registered with the Chef Server")
             end
-          rescue => error
-            if error.class == MsRestAzure::AzureOperationError && error.body
-              if error.body['error']['code'] == 'ResourceNotFound'
-                ui.error("#{error.body['error']['message']}")
-              else
-                ui.error(error.body)
-              end
-            else
-              ui.error("#{error.message}")
-              ui.error("#{error.backtrace.join("\n")}")
-            end
+
+          rescue Exception => ex
+            ui.error("#{ex.message}")
+            ui.error("#{ex.backtrace.join("\n")}")
           end
         end
       end
-
     end
   end
 end
