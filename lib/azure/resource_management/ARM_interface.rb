@@ -19,7 +19,6 @@ require "azure_mgmt_compute"
 module Azure
   class ResourceManagement
     class ARMInterface < AzureInterface
-      include AzureAPI
       include Azure::ARM::Compute
       include Azure::ARM::Compute::Models
 

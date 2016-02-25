@@ -30,13 +30,7 @@ class Chef
 
       def run
         $stdout.sync = true
-
-        if(locate_config_value(:azure_api_mode) == "asm")
-          validate_asm_keys!
-        elsif(locate_config_value(:azure_api_mode) == "arm")
-          validate_arm_keys!
-        end
-
+        validate_asm_keys!
         service.list_servers
       end
     end

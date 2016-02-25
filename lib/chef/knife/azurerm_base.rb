@@ -59,8 +59,8 @@ class Chef
           option :azure_resource_group_name,
             :short => "-r RESOURCE_GROUP_NAME",
             :long => "--azure-resource-group-name RESOURCE_GROUP_NAME",
-            :description => "Required. The Resource Group name that acts as a 
-                            container and holds related resources for an 
+            :description => "Required. The Resource Group name that acts as a
+                            container and holds related resources for an
                             application in a group."
 
         end
@@ -82,7 +82,24 @@ class Chef
       def locate_config_value(key)
         key = key.to_sym
         config[key] || Chef::Config[:knife][key]
-      end  
+      end
+
+      # validates ARM mandatory keys
+      def validate_arm_keys!(*keys)
+        parse_publish_settings_file(locate_config_value(:azure_publish_settings_file)) if(locate_config_value(:azure_publish_settings_file) != nil)
+        mandatory_keys = [:azure_tenant_id, :azure_subscription_id, :azure_client_id, :azure_client_secret]
+        keys.concat(mandatory_keys)
+
+        errors = []
+        keys.each do |k|
+          if locate_config_value(k).nil?
+            errors << "You did not provide a valid '#{pretty_key(k)}' value. Please set knife[:#{k}] in your knife.rb."
+          end
+        end
+        if errors.each{|e| ui.error(e)}.any?
+          exit 1
+        end
+      end
     end
   end
 end

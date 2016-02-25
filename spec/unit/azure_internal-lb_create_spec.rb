@@ -7,7 +7,6 @@ describe Chef::Knife::AzureInternalLbCreate do
 
   before do
     @server_instance = create_instance(Chef::Knife::AzureInternalLbCreate)
-    Chef::Config[:knife][:azure_api_mode] = "asm"
     @connection = @server_instance.service.connection
     stub_query_azure(@connection)
     allow(@server_instance).to receive(:puts)

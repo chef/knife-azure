@@ -19,7 +19,6 @@
 
 require 'chef/knife'
 require 'azure/service_management/ASM_interface'
-require 'azure/resource_management/ARM_interface'
 
 class Chef
   class Knife
@@ -64,12 +63,6 @@ class Chef
             :long => "--azure-publish-settings-file FILENAME",
             :description => "Your Azure Publish Settings File",
             :proc => Proc.new { |key| Chef::Config[:knife][:azure_publish_settings_file] = key }
-
-          option :azure_api_mode,
-            :long => "--azure-api-mode MODE",
-            :description => "The API mode to be used. Supported input arm|asm. Default is asm.",
-            :proc => Proc.new { |key| key.downcase },
-            :default => "asm"
         end
       end
 
@@ -145,14 +138,6 @@ class Chef
         if errors.each{|e| ui.error(e)}.any?
           exit 1
         end
-      end
-
-      # validates ARM mandatory keys
-      def validate_arm_keys!(*keys)
-        parse_publish_settings_file(locate_config_value(:azure_publish_settings_file)) if(locate_config_value(:azure_publish_settings_file) != nil)
-        mandatory_keys = [:azure_tenant_id, :azure_subscription_id, :azure_client_id, :azure_client_secret]
-        keys.concat(mandatory_keys)
-        validate!(keys)
       end
 
       # validate ASM mandatory keys

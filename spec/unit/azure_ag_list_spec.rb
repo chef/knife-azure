@@ -20,7 +20,6 @@ describe Chef::Knife::AzureAgList do
       }.each do |key, value|
           Chef::Config[:knife][key] = value
         end
-    Chef::Config[:knife][:azure_api_mode] = "asm"
     stub_query_azure(@server_instance.service.connection)
     allow(@server_instance).to receive(:items).and_return(:true)
     allow(@server_instance).to receive(:puts)

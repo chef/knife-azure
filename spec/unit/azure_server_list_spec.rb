@@ -11,7 +11,6 @@ describe Chef::Knife::AzureServerList do
   end
 
   it "should display DNS Name, VM Name, Status, IP Address, SSH Port and Winrm Port for ASM command." do
-    Chef::Config[:knife][:azure_api_mode] = "asm"
     stub_query_azure(@server_instance.service.connection)
     allow(@server_instance).to receive(:puts)
     expect(@server_instance.ui).to receive(:list).
@@ -26,6 +25,7 @@ describe Chef::Knife::AzureServerList do
     @server_instance.run
   end
 
+=begin
   it "should display VM Name, Location, Provisioning State and OS Type for ARM command." do
     Chef::Config[:knife][:azure_api_mode] = "arm"
     compute_client = double("ComputeClient")
@@ -34,4 +34,5 @@ describe Chef::Knife::AzureServerList do
     expect(@arm_server_instance.service).to receive(:display_list).with(@arm_server_instance.service.ui, ["VM Name", "Location", "Provisioning State", "OS Type"],[])
     @arm_server_instance.run
   end
+=end
 end

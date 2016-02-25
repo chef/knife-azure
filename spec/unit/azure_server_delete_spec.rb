@@ -20,7 +20,6 @@ describe Chef::Knife::AzureServerDelete do
       }.each do |key, value|
           Chef::Config[:knife][key] = value
         end
-    Chef::Config[:knife][:azure_api_mode] = "asm"
     @connection = @server_instance.service.connection
     stub_query_azure(@connection)
 
