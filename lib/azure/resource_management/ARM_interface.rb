@@ -84,6 +84,54 @@ module Azure
           puts "#{error.class} and #{error.message}"
         end
       end
+
+      def show_server(name, resource_group)
+        begin   
+          virtual_machine = VirtualMachines.new(get_compute_client)
+          
+          vm_object = virtual_machine.get(resource_group, name)
+          unless vm_object.value.nil?
+            vm_object = vm_object.value.body
+            
+            details = Array.new
+            details << ui.color('Server name', :bold, :cyan)
+            details << vm_object.name
+
+            details << ui.color('Size', :bold, :cyan)
+            details << vm_object.properties.hardware_profile.vm_size
+
+            details << ui.color('Provisioning State', :bold, :cyan)
+            details << vm_object.properties.provisioning_state
+
+            details << ui.color('Location', :bold, :cyan)
+            details << vm_object.location
+
+            details << ui.color('Publisher', :bold, :cyan)
+            details << vm_object.properties.storage_profile.image_reference.publisher
+
+            details << ui.color('Offer', :bold, :cyan)
+            details << vm_object.properties.storage_profile.image_reference.offer
+
+            details << ui.color('Sku', :bold, :cyan)
+            details << vm_object.properties.storage_profile.image_reference.sku
+
+            details << ui.color('Version', :bold, :cyan)
+            details << vm_object.properties.storage_profile.image_reference.version
+
+            details << ui.color('Operating System Type', :bold, :cyan)
+            details << vm_object.properties.storage_profile.os_disk.os_type
+          
+            puts ui.list(details, :columns_across, 2)
+          else
+            puts "There is no server with name #{name} or resource_group #{resource_group}. Please provide correct details."
+          end  
+       
+        rescue => error
+          puts "#{error.class} and #{error.message}"
+        end
+
+      end 
+
     end
   end
 end

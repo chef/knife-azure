@@ -18,28 +18,24 @@
 # limitations under the License.
 #
 
-require File.expand_path('../azure_base', __FILE__)
+require File.expand_path('../azurerm_base', __FILE__)
 
 class Chef
   class Knife
-    class AzureServerShow < Knife
+    class AzurermServerShow < Knife
 
-      include Knife::AzureBase
+      include Knife::AzurermBase
 
-      banner "knife azure server show SERVER [SERVER]" 
+      banner "knife azurerm server show SERVER (options)" 
 
       def run
         $stdout.sync = true
-        if(locate_config_value(:azure_api_mode) == "asm")
-          validate_asm_keys!
-
-          @name_args.each do |name|
-            service.show_server name
-          end
-        end  
+     
+        validate_arm_keys!(:azure_resource_group_name) 
+        
+        service.show_server(@name_args[0], locate_config_value(:azure_resource_group_name))
 
       end
-
     end
   end
 end
