@@ -109,9 +109,12 @@ module Azure
             exit!
           end
 
-          ui.info 'Deleting ......'
+          ui.info 'Deleting ..'
 
-          promise = compute_management_client.virtual_machines.delete(resource_group_name, vm_name, custom_headers = nil)
+          begin
+            print '.'
+            promise = compute_management_client.virtual_machines.delete(resource_group_name, vm_name, custom_headers = nil)
+          end until promise.value!.body.nil?
 
           puts "\n"
           ui.warn "Deleted server #{vm_name}"
