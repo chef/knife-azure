@@ -85,53 +85,16 @@ class Chef
       end
 
       def service
-        if(locate_config_value(:azure_api_mode) == "asm")
-          @service ||= begin
-                        service = Azure::ServiceManagement::ASMInterface.new(
+        @service ||= begin
+                      service = Azure::ServiceManagement::ASMInterface.new(
                         :azure_subscription_id => locate_config_value(:azure_subscription_id),
                         :azure_mgmt_cert => locate_config_value(:azure_mgmt_cert),
                         :azure_api_host_name => locate_config_value(:azure_api_host_name),
                         :verify_ssl_cert => locate_config_value(:verify_ssl_cert)
                       )
-                      end
-        elsif(locate_config_value(:azure_api_mode) == "arm")
-          @service ||= begin
-                        service = Azure::ResourceManagement::ARMInterface.new(
-                          :azure_subscription_id => locate_config_value(:azure_subscription_id),
-                          :azure_tenant_id => locate_config_value(:azure_tenant_id),
-                          :azure_client_id => locate_config_value(:azure_client_id),
-                          :azure_client_secret => locate_config_value(:azure_client_secret)
-                          )
-                      end
-        end
+                    end
         @service.ui = ui
         @service
-      end
-
-      def service_asm
-        @service_asm ||= begin
-                      service_asm = Azure::ServiceManagement::ASMInterface.new(
-                        :azure_subscription_id => locate_config_value(:azure_subscription_id),
-                        :azure_mgmt_cert => locate_config_value(:azure_mgmt_cert),
-                        :azure_api_host_name => locate_config_value(:azure_api_host_name),
-                        :verify_ssl_cert => locate_config_value(:verify_ssl_cert)
-                      )
-                     end
-        @service_asm.ui = ui
-        @service_asm
-      end
-
-      def service_arm
-        @service_arm ||= begin
-                      service_arm = Azure::ResourceManagement::ARMInterface.new(
-                        :azure_subscription_id => locate_config_value(:azure_subscription_id),
-                        :azure_tenant_id => locate_config_value(:azure_tenant_id),
-                        :azure_client_id => locate_config_value(:azure_client_id),
-                        :azure_client_secret => locate_config_value(:azure_client_secret)
-                      )
-                     end
-        @service_arm.ui = ui
-        @service_arm
       end
 
       def locate_config_value(key)
