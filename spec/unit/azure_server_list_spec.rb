@@ -7,7 +7,6 @@ describe Chef::Knife::AzureServerList do
 
   before do
     @server_instance = create_instance(Chef::Knife::AzureServerList)
-    @arm_server_instance = create_arm_instance(Chef::Knife::AzureServerList)
   end
 
   it "should display DNS Name, VM Name, Status, IP Address, SSH Port and Winrm Port for ASM command." do
@@ -24,15 +23,4 @@ describe Chef::Knife::AzureServerList do
         "vmname.cloudapp.net", "vmname", "ready", "65.52.251.57", "22", ""], :uneven_columns_across, 6)
     @server_instance.run
   end
-
-=begin
-  it "should display VM Name, Location, Provisioning State and OS Type for ARM command." do
-    Chef::Config[:knife][:azure_api_mode] = "arm"
-    compute_client = double("ComputeClient")
-    expect(@arm_server_instance.service).to receive(:get_compute_client).and_return(compute_client)
-    expect(compute_client).to receive_message_chain(:virtual_machines, :list_all, :value!, :body, :value).and_return([])
-    expect(@arm_server_instance.service).to receive(:display_list).with(@arm_server_instance.service.ui, ["VM Name", "Location", "Provisioning State", "OS Type"],[])
-    @arm_server_instance.run
-  end
-=end
 end
