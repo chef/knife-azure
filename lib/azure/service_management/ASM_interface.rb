@@ -129,7 +129,7 @@ module Azure
               puts ui.list(details, :columns_across, 4)
             end
           else
-            puts "No VMs found"  
+            puts "No VM found"  
           end
 
         rescue => error

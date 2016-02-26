@@ -95,7 +95,7 @@ module Azure
 
       def show_server(name, resource_group)
         begin   
-          virtual_machine = VirtualMachines.new(compute_management_client)
+          virtual_machine = VirtualMachines.new(get_compute_client)
           vm_object = virtual_machine.get(resource_group, name)
           unless vm_object.value.nil?
             vm_object = vm_object.value.body

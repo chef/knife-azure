@@ -26,36 +26,16 @@ class Chef
 
       include Knife::AzureBase
 
-      banner "knife azure server show SERVER [SERVER]"
-
-       option :resource_group,
-         :long => "--resource-group RESOURCE_GROUP",
-         :description => "Optional. Specifies the resource group of server. If not specified then server name is considered as resource group"
-       
+      banner "knife azure server show SERVER [SERVER]"  
 
       def run
         $stdout.sync = true
-        if(locate_config_value(:azure_api_mode) == "asm")
-          validate_asm_keys!
-
-          @name_args.each do |name|
-            service.show_server name
-          end
-
-        elsif(locate_config_value(:azure_api_mode) == "arm")
-          validate_arm_keys!
-          
-          #INFO - if resource is not provided then consider VMName as Resource Group
-          if locate_config_value(:resource_group)   
-            resource_group = locate_config_value(:resource_group)
-          else
-            resource_group = @name_args[0]
-          end 
-          
-          service.show_server(@name_args[0], resource_group)
-        end  
-
+        validate_asm_keys!
+        @name_args.each do |name|
+          service.show_server name
+        end
       end
+
     end
   end
 end
