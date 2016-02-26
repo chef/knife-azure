@@ -106,43 +106,21 @@ class Chef
         validate_asm_keys!
         validate_disk_and_storage
         @name_args.each do |name|
-
           begin
-            server = service.find_server({name: name, azure_dns_name: locate_config_value(:azure_dns_name)})
-
-            if not server
-              ui.warn("Server #{name} does not exist")
-              return
-            end
-
-            puts "\n"
-            msg_pair('DNS Name', server.hostedservicename + ".cloudapp.net")
-            msg_pair('VM Name', server.name)
-            msg_pair('Size', server.size)
-            msg_pair('Public Ip Address', server.publicipaddress)
-            puts "\n"
-
-            begin
-              confirm("Do you really want to delete this server")
-            rescue SystemExit   # Need to handle this as confirming with N/n raises SystemExit exception
-              server = nil      # Cleanup is implicitly performed in other cloud plugins
-              exit!
-            end
-
-            service.delete_server( { name: name, preserve_azure_os_disk: locate_config_value(:preserve_azure_os_disk),
+            service_asm.delete_server( { name: name, preserve_azure_os_disk: locate_config_value(:preserve_azure_os_disk),
                                     preserve_azure_vhd: locate_config_value(:preserve_azure_vhd),
                                     preserve_azure_dns_name: locate_config_value(:preserve_azure_dns_name),
-                                    azure_dns_name: server.hostedservicename,
                                     delete_azure_storage_account: locate_config_value(:delete_azure_storage_account),
                                      wait: locate_config_value(:wait) } )
 
-            puts "\n"
-            ui.warn("Deleted server #{server.name}")
-
             if config[:purge]
-              thing_to_delete = config[:chef_node_name] || name
-              destroy_item(Chef::Node, thing_to_delete, "node")
-              destroy_item(Chef::ApiClient, thing_to_delete, "client")
+              node_to_delete = config[:chef_node_name] || name
+              if node_to_delete
+                destroy_item(Chef::Node, node_to_delete, 'node')
+                destroy_item(Chef::ApiClient, node_to_delete, 'client')
+              else
+                ui.warn("Node name to purge not provided. Corresponding client node will remain on Chef Server.")
+              end
             else
               ui.warn("Corresponding node and client for the #{name} server were not deleted and remain registered with the Chef Server")
             end
@@ -153,7 +131,6 @@ class Chef
           end
         end
       end
-
     end
   end
 end
