@@ -146,6 +146,27 @@ class Chef
       def pretty_key(key)
         key.to_s.gsub(/_/, ' ').gsub(/\w+/){ |w| (w =~ /(ssh)|(aws)/i) ? w.upcase  : w.capitalize }
       end
+
+      def is_image_windows?
+        locate_config_value(:azure_image_reference_offer) =~ /WindowsServer.*/
+      end
+
+      def msg_pair(label, value, color=:cyan)
+        if value && !value.to_s.empty?
+          puts "#{ui.color(label, color)}: #{value}"
+        end
+      end
+
+      def msg_server_summary(server)
+        puts "\n"
+        msg_pair('VM Name', server.name)
+        msg_pair('Public Ip Address', server.publicipaddress)
+        msg_pair('SSH Port', server.sshport) unless server.sshport.nil?
+        msg_pair('WinRM Port', server.winrmport) unless server.winrmport.nil?
+        msg_pair('Environment', locate_config_value(:environment) || '_default')
+        msg_pair('Runlist', locate_config_value(:run_list)) unless locate_config_value(:run_list).empty?
+        puts "\n"
+      end
     end
   end
 end

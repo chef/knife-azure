@@ -122,10 +122,9 @@ module Azure
         end
 
         ## resource group creation
-        resource_client = get_resource_client
-        if not resource_client.resource_groups.check_existence(params[:azure_resource_group_name]).value!.body
+        if not resource_management_client.resource_groups.check_existence(params[:azure_resource_group_name]).value!.body
           Chef::Log.info("Creating ResourceGroup....")
-          resource_group = create_resource_group(resource_client, params)
+          resource_group = create_resource_group(resource_management_client, params)
           Chef::Log.info("ResourceGroup creation successfull.")
           Chef::Log.info("Resource Group name is: #{resource_group.name}")
           Chef::Log.info("Resource Group ID is: #{resource_group.id}")
@@ -136,10 +135,9 @@ module Azure
         end
 
         ## virtual machine creation
-        compute_client = get_compute_client
-        if compute_client.virtual_machines.get(params[:azure_resource_group_name], params[:azure_vm_name]).value.nil?
+        if compute_management_client.virtual_machines.get(params[:azure_resource_group_name], params[:azure_vm_name]).value.nil?
           Chef::Log.info("Creating VirtualMachine....")
-          virtual_machine = create_virtual_machine(compute_client, params, platform)
+          virtual_machine = create_virtual_machine(compute_management_client, params, platform)
           Chef::Log.info("VirtualMachine creation successfull.")
           Chef::Log.info("Virtual Machine name is: #{virtual_machine.name}")
           Chef::Log.info("Virtual Machine ID is: #{virtual_machine.id}")
@@ -154,14 +152,13 @@ module Azure
       end
 
       def get_vm_details(params, platform)
-        network_client = get_network_client
         vm_details = OpenStruct.new
-        vm_details.publicipaddress = get_vm_public_ip(network_client, params)
+        vm_details.publicipaddress = get_vm_public_ip(network_resource_client, params)
 
         if platform == "Windows"
-          vm_details.winrmport = get_vm_default_port(network_client, params)
+          vm_details.winrmport = get_vm_default_port(network_resource_client, params)
         else
-          vm_details.sshport = get_vm_default_port(network_client, params)
+          vm_details.sshport = get_vm_default_port(network_resource_client, params)
         end
 
         vm_details
@@ -227,13 +224,9 @@ module Azure
         hardware_profile.vm_size = get_vm_size(params[:azure_vm_size])
         vm_props.hardware_profile = hardware_profile
 
-        storage_client = get_storage_client
-        vm_props.storage_profile = create_storage_profile(storage_client, params)
+        vm_props.storage_profile = create_storage_profile(storage_management_client, params)
 
-        network_client = get_network_client
-        vm_props.network_profile = create_network_profile(network_client, params, platform)
-
-        #vm_props.availability_set = create_availability_set(compute_client)
+        vm_props.network_profile = create_network_profile(network_resource_client, params, platform)
 
         vm_params = VirtualMachine.new
         vm_params.name = params[:azure_vm_name]
