@@ -30,33 +30,41 @@ module Azure
         @azure_subscription_id = params[:azure_subscription_id]
       end
 
-      def get_resource_client
-        resource_client = ResourceManagementClient.new(@credentials)
-        resource_client.subscription_id = @azure_subscription_id
-        resource_client
+      def resource_management_client
+        @resource_management_client ||= begin
+          resource_client = ResourceManagementClient.new(@credentials)
+          resource_client.subscription_id = @azure_subscription_id
+          resource_client
+        end
       end
 
-      def get_compute_client
-        compute_client = ComputeManagementClient.new(@credentials)
-        compute_client.subscription_id = @azure_subscription_id
-        compute_client
+      def compute_management_client
+        @compute_management_client ||= begin
+           compute_management_client = ComputeManagementClient.new(@credentials)
+           compute_management_client.subscription_id = @azure_subscription_id
+           compute_management_client
+        end
       end
 
-      def get_storage_client
-        storage_client = StorageManagementClient.new(@credentials)
-        storage_client.subscription_id = @azure_subscription_id
-        storage_client
+      def storage_management_client
+        @storage_management_client ||= begin
+          storage_client = StorageManagementClient.new(@credentials)
+          storage_client.subscription_id = @azure_subscription_id
+          storage_client
+        end
       end
 
-      def get_network_client
-        network_client = NetworkResourceProviderClient.new(@credentials)
-        network_client.subscription_id = @azure_subscription_id
-        network_client
+      def network_resource_client
+        @network_resource_client ||= begin
+          network_client = NetworkResourceProviderClient.new(@credentials)
+          network_client.subscription_id = @azure_subscription_id
+          network_client
+        end
       end
 
       def list_servers
         begin
-          promise = get_compute_client.virtual_machines.list_all
+          promise = compute_management_client.virtual_machines.list_all
           result = promise.value!
           servers = result.body.value
 
