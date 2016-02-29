@@ -31,9 +31,9 @@ with root/administrator privileges.
 * Service management: commands using the Azure service management API
 * Resource manager: commands using the Azure Resource Manager API
 
-They are not designed to work together. For switching mode, you only need to add option `--azure-api-mode arm|asm` to your command. Default value of `--azure-api-mode` is `asm`.
+They are not designed to work together. Commands starting with `knife azure` use ASM mode, while commands starting with `knife azurerm` use ARM mode.
 
-PLEASE NOTE that Resource manager support is in initial phase. All `knife-azure` commands may not have implementation for `arm` mode.
+PLEASE NOTE that `Azuererm` subcommands are experimental and of alpha quality. Not suitable for production use. Please use ASM subcommands for production.
 
 ## Configuration
 
@@ -410,26 +410,26 @@ For CIDR notation, see here: http://en.wikipedia.org/wiki/Classless_Inter-Domain
 Address available are defined in RFC 1918: http://en.wikipedia.org/wiki/Private_network
 
 ## Detailed Usage for ARM mode
-Currently only the sub-commands documented below are supported in ARM mode.
 
 ### Common Configuration
 
 ARM configuration options can be specified in your knife.rb file only.
 
-The following options are required for all subcommands:
+The following options are required for all azurerm subcommands:
 
     option :azure_subscription_id            Your Azure subscription ID
     option :azure_tenant_id                  Your subscription's tenant id
     option :azure_client_id                  Your Active Directory Application id
     option :azure_client_secret              Your Active Directory Application's password
 
+Note: The options mentioned above can be obtained from this [step](https://github.com/chef/knife-azure#arm-mode)
+
 ### Azure Server Create Subcommand
 
 For Windows:
 
 ```
-knife azure server create
-  --azure-api-mode 'arm'
+knife azurerm server create
   --azure-resource-group-name MyResourceGrpName
   --azure-vm-name MyNewVMName
   --azure-service-location 'WEST US'
@@ -449,8 +449,7 @@ knife azure server create
 For Centos:
 
 ```
-knife azure server create
-  --azure-api-mode 'arm'
+knife azurerm server create
   --azure-resource-group-name MyResourceGrpName
   --azure-vm-name MyNewVMName
   --azure-service-location 'WEST US'
@@ -468,8 +467,7 @@ knife azure server create
 For Ubuntu:
 
 ```
-knife azure server create
-  --azure-api-mode 'arm'
+knife azurerm server create
   --azure-resource-group-name MyResourceGrpName
   --azure-vm-name MyNewVMName
   --azure-service-location 'WEST US'
@@ -483,32 +481,29 @@ knife azure server create
   -c ~/.chef/knife.rb
 ```
 
-If `--azure-resource-group-name` is not specified then server name is considered as the resource group name.
-
 ### Azure Server Delete Subcommand
-Deletes an existing ARM server in the currently configured Azure account. By default, this does not delete the associated resource-group, node and client objects from the Chef server.
+Deletes an existing ARM server in the currently configured Azure account. By default, this does not delete the associated resource-group, associated node and client objects from the Chef server.
+For deleting associated node and client objects from the Chef server, add the --purge flag.
 
 ```
-knife azure server delete MyVMName --azure-api-mode 'arm' --azure-resource-group-name MyResourceGrpName --node-name MyNodeName -c ~/.chef/knife.rb
-```
+knife azurerm server delete MyVMName --azure-resource-group-name MyResourceGrpName -c ~/.chef/knife.rb
 
-If `--azure-resource-group-name` is not specified then server name is considered as the resource group name.
+knife azurerm server delete MyVMName --azure-resource-group-name MyResourceGrpName -c ~/.chef/knife.rb --purge  #purge chef node
+```
 
 ### Azure Server List Subcommand
 Outputs a list of all ARM servers in the currently configured Azure account. PLEASE NOTE - this shows all instances associated with the account, some of which may not be currently managed by the Chef server.
 
 ```
-knife azure server list --azure-api-mode 'arm'
+knife azurerm server list
 ```
 
 ### Azure Server Show Subcommand
 Outputs the details of an ARM server.
 
 ```
-knife azure server show MyVMName --azure-api-mode "arm" -c ~/.chef/knife.rb --azure-resource-group-name MyResourceGrpName
+knife azurerm server show MyVMName --azure-resource-group-name MyResourceGrpName -c ~/.chef/knife.rb
 ```
-
-If `--azure-resource-group-name` is not specified then server name is considered as the resource group name.
 
 
 ## Alternative Management Certificate Specification
