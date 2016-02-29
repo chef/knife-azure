@@ -28,7 +28,7 @@ class Chef
   class Knife
     class AzurermServerDelete < Knife
 
-      include Knife::AzureBase
+      include Knife::AzurermBase
 
       banner "knife azurerm server delete SERVER [SERVER] (options)"
 
@@ -50,13 +50,23 @@ class Chef
       # the user is already making their intent known.  It is not
       # necessary to make them confirm two more times.
 
+      def destroy_item(klass, name, type_name)
+        begin
+          object = klass.load(name)
+          object.destroy
+          ui.warn("Deleted #{type_name} #{name}")
+        rescue Net::HTTPServerException
+          ui.warn("Could not find a #{type_name} named #{name} to delete!")
+        end
+      end
+
       def run
         begin
           $stdout.sync = true
           validate_arm_keys!(:azure_resource_group_name)
 
           vm_name = @name_args[0]
-          service_arm.delete_server(locate_config_value(:azure_resource_group_name), vm_name, custom_headers = nil)
+          service.delete_server(locate_config_value(:azure_resource_group_name), vm_name, custom_headers = nil)
 
           if config[:purge]
             node_to_delete = config[:chef_node_name] || vm_name

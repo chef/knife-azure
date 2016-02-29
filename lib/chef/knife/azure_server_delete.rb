@@ -107,7 +107,7 @@ class Chef
         validate_disk_and_storage
         @name_args.each do |name|
           begin
-            service_asm.delete_server( { name: name, preserve_azure_os_disk: locate_config_value(:preserve_azure_os_disk),
+            service.delete_server( { name: name, preserve_azure_os_disk: locate_config_value(:preserve_azure_os_disk),
                                     preserve_azure_vhd: locate_config_value(:preserve_azure_vhd),
                                     preserve_azure_dns_name: locate_config_value(:preserve_azure_dns_name),
                                     delete_azure_storage_account: locate_config_value(:delete_azure_storage_account),
