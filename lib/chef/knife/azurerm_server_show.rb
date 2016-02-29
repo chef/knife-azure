@@ -1,7 +1,5 @@
 #
-# Author:: Barry Davis (barryd@jetstreamsoftware.com)
-# Author:: Seth Chisamore (<schisamo@opscode.com>)
-# Author:: Adam Jacob (<adam@opscode.com>)
+# Author:: Meera Navale (meera.navale@msystechnologies.com)
 # Copyright:: Copyright (c) 2010-2011 Opscode, Inc.
 # License:: Apache License, Version 2.0
 #
@@ -26,7 +24,7 @@ class Chef
 
       include Knife::AzurermBase
 
-      banner "knife azure server show SERVER (options)"  
+      banner "knife azurerm server show SERVER (options)"  
 
       def run
         $stdout.sync = true
