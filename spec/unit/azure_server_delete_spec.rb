@@ -88,25 +88,13 @@ describe Chef::Knife::AzureServerDelete do
     @server_instance.run
   end
 
-  # it "display valid nomenclature in delete output" do
-  #   @server_instance.name_args = ['role001']
-  #   expect(@server_instance.ui).to receive(:warn).twice
-  #   expect(@server_instance).to receive(:msg_pair).with("DNS Name", Chef::Config[:knife][:azure_dns_name] + ".cloudapp.net")
-  #   expect(@server_instance).to receive(:msg_pair).with("VM Name", "role001")
-  #   expect(@server_instance).to receive(:msg_pair).with("Size", "Small")
-  #   expect(@server_instance).to receive(:msg_pair).with("Public Ip Address", "65.52.249.191")
-  #   expect(@server_instance.service).to receive(:delete_server).and_call_original
-  #   allow(@server_instance.service.ui).to receive(:confirm).and_return ("Y")
-  #   @server_instance.run
-  # end
-
   it "display valid nomenclature in delete output" do
     @server_instance.name_args = ['role001']
     expect(@server_instance.ui).to receive(:warn).twice
-    expect(@server_instance.service.delete_server).to receive(:msg_pair).with("DNS Name", Chef::Config[:knife][:azure_dns_name] + ".cloudapp.net")
-    expect(@server_instance.service.delete_server).to receive(:msg_pair).with("VM Name", "role001")
-    expect(@server_instance.service.delete_server).to receive(:msg_pair).with("Size", "Small")
-    expect(@server_instance.service.delete_server).to receive(:msg_pair).with("Public Ip Address", "65.52.249.191")
+    expect(@server_instance.service).to receive(:msg_pair).with(@server_instance.service.ui, "DNS Name", Chef::Config[:knife][:azure_dns_name] + ".cloudapp.net")
+    expect(@server_instance.service).to receive(:msg_pair).with(@server_instance.service.ui, "VM Name", "role001")
+    expect(@server_instance.service).to receive(:msg_pair).with(@server_instance.service.ui, "Size", "Small")
+    expect(@server_instance.service).to receive(:msg_pair).with(@server_instance.service.ui, "Public Ip Address", "65.52.249.191")
     expect(@server_instance.service).to receive(:delete_server).and_call_original
     allow(@server_instance.service.ui).to receive(:confirm).and_return ("Y")
     @server_instance.run
