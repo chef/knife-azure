@@ -27,15 +27,54 @@ module QueryAzureMock
         azure_tenant_id: 'azure_tenant_id',
         azure_client_id: 'azure_client_id',
         azure_client_secret: 'azure_client_secret',
+        azure_resource_group_name: 'test-rgrp',
+        azure_vm_name: 'test-vm',
+        azure_service_location: 'West Europe',
         azure_image_reference_publisher: 'azure_image_reference_publisher',
         azure_image_reference_offer: 'azure_image_reference_offer',
         azure_image_reference_sku: 'azure_image_reference_sku',
-        azure_image_reference_version: 'azure_image_reference_version'
+        azure_image_reference_version: 'azure_image_reference_version',
+        ssh_user: 'test-user'
       }.each do |key, value|
           Chef::Config[:knife][key] = value
         end
 
     @server_instance
+  end
+
+  def stub_resource_group_create_response
+    resource_group = OpenStruct.new
+    resource_group.name = 'test-rgrp'
+    resource_group.id = 'myrgrp'
+    resource_group
+  end
+
+  def stub_virtual_machine_create_response
+    virtual_machine = double("VirtualMachine",
+      :name => 'test-vm',
+      :id => 'myvm',
+      :properties => double)
+    allow(virtual_machine.properties).to receive(
+      :provisioning_state).and_return('Succeeded')
+    virtual_machine
+  end
+
+  def stub_vm_details
+    vm_details = OpenStruct.new
+    vm_details.publicipaddress = '1.2.3.4'
+    vm_details.sshport = '22'
+    vm_details.winrmport = '5985'
+    vm_details.name = 'test-vm'
+    vm_details.hostedservicename = "test-vm.westeurope.cloudapp.azure.com"
+    vm_details.provisioningstate = "Succeeded"
+    vm_details
+  end
+
+  def stub_storage_account_create_response
+    storage_account = OpenStruct.new
+    storage_account.name = 'test-storage'
+    storage_account.id = 'mystorage'
+    storage_account
   end
 
   def lookup_resource_in_test_xml(lookup_name, lookup_pty, tag, in_file)

@@ -145,6 +145,7 @@ module Azure
           vm_details.name = virtual_machine.name
           location_name = params[:azure_service_location].gsub(/[ ]/,'').downcase
           vm_details.hostedservicename = vm_details.name + ".#{location_name}.cloudapp.azure.com"
+          vm_details.provisioningstate = virtual_machine.properties.provisioning_state
           vm_details
         else
           Chef::Log.info("Virtual Machine #{params[:azure_vm_name]} already exist under the Resource Group #{params[:azure_resource_group_name]}.")
