@@ -15,7 +15,7 @@ require 'chef/knife/azure_vnet_list'
 
 require 'chef/knife/azurerm_server_list'
 require 'chef/knife/azurerm_server_show'
-
+require 'chef/knife/azurerm_server_delete'
 
 require 'fileutils'
 require "securerandom"
