@@ -94,7 +94,7 @@ module Azure
       end
 
        def delete_server(resource_group_name, vm_name, custom_headers=nil)
-        promise = compute_management_client.virtual_machines.get(resource_group_name, vm_name, expand =nil, custom_headers)
+        promise = compute_management_client.virtual_machines.get(resource_group_name, vm_name, expand=nil, custom_headers)
         if promise.value! && promise.value!.body.name == vm_name
           puts "\n"
           msg_pair(ui, 'VM Name', promise.value!.body.name)
@@ -118,9 +118,6 @@ module Azure
 
           puts "\n"
           ui.warn "Deleted server #{vm_name}"
-        else
-          puts promise
-          raise promise.reason.body
         end
       end
     end
