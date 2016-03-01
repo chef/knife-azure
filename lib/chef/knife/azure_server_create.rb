@@ -638,52 +638,29 @@ class Chef
       def run
         $stdout.sync = true
 
-        if(locate_config_value(:azure_api_mode) == "asm")
-          storage = nil
+        storage = nil
 
-          Chef::Log.info("validating...")
-          validate_asm_keys!(:azure_source_image)
+        Chef::Log.info("validating...")
+        validate_asm_keys!(:azure_source_image)
 
-          validate_params!
+        validate_params!
 
-          ssh_override_winrm if %w(ssh cloud-api).include?(locate_config_value(:bootstrap_protocol)) and !is_image_windows?
+        ssh_override_winrm if %w(ssh cloud-api).include?(locate_config_value(:bootstrap_protocol)) and !is_image_windows?
 
-          Chef::Log.info("creating...")
+        Chef::Log.info("creating...")
 
-          config[:azure_dns_name] = get_dns_or_rgrp_name(locate_config_value(:azure_dns_name))
+        config[:azure_dns_name] = get_dns_name(locate_config_value(:azure_dns_name))
 
-          if not locate_config_value(:azure_vm_name)
-            config[:azure_vm_name] = locate_config_value(:azure_dns_name)
-          end
-
-          service.create_server(create_server_def)
-          wait_until_virtual_machine_ready()
-          server = service.get_role_server(locate_config_value(:azure_dns_name), locate_config_value(:azure_vm_name))
-          msg_server_summary(server)
-
-          bootstrap_exec(server) unless locate_config_value(:bootstrap_protocol) == 'cloud-api'
-        elsif(locate_config_value(:azure_api_mode) == "arm")
-          Chef::Log.warn("ARM commands are still in development phase...Current implementation supports server creation with basic options.")
-          validate_arm_keys!(
-            :azure_image_reference_publisher,
-            :azure_image_reference_offer,
-            :azure_image_reference_sku,
-            :azure_image_reference_version
-          )
-
-          Chef::Log.info("creating...")
-
-          config[:azure_resource_group_name] = get_dns_or_rgrp_name(locate_config_value(:azure_resource_group_name))
-
-          if not locate_config_value(:azure_vm_name)
-            config[:azure_vm_name] = locate_config_value(:azure_resource_group_name)
-          end
-
-          vm_details = service.create_server(create_server_def)
-
-          bootstrap_exec(vm_details) unless locate_config_value(:bootstrap_protocol) == 'cloud-api'
-
+        if not locate_config_value(:azure_vm_name)
+          config[:azure_vm_name] = locate_config_value(:azure_dns_name)
         end
+
+        service.create_server(create_server_def)
+        wait_until_virtual_machine_ready()
+        server = service.get_role_server(locate_config_value(:azure_dns_name), locate_config_value(:azure_vm_name))
+        msg_server_summary(server)
+
+        bootstrap_exec(server) unless locate_config_value(:bootstrap_protocol) == 'cloud-api'
       end
 
       def default_bootstrap_template
@@ -1137,7 +1114,7 @@ class Chef
       MAX_VM_NAME_CHARACTERS = 15
 
       # generate a random dns_name if azure_dns_name is empty
-      def get_dns_or_rgrp_name(azure_dns_rgrp_name, prefix = "az-")
+      def get_dns_name(azure_dns_rgrp_name, prefix = "az-")
         return azure_dns_rgrp_name unless azure_dns_rgrp_name.nil?
         if locate_config_value(:azure_vm_name).nil?
           azure_dns_rgrp_name = prefix + SecureRandom.hex(( MAX_VM_NAME_CHARACTERS - prefix.length)/2)

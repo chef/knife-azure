@@ -92,15 +92,13 @@ class Chef
         :long => "--azure-vm-name NAME",
         :description => "Required. Specifies the name for the virtual machine.
                         The name must be unique within the ResourceGroup.
-                        The azure vm name cannot be more than 15 characters long",
-        :required => true
+                        The azure vm name cannot be more than 15 characters long"
 
       option :azure_service_location,
         :short => "-m LOCATION",
         :long => "--azure-service-location LOCATION",
         :description => "Required if not using an Affinity Group. Specifies the geographic location - the name of the data center location that is valid for your subscription.
                                       Eg: West US, East US, East Asia, Southeast Asia, North Europe, West Europe",
-        :required => true,
         :proc        => Proc.new { |lo| Chef::Config[:knife][:azure_service_location] = lo }
 
       option :azure_os_disk_name,
@@ -121,28 +119,24 @@ class Chef
       option :azure_image_reference_publisher,
         :long => "--azure-image-reference-publisher PUBLISHER_NAME",
         :description => "Required. ARM option. Specifies the publisher of the image used to create the virtual machine.
-                                      Do a \"knife azure image list --azure-api-mode ARM\" to see a list of available Publishers.",
-        :required => true
+                                      Do a \"knife azure image list --azure-api-mode ARM\" to see a list of available Publishers."
 
       option :azure_image_reference_offer,
         :long => "--azure-image-reference-offer OFFER",
         :description => "Required. ARM option. Specifies the offer of the image used to create the virtual machine.
-                                      Do a \"knife azure image list --azure-api-mode ARM\" to see a list of available Offers.",
-        :required => true
+                                      Do a \"knife azure image list --azure-api-mode ARM\" to see a list of available Offers."
 
       option :azure_image_reference_sku,
         :long => "--azure-image-reference-sku SKU",
         :description => "Required. ARM option. Specifies the SKU of the image used to create the virtual machine.
-                                      Do a \"knife azure image list --azure-api-mode ARM\" to see a list of available SKUs.",
-        :required => true
+                                      Do a \"knife azure image list --azure-api-mode ARM\" to see a list of available SKUs."
 
       option :azure_image_reference_version,
         :long => "--azure-image-reference-version VERSION",
         :description => "Optional. ARM option. Specifies the version of the image used to create the virtual machine.
                                       You can use the value of 'latest' to use the latest version of an image.
                                       Do a \"knife azure image list --azure-api-mode ARM\" to see a list of available Versions.",
-        :default => 'latest',
-        :required => true
+        :default => 'latest'
 
       option :azure_vm_size,
         :short => "-z SIZE",
@@ -184,7 +178,15 @@ class Chef
         $stdout.sync = true
 
         Chef::Log.warn("ARM commands are still in development phase...Current implementation supports server creation with basic options.")
-        validate_arm_keys!(:azure_resource_group_name)
+        validate_arm_keys!(
+          :azure_resource_group_name,
+          :azure_vm_name,
+          :azure_service_location,
+          :azure_image_reference_publisher,
+          :azure_image_reference_offer,
+          :azure_image_reference_sku,
+          :azure_image_reference_version
+        )
 
         ssh_override_winrm if %w(ssh cloud-api).include?(locate_config_value(:bootstrap_protocol)) and !is_image_windows?
 
