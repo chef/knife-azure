@@ -8,45 +8,60 @@ describe Chef::Knife::AzurermServerDelete do
   before do
     @arm_server_instance = create_arm_instance(Chef::Knife::AzurermServerDelete)
     allow(@arm_server_instance.service.ui).to receive(:confirm).and_return (true)
+    @compute_client = double("ComputeManagementClient")
+    @service = @arm_server_instance.service
+
+    Chef::Config[:knife][:azure_resource_group_name] = 'test-rg-group'
+    @arm_server_instance.name_args = ['VM001']
+
+    @server = double('server', :name => "VM001", :properties => double)
+    allow(@server.properties).to receive_message_chain(:hardware_profile, :vm_size).and_return("10")
+    allow(@server.properties).to receive_message_chain(:storage_profile, :os_disk, :os_type).and_return("Linux")
   end
 
-  it "delete server" do
-    compute_client = double("ComputeManagementClient")
-    @server_instance.name_args = ['role001']
-    @service = @arm_server_instance.service
-    Chef::Config[:knife][:azure_resource_group_name] = 'test-rg-group'
+  it "deletes server" do
     promise = double('promise')
+    delete_promise = double('delete')
+    allow(delete_promise).to receive_message_chain(:value!, :body)
 
-    @service = @arm_server_instance.service
+    expect(@arm_server_instance).to receive(:validate_arm_keys!).with(:azure_resource_group_name)
+    allow(@arm_server_instance.service).to receive(:compute_management_client).and_return(@compute_client)
+    allow(@compute_client).to receive_message_chain(:virtual_machines, :get).with('test-rg-group', 'VM001', nil, nil).and_return(promise)
+    allow(promise).to receive_message_chain(:value!, :body).and_return(@server)
 
-    expect(@arm_server_instance.service).to receive(:compute_management_client).and_return(compute_client)
-    allow(compute_client).to receive_message_chain(:virtual_machines, :get).with('test-rg-group', 'role001', nil, nil).and_return(promise)
-    allow(promise).to receive_message_chain(:value!, :body, :name).and_return("role001")
-    allow(promise).to receive_message_chain(:value!, :body, :properties, :hardware_profile, :vm_size).and_return("10")
-    allow(promise).to receive_message_chain(:value!, :body, :properties, :storage_profile, :os_disk, :os_type).and_return("Linux")
-
-    expect(@service).to receive(:msg_pair).thrice
+    expect(@service).to receive(:msg_pair).with(@service.ui, 'VM Name', 'VM001')
+    expect(@service).to receive(:msg_pair).with(@service.ui, 'VM Size', '10')
+    expect(@service).to receive(:msg_pair).with(@service.ui, 'VM OS', 'Linux')
+    allow(@compute_client).to receive_message_chain(:virtual_machines, :delete).with('test-rg-group', 'VM001', nil).and_return(delete_promise)
     expect(@service.ui).to receive(:info).once
-
-    delete_call = double('promise')
-    allow(delete_call).to receive_message_chain(:value!, :body).and_return(nil)
-    expect(@arm_server_instance.service).to receive(:compute_management_client).and_return(compute_client)
-    allow(compute_client).to receive_message_chain(:virtual_machines, :delete).with('test-rg-group', 'role001', nil).and_return(delete_call)
     expect(@service.ui).to receive(:warn).twice
+    expect(@service).to receive(:print)
     @arm_server_instance.run
   end
 
-  it "exit if server not found" do
-    compute_client = double("ComputeManagementClient")
-    @server_instance.name_args = ['role001']
-    @service = @arm_server_instance.service
-    Chef::Config[:knife][:azure_resource_group_name] = 'test-rg-group'
+  it "does nothing if the server is not found" do
     promise = double('promise')
 
-    expect(@arm_server_instance.service).to receive(:compute_management_client).and_return(compute_client)
-    expect(compute_client).to receive_message_chain(:virtual_machines, :get).with('test-rg-group', 'role001', nil, nil).and_return(promise)
+    expect(@arm_server_instance).to receive(:validate_arm_keys!).with(:azure_resource_group_name)
+    expect(@arm_server_instance.service).to receive(:compute_management_client).and_return(@compute_client)
+    expect(@compute_client).to receive_message_chain(:virtual_machines, :get).with('test-rg-group', 'VM001', nil, nil).and_return(promise)
     allow(promise).to receive_message_chain(:value!).and_return(nil)
     expect(@service.ui).to receive(:warn).once
+    @arm_server_instance.run
+  end
+
+  it "destroys the corresponding node and client if --purge is given" do
+    expect(@arm_server_instance).to receive(:validate_arm_keys!).with(:azure_resource_group_name)
+    allow(@service).to receive(:delete_server)
+    @arm_server_instance.config[:purge] = true
+    expect(@arm_server_instance).to receive(:destroy_item).twice
+    @arm_server_instance.run
+  end
+
+  it "rescues exception if the delete process fails" do
+    expect(@arm_server_instance).to receive(:validate_arm_keys!).with(:azure_resource_group_name)
+    allow(@service).to receive(:delete_server).and_raise(MsRestAzure::AzureOperationError, "ResourceNotFound")
+    allow(@service.ui).to receive(:error).twice
     @arm_server_instance.run
   end
 end
