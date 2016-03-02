@@ -1,7 +1,5 @@
 #
-# Author:: Barry Davis (barryd@jetstreamsoftware.com)
-# Author:: Seth Chisamore (<schisamo@opscode.com>)
-# Author:: Adam Jacob (<adam@opscode.com>)
+# Author:: Meera Navale (meera.navale@msystechnologies.com)
 # Copyright:: Copyright (c) 2010-2011 Opscode, Inc.
 # License:: Apache License, Version 2.0
 #
@@ -18,22 +16,20 @@
 # limitations under the License.
 #
 
-require File.expand_path('../azure_base', __FILE__)
+require File.expand_path('../azurerm_base', __FILE__)
 
 class Chef
   class Knife
-    class AzureServerShow < Knife
+    class AzurermServerShow < Knife
 
-      include Knife::AzureBase
+      include Knife::AzurermBase
 
-      banner "knife azure server show SERVER [SERVER]"  
+      banner "knife azurerm server show SERVER (options)"  
 
       def run
         $stdout.sync = true
-        validate_asm_keys!
-        @name_args.each do |name|
-          service.show_server name
-        end
+        validate_arm_keys!(:azure_resource_group_name)
+        service.show_server(@name_args[0], locate_config_value(:azure_resource_group_name))
       end
 
     end

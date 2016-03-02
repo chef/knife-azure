@@ -1,11 +1,12 @@
 require File.expand_path(File.dirname(__FILE__) + '/../spec_helper')
 require File.expand_path(File.dirname(__FILE__) + '/../unit/query_azure_mock')
 
-describe Chef::Knife::AzureAgList do
+describe Chef::Knife::AzureServerShow do
   include AzureSpecHelper
   include QueryAzureMock
   before do
     @server_instance = create_instance(Chef::Knife::AzureServerShow)
+    
     stub_query_azure(@server_instance.service.connection)
     allow(@server_instance).to receive(:puts)
   end

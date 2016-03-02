@@ -92,6 +92,55 @@ module Azure
           puts "#{error.class} and #{error.message}"
         end
       end
+
+      def show_server(name, resource_group)
+        begin 
+          promise = compute_management_client.virtual_machines.get(resource_group, name)
+          result = promise.value!
+          
+          unless result.nil?
+            server = result.body
+            
+            details = Array.new
+            details << ui.color('Server Name', :bold, :cyan)
+            details << server.name
+
+            details << ui.color('Size', :bold, :cyan)
+            details << server.properties.hardware_profile.vm_size
+
+            details << ui.color('Provisioning State', :bold, :cyan)
+            details << server.properties.provisioning_state
+
+            details << ui.color('Location', :bold, :cyan)
+            details << server.location
+
+            details << ui.color('Publisher', :bold, :cyan)
+            details << server.properties.storage_profile.image_reference.publisher
+
+            details << ui.color('Offer', :bold, :cyan)
+            details << server.properties.storage_profile.image_reference.offer
+
+            details << ui.color('Sku', :bold, :cyan)
+            details << server.properties.storage_profile.image_reference.sku
+
+            details << ui.color('Version', :bold, :cyan)
+            details << server.properties.storage_profile.image_reference.version
+
+            details << ui.color('OS Type', :bold, :cyan)
+            details << server.properties.storage_profile.os_disk.os_type
+      
+            puts ui.list(details, :columns_across, 2)
+            
+         else
+           puts "There is no server with name #{name} or resource_group #{resource_group}. Please provide correct details."
+         end  
+       
+        rescue => error
+          puts "#{error.class} and #{error.message}"
+        end
+
+      end 
+     
     end
   end
 end
