@@ -70,10 +70,10 @@ module Azure
         connection.roles.delete(params)
       end
 
-      def show_server(name, resource_group = "")
+      def show_server(name)
         begin
           role = connection.roles.find name
-          
+
           puts ''
           if (role)
             details = Array.new
@@ -129,7 +129,7 @@ module Azure
               puts ui.list(details, :columns_across, 4)
             end
           else
-            puts "No VM found"  
+            puts "No VM found"
           end
 
         rescue => error
