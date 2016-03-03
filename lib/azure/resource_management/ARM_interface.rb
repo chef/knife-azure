@@ -618,8 +618,6 @@ module Azure
 
         security_rule
       end
-
->>>>>>> Basic ARM command to create server for Linux and Windows platform with Chef bootstrap functionality only for Linux.
     end
   end
 end
