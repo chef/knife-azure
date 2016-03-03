@@ -367,7 +367,6 @@ module Azure
       end
 
       def create_virtual_network(network_client, resource_group_name, virtual_network_name, service_location)
-        ##TODO: handle 4 scenarios
         vnet_params = VirtualNetwork.new
         vnet_params.name = virtual_network_name
         vnet_props = VirtualNetworkPropertiesFormat.new
@@ -389,7 +388,6 @@ module Azure
       end
 
       def create_subnet(network_client, resource_group_name, subnet_name, virtual_network)
-        ##TODO: handle 4 scenarios
         sbn_params = Subnet.new
         sbn_params.name = subnet_name
         sbn_prop = SubnetPropertiesFormat.new
