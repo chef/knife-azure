@@ -425,8 +425,6 @@ module Azure
         Chef::Log.info("Subnet ID is: #{sbn.id}")
 
         Chef::Log.info("Creating NetworkInterface....")
-        require 'pry'
-        binding.pry
         nic = create_network_interface(
           network_client,
           params[:azure_resource_group_name],
@@ -501,8 +499,6 @@ module Azure
         network_interface_ip_configuration.properties = network_ip_configuration_properties
         network_interface_ip_configuration.name = vm_name
 
-        require 'pry'
-        binding.pry
         network_interface_props_format = NetworkInterfacePropertiesFormat.new
         network_interface_props_format.ip_configurations = [network_interface_ip_configuration]
         network_interface_props_format.network_security_group = create_network_security_group(
@@ -576,9 +572,6 @@ module Azure
         security_rules = []
         if platform == "Windows"
           security_rules << add_security_rule(port, "Powershell", 1000, network_client, resource_group_name, vm_name, network_security_group)
-          security_rules << add_security_rule("3389", "Remote Desktop", 1100, network_client, resource_group_name, vm_name, network_security_group)
-          require 'pry'
-          binding.pry
         else
           security_rules << add_security_rule("22", "SSH", 1000, network_client, resource_group_name, vm_name, network_security_group)
         end
