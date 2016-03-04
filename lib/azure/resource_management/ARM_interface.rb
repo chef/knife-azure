@@ -294,7 +294,7 @@ module Azure
           os_profile.admin_password = params[:ssh_password]
           os_profile.linux_configuration = linux_config
         end
-        
+
         vm_props.os_profile = os_profile
 
         hardware_profile = HardwareProfile.new
@@ -369,7 +369,7 @@ module Azure
           Chef::Log.debug("#{backtrace_message}")
         end
         storage.name = storage_account_name    ## response for storage creation does not contain name in it ##
-  
+
         storage
       end
 
@@ -400,7 +400,7 @@ module Azure
 
         os_disk
       end
-      
+
       def create_network_profile(network_client, params, platform)
         Chef::Log.info("Creating VirtualNetwork....")
         vnet = create_virtual_network(
@@ -431,6 +431,7 @@ module Azure
           params[:azure_vm_name],
           params[:azure_service_location],
           sbn,
+          params[:port],
           platform
         )
         Chef::Log.info("NetworkInterface creation successfull.")
@@ -481,7 +482,7 @@ module Azure
         sbn
       end
 
-      def create_network_interface(network_client, resource_group_name, vm_name, service_location, subnet, platform)
+      def create_network_interface(network_client, resource_group_name, vm_name, service_location, subnet, port, platform)
         network_ip_configuration_properties = NetworkInterfaceIpConfigurationPropertiesFormat.new
         network_ip_configuration_properties.private_ipallocation_method = 'Dynamic'
 
@@ -505,6 +506,7 @@ module Azure
           resource_group_name,
           vm_name,
           service_location,
+          port,
           platform
         )
 
@@ -512,7 +514,7 @@ module Azure
         network_interface.location = service_location
         network_interface.name = vm_name
         network_interface.properties = network_interface_props_format
-  
+
         begin
           nic = network_client.network_interfaces.create_or_update(resource_group_name, network_interface.name, network_interface).value!.body
         rescue Exception => e
@@ -544,11 +546,11 @@ module Azure
           backtrace_message = "#{e.class}: #{e}\n#{e.backtrace.join("\n")}"
           Chef::Log.debug("#{backtrace_message}")
         end
-        
+
         public_ip_address
       end
 
-      def create_network_security_group(network_client, resource_group_name, vm_name, service_location, platform)
+      def create_network_security_group(network_client, resource_group_name, vm_name, service_location, port, platform)
         network_security_group_prop_format = NetworkSecurityGroupPropertiesFormat.new
         network_security_group = NetworkSecurityGroup.new
         network_security_group.name = vm_name
@@ -566,37 +568,29 @@ module Azure
           backtrace_message = "#{e.class}: #{e}\n#{e.backtrace.join("\n")}"
           Chef::Log.debug("#{backtrace_message}")
         end
-        
-        security_rule = add_default_security_rule(
-          network_client,
-          resource_group_name,
-          vm_name,
-          network_security_group,
-          platform
-        )
+
+        security_rules = []
+        if platform == "Windows"
+          security_rules << add_security_rule(port, "Powershell", 1000, network_client, resource_group_name, vm_name, network_security_group)
+        else
+          security_rules << add_security_rule("22", "SSH", 1000, network_client, resource_group_name, vm_name, network_security_group)
+        end
         #network_security_group_prop_format.security_rules = [security_rule]
-        network_security_group_prop_format.default_security_rules = [security_rule]
+        network_security_group_prop_format.default_security_rules = security_rules
 
         nsg
       end
-      
-      def add_default_security_rule(network_client, resource_group_name, vm_name, network_security_group, platform)
+
+      def add_security_rule(port, description, priority, network_client, resource_group_name, vm_name, network_security_group)
         security_rule_props = SecurityRulePropertiesFormat.new
-
-        if platform == "Windows"
-          security_rule_props.description = "RDP port to access the machine."
-          security_rule_props.destination_port_range = "3389"
-        else
-          security_rule_props.description = "SSH port to access the machine."
-          security_rule_props.destination_port_range = "22"
-        end
-
+        security_rule_props.description = description
+        security_rule_props.destination_port_range = port
         security_rule_props.protocol = "Tcp"
         security_rule_props.source_port_range = "*"
         security_rule_props.source_address_prefix = "*"
         security_rule_props.destination_address_prefix = "*"
         security_rule_props.access = "Allow"
-        security_rule_props.priority = 1000
+        security_rule_props.priority = priority
         security_rule_props.direction = "Inbound"
 
         security_rule = SecurityRule.new
