@@ -93,7 +93,7 @@ module Azure
 
         connection.roles.delete(params)
 
-        puts '\n'
+        puts "\n"
         ui.warn("Deleted server #{server.name}")
       end
 
