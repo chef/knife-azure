@@ -34,7 +34,8 @@ describe Chef::Knife::AzurermServerCreate do
       :azure_os_disk_caching => 'azure_os_disk_caching',
       :azure_os_disk_create_option => 'azure_os_disk_create_option',
       :azure_virtual_network_name => 'azure_virtual_network_name',
-      :azure_subnet_name => 'azure_subnet_name'
+      :azure_subnet_name => 'azure_subnet_name',
+      :port => "5985"
     }
   end
 
@@ -605,6 +606,7 @@ describe Chef::Knife::AzurermServerCreate do
           @params[:azure_vm_name],
           @params[:azure_service_location],
           stub_subnet_create_response,
+          @params[:port],
           'NA')
         expect(response.name).to_not be nil
         expect(response.id).to_not be nil
@@ -635,13 +637,14 @@ describe Chef::Knife::AzurermServerCreate do
     describe "create_network_security_group" do
       it "successfully creates network security group" do
         expect(@service).to receive(
-          :add_default_security_rule).and_return(
+          :add_security_rule).and_return(
             stub_default_security_rule_add_response('NA'))
         response = @service.create_network_security_group(
           stub_network_client('NA'),
           @params[:azure_resource_group_name],
           @params[:azure_vm_name],
           @params[:azure_service_location],
+          @params[:port],
           'NA')
         expect(response.name).to_not be nil
         expect(response.id).to_not be nil
@@ -653,19 +656,21 @@ describe Chef::Knife::AzurermServerCreate do
       end
     end
 
-    describe "add_default_security_rule" do
+    describe "add_security_rule" do
       context "for Linux" do
         before do
           @platform = 'Linux'
         end
 
         it "successfully adds default security rule" do
-          response = @service.add_default_security_rule(
+          response = @service.add_security_rule(
+            @params[:port],
+            "Port desc",
+            "1000",
             stub_network_client(@platform),
             @params[:azure_resource_group_name],
             @params[:azure_vm_name],
-            stub_network_security_group_create_response,
-            @platform)
+            stub_network_security_group_create_response)
           expect(response.name).to_not be nil
           expect(response.id).to_not be nil
           expect(response.location).to_not be nil
@@ -688,12 +693,14 @@ describe Chef::Knife::AzurermServerCreate do
         end
 
         it "successfully adds default security rule" do
-          response = @service.add_default_security_rule(
+          response = @service.add_security_rule(
+            @params[:port],
+            "Port desc",
+            "1000",
             stub_network_client(@platform),
             @params[:azure_resource_group_name],
             @params[:azure_vm_name],
-            stub_network_security_group_create_response,
-            @platform)
+            stub_network_security_group_create_response)
             expect(response.name).to_not be nil
             expect(response.id).to_not be nil
             expect(response.location).to_not be nil
