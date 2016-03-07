@@ -222,6 +222,92 @@ class Chef
           bootstrap.config[:bootstrap_curl_options] = locate_config_value(:bootstrap_curl_options)
           bootstrap_common_params(bootstrap, server)
         end
+
+        def get_chef_extension_name
+          is_image_windows? ? "ChefClient" : "LinuxChefClient"
+        end
+
+        def get_chef_extension_publisher
+          "Chef.Bootstrap.WindowsAzure"
+        end
+
+        # get latest version
+        def get_chef_extension_version
+          if locate_config_value(:azure_chef_extension_version)
+            Chef::Config[:knife][:azure_chef_extension_version]
+          else
+            ext_version = compute_management_client.virtual_machine_extension_images.list_versions(
+              locate_config_value(:azure_service_location),
+              get_chef_extension_publisher,
+              get_chef_extension_name).value!.body.last.name
+            ext_version = ext_version.split(".").first + ".*"
+            ext_version
+          end
+        end
+
+        def get_chef_extension_public_params
+          pub_config = Hash.new
+          if(locate_config_value(:azure_extension_client_config))
+            pub_config[:client_rb] = File.read(locate_config_value(:azure_extension_client_config))
+          else
+            pub_config[:client_rb] = "chef_server_url \t #{Chef::Config[:chef_server_url].to_json}\nvalidation_client_name\t#{Chef::Config[:validation_client_name].to_json}"
+          end
+
+          pub_config[:runlist] = locate_config_value(:run_list).empty? ? "" : locate_config_value(:run_list).join(",").to_json
+          pub_config[:autoUpdateClient] = locate_config_value(:auto_update_client) ? "true" : "false"
+          pub_config[:deleteChefConfig] = locate_config_value(:delete_chef_extension_config) ? "true" : "false"
+          pub_config[:uninstallChefClient] = locate_config_value(:uninstall_chef_client) ? "true" : "false"
+          pub_config[:custom_json_attr] = locate_config_value(:json_attributes) || {}
+
+          # bootstrap attributes
+          pub_config[:bootstrap_options] = {}
+          pub_config[:bootstrap_options][:environment] = locate_config_value(:environment) if locate_config_value(:environment)
+          pub_config[:bootstrap_options][:chef_node_name] = config[:chef_node_name] if config[:chef_node_name]
+          pub_config[:bootstrap_options][:encrypted_data_bag_secret] = locate_config_value(:encrypted_data_bag_secret) if locate_config_value(:encrypted_data_bag_secret)
+          pub_config[:bootstrap_options][:chef_server_url] = Chef::Config[:chef_server_url] if Chef::Config[:chef_server_url]
+          pub_config[:bootstrap_options][:validation_client_name] = Chef::Config[:validation_client_name] if Chef::Config[:validation_client_name]
+          pub_config[:bootstrap_options][:node_verify_api_cert] = locate_config_value(:node_verify_api_cert) ? "true" : "false" if config.key?(:node_verify_api_cert)
+          pub_config[:bootstrap_options][:bootstrap_version] = locate_config_value(:bootstrap_version) if locate_config_value(:bootstrap_version)
+          pub_config[:bootstrap_options][:node_ssl_verify_mode] = locate_config_value(:node_ssl_verify_mode) if locate_config_value(:node_ssl_verify_mode)
+          pub_config[:bootstrap_options][:bootstrap_proxy] = locate_config_value(:bootstrap_proxy) if locate_config_value(:bootstrap_proxy)
+          Base64.encode64(pub_config.to_json)
+        end
+
+        def get_chef_extension_private_params
+          pri_config = Hash.new
+
+          # validator less bootstrap support for bootstrap protocol cloud-api
+          if (Chef::Config[:validation_key] && !File.exist?(File.expand_path(Chef::Config[:validation_key])))
+
+            if Chef::VERSION.split('.').first.to_i == 11
+              ui.error('Unable to find validation key. Please verify your configuration file for validation_key config value.')
+              exit 1
+            end
+
+            client_builder = Chef::Knife::Bootstrap::ClientBuilder.new(
+              chef_config: Chef::Config,
+              knife_config: config,
+              ui: ui,
+            )
+
+            client_builder.run
+            key_path = client_builder.client_path
+            pri_config[:client_pem] = File.read(key_path)
+          else
+            pri_config[:validation_key] = File.read(Chef::Config[:validation_key])
+          end
+
+          # SSL cert bootstrap support
+          if locate_config_value(:cert_path)
+            if File.exist?(File.expand_path(locate_config_value(:cert_path)))
+              pri_config[:chef_server_crt] = File.read(locate_config_value(:cert_path))
+            else
+              ui.error('Specified SSL certificate does not exist.')
+              exit 1
+            end
+          end
+          Base64.encode64(pri_config.to_json)
+        end
       end
     end
   end

@@ -310,9 +310,11 @@ module Azure
         vm_params.type = 'Microsoft.Compute/virtualMachines'
         vm_params.properties = vm_props
         vm_params.location = params[:azure_service_location]
+        #vm_params.resources = create_vm_extension(compute_client, params)
 
         begin
           virtual_machine = compute_client.virtual_machines.create_or_update(params[:azure_resource_group_name], vm_params.name, vm_params).value!.body
+          vm_extension = create_vm_extension(compute_client, params)
         rescue Exception => e
           Chef::Log.error("Failed to create the Virtual Machine -- exception being rescued: #{e.to_s}")
           backtrace_message = "#{e.class}: #{e}\n#{e.backtrace.join("\n")}"
@@ -611,6 +613,37 @@ module Azure
         end
 
         security_rule
+      end
+
+      def create_vm_extension(compute_client, params)
+        vm_ext_props = VirtualMachineExtensionProperties.new
+        vm_ext_props.publisher = params[:chef_extension_publisher]
+        vm_ext_props.type = params[:chef_extension]
+        vm_ext_props.type_handler_version = params[:chef_extension_version]
+        vm_ext_props.auto_upgrade_minor_version = false
+        vm_ext_props.settings = params[:chef_extension_public_param]
+        vm_ext_props.protected_settings = params[:chef_extension_private_param]
+
+        vm_ext = VirtualMachineExtension.new
+        vm_ext.name = params[:azure_vm_name]
+        vm_ext.location = params[:azure_service_location]
+        vm_ext.properties = vm_ext_props
+
+        begin
+          vm_extension = compute_client.virtual_machine_extensions.create_or_update(
+            params[:azure_resource_group_name],
+            params[:azure_vm_name],
+            vm_ext.name,
+            vm_ext
+          ).value!.body
+        rescue Exception => e
+          Chef::Log.error("Failed to create the Virtual Machine Extension -- exception being rescued: #{e.to_s}")
+          backtrace_message = "#{e.class}: #{e}\n#{e.backtrace.join("\n")}"
+          Chef::Log.debug("#{backtrace_message}")
+        end
+
+        #[vm_extension]
+        vm_extension
       end
     end
   end

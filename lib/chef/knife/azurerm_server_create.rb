@@ -177,7 +177,6 @@ class Chef
       def run
         $stdout.sync = true
 
-        Chef::Log.warn("ARM commands are still in development phase...Current implementation supports server creation with basic options.")
         validate_arm_keys!(
           :azure_resource_group_name,
           :azure_vm_name,
@@ -230,31 +229,39 @@ class Chef
         server_def[:azure_network_name] = locate_config_value(:azure_vm_name) if server_def[:azure_network_name].nil?
         server_def[:azure_subnet_name] = locate_config_value(:azure_vm_name) if server_def[:azure_subnet_name].nil?
 
-        if is_image_windows?
-          if not locate_config_value(:winrm_password) or not locate_config_value(:bootstrap_protocol)
-            ui.error("WinRM Password and Bootstrapping Protocol are compulsory parameters")
-            exit 1
-          end
-          # We can specify the AdminUsername after API version 2013-03-01. However, in this API version,
-          # the AdminUsername is a required parameter.
-          # Also, the user name cannot be Administrator, Admin, Admin1 etc, for enhanced security (provided by Azure)
-          if locate_config_value(:winrm_user).nil? || locate_config_value(:winrm_user).downcase =~ /admin*/
-            ui.error("WinRM User is compulsory parameter and it cannot be named 'admin*'")
-            exit 1
-          end
-          # take cares of when user name contains domain
-          # azure add role api doesn't support '\\' in user name
-          if locate_config_value(:winrm_user) && locate_config_value(:winrm_user).split("\\").length.eql?(2)
-            server_def[:winrm_user] = locate_config_value(:winrm_user).split("\\")[1]
-          end
+        if locate_config_value(:bootstrap_protocol) == 'cloud-api'
+          server_def[:chef_extension] = get_chef_extension_name
+          server_def[:chef_extension_publisher] = get_chef_extension_publisher
+          server_def[:chef_extension_version] = get_chef_extension_version
+          server_def[:chef_extension_public_param] = get_chef_extension_public_params
+          server_def[:chef_extension_private_param] = get_chef_extension_private_params
         else
-          if not locate_config_value(:ssh_user)
-            ui.error("SSH User is compulsory parameter")
-            exit 1
-          end
-          unless locate_config_value(:ssh_password) or locate_config_value(:identity_file)
-            ui.error("Specify either SSH Key or SSH Password")
-            exit 1
+          if is_image_windows?
+            if not locate_config_value(:winrm_password) or not locate_config_value(:bootstrap_protocol)
+              ui.error("WinRM Password and Bootstrapping Protocol are compulsory parameters")
+              exit 1
+            end
+            # We can specify the AdminUsername after API version 2013-03-01. However, in this API version,
+            # the AdminUsername is a required parameter.
+            # Also, the user name cannot be Administrator, Admin, Admin1 etc, for enhanced security (provided by Azure)
+            if locate_config_value(:winrm_user).nil? || locate_config_value(:winrm_user).downcase =~ /admin*/
+              ui.error("WinRM User is compulsory parameter and it cannot be named 'admin*'")
+              exit 1
+            end
+            # take cares of when user name contains domain
+            # azure add role api doesn't support '\\' in user name
+            if locate_config_value(:winrm_user) && locate_config_value(:winrm_user).split("\\").length.eql?(2)
+              server_def[:winrm_user] = locate_config_value(:winrm_user).split("\\")[1]
+            end
+          else
+            if not locate_config_value(:ssh_user)
+              ui.error("SSH User is compulsory parameter")
+              exit 1
+            end
+            unless locate_config_value(:ssh_password) or locate_config_value(:identity_file)
+              ui.error("Specify either SSH Key or SSH Password")
+              exit 1
+            end
           end
         end
 

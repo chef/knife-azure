@@ -977,28 +977,6 @@ class Chef
         server_def[:azure_domain_passwd] = locate_config_value(:azure_domain_passwd)
         server_def[:azure_domain_ou_dn] = locate_config_value(:azure_domain_ou_dn)
 
-        ## ARM parameters ##
-        if(locate_config_value(:azure_api_mode) == "arm")
-          server_def[:azure_resource_group_name] = locate_config_value(:azure_resource_group_name)
-          server_def[:azure_os_disk_caching] = locate_config_value(:azure_os_disk_caching)
-          server_def[:azure_os_disk_create_option] = locate_config_value(:azure_os_disk_create_option)
-
-          server_def[:azure_image_reference_publisher] = locate_config_value(:azure_image_reference_publisher)
-          server_def[:azure_image_reference_offer] = locate_config_value(:azure_image_reference_offer)
-          server_def[:azure_image_reference_sku] = locate_config_value(:azure_image_reference_sku)
-          server_def[:azure_image_reference_version] = locate_config_value(:azure_image_reference_version)
-
-          server_def[:azure_storage_account] = locate_config_value(:azure_vm_name) if server_def[:azure_storage_account].nil?
-          server_def[:azure_storage_account] = server_def[:azure_storage_account].gsub(/[!@#$%^&*()_-]/,'')
-          server_def[:azure_storage_account_type] = locate_config_value(:azure_storage_account_type)
-          server_def[:azure_os_disk_name] = locate_config_value(:azure_vm_name) if server_def[:azure_os_disk_name].nil?
-          server_def[:azure_os_disk_name] = server_def[:azure_os_disk_name].gsub(/[!@#$%^&*()_-]/,'')
-
-          server_def[:azure_network_name] = locate_config_value(:azure_vm_name) if server_def[:azure_network_name].nil?
-          server_def[:azure_subnet_name] = locate_config_value(:azure_vm_name) if server_def[:azure_subnet_name].nil?
-          
-        end
-
         server_def
       end
 
