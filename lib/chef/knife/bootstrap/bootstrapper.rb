@@ -270,7 +270,8 @@ class Chef
           pub_config[:bootstrap_options][:bootstrap_version] = locate_config_value(:bootstrap_version) if locate_config_value(:bootstrap_version)
           pub_config[:bootstrap_options][:node_ssl_verify_mode] = locate_config_value(:node_ssl_verify_mode) if locate_config_value(:node_ssl_verify_mode)
           pub_config[:bootstrap_options][:bootstrap_proxy] = locate_config_value(:bootstrap_proxy) if locate_config_value(:bootstrap_proxy)
-          Base64.encode64(pub_config.to_json)
+
+          pub_config.to_json
         end
 
         def get_chef_extension_private_params
@@ -306,7 +307,8 @@ class Chef
               exit 1
             end
           end
-          Base64.encode64(pri_config.to_json)
+
+          pri_config.to_json
         end
       end
     end
