@@ -206,8 +206,7 @@ module Azure
           Chef::Log.info("Resource Group ID is: #{resource_group.id}")
         else
           Chef::Log.info("Resource Group #{params[:azure_resource_group_name]} already exist. Skipping its creation.")
-          Chef::Log.info("Exiting for now. This will improve over time and VMs will be added in an existing Resource Group too.")
-          exit 1
+          Chef::Log.info("Adding new VM #{params[:azure_vm_name]} to this resource group.")
         end
 
         ## virtual machine creation
@@ -217,12 +216,20 @@ module Azure
           Chef::Log.info("VirtualMachine creation successfull.")
           Chef::Log.info("Virtual Machine name is: #{virtual_machine.name}")
           Chef::Log.info("Virtual Machine ID is: #{virtual_machine.id}")
-          vm_details = get_vm_details(params, platform)
-          vm_details.name = virtual_machine.name
-          location_name = params[:azure_service_location].gsub(/[ ]/,'').downcase
-          vm_details.hostedservicename = vm_details.name + ".#{location_name}.cloudapp.azure.com"
-          vm_details.provisioningstate = virtual_machine.properties.provisioning_state
-          vm_details
+          if params[:bootstrap_proto] == 'cloud-api'
+            vm_extension = create_vm_extension(compute_client, params)
+            Chef::Log.info("VirtualMachineExtension creation successfull.")
+            Chef::Log.info("Virtual Machine Extension name is: #{vm_extension.name}")
+            Chef::Log.info("Virtual Machine Extension ID is: #{vm_extension.id}")
+            []
+          else
+            vm_details = get_vm_details(params, platform)
+            vm_details.name = virtual_machine.name
+            location_name = params[:azure_service_location].gsub(/[ ]/,'').downcase
+            vm_details.hostedservicename = vm_details.name + ".#{location_name}.cloudapp.azure.com"
+            vm_details.provisioningstate = virtual_machine.properties.provisioning_state
+            vm_details
+          end
         else
           Chef::Log.info("Virtual Machine #{params[:azure_vm_name]} already exist under the Resource Group #{params[:azure_resource_group_name]}.")
         end
@@ -310,11 +317,9 @@ module Azure
         vm_params.type = 'Microsoft.Compute/virtualMachines'
         vm_params.properties = vm_props
         vm_params.location = params[:azure_service_location]
-        #vm_params.resources = create_vm_extension(compute_client, params)
 
         begin
           virtual_machine = compute_client.virtual_machines.create_or_update(params[:azure_resource_group_name], vm_params.name, vm_params).value!.body
-          vm_extension = create_vm_extension(compute_client, params)
         rescue Exception => e
           Chef::Log.error("Failed to create the Virtual Machine -- exception being rescued: #{e.to_s}")
           backtrace_message = "#{e.class}: #{e}\n#{e.backtrace.join("\n")}"
@@ -642,7 +647,6 @@ module Azure
           Chef::Log.debug("#{backtrace_message}")
         end
 
-        #[vm_extension]
         vm_extension
       end
     end
