@@ -438,10 +438,6 @@ knife azurerm server create
   --azure-image-reference-sku '2012-R2-Datacenter'
   --azure-image-reference-version 'latest'
   -x myuser -P mypassword
-  --bootstrap-protocol winrm
-  --winrm-transport ssl
-  --winrm-authentication-protocol negotiate
-  --winrm-ssl-verify-mode verify_none
   -r "recipe[cbk1::rec2]"
   -c ~/.chef/knife.rb
 ```
@@ -458,7 +454,6 @@ knife azurerm server create
   --azure-image-reference-sku '6.5'
   --azure-image-reference-version 'latest'
   --ssh-user myuser --ssh-password mypassword
-  --bootstrap-protocol ssh
   --azure-vm-size Small
   -r "recipe[cbk1::rec1]"
   -c ~/.chef/knife.rb
@@ -476,7 +471,7 @@ knife azurerm server create
   --azure-image-reference-sku '14.04.2-LTS'
   --azure-image-reference-version 'latest'
   --ssh-user myuser --ssh-password mypassword
-  --bootstrap-protocol ssh --azure-vm-size Small
+  --azure-vm-size Small
   -r "recipe[cbk1::rec1]"
   -c ~/.chef/knife.rb
 ```
