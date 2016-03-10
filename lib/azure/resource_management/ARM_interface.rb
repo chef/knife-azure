@@ -216,22 +216,29 @@ module Azure
           Chef::Log.info("VirtualMachine creation successfull.")
           Chef::Log.info("Virtual Machine name is: #{virtual_machine.name}")
           Chef::Log.info("Virtual Machine ID is: #{virtual_machine.id}")
-          if params[:bootstrap_proto] == 'cloud-api'
-            vm_extension = create_vm_extension(compute_client, params)
-            Chef::Log.info("VirtualMachineExtension creation successfull.")
-            Chef::Log.info("Virtual Machine Extension name is: #{vm_extension.name}")
-            Chef::Log.info("Virtual Machine Extension ID is: #{vm_extension.id}")
-            []
-          else
-            vm_details = get_vm_details(params, platform)
-            vm_details.name = virtual_machine.name
-            location_name = params[:azure_service_location].gsub(/[ ]/,'').downcase
-            vm_details.hostedservicename = vm_details.name + ".#{location_name}.cloudapp.azure.com"
-            vm_details.provisioningstate = virtual_machine.properties.provisioning_state
-            vm_details
-          end
+
+          Chef::Log.info("Creating VirtualMachineExtension....")
+          vm_extension = create_vm_extension(compute_management_client, params)
+          Chef::Log.info("VirtualMachineExtension creation successfull.")
+          Chef::Log.info("Virtual Machine Extension name is: #{vm_extension.name}")
+          Chef::Log.info("Virtual Machine Extension ID is: #{vm_extension.id}")
+
+          vm_details = get_vm_details(params, platform)
+          vm_details.id = virtual_machine.id
+          vm_details.name = virtual_machine.name
+          vm_details.locationname = params[:azure_service_location].gsub(/[ ]/,'').downcase
+          vm_details.ostype = virtual_machine.properties.storage_profile.os_disk.os_type
+          vm_details.provisioningstate = virtual_machine.properties.provisioning_state
+          vm_details.resources = OpenStruct.new
+          vm_details.resources.id = vm_extension.id
+          vm_details.resources.name = vm_extension.name
+          vm_details.resources.publisher = vm_extension.properties.publisher
+          vm_details.resources.type = vm_extension.properties.type
+          vm_details.resources.type_handler_version = vm_extension.properties.type_handler_version
+          vm_details.resources.provisioning_state = vm_extension.properties.provisioning_state
+          vm_details
         else
-          Chef::Log.info("Virtual Machine #{params[:azure_vm_name]} already exist under the Resource Group #{params[:azure_resource_group_name]}.")
+          Chef::Log.info("Virtual Machine #{params[:azure_vm_name]} already exist under the Resource Group #{params[:azure_resource_group_name]}. Exiting for now.")
         end
       end
 
@@ -240,7 +247,7 @@ module Azure
         vm_details.publicipaddress = get_vm_public_ip(network_resource_client, params)
 
         if platform == "Windows"
-          vm_details.winrmport = get_vm_default_port(network_resource_client, params)
+          vm_details.rdpport = get_vm_default_port(network_resource_client, params)
         else
           vm_details.sshport = get_vm_default_port(network_resource_client, params)
         end
@@ -438,7 +445,6 @@ module Azure
           params[:azure_vm_name],
           params[:azure_service_location],
           sbn,
-          params[:port],
           platform
         )
         Chef::Log.info("NetworkInterface creation successfull.")
@@ -489,7 +495,7 @@ module Azure
         sbn
       end
 
-      def create_network_interface(network_client, resource_group_name, vm_name, service_location, subnet, port, platform)
+      def create_network_interface(network_client, resource_group_name, vm_name, service_location, subnet, platform)
         network_ip_configuration_properties = NetworkInterfaceIpConfigurationPropertiesFormat.new
         network_ip_configuration_properties.private_ipallocation_method = 'Dynamic'
 
@@ -513,7 +519,6 @@ module Azure
           resource_group_name,
           vm_name,
           service_location,
-          port,
           platform
         )
 
@@ -557,7 +562,7 @@ module Azure
         public_ip_address
       end
 
-      def create_network_security_group(network_client, resource_group_name, vm_name, service_location, port, platform)
+      def create_network_security_group(network_client, resource_group_name, vm_name, service_location, platform)
         network_security_group_prop_format = NetworkSecurityGroupPropertiesFormat.new
         network_security_group = NetworkSecurityGroup.new
         network_security_group.name = vm_name
@@ -578,11 +583,10 @@ module Azure
 
         security_rules = []
         if platform == "Windows"
-          security_rules << add_security_rule(port, "Powershell", 1000, network_client, resource_group_name, vm_name, network_security_group)
+          security_rules << add_security_rule('3389', "RDP", 1000, network_client, resource_group_name, vm_name, network_security_group)
         else
           security_rules << add_security_rule("22", "SSH", 1000, network_client, resource_group_name, vm_name, network_security_group)
         end
-        #network_security_group_prop_format.security_rules = [security_rule]
         network_security_group_prop_format.default_security_rules = security_rules
 
         nsg
@@ -624,7 +628,7 @@ module Azure
         vm_ext_props = VirtualMachineExtensionProperties.new
         vm_ext_props.publisher = params[:chef_extension_publisher]
         vm_ext_props.type = params[:chef_extension]
-        vm_ext_props.type_handler_version = params[:chef_extension_version]
+        vm_ext_props.type_handler_version = params[:chef_extension_version].nil? ? get_latest_chef_extension_version : params[:chef_extension_version]
         vm_ext_props.auto_upgrade_minor_version = false
         vm_ext_props.settings = params[:chef_extension_public_param]
         vm_ext_props.protected_settings = params[:chef_extension_private_param]
@@ -648,6 +652,15 @@ module Azure
         end
 
         vm_extension
+      end
+
+      def get_latest_chef_extension_version
+        ext_version = compute_management_client.virtual_machine_extension_images.list_versions(
+          locate_config_value(:azure_service_location),
+          get_chef_extension_publisher,
+          get_chef_extension_name).value!.body.last.name
+        ext_version = ext_version.split(".").first + ".*"
+        ext_version
       end
     end
   end

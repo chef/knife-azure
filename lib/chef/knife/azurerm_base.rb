@@ -81,7 +81,7 @@ class Chef
 
       def locate_config_value(key)
         key = key.to_sym
-        config[key] || Chef::Config[:knife][key]
+        config[key] || Chef::Config[:knife][key]  || default_config[key]
       end
 
       # validates ARM mandatory keys

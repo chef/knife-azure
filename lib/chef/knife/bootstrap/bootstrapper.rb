@@ -236,12 +236,8 @@ class Chef
           if locate_config_value(:azure_chef_extension_version)
             Chef::Config[:knife][:azure_chef_extension_version]
           else
-            ext_version = compute_management_client.virtual_machine_extension_images.list_versions(
-              locate_config_value(:azure_service_location),
-              get_chef_extension_publisher,
-              get_chef_extension_name).value!.body.last.name
-            ext_version = ext_version.split(".").first + ".*"
-            ext_version
+            extensions = service.get_extension(get_chef_extension_name, get_chef_extension_publisher)
+            extensions.css("Version").max.text.split(".").first + ".*"
           end
         end
 
@@ -271,7 +267,7 @@ class Chef
           pub_config[:bootstrap_options][:node_ssl_verify_mode] = locate_config_value(:node_ssl_verify_mode) if locate_config_value(:node_ssl_verify_mode)
           pub_config[:bootstrap_options][:bootstrap_proxy] = locate_config_value(:bootstrap_proxy) if locate_config_value(:bootstrap_proxy)
 
-          pub_config.to_json
+          pub_config
         end
 
         def get_chef_extension_private_params
@@ -308,7 +304,7 @@ class Chef
             end
           end
 
-          pri_config.to_json
+          pri_config
         end
       end
     end

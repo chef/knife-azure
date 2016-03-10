@@ -5,6 +5,7 @@
 
 require File.expand_path(File.dirname(__FILE__) + '/../spec_helper')
 require File.expand_path(File.dirname(__FILE__) + '/../unit/query_azure_mock')
+require 'chef/knife/bootstrap'
 
 describe Chef::Knife::AzurermServerCreate do
   include AzureSpecHelper
@@ -35,8 +36,13 @@ describe Chef::Knife::AzurermServerCreate do
       :azure_os_disk_create_option => 'azure_os_disk_create_option',
       :azure_virtual_network_name => 'azure_virtual_network_name',
       :azure_subnet_name => 'azure_subnet_name',
-      :port => "5985"
+      :rdp_port => '3389',
+      :ssh_port => '22',
+      :bootstrap_proto => "ssh"
     }
+
+    allow(File).to receive(:exist?).and_return(true)
+    allow(File).to receive(:read).and_return('foo')
   end
 
   describe "parameter test:" do
@@ -98,12 +104,6 @@ describe Chef::Knife::AzurermServerCreate do
 
       it "azure_image_reference_sku" do
         Chef::Config[:knife].delete(:azure_image_reference_sku)
-        expect(@arm_server_instance.ui).to receive(:error)
-        expect {@arm_server_instance.run}.to raise_error(SystemExit)
-      end
-
-      it "azure_image_reference_version" do
-        Chef::Config[:knife].delete(:azure_image_reference_version)
         expect(@arm_server_instance.ui).to receive(:error)
         expect {@arm_server_instance.run}.to raise_error(SystemExit)
       end
@@ -223,8 +223,8 @@ describe Chef::Knife::AzurermServerCreate do
       allow(@service).to receive(
         :network_resource_client).and_return(
           @network_client)
-
-      allow(@arm_server_instance).to receive(:bootstrap_exec)
+      allow(@arm_server_instance).to receive(
+            :show_server_details)
     end
 
     describe "resource group" do
@@ -257,7 +257,8 @@ describe Chef::Knife::AzurermServerCreate do
         expect(@resource_promise).to receive_message_chain(
           :value!, :body).and_return(
             true)
-        expect {@arm_server_instance.run}.to raise_error(SystemExit)
+        expect(@service).to_not receive(:create_resource_group)
+        @arm_server_instance.run
       end
     end
 
@@ -276,7 +277,7 @@ describe Chef::Knife::AzurermServerCreate do
             end
 
           expect(@arm_server_instance).to receive(
-            :is_image_windows?).at_least(4).and_return(false)
+            :is_image_windows?).at_least(3).and_return(false)
 
           allow(@resource_client).to receive_message_chain(
             :resource_groups, :check_existence).and_return(
@@ -299,6 +300,9 @@ describe Chef::Knife::AzurermServerCreate do
           expect(@service).to receive(
             :create_virtual_machine).exactly(1).and_return(
               stub_virtual_machine_create_response)
+          expect(@service).to receive(
+            :create_vm_extension).exactly(1).and_return(
+              stub_vm_extension_create_response)
           expect(@service).to receive(
             :get_vm_details).exactly(1).and_return(
               stub_vm_details)
@@ -343,7 +347,7 @@ describe Chef::Knife::AzurermServerCreate do
               stub_resource_group_create_response)
         end
 
-        it "create virtual machine when it does not exist already" do
+        it "create virtual machine when it does not exist already and also installs extension on it" do
           expect(@compute_client).to receive_message_chain(
             :virtual_machines, :get).and_return(
               @compute_promise)
@@ -353,6 +357,9 @@ describe Chef::Knife::AzurermServerCreate do
           expect(@service).to receive(
             :create_virtual_machine).exactly(1).and_return(
               stub_virtual_machine_create_response)
+          expect(@service).to receive(
+            :create_vm_extension).exactly(1).and_return(
+              stub_vm_extension_create_response)
           expect(@service).to receive(
             :get_vm_details).exactly(1).and_return(
               stub_vm_details)
@@ -454,7 +461,7 @@ describe Chef::Knife::AzurermServerCreate do
               stub_vm_default_port_get_response(@platform))
           response = @service.get_vm_details(@params, @platform)
           expect(response.publicipaddress).to_not be nil
-          expect(response.winrmport).to be == '3389'
+          expect(response.rdpport).to be == '3389'
         end
       end
     end
@@ -606,7 +613,6 @@ describe Chef::Knife::AzurermServerCreate do
           @params[:azure_vm_name],
           @params[:azure_service_location],
           stub_subnet_create_response,
-          @params[:port],
           'NA')
         expect(response.name).to_not be nil
         expect(response.id).to_not be nil
@@ -644,7 +650,6 @@ describe Chef::Knife::AzurermServerCreate do
           @params[:azure_resource_group_name],
           @params[:azure_vm_name],
           @params[:azure_service_location],
-          @params[:port],
           'NA')
         expect(response.name).to_not be nil
         expect(response.id).to_not be nil
@@ -664,7 +669,7 @@ describe Chef::Knife::AzurermServerCreate do
 
         it "successfully adds default security rule" do
           response = @service.add_security_rule(
-            @params[:port],
+            @params[:ssh_port],
             "Port desc",
             "1000",
             stub_network_client(@platform),
@@ -694,7 +699,7 @@ describe Chef::Knife::AzurermServerCreate do
 
         it "successfully adds default security rule" do
           response = @service.add_security_rule(
-            @params[:port],
+            @params[:rdp_port],
             "Port desc",
             "1000",
             stub_network_client(@platform),
@@ -714,6 +719,184 @@ describe Chef::Knife::AzurermServerCreate do
             expect(response.properties.access).to be == 'Allow'
             expect(response.properties.priority).to be == 1000
             expect(response.properties.direction).to be == 'Inbound'
+        end
+      end
+    end
+
+    describe "bootstrap protocol cloud-api" do
+      before do
+        allow(@arm_server_instance).to receive(:msg_server_summary)
+        Chef::Config[:knife][:run_list] = ["getting-started"]
+        Chef::Config[:knife][:validation_client_name] = "testorg-validator"
+        Chef::Config[:knife][:chef_server_url] = "https://api.opscode.com/organizations/testorg"
+      end
+
+      after do
+        Chef::Config[:knife].delete(:run_list)
+        Chef::Config[:knife].delete(:validation_client_name)
+        Chef::Config[:knife].delete(:chef_server_url)
+      end
+
+      context "parameters test" do
+        context "for chef_extension parameter" do
+          before do
+            allow(@arm_server_instance).to receive(
+              :is_image_windows?).and_return(false)
+          end
+
+          it "sets correct value for Linux platform" do
+            allow(@arm_server_instance).to receive(
+              :is_image_windows?).and_return(false)
+            @server_params = @arm_server_instance.create_server_def
+            expect(@server_params[:chef_extension]).to be == 'LinuxChefClient'
+          end
+
+          it "sets correct value for Windows platform" do
+            allow(@arm_server_instance).to receive(
+              :is_image_windows?).and_return(true)
+            @server_params = @arm_server_instance.create_server_def
+            expect(@server_params[:chef_extension]).to be == 'ChefClient'
+          end
+        end
+
+        it "sets correct value for chef_extension_publisher parameter" do
+          @server_params = @arm_server_instance.create_server_def
+          expect(@server_params[:chef_extension_publisher]).to be == 'Chef.Bootstrap.WindowsAzure'
+        end
+
+        it "sets user supplied value for chef_extension_version parameter" do
+          Chef::Config[:knife][:azure_chef_extension_version] = '1210.12'
+          @server_params = @arm_server_instance.create_server_def
+          expect(@server_params[:chef_extension_version]).to be == '1210.12'
+        end
+
+        it "sets nil value for chef_extension_version parameter when user has not supplied any value for it" do
+          Chef::Config[:knife].delete(:azure_chef_extension_version)
+          @server_params = @arm_server_instance.create_server_def
+          expect(@server_params[:chef_extension_version]).to be nil
+        end
+
+        it "sets correct config for chef_extension_public_param parameter" do
+          allow(@arm_server_instance).to receive(
+            :get_chef_extension_public_params).and_return(
+              'public_params')
+          @server_params = @arm_server_instance.create_server_def
+          expect(@server_params[:chef_extension_public_param]).to be == 'public_params'
+        end
+
+        it "sets correct config for chef_extension_private_param parameter" do
+          allow(@arm_server_instance).to receive(
+            :get_chef_extension_private_params).and_return(
+              'private_params')
+          @server_params = @arm_server_instance.create_server_def
+          expect(@server_params[:chef_extension_private_param]).to be == 'private_params'
+        end
+      end
+
+      context "get_chef_extension_public_params" do
+        it "should set autoUpdateClient flag to true" do
+          @arm_server_instance.config[:auto_update_client] = true
+          public_config = "{\"client_rb\":\"chef_server_url \\t \\\"https://localhost:443\\\"\\nvalidation_client_name\\t\\\"chef-validator\\\"\",\"runlist\":\"\\\"getting-started\\\"\",\"autoUpdateClient\":\"true\",\"deleteChefConfig\":\"false\",\"uninstallChefClient\":\"false\",\"custom_json_attr\":{},\"bootstrap_options\":{\"chef_server_url\":\"https://localhost:443\",\"validation_client_name\":\"chef-validator\"}}"
+
+          @arm_server_instance.get_chef_extension_public_params
+        end
+
+        it "should set autoUpdateClient flag to false" do
+          @arm_server_instance.config[:auto_update_client] = false
+          public_config = "{\"client_rb\":\"chef_server_url \\t \\\"https://localhost:443\\\"\\nvalidation_client_name\\t\\\"chef-validator\\\"\",\"runlist\":\"\\\"getting-started\\\"\",\"autoUpdateClient\":\"false\",\"deleteChefConfig\":\"false\",\"uninstallChefClient\":\"false\",\"custom_json_attr\":{},\"bootstrap_options\":{\"chef_server_url\":\"https://localhost:443\",\"validation_client_name\":\"chef-validator\"}}"
+
+          @arm_server_instance.get_chef_extension_public_params
+        end
+
+        it "sets deleteChefConfig flag to true" do
+          @arm_server_instance.config[:delete_chef_extension_config] = true
+          public_config = "{\"client_rb\":\"chef_server_url \\t \\\"https://localhost:443\\\"\\nvalidation_client_name\\t\\\"chef-validator\\\"\",\"runlist\":\"\\\"getting-started\\\"\",\"autoUpdateClient\":\"false\",\"deleteChefConfig\":\"true\",\"uninstallChefClient\":\"false\",\"custom_json_attr\":{},\"bootstrap_options\":{\"chef_server_url\":\"https://localhost:443\",\"validation_client_name\":\"chef-validator\"}}"
+
+          @arm_server_instance.get_chef_extension_public_params
+        end
+
+        it "sets deleteChefConfig flag to false" do
+          @arm_server_instance.config[:delete_chef_extension_config] = false
+          public_config = "{\"client_rb\":\"chef_server_url \\t \\\"https://localhost:443\\\"\\nvalidation_client_name\\t\\\"chef-validator\\\"\",\"runlist\":\"\\\"getting-started\\\"\",\"autoUpdateClient\":\"false\",\"deleteChefConfig\":\"false\",\"uninstallChefClient\":\"false\",\"custom_json_attr\":{},\"bootstrap_options\":{\"chef_server_url\":\"https://localhost:443\",\"validation_client_name\":\"chef-validator\"}}"
+
+          @arm_server_instance.get_chef_extension_public_params
+        end
+
+        it "sets bootstrapVersion variable in public_config" do
+          @arm_server_instance.config[:bootstrap_version] = '12.4.2'
+          public_config = "{\"client_rb\":\"chef_server_url \\t \\\"https://localhost:443\\\"\\nvalidation_client_name\\t\\\"chef-validator\\\"\",\"runlist\":\"\\\"getting-started\\\"\",\"autoUpdateClient\":\"false\",\"deleteChefConfig\":\"false\",\"uninstallChefClient\":\"false\",\"custom_json_attr\":{},\"bootstrap_options\":{\"chef_server_url\":\"https://localhost:443\",\"validation_client_name\":\"chef-validator\",\"bootstrap_version\":\"12.4.2\"}}"
+
+          @arm_server_instance.get_chef_extension_public_params
+        end
+
+        it "sets uninstallChefClient flag to false" do
+          @arm_server_instance.config[:uninstall_chef_client] = false
+          public_config = "{\"client_rb\":\"chef_server_url \\t \\\"https://localhost:443\\\"\\nvalidation_client_name\\t\\\"chef-validator\\\"\",\"runlist\":\"\\\"getting-started\\\"\",\"autoUpdateClient\":\"false\",\"deleteChefConfig\":\"false\",\"uninstallChefClient\":\"false\",\"custom_json_attr\":{},\"bootstrap_options\":{\"chef_server_url\":\"https://localhost:443\",\"validation_client_name\":\"chef-validator\"}}"
+
+          @arm_server_instance.get_chef_extension_public_params
+        end
+
+        it "sets uninstallChefClient flag to true" do
+          @arm_server_instance.config[:uninstall_chef_client] = true
+          public_config = "{\"client_rb\":\"chef_server_url \\t \\\"https://localhost:443\\\"\\nvalidation_client_name\\t\\\"chef-validator\\\"\",\"runlist\":\"\\\"getting-started\\\"\",\"autoUpdateClient\":\"false\",\"deleteChefConfig\":\"false\",\"uninstallChefClient\":\"true\",\"custom_json_attr\":{},\"bootstrap_options\":{\"chef_server_url\":\"https://localhost:443\",\"validation_client_name\":\"chef-validator\"}}"
+
+          @arm_server_instance.get_chef_extension_public_params
+        end
+      end
+
+      context 'when validation key is not present', :chef_gte_12_only do
+        before do
+          allow(File).to receive(:exist?).and_return(false)
+          Chef::Config[:knife] = { chef_node_name: 'foo.example.com' }
+        end
+
+        it 'calls get chef extension private params and adds client pem in json object' do
+          allow_any_instance_of(Chef::Knife::Bootstrap::ClientBuilder).to receive(:run)
+          allow_any_instance_of(Chef::Knife::Bootstrap::ClientBuilder).to receive(:client_path)
+          allow(File).to receive(:read).and_return('foo')
+          pri_config = { client_pem: 'foo' }
+          @arm_server_instance.get_chef_extension_private_params
+        end
+      end
+
+      context 'when SSL certificate file option is passed but file does not exist physically' do
+        before do
+          allow_any_instance_of(Chef::Knife::Bootstrap::ClientBuilder).to receive(:run)
+          allow_any_instance_of(Chef::Knife::Bootstrap::ClientBuilder).to receive(:client_path)
+          allow(File).to receive(:exist?).and_return(false)
+          allow(File).to receive(:read).and_return('foo')
+          @arm_server_instance.config[:cert_path] = '~/my_cert.crt'
+        end
+
+        it 'raises an error and exits' do
+          expect(@arm_server_instance.ui).to receive(:error).with('Specified SSL certificate does not exist.')
+          expect { @arm_server_instance.get_chef_extension_private_params }.to raise_error(SystemExit)
+        end
+      end
+
+      context 'when SSL certificate file option is passed and file exist physically' do
+        before do
+          allow_any_instance_of(Chef::Knife::Bootstrap::ClientBuilder).to receive(:run)
+          allow_any_instance_of(Chef::Knife::Bootstrap::ClientBuilder).to receive(:client_path)
+          allow(File).to receive(:exist?).and_return(true)
+          allow(File).to receive(:read).and_return('foo')
+          @arm_server_instance.config[:cert_path] = '~/my_cert.crt'
+        end
+
+        it "copies SSL certificate contents into chef_server_crt attribute of extension's private params" do
+          pri_config = { validation_key: 'foo', chef_server_crt: 'foo' }
+          @arm_server_instance.get_chef_extension_private_params
+        end
+      end
+
+      context "when validation key is not present, using chef 11", :chef_lt_12_only do
+        before do
+          allow(File).to receive(:exist?).and_return(false)
+        end
+
+        it 'raises an exception if validation_key is not present in chef 11' do
+          expect(@arm_server_instance.ui).to receive(:error)
+          expect { @arm_server_instance.run }.to raise_error(SystemExit)
         end
       end
     end
