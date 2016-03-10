@@ -116,7 +116,7 @@ module Azure
        def delete_server(resource_group_name, vm_name, custom_headers=nil)
         promise = compute_management_client.virtual_machines.get(resource_group_name, vm_name, expand=nil, custom_headers)
         if promise.value! && promise.value!.body.name == vm_name
-          puts "\n"
+          puts "\n\n"
           msg_pair(ui, 'VM Name', promise.value!.body.name)
           msg_pair(ui, 'VM Size', promise.value!.body.properties.hardware_profile.vm_size)
           msg_pair(ui, 'VM OS', promise.value!.body.properties.storage_profile.os_disk.os_type)
@@ -186,7 +186,6 @@ module Azure
         rescue => error
           puts "#{error.body["error"]["message"]}"
         end
-
       end
 
       def create_server(params = {})
@@ -654,6 +653,29 @@ module Azure
           params[:chef_extension]).value!.body.last.name
         ext_version = ext_version.split(".").first + ".*"
         ext_version
+      end
+
+      def delete_resource_group(resource_group_name, vm_name)
+        ui.warn "Deleting resource group will delete all the virtual_machines inside it."
+        begin
+          ui.confirm('Do you really want to delete resource group')
+        rescue SystemExit   # Need to handle this as confirming with N/n raises SystemExit exception
+          server = nil      # Cleanup is implicitly performed in other cloud plugins
+          ui.warn "Resource group not deleted. Proceeding for server delete ..."
+          delete_server(resource_group_name, vm_name)
+          exit
+        end
+
+        ui.info 'Deleting Resource Group '+resource_group_name+' and Virtual Machine '+vm_name+' ..'
+        ui.info 'It will take sometime to delete. Please wait ...'
+
+        begin
+          print '.'
+          promise = resource_management_client.resource_groups.delete(resource_group_name)
+        end until promise.value!.body.nil?
+
+        puts "\n"
+        ui.warn "Deleted resource_group_name #{resource_group_name} and #{vm_name}"
       end
     end
   end
