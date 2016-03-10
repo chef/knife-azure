@@ -25,7 +25,19 @@ chef gem install knife-azure
 Depending on your system's configuration, you may need to run this command
 with root/administrator privileges.
 
+## Modes
+`knife-azure 1.6.0.rc.0` onwards, we are adding support for Azure Resource Manager. You can easily switch between the
+
+* Service management: commands using the Azure service management API
+* Resource manager: commands using the Azure Resource Manager API
+
+They are not designed to work together. Commands starting with `knife azure` use ASM mode, while commands starting with `knife azurerm` use ARM mode.
+
+PLEASE NOTE that `Azuererm` subcommands are experimental and of alpha quality. Not suitable for production use. Please use ASM subcommands for production.
+
 ## Configuration
+
+### ASM mode
 For this plugin to interact with Azure's REST API, you will need to give Knife
 information about your Azure account and credentials. The easiest way to do
 this is to sign in to the Azure portal and download a publishsettings file
@@ -52,8 +64,16 @@ also refer [Azure Xplat-CLI](https://github.com/Azure/azure-xplat-cli#use-publis
 If Azure Profile file has entries for multiple subscriptions then you can choose the default using `azure account set <subscription_name>`. The same default subscription will
 be picked up that you have configured.
 
+### ARM mode
+ARM mode requires setting up service principal for authentication and permissioning. For setting up a service principal from the command line please refer
+[Authenticating a service principal with Azure Resource Manager](http://aka.ms/cli-service-principal) or
+[Unattended Authentication](http://aka.ms/auth-unattended). For detailed explanation of authentication in Azure,
+see [Developer’s guide to auth with Azure Resource Manager API](http://aka.ms/arm-auth-dev-guide).
 
-## Basic Examples
+After creating the service principal, you should have these 3 values, a client id (GUID), client secret(string) and tenant id (GUID).
+
+
+## Basic Examples for ASM
 The following examples assume that you've configured the publishsettings file
 location in your knife.rb:
 
@@ -83,7 +103,7 @@ Use the --help option to read more about each subcommand. Eg:
 
     knife azure server create --help
 
-## Detailed Usage
+## Detailed Usage for ASM mode
 
 ### Common Configuration
 Most configuration options can be specified either in your knife.rb file or as command line parameters. The CLI parameters override the knife.rb parameters.
@@ -388,6 +408,97 @@ Knife options:
 
 For CIDR notation, see here: http://en.wikipedia.org/wiki/Classless_Inter-Domain_Routing
 Address available are defined in RFC 1918: http://en.wikipedia.org/wiki/Private_network
+
+## Detailed Usage for ARM mode
+
+### Common Configuration
+
+ARM configuration options can be specified in your knife.rb file only.
+
+The following options are required for all azurerm subcommands:
+
+    option :azure_subscription_id            Your Azure subscription ID
+    option :azure_tenant_id                  Your subscription's tenant id
+    option :azure_client_id                  Your Active Directory Application id
+    option :azure_client_secret              Your Active Directory Application's password
+
+Note: The options mentioned above can be obtained from this [step](https://github.com/chef/knife-azure#arm-mode)
+
+### Azure Server Create Subcommand
+
+For Windows:
+
+```
+knife azurerm server create
+  --azure-resource-group-name MyResourceGrpName
+  --azure-vm-name MyNewVMName
+  --azure-service-location 'WEST US'
+  --azure-image-reference-publisher 'MicrosoftWindowsServer'
+  --azure-image-reference-offer 'WindowsServer'
+  --azure-image-reference-sku '2012-R2-Datacenter'
+  --azure-image-reference-version 'latest'
+  -x myuser -P mypassword
+  -r "recipe[cbk1::rec2]"
+  -c ~/.chef/knife.rb
+```
+
+For Centos:
+
+```
+knife azurerm server create
+  --azure-resource-group-name MyResourceGrpName
+  --azure-vm-name MyNewVMName
+  --azure-service-location 'WEST US'
+  --azure-image-reference-publisher 'OpenLogic'
+  --azure-image-reference-offer 'CentOS'
+  --azure-image-reference-sku '6.5'
+  --azure-image-reference-version 'latest'
+  --ssh-user myuser --ssh-password mypassword
+  --azure-vm-size Small
+  -r "recipe[cbk1::rec1]"
+  -c ~/.chef/knife.rb
+```
+
+For Ubuntu:
+
+```
+knife azurerm server create
+  --azure-resource-group-name MyResourceGrpName
+  --azure-vm-name MyNewVMName
+  --azure-service-location 'WEST US'
+  --azure-image-reference-publisher 'Canonical'
+  --azure-image-reference-offer 'UbuntuServer'
+  --azure-image-reference-sku '14.04.2-LTS'
+  --azure-image-reference-version 'latest'
+  --ssh-user myuser --ssh-password mypassword
+  --azure-vm-size Small
+  -r "recipe[cbk1::rec1]"
+  -c ~/.chef/knife.rb
+```
+
+### Azure Server Delete Subcommand
+Deletes an existing ARM server in the currently configured Azure account. By default, this does not delete the associated resource-group, associated node and client objects from the Chef server.
+For deleting associated node and client objects from the Chef server, add the --purge flag.
+
+```
+knife azurerm server delete MyVMName --azure-resource-group-name MyResourceGrpName -c ~/.chef/knife.rb
+
+knife azurerm server delete MyVMName --azure-resource-group-name MyResourceGrpName -c ~/.chef/knife.rb --purge  #purge chef node
+```
+
+### Azure Server List Subcommand
+Outputs a list of all ARM servers in the currently configured Azure account. PLEASE NOTE - this shows all instances associated with the account, some of which may not be currently managed by the Chef server.
+
+```
+knife azurerm server list
+```
+
+### Azure Server Show Subcommand
+Outputs the details of an ARM server.
+
+```
+knife azurerm server show MyVMName --azure-resource-group-name MyResourceGrpName -c ~/.chef/knife.rb
+```
 
 
 ## Alternative Management Certificate Specification
