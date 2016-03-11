@@ -667,7 +667,7 @@ module Azure
         end
 
         ui.info 'Deleting Resource Group '+resource_group_name+' and Virtual Machine '+vm_name+' ..'
-        ui.info 'It will take sometime to delete. Please wait ...'
+        ui.info 'Resource gorup deletion takes some time. Please wait ...'
 
         begin
           print '.'
