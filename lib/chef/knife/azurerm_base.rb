@@ -63,10 +63,10 @@ class Chef
         Chef::Log.warn('Azurerm subcommands are experimental and of alpha quality. Not suitable for production use. Please use ASM subcommands for production.')
         parse_publish_settings_file(locate_config_value(:azure_publish_settings_file)) if(locate_config_value(:azure_publish_settings_file) != nil)
         mandatory_keys = [:azure_tenant_id, :azure_subscription_id, :azure_client_id, :azure_client_secret]
-        keys.concat(mandatory_keys)
+        mandatory_keys.concat(keys)
 
         errors = []
-        keys.each do |k|
+        mandatory_keys.each do |k|
           if locate_config_value(k).nil?
             errors << "You did not provide a valid '#{pretty_key(k)}' value. Please set knife[:#{k}] in your knife.rb."
           end
