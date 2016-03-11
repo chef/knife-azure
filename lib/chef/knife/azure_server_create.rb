@@ -202,16 +202,6 @@ class Chef
                                       This name is the DNS prefix name and can be used to access blobs, queues, and tables in the storage account.
                                       For example: http://ServiceName.blob.core.windows.net/mycontainer/"
 
-      option :azure_storage_account_type,
-        :long => "--azure-storage-account-type TYPE",
-        :description => "Optional. ARM option. One of the following account types (case-sensitive):
-                                                  Standard_LRS (Standard Locally-redundant storage)
-                                                  Standard_ZRS (Standard Zone-redundant storage)
-                                                  Standard_GRS (Standard Geo-redundant storage)
-                                                  Standard_RAGRS (Standard Read access geo-redundant storage)
-                                                  Premium_LRS (Premium Locally-redundant storage)",
-        :default => 'Standard_GRS'
-
       option :azure_vm_name,
         :long => "--azure-vm-name NAME",
         :description => "Required for advanced server-create option.
@@ -238,55 +228,16 @@ class Chef
                                       Otherwise a new deployment is created. For example, if the DNS of cloud service is MyService you could access the cloud service
                                       by calling: http://DNS_NAME.cloudapp.net"
 
-      option :azure_resource_group_name,
-        :short => "-g RESOURCE_GROUP_NAME",
-        :long => "--azure-resource-group-name RESOURCE_GROUP_NAME",
-        :description => "Optional. ARM option. The Resource Group name that acts as a container and holds related resources for an application in a group.
-                                      If you want to add new VM to an existing Resource Group, specify an exiting Resource Group name.
-                                      Otherwise a new Resource Group is created."
-
       option :azure_os_disk_name,
         :short => "-o DISKNAME",
         :long => "--azure-os-disk-name DISKNAME",
         :description => "Optional. Specifies the friendly name of the disk containing the guest OS image in the image repository."
-
-      option :azure_os_disk_caching,
-        :long => "--azure-os-disk-caching CACHING_TYPE",
-        :description => "Optional. ARM option. Specifies the caching requirements. options: 'None' or 'ReadOnly' or 'ReadWrite'.",
-        :default => 'None'
-
-      option :azure_os_disk_create_option,
-        :long => "--azure-os-disk-create-option CREATE_OPTION",
-        :description => "Optional. ARM option. Specifies how the virtual machine should be created. options: 'fromImage' or 'attach' or 'empty'.",
-        :default => 'fromImage'
 
       option :azure_source_image,
         :short => "-I IMAGE",
         :long => "--azure-source-image IMAGE",
         :description => "Required. Specifies the name of the disk image to use to create the virtual machine.
                                       Do a \"knife azure image list\" to see a list of available images."
-
-      option :azure_image_reference_publisher,
-        :long => "--azure-image-reference-publisher PUBLISHER_NAME",
-        :description => "Required. ARM option. Specifies the publisher of the image used to create the virtual machine.
-                                      Do a \"knife azure image list --azure-api-mode ARM\" to see a list of available Publishers."
-
-      option :azure_image_reference_offer,
-        :long => "--azure-image-reference-offer OFFER",
-        :description => "Required. ARM option. Specifies the offer of the image used to create the virtual machine.
-                                      Do a \"knife azure image list --azure-api-mode ARM\" to see a list of available Offers."
-
-      option :azure_image_reference_sku,
-        :long => "--azure-image-reference-sku SKU",
-        :description => "Required. ARM option. Specifies the SKU of the image used to create the virtual machine.
-                                      Do a \"knife azure image list --azure-api-mode ARM\" to see a list of available SKUs."
-
-      option :azure_image_reference_version,
-        :long => "--azure-image-reference-version VERSION",
-        :description => "Optional. ARM option. Specifies the version of the image used to create the virtual machine.
-                                      You can use the value of 'latest' to use the latest version of an image.
-                                      Do a \"knife azure image list --azure-api-mode ARM\" to see a list of available Versions.",
-        :default => 'latest'
 
       option :azure_vm_size,
         :short => "-z SIZE",
@@ -952,7 +903,7 @@ class Chef
 
         server_def[:port] = port
 
-        server_def[:is_vm_image] = service.vm_image?(locate_config_value(:azure_source_image)) if locate_config_value(:azure_api_mode) != "arm"
+        server_def[:is_vm_image] = service.vm_image?(locate_config_value(:azure_source_image))
         server_def[:azure_domain_name] = locate_config_value(:azure_domain_name) if locate_config_value(:azure_domain_name)
 
         if locate_config_value(:azure_domain_user)
@@ -976,28 +927,6 @@ class Chef
         end
         server_def[:azure_domain_passwd] = locate_config_value(:azure_domain_passwd)
         server_def[:azure_domain_ou_dn] = locate_config_value(:azure_domain_ou_dn)
-
-        ## ARM parameters ##
-        if(locate_config_value(:azure_api_mode) == "arm")
-          server_def[:azure_resource_group_name] = locate_config_value(:azure_resource_group_name)
-          server_def[:azure_os_disk_caching] = locate_config_value(:azure_os_disk_caching)
-          server_def[:azure_os_disk_create_option] = locate_config_value(:azure_os_disk_create_option)
-
-          server_def[:azure_image_reference_publisher] = locate_config_value(:azure_image_reference_publisher)
-          server_def[:azure_image_reference_offer] = locate_config_value(:azure_image_reference_offer)
-          server_def[:azure_image_reference_sku] = locate_config_value(:azure_image_reference_sku)
-          server_def[:azure_image_reference_version] = locate_config_value(:azure_image_reference_version)
-
-          server_def[:azure_storage_account] = locate_config_value(:azure_vm_name) if server_def[:azure_storage_account].nil?
-          server_def[:azure_storage_account] = server_def[:azure_storage_account].gsub(/[!@#$%^&*()_-]/,'')
-          server_def[:azure_storage_account_type] = locate_config_value(:azure_storage_account_type)
-          server_def[:azure_os_disk_name] = locate_config_value(:azure_vm_name) if server_def[:azure_os_disk_name].nil?
-          server_def[:azure_os_disk_name] = server_def[:azure_os_disk_name].gsub(/[!@#$%^&*()_-]/,'')
-
-          server_def[:azure_network_name] = locate_config_value(:azure_vm_name) if server_def[:azure_network_name].nil?
-          server_def[:azure_subnet_name] = locate_config_value(:azure_vm_name) if server_def[:azure_subnet_name].nil?
-          
-        end
 
         server_def
       end

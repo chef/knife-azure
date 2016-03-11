@@ -34,7 +34,8 @@ module QueryAzureMock
         azure_image_reference_offer: 'azure_image_reference_offer',
         azure_image_reference_sku: 'azure_image_reference_sku',
         azure_image_reference_version: 'azure_image_reference_version',
-        ssh_user: 'test-user'
+        ssh_user: 'test-user',
+        validation_key: '/tmp/validation_key'
       }.each do |key, value|
           Chef::Config[:knife][key] = value
         end
@@ -61,14 +62,28 @@ module QueryAzureMock
     resource_client
   end
 
-  def stub_compute_client
+  def stub_compute_client(user_supplied_value)
     compute_client = double("ComputeClient",
-      :virtual_machines => double)
+      :virtual_machines => double,
+      :virtual_machine_extensions => double,
+      :virtual_machine_extension_images => double)
     allow(compute_client.virtual_machines).to receive_message_chain(
       :create_or_update => 'create_or_update',
       :value! => nil,
       :body => nil
     ).and_return(stub_virtual_machine_create_response)
+    allow(compute_client.virtual_machine_extensions).to receive_message_chain(
+      :create_or_update => 'create_or_update',
+      :value! => nil,
+      :body => nil
+    ).and_return(stub_vm_extension_create_response(user_supplied_value))
+    allow(compute_client.virtual_machine_extension_images).to receive_message_chain(
+      :list_versions,
+      :value!,
+      :body,
+      :last,
+      :name
+    ).and_return('1210.12.10.100')
     compute_client
   end
 
@@ -146,6 +161,10 @@ module QueryAzureMock
       :type => 'Microsoft.Compute/virtualMachines',
       :properties => double,
       :location => 'West Europe')
+    allow(virtual_machine.properties).to receive_message_chain(
+      :storage_profile,
+      :os_disk,
+      :os_type).and_return('Test_OS_Type')
     allow(virtual_machine.properties).to receive(
       :provisioning_state).and_return('Succeeded')
     virtual_machine
@@ -153,13 +172,41 @@ module QueryAzureMock
 
   def stub_vm_details
     vm_details = OpenStruct.new
-    vm_details.publicipaddress = '1.2.3.4'
-    vm_details.sshport = '22'
-    vm_details.winrmport = '5985'
+    vm_details.id = 'test-vm-id'
     vm_details.name = 'test-vm'
-    vm_details.hostedservicename = "test-vm.westeurope.cloudapp.azure.com"
-    vm_details.provisioningstate = "Succeeded"
+    vm_details.locationname = 'test-vm-loc'
+    vm_details.ostype = 'test-vm-os'
+    vm_details.publicipaddress = '1.2.3.4'
+    vm_details.rdpport = '3389'
+    vm_details.sshport = '22'
+    vm_details.provisioningstate = 'Succeeded'
     vm_details
+  end
+
+  def stub_vm_extension_create_response(user_supplied_value)
+    vm_extension = double("VMExtension",
+      :name => 'test-vm-ext',
+      :id => 'myvmextid',
+      :type => 'Microsoft.Compute/virtualMachines/extensions',
+      :properties => double,
+      :location => 'West Europe')
+    allow(vm_extension.properties).to receive(
+      :publisher).and_return('Ext_Publisher')
+    allow(vm_extension.properties).to receive(
+      :type).and_return('Ext_Type')
+    if user_supplied_value == 'yes'
+      allow(vm_extension.properties).to receive(
+        :type_handler_version).and_return('11.10.1')
+    elsif user_supplied_value == 'no'
+      allow(vm_extension.properties).to receive(
+        :type_handler_version).and_return('1210.12')
+    else
+      allow(vm_extension.properties).to receive(
+        :type_handler_version).and_return('')
+    end
+    allow(vm_extension.properties).to receive(
+      :provisioning_state).and_return('Succeeded')
+    vm_extension
   end
 
   def stub_storage_profile_response

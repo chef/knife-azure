@@ -156,6 +156,24 @@ class Chef
                   name, path = h.split("=")
                   Chef::Config[:knife][:hints][name] = path ? JSON.parse(::File.read(path)) : Hash.new
                 }
+
+            option :auto_update_client,
+              :long => "--auto-update-client",
+              :boolean => true,
+              :default => false,
+              :description => "Set this flag to enable auto chef client update in azure chef extension. This flag should be used with cloud-api bootstrap protocol only"
+
+            option :delete_chef_extension_config,
+              :long => "--delete-chef-extension-config",
+              :boolean => true,
+              :default => false,
+              :description => "Determines whether Chef configuration files removed when Azure removes the Chef resource extension from the VM. This option is only valid for the 'cloud-api' bootstrap protocol. The default is false."
+
+            option :uninstall_chef_client,
+              :long => "--uninstall-chef-client",
+              :boolean => true,
+              :default => false,
+              :description => "Determines whether Chef Client will be un-installed from the VM or not. This option is only valid for the 'cloud-api' bootstrap protocol. The default value is false."
                 
   	  	  end
   	  	end

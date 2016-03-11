@@ -19,7 +19,7 @@
 
 require 'chef/knife/azurerm_base'
 require 'securerandom'
-require 'chef/knife/bootstrap/bootstrap_options'
+require 'chef/knife/bootstrap/azurerm_bootstrap_options'
 require 'chef/knife/bootstrap/bootstrapper'
 
 class Chef
@@ -27,17 +27,12 @@ class Chef
     class AzurermServerCreate < Knife
 
       include Knife::AzurermBase
-      include Knife::Bootstrap::BootstrapOptions
+      include Knife::Bootstrap::AzurermBootstrapOptions
       include Knife::Bootstrap::Bootstrapper
 
       banner "knife azurerm server create (options)"
 
       attr_accessor :initial_sleep_delay
-
-      option :bootstrap_protocol,
-        :long => "--bootstrap-protocol protocol",
-        :description => "Protocol to bootstrap windows servers. options: 'winrm' or 'ssh' or 'cloud-api'.",
-        :default => "winrm"
 
       option :ssh_user,
         :short => "-x USERNAME",
@@ -52,22 +47,20 @@ class Chef
 
       option :ssh_port,
         :long => "--ssh-port PORT",
-        :description => "The ssh port. Default is 22. If --azure-connect-to-existing-dns set then default SSH port is random"
+        :description => "The ssh port. Default is 22."
 
-      option :node_ssl_verify_mode,
-        :long        => "--node-ssl-verify-mode [peer|none]",
-        :description => "Whether or not to verify the SSL cert for all HTTPS requests.",
-        :proc        => Proc.new { |v|
-          valid_values = ["none", "peer"]
-          unless valid_values.include?(v)
-            raise "Invalid value '#{v}' for --node-ssl-verify-mode. Valid values are: #{valid_values.join(", ")}"
-          end
-        }
+      option :winrm_user,
+        :short => "-x USERNAME",
+        :long => "--winrm-user USERNAME",
+        :description => "The WinRM username",
+        :default => "Administrator",
+        :proc => Proc.new { |key| Chef::Config[:knife][:winrm_user] = key }
 
-      option :node_verify_api_cert,
-        :long        => "--[no-]node-verify-api-cert",
-        :description => "Verify the SSL cert for HTTPS requests to the Chef server API.",
-        :boolean     => true
+      option :winrm_password,
+        :short => "-P PASSWORD",
+        :long => "--winrm-password PASSWORD",
+        :description => "The WinRM password",
+        :proc => Proc.new { |key| Chef::Config[:knife][:winrm_password] = key }
 
       option :azure_storage_account,
         :short => "-a NAME",
@@ -80,12 +73,12 @@ class Chef
 
       option :azure_storage_account_type,
         :long => "--azure-storage-account-type TYPE",
-        :description => "Optional. ARM option. One of the following account types (case-sensitive):
-                                                  Standard_LRS (Standard Locally-redundant storage)
-                                                  Standard_ZRS (Standard Zone-redundant storage)
-                                                  Standard_GRS (Standard Geo-redundant storage)
-                                                  Standard_RAGRS (Standard Read access geo-redundant storage)
-                                                  Premium_LRS (Premium Locally-redundant storage)",
+        :description => "Optional. One of the following account types (case-sensitive):
+                                      Standard_LRS (Standard Locally-redundant storage)
+                                      Standard_ZRS (Standard Zone-redundant storage)
+                                      Standard_GRS (Standard Geo-redundant storage)
+                                      Standard_RAGRS (Standard Read access geo-redundant storage)
+                                      Premium_LRS (Premium Locally-redundant storage)",
         :default => 'Standard_GRS'
 
       option :azure_vm_name,
@@ -108,32 +101,32 @@ class Chef
 
       option :azure_os_disk_caching,
         :long => "--azure-os-disk-caching CACHING_TYPE",
-        :description => "Optional. ARM option. Specifies the caching requirements. options: 'None' or 'ReadOnly' or 'ReadWrite'.",
+        :description => "Optional. Specifies the caching requirements. options: 'None' or 'ReadOnly' or 'ReadWrite'.",
         :default => 'None'
 
       option :azure_os_disk_create_option,
         :long => "--azure-os-disk-create-option CREATE_OPTION",
-        :description => "Optional. ARM option. Specifies how the virtual machine should be created. options: 'fromImage' or 'attach' or 'empty'.",
+        :description => "Optional. Specifies how the virtual machine should be created. options: 'fromImage' or 'attach' or 'empty'.",
         :default => 'fromImage'
 
       option :azure_image_reference_publisher,
         :long => "--azure-image-reference-publisher PUBLISHER_NAME",
-        :description => "Required. ARM option. Specifies the publisher of the image used to create the virtual machine.
+        :description => "Required. Specifies the publisher of the image used to create the virtual machine.
                                       Do a \"knife azure image list --azure-api-mode ARM\" to see a list of available Publishers."
 
       option :azure_image_reference_offer,
         :long => "--azure-image-reference-offer OFFER",
-        :description => "Required. ARM option. Specifies the offer of the image used to create the virtual machine.
+        :description => "Required. Specifies the offer of the image used to create the virtual machine.
                                       Do a \"knife azure image list --azure-api-mode ARM\" to see a list of available Offers."
 
       option :azure_image_reference_sku,
         :long => "--azure-image-reference-sku SKU",
-        :description => "Required. ARM option. Specifies the SKU of the image used to create the virtual machine.
+        :description => "Required. Specifies the SKU of the image used to create the virtual machine.
                                       Do a \"knife azure image list --azure-api-mode ARM\" to see a list of available SKUs."
 
       option :azure_image_reference_version,
         :long => "--azure-image-reference-version VERSION",
-        :description => "Optional. ARM option. Specifies the version of the image used to create the virtual machine.
+        :description => "Optional. Specifies the version of the image used to create the virtual machine.
                                       You can use the value of 'latest' to use the latest version of an image.
                                       Do a \"knife azure image list --azure-api-mode ARM\" to see a list of available Versions.",
         :default => 'latest'
@@ -177,7 +170,6 @@ class Chef
       def run
         $stdout.sync = true
 
-        Chef::Log.warn("ARM commands are still in development phase...Current implementation supports server creation with basic options.")
         validate_arm_keys!(
           :azure_resource_group_name,
           :azure_vm_name,
@@ -188,13 +180,13 @@ class Chef
           :azure_image_reference_version
         )
 
-        ssh_override_winrm if %w(ssh cloud-api).include?(locate_config_value(:bootstrap_protocol)) and !is_image_windows?
+        ssh_override_winrm if !is_image_windows?
 
         Chef::Log.info("creating...")
 
         vm_details = service.create_server(create_server_def)
 
-        bootstrap_exec(vm_details) unless locate_config_value(:bootstrap_protocol) == 'cloud-api'
+        msg_server_summary(vm_details)
       end
 
       def create_server_def
@@ -212,7 +204,6 @@ class Chef
           :azure_image_reference_offer => locate_config_value(:azure_image_reference_offer),
           :azure_image_reference_sku => locate_config_value(:azure_image_reference_sku),
           :azure_image_reference_version => locate_config_value(:azure_image_reference_version),
-          :bootstrap_proto => locate_config_value(:bootstrap_protocol),
           :winrm_user => locate_config_value(:winrm_user),
           :azure_network_name => locate_config_value(:azure_network_name),
           :azure_subnet_name => locate_config_value(:azure_subnet_name),
@@ -230,54 +221,20 @@ class Chef
         server_def[:azure_network_name] = locate_config_value(:azure_vm_name) if server_def[:azure_network_name].nil?
         server_def[:azure_subnet_name] = locate_config_value(:azure_vm_name) if server_def[:azure_subnet_name].nil?
 
-        if is_image_windows?
-          if not locate_config_value(:winrm_password) or not locate_config_value(:bootstrap_protocol)
-            ui.error("WinRM Password and Bootstrapping Protocol are compulsory parameters")
-            exit 1
-          end
-          # We can specify the AdminUsername after API version 2013-03-01. However, in this API version,
-          # the AdminUsername is a required parameter.
-          # Also, the user name cannot be Administrator, Admin, Admin1 etc, for enhanced security (provided by Azure)
-          if locate_config_value(:winrm_user).nil? || locate_config_value(:winrm_user).downcase =~ /admin*/
-            ui.error("WinRM User is compulsory parameter and it cannot be named 'admin*'")
-            exit 1
-          end
-          # take cares of when user name contains domain
-          # azure add role api doesn't support '\\' in user name
-          if locate_config_value(:winrm_user) && locate_config_value(:winrm_user).split("\\").length.eql?(2)
-            server_def[:winrm_user] = locate_config_value(:winrm_user).split("\\")[1]
-          end
-        else
-          if not locate_config_value(:ssh_user)
-            ui.error("SSH User is compulsory parameter")
-            exit 1
-          end
-          unless locate_config_value(:ssh_password) or locate_config_value(:identity_file)
-            ui.error("Specify either SSH Key or SSH Password")
-            exit 1
-          end
-        end
+        server_def[:chef_extension] = get_chef_extension_name
+        server_def[:chef_extension_publisher] = get_chef_extension_publisher
+        server_def[:chef_extension_version] = locate_config_value(:azure_chef_extension_version)
+        server_def[:chef_extension_public_param] = get_chef_extension_public_params
+        server_def[:chef_extension_private_param] = get_chef_extension_private_params
 
         if is_image_windows?
-          server_def[:os_type] = 'Windows'
           server_def[:admin_password] = locate_config_value(:winrm_password)
-          server_def[:bootstrap_proto] = locate_config_value(:bootstrap_protocol)
         else
-          server_def[:os_type] = 'Linux'
-          server_def[:bootstrap_proto] = (locate_config_value(:bootstrap_protocol) == 'winrm') ? 'ssh' : locate_config_value(:bootstrap_protocol)
           server_def[:ssh_user] = locate_config_value(:ssh_user)
           server_def[:ssh_password] = locate_config_value(:ssh_password)
           server_def[:identity_file] = locate_config_value(:identity_file)
           server_def[:identity_file_passphrase] = locate_config_value(:identity_file_passphrase)
         end
-
-        if is_image_windows? && server_def[:bootstrap_proto] == 'winrm'
-          port = locate_config_value(:winrm_port) || '5985'
-        elsif server_def[:bootstrap_proto] == 'ssh'
-          port = locate_config_value(:ssh_port) || '22'
-        end
-
-        server_def[:port] = port
 
         server_def
       end
@@ -290,20 +247,10 @@ class Chef
             !locate_config_value(:winrm_user).eql?(options[:winrm_user][:default])
           config[:ssh_user] = locate_config_value(:winrm_user)
         end
-        # unchanged ssh_port and changed winrm_port, override ssh_port
-        if locate_config_value(:ssh_port).eql?(options[:ssh_port][:default]) &&
-            !locate_config_value(:winrm_port).eql?(options[:winrm_port][:default])
-          config[:ssh_port] = locate_config_value(:winrm_port)
-        end
-        # unset ssh_password and set winrm_password, override ssh_password
+
         if locate_config_value(:ssh_password).nil? &&
             !locate_config_value(:winrm_password).nil?
           config[:ssh_password] = locate_config_value(:winrm_password)
-        end
-        # unset identity_file and set _file, override identity_file
-        if locate_config_value(:identity_file).nil? &&
-            !locate_config_value(:kerberos_keytab_file).nil?
-          config[:identity_file] = locate_config_value(:kerberos_keytab_file)
         end
       end
     end
