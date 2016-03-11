@@ -229,7 +229,7 @@ describe Chef::Knife::AzurermServerCreate do
         :network_resource_client).and_return(
           @network_client)
       allow(@arm_server_instance).to receive(
-            :show_server_details)
+            :msg_server_summary)
     end
 
     describe "resource group" do

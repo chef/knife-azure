@@ -186,7 +186,7 @@ class Chef
 
         vm_details = service.create_server(create_server_def)
 
-        show_server_details(vm_details)
+        msg_server_summary(vm_details)
       end
 
       def create_server_def
@@ -237,68 +237,6 @@ class Chef
         end
 
         server_def
-      end
-
-      def show_server_details(vm_details)
-        if vm_details.provisioningstate == 'Succeeded'
-          Chef::Log.info("Server creation went successfull. Below are the details.")
-          details = Array.new
-          details << ui.color('Server Details', :bold, :cyan)
-
-          details << ui.color('Server ID', :bold, :cyan)
-          details << vm_details.id
-
-          details << ui.color('Server Name', :bold, :cyan)
-          details << vm_details.name
-
-          details << ui.color('Server Public IP Address', :bold, :cyan)
-          details << vm_details.publicipaddress
-
-          if is_image_windows?
-            details << ui.color('Server RDP Port', :bold, :cyan)
-            details << vm_details.rdpport
-          else
-            details << ui.color('Server SSH Port', :bold, :cyan)
-            details << vm_details.sshport
-          end
-
-          details << ui.color('Server Location', :bold, :cyan)
-          details << vm_details.locationname
-
-          details << ui.color('Server OS Type', :bold, :cyan)
-          details << vm_details.ostype
-
-          details << ui.color('Server Provisioning State', :bold, :cyan)
-          details << vm_details.provisioningstate
-        else
-          Chef::Log.info("Server Creation Failed.")
-        end
-
-        if vm_details.resources.provisioning_state == 'Succeeded'
-          Chef::Log.info("Server Extension creation went successfull. Below are the details.")
-          details = Array.new
-          details << ui.color('Server Extension Details', :bold, :red)
-
-          details << ui.color('Server Extension ID', :bold, :red)
-          details << vm_details.resources.id
-
-          details << ui.color('Server Extension Name', :bold, :red)
-          details << vm_details.resources.name
-
-          details << ui.color('Server Extension Publisher', :bold, :red)
-          details << vm_details.resources.publisher
-
-          details << ui.color('Server Extension Type', :bold, :red)
-          details << vm_details.resources.type
-
-          details << ui.color('Server Extension Type Handler Version', :bold, :red)
-          details << vm_details.resources.type_handler_version
-
-          details << ui.color('Server Extension Provisioning State', :bold, :red)
-          details << vm_details.resources.provisioning_state
-        else
-          Chef::Log.info("Server Extension Creation Failed.")
-        end
       end
 
       private
