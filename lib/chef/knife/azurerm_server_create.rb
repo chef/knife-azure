@@ -111,18 +111,18 @@ class Chef
 
       option :azure_image_reference_publisher,
         :long => "--azure-image-reference-publisher PUBLISHER_NAME",
-        :description => "Required. Specifies the publisher of the image used to create the virtual machine.
+        :description => "Optional. Specifies the publisher of the image used to create the virtual machine.
                                       Do a \"knife azure image list --azure-api-mode ARM\" to see a list of available Publishers."
 
       option :azure_image_reference_offer,
         :long => "--azure-image-reference-offer OFFER",
-        :description => "Required. Specifies the offer of the image used to create the virtual machine.
+        :description => "Optional. Specifies the offer of the image used to create the virtual machine.
                                       Do a \"knife azure image list --azure-api-mode ARM\" to see a list of available Offers."
 
       option :azure_image_reference_sku,
         :long => "--azure-image-reference-sku SKU",
-        :description => "Required. Specifies the SKU of the image used to create the virtual machine.
-                                      Do a \"knife azure image list --azure-api-mode ARM\" to see a list of available SKUs."
+        :description => "Optional. Specifies the SKU of the image used to create the virtual machine.
+                            Do a \"knife azure image list --azure-api-mode ARM\" to see a list of available SKUs."
 
       option :azure_image_reference_version,
         :long => "--azure-image-reference-version VERSION",
@@ -130,6 +130,10 @@ class Chef
                                       You can use the value of 'latest' to use the latest version of an image.
                                       Do a \"knife azure image list --azure-api-mode ARM\" to see a list of available Versions.",
         :default => 'latest'
+
+      option :azure_image_os_type,
+        :long => "--azure-image-os-type OSTYPE",
+        :description => "Required. Specifies the image OS Type for which server needs to be created. Accepted values ubuntu|centos|windows"
 
       option :azure_vm_size,
         :short => "-z SIZE",
@@ -166,19 +170,17 @@ class Chef
         :long => "--cert-path PATH",
         :description => "SSL Certificate Path"
 
-      
+
       def run
         $stdout.sync = true
 
         validate_arm_keys!(
           :azure_resource_group_name,
           :azure_vm_name,
-          :azure_service_location,
-          :azure_image_reference_publisher,
-          :azure_image_reference_offer,
-          :azure_image_reference_sku,
-          :azure_image_reference_version
+          :azure_service_location
         )
+
+        set_default_image_reference
 
         ssh_override_winrm if !is_image_windows?
 
@@ -252,6 +254,51 @@ class Chef
             !locate_config_value(:winrm_password).nil?
           config[:ssh_password] = locate_config_value(:winrm_password)
         end
+      end
+
+      def set_default_image_reference
+        if locate_config_value(:azure_image_os_type)
+          if (locate_config_value(:azure_image_reference_publisher) && locate_config_value(:azure_image_reference_offer) && locate_config_value(:azure_image_reference_sku) && locate_config_value(:azure_image_reference_version))
+            # if azure_image_os_type is given and other image reference parameters are also given,
+            # give priority to image reference parameters
+            # do nothing
+          else
+            # if azure_image_os_type is given and other image reference parameters are not given,
+            # set default image reference parameters
+            case locate_config_value(:azure_image_os_type)
+            when "ubuntu"
+              config[:azure_image_reference_publisher] = "Canonical"
+              config[:azure_image_reference_offer] = "UbuntuServer"
+              config[:azure_image_reference_sku] = "14.04.2-LTS"
+            when "centos"
+              config[:azure_image_reference_publisher] = "OpenLogic"
+              config[:azure_image_reference_offer] = "CentOS"
+              config[:azure_image_reference_sku] = "7.1"
+            when "windows"
+              config[:azure_image_reference_publisher] = "MicrosoftWindowsServer"
+              config[:azure_image_reference_offer] = "WindowsServer"
+              config[:azure_image_reference_sku] = "2012-R2-Datacenter"
+            else
+              ui.error("Invalid value of --azure-image-os-type. Accepted values ubuntu|centos|windows")
+              exit 1
+            end
+          end
+        else
+          if (locate_config_value(:azure_image_reference_publisher) && locate_config_value(:azure_image_reference_offer) && locate_config_value(:azure_image_reference_sku) && locate_config_value(:azure_image_reference_version))
+            # if azure_image_os_type is not given and other image reference parameters are given,
+            # do nothing
+          else
+            # if azure_image_os_type is not given and other image reference parameters are also not given,
+            # throw error for azure_image_os_type
+            validate_arm_keys!(:azure_image_os_type)
+          end
+        end
+
+        # final verification for image reference parameters
+        validate_arm_keys!(:azure_image_reference_publisher,
+            :azure_image_reference_offer,
+            :azure_image_reference_sku,
+            :azure_image_reference_version)
       end
     end
   end
