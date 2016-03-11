@@ -38,7 +38,12 @@ describe Chef::Knife::AzurermServerCreate do
       :azure_subnet_name => 'azure_subnet_name',
       :rdp_port => '3389',
       :ssh_port => '22',
-      :bootstrap_proto => "ssh"
+      :chef_extension_publisher => 'chef_extension_publisher',
+      :chef_extension => 'chef_extension',
+      :chef_extension_version => '11.10.1',
+      :chef_extension_public_param => 'chef_extension_public_param',
+      :chef_extension_private_param => 'chef_extension_private_param',
+      :latest_chef_extension_version => '1210.12'
     }
 
     allow(File).to receive(:exist?).and_return(true)
@@ -270,8 +275,7 @@ describe Chef::Knife::AzurermServerCreate do
             :azure_image_reference_offer => 'CentOS',
             :azure_image_reference_sku => '6.5',
             :azure_image_reference_version => 'latest',
-            :ssh_user => 'ssh_user',
-            :bootstrap_protocol => 'ssh'
+            :ssh_user => 'ssh_user'
           }.each do |key, value|
               Chef::Config[:knife][key] = value
             end
@@ -302,7 +306,7 @@ describe Chef::Knife::AzurermServerCreate do
               stub_virtual_machine_create_response)
           expect(@service).to receive(
             :create_vm_extension).exactly(1).and_return(
-              stub_vm_extension_create_response)
+              stub_vm_extension_create_response('NA'))
           expect(@service).to receive(
             :get_vm_details).exactly(1).and_return(
               stub_vm_details)
@@ -327,8 +331,7 @@ describe Chef::Knife::AzurermServerCreate do
             :azure_image_reference_offer => 'WindowsServer',
             :azure_image_reference_sku => '2012-R2-Datacenter',
             :azure_image_reference_version => 'latest',
-            :winrm_user => 'winrm_user',
-            :bootstrap_protocol => 'winrm'
+            :winrm_user => 'winrm_user'
           }.each do |key, value|
               Chef::Config[:knife][key] = value
             end
@@ -359,7 +362,7 @@ describe Chef::Knife::AzurermServerCreate do
               stub_virtual_machine_create_response)
           expect(@service).to receive(
             :create_vm_extension).exactly(1).and_return(
-              stub_vm_extension_create_response)
+              stub_vm_extension_create_response('NA'))
           expect(@service).to receive(
             :get_vm_details).exactly(1).and_return(
               stub_vm_details)
@@ -396,7 +399,7 @@ describe Chef::Knife::AzurermServerCreate do
 
       it "successfully returns virtual machine create response" do
         response = @service.create_virtual_machine(
-          stub_compute_client, @params, 'Linux')
+          stub_compute_client('NA'), @params, 'Linux')
         expect(response.name).to_not be nil
         expect(response.id).to_not be nil
         expect(response.type).to_not be nil
@@ -723,6 +726,56 @@ describe Chef::Knife::AzurermServerCreate do
       end
     end
 
+    describe "create_vm_extension" do
+      context "when user has supplied chef extension version value" do
+        it "successfully creates virtual machine extension with the user supplied version value" do
+          expect(@service).to_not receive(:get_latest_chef_extension_version)
+          response = @service.create_vm_extension(
+            stub_compute_client('yes'),
+            @params)
+          expect(response.name).to be == 'test-vm-ext'
+          expect(response.id).to_not be nil
+          expect(response.type).to be == 'Microsoft.Compute/virtualMachines/extensions'
+          expect(response.location).to_not be nil
+          expect(response.properties).to_not be nil
+          expect(response.properties.publisher).to be == 'Ext_Publisher'
+          expect(response.properties.type).to be == 'Ext_Type'
+          expect(response.properties.type_handler_version).to be == '11.10.1'
+          expect(response.properties.provisioning_state).to be == 'Succeeded'
+        end
+      end
+
+      context "when user has not supplied chef extension version value" do
+        before do
+          @params.delete(:chef_extension_version)
+        end
+
+        it "successfully creates virtual machine extension with the latest version" do
+          expect(@service).to receive(:get_latest_chef_extension_version)
+          response = @service.create_vm_extension(
+            stub_compute_client('no'),
+            @params)
+          expect(response.name).to be == 'test-vm-ext'
+          expect(response.id).to_not be nil
+          expect(response.type).to be == 'Microsoft.Compute/virtualMachines/extensions'
+          expect(response.location).to_not be nil
+          expect(response.properties).to_not be nil
+          expect(response.properties.publisher).to be == 'Ext_Publisher'
+          expect(response.properties.type).to be == 'Ext_Type'
+          expect(response.properties.type_handler_version).to be == '1210.12'
+          expect(response.properties.provisioning_state).to be == 'Succeeded'
+        end
+      end
+    end
+
+    describe "get_latest_chef_extension_version" do
+      it "successfully returns latest Chef Extension version" do
+        response = @service.get_latest_chef_extension_version(
+          stub_compute_client('NA'), @params)
+        expect(response).to be == '1210.*'
+      end
+    end
+
     describe "bootstrap protocol cloud-api" do
       before do
         allow(@arm_server_instance).to receive(:msg_server_summary)
@@ -790,6 +843,33 @@ describe Chef::Knife::AzurermServerCreate do
               'private_params')
           @server_params = @arm_server_instance.create_server_def
           expect(@server_params[:chef_extension_private_param]).to be == 'private_params'
+        end
+      end
+
+      describe "get_chef_extension_name" do
+        context "for Linux" do
+          it "successfully returns chef extension name for Linux platform" do
+            allow(@arm_server_instance).to receive(
+              :is_image_windows?).and_return(false)
+            response = @arm_server_instance.get_chef_extension_name
+            expect(response).to be == 'LinuxChefClient'
+          end
+        end
+
+        context "for Windows" do
+          it "successfully returns chef extension name for Windows platform" do
+            allow(@arm_server_instance).to receive(
+              :is_image_windows?).and_return(true)
+            response = @arm_server_instance.get_chef_extension_name
+            expect(response).to be == 'ChefClient'
+          end
+        end
+      end
+
+      describe "get_chef_extension_publisher" do
+        it "successfully returns chef extension publisher" do
+          response = @arm_server_instance.get_chef_extension_publisher
+          expect(response).to be == 'Chef.Bootstrap.WindowsAzure'
         end
       end
 

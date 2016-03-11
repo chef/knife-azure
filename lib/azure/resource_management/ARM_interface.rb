@@ -628,7 +628,7 @@ module Azure
         vm_ext_props = VirtualMachineExtensionProperties.new
         vm_ext_props.publisher = params[:chef_extension_publisher]
         vm_ext_props.type = params[:chef_extension]
-        vm_ext_props.type_handler_version = params[:chef_extension_version].nil? ? get_latest_chef_extension_version : params[:chef_extension_version]
+        vm_ext_props.type_handler_version = params[:chef_extension_version].nil? ? get_latest_chef_extension_version(compute_client, params) : params[:chef_extension_version]
         vm_ext_props.auto_upgrade_minor_version = false
         vm_ext_props.settings = params[:chef_extension_public_param]
         vm_ext_props.protected_settings = params[:chef_extension_private_param]
@@ -654,11 +654,11 @@ module Azure
         vm_extension
       end
 
-      def get_latest_chef_extension_version
-        ext_version = compute_management_client.virtual_machine_extension_images.list_versions(
-          locate_config_value(:azure_service_location),
-          get_chef_extension_publisher,
-          get_chef_extension_name).value!.body.last.name
+      def get_latest_chef_extension_version(compute_client, params)
+        ext_version = compute_client.virtual_machine_extension_images.list_versions(
+          params[:azure_service_location],
+          params[:chef_extension_publisher],
+          params[:chef_extension]).value!.body.last.name
         ext_version = ext_version.split(".").first + ".*"
         ext_version
       end

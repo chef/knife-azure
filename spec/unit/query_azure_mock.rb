@@ -62,10 +62,11 @@ module QueryAzureMock
     resource_client
   end
 
-  def stub_compute_client
+  def stub_compute_client(user_supplied_value)
     compute_client = double("ComputeClient",
       :virtual_machines => double,
-      :virtual_machine_extensions => double)
+      :virtual_machine_extensions => double,
+      :virtual_machine_extension_images => double)
     allow(compute_client.virtual_machines).to receive_message_chain(
       :create_or_update => 'create_or_update',
       :value! => nil,
@@ -75,7 +76,14 @@ module QueryAzureMock
       :create_or_update => 'create_or_update',
       :value! => nil,
       :body => nil
-    ).and_return(stub_vm_extension_create_response)
+    ).and_return(stub_vm_extension_create_response(user_supplied_value))
+    allow(compute_client.virtual_machine_extension_images).to receive_message_chain(
+      :list_versions,
+      :value!,
+      :body,
+      :last,
+      :name
+    ).and_return('1210.12.10.100')
     compute_client
   end
 
@@ -175,7 +183,7 @@ module QueryAzureMock
     vm_details
   end
 
-  def stub_vm_extension_create_response
+  def stub_vm_extension_create_response(user_supplied_value)
     vm_extension = double("VMExtension",
       :name => 'test-vm-ext',
       :id => 'myvmextid',
@@ -186,8 +194,16 @@ module QueryAzureMock
       :publisher).and_return('Ext_Publisher')
     allow(vm_extension.properties).to receive(
       :type).and_return('Ext_Type')
-    allow(vm_extension.properties).to receive(
-      :type_handler_version).and_return('Ext_Type_Handler_Version')
+    if user_supplied_value == 'yes'
+      allow(vm_extension.properties).to receive(
+        :type_handler_version).and_return('11.10.1')
+    elsif user_supplied_value == 'no'
+      allow(vm_extension.properties).to receive(
+        :type_handler_version).and_return('1210.12')
+    else
+      allow(vm_extension.properties).to receive(
+        :type_handler_version).and_return('')
+    end
     allow(vm_extension.properties).to receive(
       :provisioning_state).and_return('Succeeded')
     vm_extension

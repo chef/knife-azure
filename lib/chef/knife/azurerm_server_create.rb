@@ -19,7 +19,7 @@
 
 require 'chef/knife/azurerm_base'
 require 'securerandom'
-require 'chef/knife/bootstrap/bootstrap_options'
+require 'chef/knife/bootstrap/azurerm_bootstrap_options'
 require 'chef/knife/bootstrap/bootstrapper'
 
 class Chef
@@ -27,7 +27,7 @@ class Chef
     class AzurermServerCreate < Knife
 
       include Knife::AzurermBase
-      include Knife::Bootstrap::BootstrapOptions
+      include Knife::Bootstrap::AzurermBootstrapOptions
       include Knife::Bootstrap::Bootstrapper
 
       banner "knife azurerm server create (options)"
@@ -47,22 +47,20 @@ class Chef
 
       option :ssh_port,
         :long => "--ssh-port PORT",
-        :description => "The ssh port. Default is 22. If --azure-connect-to-existing-dns set then default SSH port is random"
+        :description => "The ssh port. Default is 22."
 
-      option :node_ssl_verify_mode,
-        :long        => "--node-ssl-verify-mode [peer|none]",
-        :description => "Whether or not to verify the SSL cert for all HTTPS requests.",
-        :proc        => Proc.new { |v|
-          valid_values = ["none", "peer"]
-          unless valid_values.include?(v)
-            raise "Invalid value '#{v}' for --node-ssl-verify-mode. Valid values are: #{valid_values.join(", ")}"
-          end
-        }
+      option :winrm_user,
+        :short => "-x USERNAME",
+        :long => "--winrm-user USERNAME",
+        :description => "The WinRM username",
+        :default => "Administrator",
+        :proc => Proc.new { |key| Chef::Config[:knife][:winrm_user] = key }
 
-      option :node_verify_api_cert,
-        :long        => "--[no-]node-verify-api-cert",
-        :description => "Verify the SSL cert for HTTPS requests to the Chef server API.",
-        :boolean     => true
+      option :winrm_password,
+        :short => "-P PASSWORD",
+        :long => "--winrm-password PASSWORD",
+        :description => "The WinRM password",
+        :proc => Proc.new { |key| Chef::Config[:knife][:winrm_password] = key }
 
       option :azure_storage_account,
         :short => "-a NAME",
@@ -311,20 +309,10 @@ class Chef
             !locate_config_value(:winrm_user).eql?(options[:winrm_user][:default])
           config[:ssh_user] = locate_config_value(:winrm_user)
         end
-        # unchanged ssh_port and changed winrm_port, override ssh_port
-        if locate_config_value(:ssh_port).eql?(options[:ssh_port][:default]) &&
-            !locate_config_value(:winrm_port).eql?(options[:winrm_port][:default])
-          config[:ssh_port] = locate_config_value(:winrm_port)
-        end
-        # unset ssh_password and set winrm_password, override ssh_password
+
         if locate_config_value(:ssh_password).nil? &&
             !locate_config_value(:winrm_password).nil?
           config[:ssh_password] = locate_config_value(:winrm_password)
-        end
-        # unset identity_file and set _file, override identity_file
-        if locate_config_value(:identity_file).nil? &&
-            !locate_config_value(:kerberos_keytab_file).nil?
-          config[:identity_file] = locate_config_value(:kerberos_keytab_file)
         end
       end
     end
