@@ -133,7 +133,7 @@ class Chef
 
       option :azure_image_os_type,
         :long => "--azure-image-os-type OSTYPE",
-        :description => "Required. Specifies the image OS Type for which server needs to be created. Accepted values ubuntu|centos|windows"
+        :description => "Optional. Specifies the image OS Type for which server needs to be created. Accepted values ubuntu|centos|windows"
 
       option :azure_vm_size,
         :short => "-z SIZE",
@@ -258,10 +258,12 @@ class Chef
 
       def set_default_image_reference
         if locate_config_value(:azure_image_os_type)
-          if (locate_config_value(:azure_image_reference_publisher) && locate_config_value(:azure_image_reference_offer) && locate_config_value(:azure_image_reference_sku) && locate_config_value(:azure_image_reference_version))
+          if (locate_config_value(:azure_image_reference_publisher) || locate_config_value(:azure_image_reference_offer) || locate_config_value(:azure_image_reference_sku) || locate_config_value(:azure_image_reference_version))
             # if azure_image_os_type is given and other image reference parameters are also given,
-            # give priority to image reference parameters
-            # do nothing
+            # raise error
+            ui.error("Please specify either --azure-image-os-type or other image reference parameters i.e.
+              --azure-image-reference-publisher, --azure-image-reference-offer, --azure-image-reference-sku, --azure-image-reference-version.")
+            exit 1
           else
             # if azure_image_os_type is given and other image reference parameters are not given,
             # set default image reference parameters
