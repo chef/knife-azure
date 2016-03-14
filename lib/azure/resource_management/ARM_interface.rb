@@ -142,13 +142,13 @@ module Azure
       end
 
       def show_server(name, resource_group)
-        begin 
+        begin
           promise = compute_management_client.virtual_machines.get(resource_group, name)
           result = promise.value!
-          
+
           unless result.nil?
             server = result.body
-            
+
             details = Array.new
             details << ui.color('Server Name', :bold, :cyan)
             details << server.name
@@ -176,19 +176,19 @@ module Azure
 
             details << ui.color('OS Type', :bold, :cyan)
             details << server.properties.storage_profile.os_disk.os_type
-      
+
             puts ui.list(details, :columns_across, 2)
-            
+
          else
            puts "There is no server with name #{name} or resource_group #{resource_group}. Please provide correct details."
-         end  
-       
+         end
+
         rescue => error
           puts "#{error.class} and #{error.message}"
         end
 
-      end 
-     
+      end
+
       def create_server(params = {})
         platform = ""
         if params[:azure_image_reference_offer] =~ /WindowsServer.*/
@@ -375,13 +375,8 @@ module Azure
         storage_params.properties = storage_props
         storage_props.account_type = storage_account_type
 
-        begin
-          storage = storage_client.storage_accounts.create(resource_group_name, storage_params.name, storage_params).value!.body
-        rescue Exception => e
-          Chef::Log.error("Failed to create the Storage Account -- exception being rescued: #{e.to_s}")
-          backtrace_message = "#{e.class}: #{e}\n#{e.backtrace.join("\n")}"
-          Chef::Log.debug("#{backtrace_message}")
-        end
+        storage = storage_client.storage_accounts.create(resource_group_name, storage_params.name, storage_params).value!.body
+
         storage.name = storage_account_name    ## response for storage creation does not contain name in it ##
 
         storage

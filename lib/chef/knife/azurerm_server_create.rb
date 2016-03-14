@@ -166,7 +166,7 @@ class Chef
         :long => "--cert-path PATH",
         :description => "SSL Certificate Path"
 
-      
+
       def run
         $stdout.sync = true
 
@@ -183,8 +183,21 @@ class Chef
         ssh_override_winrm if !is_image_windows?
 
         Chef::Log.info("creating...")
-
-        vm_details = service.create_server(create_server_def)
+        begin
+          vm_details = service.create_server(create_server_def)
+        rescue => error
+          if error.class == MsRestAzure::AzureOperationError && error.body
+            if error.body['error']['code']
+              ui.error("#{error.body['error']['message']}")
+            else
+              ui.error(error.body)
+            end
+          else
+            ui.error("#{error.message}")
+            ui.error("#{error.backtrace.join("\n")}")
+          end
+          exit
+        end
 
         msg_server_summary(vm_details)
       end
