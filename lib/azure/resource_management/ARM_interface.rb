@@ -142,7 +142,7 @@ module Azure
       end
 
       def show_server(name, resource_group)
-        begin 
+        begin
           promise = compute_management_client.virtual_machines.get(resource_group, name)
           result = promise.value!
           
@@ -184,7 +184,7 @@ module Azure
          end  
        
         rescue => error
-          puts "#{error.class} and #{error.message}"
+          puts "#{error.body["error"]["message"]}"
         end
 
       end 
