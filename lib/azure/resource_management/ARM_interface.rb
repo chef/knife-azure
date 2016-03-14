@@ -184,7 +184,7 @@ module Azure
          end
 
         rescue => error
-          puts "#{error.class} and #{error.message}"
+          puts "#{error.body["error"]["message"]}"
         end
 
       end
