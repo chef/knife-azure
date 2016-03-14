@@ -21,20 +21,20 @@ require 'chef/knife/winrm_base'
 
 class Chef
   class Knife
-  	class Bootstrap
-  	  module BootstrapOptions
+    class Bootstrap
+      module BootstrapOptions
 
-  	  	def self.included(includer)
-  	  	  includer.class_eval do
+        def self.included(includer)
+          includer.class_eval do
 
-  	  	  	include Knife::WinrmBase
+            include Knife::WinrmBase
 
-  	  	  	deps do
+            deps do
               require 'chef/knife/bootstrap'
               Chef::Knife::Bootstrap.load_deps
             end
 
-  	  	  	option :forward_agent,
+            option :forward_agent,
               :short => "-A",
               :long => "--forward-agent",
               :description =>  "Enable SSH agent forwarding",

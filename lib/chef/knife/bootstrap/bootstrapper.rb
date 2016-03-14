@@ -19,16 +19,16 @@
 
 class Chef
   class Knife
-  	class Bootstrap
-  	  module Bootstrapper
+    class Bootstrap
+      module Bootstrapper
 
-  	  	def load_winrm_deps
+        def load_winrm_deps
           require 'winrm'
           require 'chef/knife/winrm'
           require 'chef/knife/bootstrap_windows_winrm'
         end
 
-  	  	def default_bootstrap_template
+        def default_bootstrap_template
           is_image_windows? ? 'windows-chef-client-msi' : 'chef-full'
         end
 
@@ -310,15 +310,3 @@ class Chef
     end
   end
 end
-
-
-
-
-
-
-
-
-
-
-
-

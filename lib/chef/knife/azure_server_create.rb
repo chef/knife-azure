@@ -1043,12 +1043,12 @@ class Chef
       MAX_VM_NAME_CHARACTERS = 15
 
       # generate a random dns_name if azure_dns_name is empty
-      def get_dns_name(azure_dns_rgrp_name, prefix = "az-")
-        return azure_dns_rgrp_name unless azure_dns_rgrp_name.nil?
+      def get_dns_name(azure_dns_name, prefix = "az-")
+        return azure_dns_name unless azure_dns_name.nil?
         if locate_config_value(:azure_vm_name).nil?
-          azure_dns_rgrp_name = prefix + SecureRandom.hex(( MAX_VM_NAME_CHARACTERS - prefix.length)/2)
+          azure_dns_name = prefix + SecureRandom.hex(( MAX_VM_NAME_CHARACTERS - prefix.length)/2)
         else
-          azure_dns_rgrp_name = locate_config_value(:azure_vm_name)
+          azure_dns_name = locate_config_value(:azure_vm_name)
         end
       end
     end

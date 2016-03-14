@@ -19,18 +19,18 @@
 
 class Chef
   class Knife
-  	class Bootstrap
-  	  module AzurermBootstrapOptions
+    class Bootstrap
+      module AzurermBootstrapOptions
 
-  	  	def self.included(includer)
-  	  	  includer.class_eval do
+        def self.included(includer)
+          includer.class_eval do
 
-  	  	  	deps do
+            deps do
               require 'chef/knife/bootstrap'
               Chef::Knife::Bootstrap.load_deps
             end
 
-  	  	  	option :chef_node_name,
+            option :chef_node_name,
               :short => "-N NAME",
               :long => "--node-name NAME",
               :description => "The Chef node name for your new node"
