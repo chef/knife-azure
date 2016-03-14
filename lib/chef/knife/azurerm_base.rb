@@ -32,37 +32,6 @@ class Chef
             require 'chef/json_compat'
           end
 
-          option :azure_subscription_id,
-            :short => "-S ID",
-            :long => "--azure-subscription-id ID",
-            :description => "Your Azure subscription ID",
-            :proc => Proc.new { |key| Chef::Config[:knife][:azure_subscription_id] = key }
-
-          option :azure_tenant_id,
-            :short => "-T ID",
-            :long => "--azure-tenant-id ID",
-            :description => "Your Azure tenant ID",
-            :proc => Proc.new { |key| Chef::Config[:knife][:azure_tenant_id] = key }
-
-          option :azure_client_id,
-            :short => "-C ID",
-            :long => "--azure-client-id ID",
-            :description => "Your Azure client ID",
-            :proc => Proc.new { |key| Chef::Config[:knife][:azure_client_id] = key }
-
-          option :azure_client_secret,
-            :short => "-S SECRET",
-            :long => "--azure-client-secret SECRET",
-            :description => "Your Azure client secret",
-            :proc => Proc.new { |key| Chef::Config[:knife][:azure_client_secret] = key }
-
-          option :azure_resource_group_name,
-            :short => "-r RESOURCE_GROUP_NAME",
-            :long => "--azure-resource-group-name RESOURCE_GROUP_NAME",
-            :description => "Required. The Resource Group name that acts as a
-                            container and holds related resources for an
-                            application in a group."
-
         end
       end
 
