@@ -81,7 +81,7 @@ class Chef
 
       def locate_config_value(key)
         key = key.to_sym
-        config[key] || Chef::Config[:knife][key]
+        config[key] || Chef::Config[:knife][key]  || default_config[key]
       end
 
       # validates ARM mandatory keys
@@ -146,6 +146,55 @@ class Chef
 
       def pretty_key(key)
         key.to_s.gsub(/_/, ' ').gsub(/\w+/){ |w| (w =~ /(ssh)|(aws)/i) ? w.upcase  : w.capitalize }
+      end
+
+      def is_image_windows?
+        locate_config_value(:azure_image_reference_offer) =~ /WindowsServer.*/
+      end
+
+      def msg_pair(label, value, color=:cyan)
+        if value && !value.to_s.empty?
+          puts "#{ui.color(label, color)}: #{value}"
+        end
+      end
+
+      def msg_server_summary(server)
+        puts "\n\n"
+        if server.provisioningstate == 'Succeeded'
+          Chef::Log.info("Server creation went successfull.")
+          puts "\nServer Details are:\n"
+
+          msg_pair('Server ID', server.id)
+          msg_pair('Server Name', server.name)
+          msg_pair('Server Public IP Address', server.publicipaddress)
+          if is_image_windows?
+            msg_pair('Server RDP Port', server.rdpport)
+          else
+            msg_pair('Server SSH Port', server.sshport)
+          end
+          msg_pair('Server Location', server.locationname)
+          msg_pair('Server OS Type', server.ostype)
+          msg_pair('Server Provisioning State', server.provisioningstate)
+        else
+          Chef::Log.info("Server Creation Failed.")
+        end
+
+        puts "\n\n"
+
+        if server.resources.provisioning_state == 'Succeeded'
+          Chef::Log.info("Server Extension creation went successfull.")
+          puts "\nServer Extension Details are:\n"
+
+          msg_pair('Server Extension ID', server.resources.id)
+          msg_pair('Server Extension Name', server.resources.name)
+          msg_pair('Server Extension Publisher', server.resources.publisher)
+          msg_pair('Server Extension Type', server.resources.type)
+          msg_pair('Server Extension Type Handler Version', server.resources.type_handler_version)
+          msg_pair('Server Extension Provisioning State', server.resources.provisioning_state)
+        else
+          Chef::Log.info("Server Extension Creation Failed.")
+        end
+        puts "\n"
       end
     end
   end
