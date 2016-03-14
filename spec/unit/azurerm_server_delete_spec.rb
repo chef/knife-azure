@@ -28,13 +28,13 @@ describe Chef::Knife::AzurermServerDelete do
 
       expect(@arm_server_instance).to receive(:validate_arm_keys!).with(:azure_resource_group_name)
       allow(@arm_server_instance.service).to receive(:compute_management_client).and_return(@compute_client)
-      allow(@compute_client).to receive_message_chain(:virtual_machines, :get).with('test-rg-group', 'VM001', nil, nil).and_return(promise)
+      allow(@compute_client).to receive_message_chain(:virtual_machines, :get).with('test-rg-group', 'VM001').and_return(promise)
       allow(promise).to receive_message_chain(:value!, :body).and_return(@server)
 
       expect(@service).to receive(:msg_pair).with(@service.ui, 'VM Name', 'VM001')
       expect(@service).to receive(:msg_pair).with(@service.ui, 'VM Size', '10')
       expect(@service).to receive(:msg_pair).with(@service.ui, 'VM OS', 'Linux')
-      allow(@compute_client).to receive_message_chain(:virtual_machines, :delete).with('test-rg-group', 'VM001', nil).and_return(delete_promise)
+      allow(@compute_client).to receive_message_chain(:virtual_machines, :delete).with('test-rg-group', 'VM001').and_return(delete_promise)
       expect(@service.ui).to receive(:info).once
       expect(@service.ui).to receive(:warn).twice
       expect(@service).to receive(:print)
@@ -46,7 +46,7 @@ describe Chef::Knife::AzurermServerDelete do
 
       expect(@arm_server_instance).to receive(:validate_arm_keys!).with(:azure_resource_group_name)
       expect(@arm_server_instance.service).to receive(:compute_management_client).and_return(@compute_client)
-      expect(@compute_client).to receive_message_chain(:virtual_machines, :get).with('test-rg-group', 'VM001', nil, nil).and_return(promise)
+      expect(@compute_client).to receive_message_chain(:virtual_machines, :get).with('test-rg-group', 'VM001').and_return(promise)
       allow(promise).to receive_message_chain(:value!).and_return(nil)
       expect(@service.ui).to receive(:warn).once
       @arm_server_instance.run

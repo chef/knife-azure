@@ -79,11 +79,24 @@ class Chef
           validate_arm_keys!(:azure_resource_group_name)
 
           vm_name = @name_args[0]
+          resource_group_name = locate_config_value(:azure_resource_group_name)
 
           if locate_config_value(:delete_resource_group)
-            service.delete_resource_group(locate_config_value(:azure_resource_group_name), vm_name)
+            ui.warn "Deleting resource group will delete all the virtual_machines inside it."
+            begin
+              ui.confirm('Do you really want to delete resource group')
+            rescue SystemExit   # Need to handle this as confirming with N/n raises SystemExit exception
+              server = nil      # Cleanup is implicitly performed in other cloud plugins
+              ui.warn "Resource group not deleted. Proceeding for server delete ..."
+              service.delete_server(locate_config_value(:azure_resource_group_name), vm_name)
+              exit
+            end
+
+            ui.info 'Deleting Resource Group '+resource_group_name+' and Virtual Machine '+vm_name+' ..'
+            service.delete_resource_group(locate_config_value(:azure_resource_group_name))
+            ui.warn "Deleted resource_group_name #{resource_group_name} and #{vm_name}"
           else
-            service.delete_server(locate_config_value(:azure_resource_group_name), vm_name, custom_headers=nil)
+            service.delete_server(locate_config_value(:azure_resource_group_name), vm_name)
           end
 
           if config[:purge]

@@ -113,8 +113,8 @@ module Azure
         end
       end
 
-       def delete_server(resource_group_name, vm_name, custom_headers=nil)
-        promise = compute_management_client.virtual_machines.get(resource_group_name, vm_name, expand=nil, custom_headers)
+       def delete_server(resource_group_name, vm_name)
+        promise = compute_management_client.virtual_machines.get(resource_group_name, vm_name)
         if promise.value! && promise.value!.body.name == vm_name
           puts "\n\n"
           msg_pair(ui, 'VM Name', promise.value!.body.name)
@@ -133,7 +133,7 @@ module Azure
 
           begin
             print '.'
-            promise = compute_management_client.virtual_machines.delete(resource_group_name, vm_name, custom_headers = nil)
+            promise = compute_management_client.virtual_machines.delete(resource_group_name, vm_name)
           end until promise.value!.body.nil?
 
           puts "\n"
@@ -655,19 +655,9 @@ module Azure
         ext_version
       end
 
-      def delete_resource_group(resource_group_name, vm_name)
-        ui.warn "Deleting resource group will delete all the virtual_machines inside it."
-        begin
-          ui.confirm('Do you really want to delete resource group')
-        rescue SystemExit   # Need to handle this as confirming with N/n raises SystemExit exception
-          server = nil      # Cleanup is implicitly performed in other cloud plugins
-          ui.warn "Resource group not deleted. Proceeding for server delete ..."
-          delete_server(resource_group_name, vm_name)
-          exit
-        end
+      def delete_resource_group(resource_group_name)
 
-        ui.info 'Deleting Resource Group '+resource_group_name+' and Virtual Machine '+vm_name+' ..'
-        ui.info 'Resource gorup deletion takes some time. Please wait ...'
+        ui.info 'Resource group deletion takes some time. Please wait ...'
 
         begin
           print '.'
@@ -675,7 +665,7 @@ module Azure
         end until promise.value!.body.nil?
 
         puts "\n"
-        ui.warn "Deleted resource_group_name #{resource_group_name} and #{vm_name}"
+
       end
     end
   end
