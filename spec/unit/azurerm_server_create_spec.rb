@@ -980,17 +980,11 @@ describe Chef::Knife::AzurermServerCreate do
     end
 
     describe "set_default_image_reference" do
-      it "gives priority to the image reference parameters over azure_image_os_type options" do
+      it "raises error if both azure_image_os_type and image reference parameters are specified" do
         @arm_server_instance.config[:azure_image_os_type] = "ubuntu"
         @arm_server_instance.config[:azure_image_reference_publisher] = "publisher"
-        @arm_server_instance.config[:azure_image_reference_offer] = "offer"
-        @arm_server_instance.config[:azure_image_reference_sku] = "sku"
-        @arm_server_instance.config[:azure_image_reference_version] = "version"
-        expect(@arm_server_instance.config[:azure_image_reference_publisher]).to be == "publisher"
-        expect(@arm_server_instance.config[:azure_image_reference_offer]).to be == "offer"
-        expect(@arm_server_instance.config[:azure_image_reference_sku]).to be == "sku"
-        expect(@arm_server_instance.config[:azure_image_reference_version]).to be == "version"
-        @arm_server_instance.send(:set_default_image_reference)
+        expect(@arm_server_instance.ui).to receive(:error)
+        expect{@arm_server_instance.send(:set_default_image_reference)}.to raise_error(SystemExit)
       end
 
       it "calls validation for azure_image_os_type if azure_image_os_type and image reference parameters are not given" do
@@ -1041,7 +1035,7 @@ describe Chef::Knife::AzurermServerCreate do
         Chef::Config[:knife].delete(:azure_image_reference_offer)
         Chef::Config[:knife].delete(:azure_image_reference_sku)
         expect(@arm_server_instance.ui).to receive(:error).with("Invalid value of --azure-image-os-type. Accepted values ubuntu|centos|windows")
-        @arm_server_instance.send(:set_default_image_reference)
+        expect{@arm_server_instance.send(:set_default_image_reference)}.to raise_error(SystemExit)
       end
     end
   end

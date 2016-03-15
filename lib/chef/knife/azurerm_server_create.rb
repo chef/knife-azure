@@ -269,10 +269,10 @@ class Chef
 
       def set_default_image_reference
         if locate_config_value(:azure_image_os_type)
-          if (locate_config_value(:azure_image_reference_publisher) || locate_config_value(:azure_image_reference_offer) || locate_config_value(:azure_image_reference_sku) || locate_config_value(:azure_image_reference_version))
+          if (locate_config_value(:azure_image_reference_publisher) || locate_config_value(:azure_image_reference_offer) || locate_config_value(:azure_image_reference_sku))
             # if azure_image_os_type is given and other image reference parameters are also given,
             # raise error
-            ui.error("Please specify either --azure-image-os-type or other image reference parameters i.e.
+            ui.error("Please specify either --azure-image-os-type OR other image reference parameters i.e.
               --azure-image-reference-publisher, --azure-image-reference-offer, --azure-image-reference-sku, --azure-image-reference-version.")
             exit 1
           else
