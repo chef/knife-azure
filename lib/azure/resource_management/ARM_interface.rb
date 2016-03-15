@@ -73,7 +73,7 @@ module Azure
 
       def network_resource_client
         @network_resource_client ||= begin
-          network_client = NetworkResourceProviderClient.new(@credentials)
+          network_client = NetworkManagementClient.new(@credentials)
           network_client.subscription_id = @azure_subscription_id
           network_client
         end
@@ -256,7 +256,7 @@ module Azure
       end
 
       def get_vm_public_ip(network_client, params)
-        network_client.public_ip_addresses.get(
+        network_client.public_ipaddresses.get(
           params[:azure_resource_group_name],
           params[:azure_vm_name]
         ).value!.body.properties.ip_address
@@ -346,9 +346,10 @@ module Azure
           params[:azure_resource_group_name]
         )
         Chef::Log.info("StorageAccount creation successfull.")
-        Chef::Log.info("Storage Account name is: #{storage_account.name}")
-        Chef::Log.info("Storage Account ID is: #{storage_account.id}")
-        virtual_hard_disk = get_vhd(storage_account, params[:azure_os_disk_name])
+        virtual_hard_disk = get_vhd(
+          params[:azure_storage_account],
+          params[:azure_os_disk_name]
+        )
 
         storage_profile = StorageProfile.new
         storage_profile.image_reference = get_image_reference(
@@ -369,21 +370,18 @@ module Azure
 
       def create_storage_account(storage_client, storage_account_name, location, storage_account_type, resource_group_name)
         storage_params = Azure::ARM::Storage::Models::StorageAccountCreateParameters.new
-        storage_params.name = storage_account_name
         storage_params.location = location
         storage_props = Azure::ARM::Storage::Models::StorageAccountPropertiesCreateParameters.new
         storage_params.properties = storage_props
         storage_props.account_type = storage_account_type
 
-        storage = storage_client.storage_accounts.create(resource_group_name, storage_params.name, storage_params).value!.body
-
-        storage.name = storage_account_name    ## response for storage creation does not contain name in it ##
+        storage = storage_client.storage_accounts.create(resource_group_name, storage_account_name, storage_params).value!.body
 
         storage
       end
 
       def get_vhd(storage, os_disk_name)
-        storage_account_name = storage.name
+        storage_account_name = storage
         virtual_hard_disk = VirtualHardDisk.new
         virtual_hard_disk.uri = "http://#{storage_account_name}.blob.core.windows.net/vhds/#{os_disk_name}.vhd"
 
@@ -491,7 +489,7 @@ module Azure
       end
 
       def create_network_interface(network_client, resource_group_name, vm_name, service_location, subnet, platform)
-        network_ip_configuration_properties = NetworkInterfaceIpConfigurationPropertiesFormat.new
+        network_ip_configuration_properties = NetworkInterfaceIPConfigurationPropertiesFormat.new
         network_ip_configuration_properties.private_ipallocation_method = 'Dynamic'
 
         network_ip_configuration_properties.public_ipaddress = create_public_ip_config(
@@ -503,7 +501,7 @@ module Azure
 
         network_ip_configuration_properties.subnet = subnet
 
-        network_interface_ip_configuration = NetworkInterfaceIpConfiguration.new
+        network_interface_ip_configuration = NetworkInterfaceIPConfiguration.new
         network_interface_ip_configuration.properties = network_ip_configuration_properties
         network_interface_ip_configuration.name = vm_name
 
@@ -534,16 +532,16 @@ module Azure
       end
 
       def create_public_ip_config(network_client, resource_group_name, vm_name, service_location)
-        public_ip_props = PublicIpAddressPropertiesFormat.new
+        public_ip_props = PublicIPAddressPropertiesFormat.new
         public_ip_props.public_ipallocation_method = 'Dynamic'
 
-        public_ip = PublicIpAddress.new
+        public_ip = PublicIPAddress.new
         public_ip.name = vm_name
         public_ip.location = service_location
         public_ip.properties = public_ip_props
 
         begin
-          public_ip_address = network_client.public_ip_addresses.create_or_update(
+          public_ip_address = network_client.public_ipaddresses.create_or_update(
             resource_group_name,
             public_ip.name,
             public_ip

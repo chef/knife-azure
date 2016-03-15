@@ -508,8 +508,6 @@ describe Chef::Knife::AzurermServerCreate do
           @params[:azure_service_location],
           @params[:azure_storage_account_type],
           @params[:azure_resource_group_name])
-        expect(response.name).to be == 'azurestorageaccount'
-        expect(response.id).to_not be nil
         expect(response.location).to_not be nil
         expect(response.properties).to_not be nil
         expect(response.properties.account_type).to be == 'azure_storage_account_type'
@@ -519,8 +517,8 @@ describe Chef::Knife::AzurermServerCreate do
     describe "get_vhd" do
       it "successfully returns virtual hard disk response" do
         response = @service.get_vhd(
-          stub_storage_account_create_response, @params[:azure_os_disk_name])
-        expect(response.uri).to be == 'http://teststorage.blob.core.windows.net/vhds/azureosdiskname.vhd'
+          @params[:azure_storage_account], @params[:azure_os_disk_name])
+        expect(response.uri).to be == 'http://azurestorageaccount.blob.core.windows.net/vhds/azureosdiskname.vhd'
       end
     end
 
