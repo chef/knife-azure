@@ -192,7 +192,7 @@ module Azure
             else
               details << ' -- '
             end
-
+            
             details << ui.color('FQDN', :bold, :cyan)
             unless public_ip_data.nil? or public_ip_data.properties.dns_settings.nil?
               details << public_ip_data.properties.dns_settings.fqdn
