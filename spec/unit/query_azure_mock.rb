@@ -99,13 +99,13 @@ module QueryAzureMock
 
   def stub_network_client(platform)
     network_client = double("NetworkClient",
-      :public_ip_addresses => double,
+      :public_ipaddresses => double,
       :network_security_groups => double,
       :virtual_networks => double,
       :subnets => double,
       :network_interfaces => double,
       :security_rules => double)
-    allow(network_client.public_ip_addresses).to receive_message_chain(
+    allow(network_client.public_ipaddresses).to receive_message_chain(
       :get => 'get',
       :value! => nil,
       :body => nil,
@@ -138,7 +138,7 @@ module QueryAzureMock
       :create_or_update => 'create_or_update',
       :value! => nil,
       :body => nil).and_return(stub_network_interface_create_response)
-    allow(network_client.public_ip_addresses).to receive_message_chain(
+    allow(network_client.public_ipaddresses).to receive_message_chain(
       :create_or_update => 'create_or_update',
       :value! => nil,
       :body => nil).and_return(stub_public_ip_config_create_response)
@@ -218,8 +218,6 @@ module QueryAzureMock
 
   def stub_storage_account_create_response
     storage_account = OpenStruct.new
-    storage_account.name = 'teststorage'
-    storage_account.id = 'mystorage'
     storage_account.location = 'West Europe'
     storage_account.properties = OpenStruct.new
     storage_account.properties.account_type = 'azure_storage_account_type'
