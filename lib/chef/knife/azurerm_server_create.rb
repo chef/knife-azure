@@ -112,23 +112,21 @@ class Chef
       option :azure_image_reference_publisher,
         :long => "--azure-image-reference-publisher PUBLISHER_NAME",
         :description => "Optional. Specifies the publisher of the image used to create the virtual machine.
-                                      Do a \"knife azure image list --azure-api-mode ARM\" to see a list of available Publishers."
+                          eg. OpenLogic, Canonical, MicrosoftWindowsServer"
 
       option :azure_image_reference_offer,
         :long => "--azure-image-reference-offer OFFER",
         :description => "Optional. Specifies the offer of the image used to create the virtual machine.
-                                      Do a \"knife azure image list --azure-api-mode ARM\" to see a list of available Offers."
+                          eg. CentOS, UbuntuServer, WindowsServer"
 
       option :azure_image_reference_sku,
         :long => "--azure-image-reference-sku SKU",
-        :description => "Optional. Specifies the SKU of the image used to create the virtual machine.
-                            Do a \"knife azure image list --azure-api-mode ARM\" to see a list of available SKUs."
+        :description => "Optional. Specifies the SKU of the image used to create the virtual machine."
 
       option :azure_image_reference_version,
         :long => "--azure-image-reference-version VERSION",
         :description => "Optional. Specifies the version of the image used to create the virtual machine.
-                                      You can use the value of 'latest' to use the latest version of an image.
-                                      Do a \"knife azure image list --azure-api-mode ARM\" to see a list of available Versions.",
+                          Default value is 'latest'",
         :default => 'latest'
 
       option :azure_image_os_type,

@@ -425,9 +425,28 @@ The following options are required for all azurerm subcommands:
 Note: The options mentioned above can be obtained from this [step](https://github.com/chef/knife-azure#arm-mode)
 
 ### Azure Server Create Subcommand
+This subcommand provisions a new server in Azure and then performs a Chef bootstrap.
+
+User can either provide just `--azure-image-os-type` or other image reference parameters i.e. `--azure-image-reference-publisher`, `--azure-image-reference-offer`, `--azure-image-reference-sku` and `--azure-image-reference-version` to specify the image.
+
+Accepted values for `--azure-image-os-type` are `ubuntu`, `centos` and `windows`. It creates the server using standard image parameters for respective OS. However, they can be overridden using `--azure-image-reference-publisher`, `--azure-image-reference-offer`, `--azure-image-reference-sku` and `--azure-image-reference-version` options.
+`--azure-image-os-type` option should not be used with other image reference parameters.
+
+To see a list of commonly used image parameters, please refer https://azure.microsoft.com/en-in/documentation/articles/resource-groups-vm-searching/#table-of-commonly-used-images
 
 For Windows:
 
+```
+knife azurerm server create
+  --azure-resource-group-name MyResourceGrpName
+  --azure-vm-name MyNewVMName
+  --azure-service-location 'WEST US'
+  --azure-image-os-type windows
+  -x myuser -P mypassword
+  -r "recipe[cbk1::rec2]"
+  -c ~/.chef/knife.rb
+```
+OR
 ```
 knife azurerm server create
   --azure-resource-group-name MyResourceGrpName
@@ -449,6 +468,17 @@ knife azurerm server create
   --azure-resource-group-name MyResourceGrpName
   --azure-vm-name MyNewVMName
   --azure-service-location 'WEST US'
+  --azure-image-os-type centos
+  --azure-vm-size Small
+  -r "recipe[cbk1::rec1]"
+  -c ~/.chef/knife.rb
+```
+OR
+```
+knife azurerm server create
+  --azure-resource-group-name MyResourceGrpName
+  --azure-vm-name MyNewVMName
+  --azure-service-location 'WEST US'
   --azure-image-reference-publisher 'OpenLogic'
   --azure-image-reference-offer 'CentOS'
   --azure-image-reference-sku '6.5'
@@ -461,6 +491,18 @@ knife azurerm server create
 
 For Ubuntu:
 
+```
+knife azurerm server create
+  --azure-resource-group-name MyResourceGrpName
+  --azure-vm-name MyNewVMName
+  --azure-service-location 'WEST US'
+  --azure-image-os-type ubuntu
+  --ssh-user myuser --ssh-password mypassword
+  --azure-vm-size Small
+  -r "recipe[cbk1::rec1]"
+  -c ~/.chef/knife.rb
+```
+OR
 ```
 knife azurerm server create
   --azure-resource-group-name MyResourceGrpName
