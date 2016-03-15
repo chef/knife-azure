@@ -34,14 +34,6 @@ class Chef
 
       attr_accessor :initial_sleep_delay
 
-      option :azure_resource_group_name,
-        :short => "-r RESOURCE_GROUP_NAME",
-        :long => "--azure-resource-group-name RESOURCE_GROUP_NAME",
-        :description => "Required. The Resource Group name that acts as a
-                        container and holds related resources for an
-                        application in a group."
-
-
       option :ssh_user,
         :short => "-x USERNAME",
         :long => "--ssh-user USERNAME",

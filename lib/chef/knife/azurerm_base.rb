@@ -32,6 +32,14 @@ class Chef
             require 'chef/json_compat'
           end
 
+          option :azure_resource_group_name,
+            :short => "-r RESOURCE_GROUP_NAME",
+            :long => "--azure-resource-group-name RESOURCE_GROUP_NAME",
+            :description => "The Resource Group name that acts as a
+                            container and holds related resources for an
+                            application in a group."
+
+
         end
       end
 

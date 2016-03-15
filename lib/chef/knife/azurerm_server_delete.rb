@@ -32,13 +32,6 @@ class Chef
 
       banner "knife azurerm server delete SERVER [SERVER] (options)"
 
-      option :azure_resource_group_name,
-        :short => "-r RESOURCE_GROUP_NAME",
-        :long => "--azure-resource-group-name RESOURCE_GROUP_NAME",
-        :description => "Required. The Resource Group name that acts as a
-                        container and holds related resources for an
-                        application in a group."
-
       option :purge,
         :short => "-P",
         :long => "--purge",

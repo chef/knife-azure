@@ -11,7 +11,11 @@ class Chef
       def run
         $stdout.sync = true
         validate_arm_keys!
-        service.list_servers
+        if locate_config_value(:azure_resource_group_name).nil?
+          service.list_servers
+        else
+          service.list_servers(locate_config_value(:azure_resource_group_name))
+        end
       end
     end
   end
