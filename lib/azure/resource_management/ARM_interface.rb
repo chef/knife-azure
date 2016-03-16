@@ -148,6 +148,15 @@ module Azure
 
           unless result.nil?
             server = result.body
+            network_interface_name = server.properties.network_profile.network_interfaces[0].id.split('/')[-1]
+            network_interface_data = network_resource_client.network_interfaces.get(resource_group, network_interface_name).value!.body
+            public_ip_id_data = network_interface_data.properties.ip_configurations[0].properties.public_ipaddress
+            unless public_ip_id_data.nil?
+              public_ip_name = public_ip_id_data.id.split('/')[-1]
+              public_ip_data = network_resource_client.public_ipaddresses.get(resource_group, public_ip_name).value!.body
+            else
+              public_ip_data = nil
+            end
 
             details = Array.new
             details << ui.color('Server Name', :bold, :cyan)
@@ -177,11 +186,25 @@ module Azure
             details << ui.color('OS Type', :bold, :cyan)
             details << server.properties.storage_profile.os_disk.os_type
 
+            details << ui.color('Public IP address', :bold, :cyan)
+            unless public_ip_data.nil?
+              details << public_ip_data.properties.ip_address
+            else
+              details << ' -- '
+            end
+            
+            details << ui.color('FQDN', :bold, :cyan)
+            unless public_ip_data.nil? or public_ip_data.properties.dns_settings.nil?
+              details << public_ip_data.properties.dns_settings.fqdn
+            else
+              details << ' -- '
+            end
+
             puts ui.list(details, :columns_across, 2)
 
-         else
-           puts "There is no server with name #{name} or resource_group #{resource_group}. Please provide correct details."
-         end
+          else
+            puts "There is no server with name #{name} or resource_group #{resource_group}. Please provide correct details."
+          end
 
         rescue => error
           puts "#{error.body["error"]["message"]}"
@@ -670,4 +693,3 @@ module Azure
     end
   end
 end
-
