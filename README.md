@@ -478,12 +478,15 @@ knife azurerm server create
 
 ### Azure Server Delete Subcommand
 Deletes an existing ARM server in the currently configured Azure account. By default, this does not delete the associated resource-group, associated node and client objects from the Chef server.
+For deleting associated resource-group along with server use --delete-resource-group flag.
 For deleting associated node and client objects from the Chef server, add the --purge flag.
 
 ```
 knife azurerm server delete MyVMName --azure-resource-group-name MyResourceGrpName -c ~/.chef/knife.rb
 
 knife azurerm server delete MyVMName --azure-resource-group-name MyResourceGrpName -c ~/.chef/knife.rb --purge  #purge chef node
+
+knife azurerm server delete MyVMName --azure-resource-group-name MyResourceGrpName -c ~/.chef/knife.rb --delete-resource-group #deletes resource group
 ```
 
 ### Azure Server List Subcommand

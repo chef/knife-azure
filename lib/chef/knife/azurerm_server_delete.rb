@@ -49,7 +49,13 @@ class Chef
       option :chef_node_name,
         :short => "-N NAME",
         :long => "--node-name NAME",
-        :description => "The name of the node and client to delete, if it differs from the server name.  Only has meaning when used with the '--purge' option."
+        :description => "The name of the node and client to delete, if it differs from the server name. Only has meaning when used with the '--purge' option."
+
+      option :delete_resource_group,
+        :long => "--delete-resource-group",
+        :boolean => true,
+        :default => false,
+        :description => "Deletes corresponding resource group along with Vitual Machine."
 
       # Extracted from Chef::Knife.delete_object, because it has a
       # confirmation step built in... By specifying the '--purge'
@@ -73,7 +79,25 @@ class Chef
           validate_arm_keys!(:azure_resource_group_name)
 
           vm_name = @name_args[0]
-          service.delete_server(locate_config_value(:azure_resource_group_name), vm_name, custom_headers = nil)
+          resource_group_name = locate_config_value(:azure_resource_group_name)
+
+          if locate_config_value(:delete_resource_group)
+            ui.warn "Deleting resource group will delete all the virtual_machines inside it."
+            begin
+              ui.confirm('Do you really want to delete resource group')
+            rescue SystemExit   # Need to handle this as confirming with N/n raises SystemExit exception
+              server = nil      # Cleanup is implicitly performed in other cloud plugins
+              ui.warn "Resource group not deleted. Proceeding for server delete ..."
+              service.delete_server(locate_config_value(:azure_resource_group_name), vm_name)
+              exit
+            end
+
+            ui.info 'Deleting Resource Group '+resource_group_name+' and Virtual Machine '+vm_name+' ..'
+            service.delete_resource_group(locate_config_value(:azure_resource_group_name))
+            ui.warn "Deleted resource_group_name #{resource_group_name} and #{vm_name}"
+          else
+            service.delete_server(locate_config_value(:azure_resource_group_name), vm_name)
+          end
 
           if config[:purge]
             node_to_delete = config[:chef_node_name] || vm_name
