@@ -82,34 +82,50 @@ module Azure
       def list_images
       end
 
-      def list_servers
+      def list_servers(resource_group_name = nil)
         begin
-          promise = compute_management_client.virtual_machines.list_all
+          if resource_group_name.nil?
+            promise = compute_management_client.virtual_machines.list_all
+          else
+            promise = compute_management_client.virtual_machines.list(resource_group_name)
+          end
+
           result = promise.value!
           servers = result.body.value
 
-          cols = ['VM Name', 'Location', 'Provisioning State', 'OS Type']
+          cols = ['VM Name', 'Resource Group Name', 'Location', 'Provisioning State', 'OS Type']
           rows =  []
 
           servers.each do |server|
             rows << server.name.to_s
+            rows << server.id.split('/')[4].downcase
             rows << server.location.to_s
             rows << begin
                              state = server.properties.provisioning_state.to_s.downcase
                              case state
-                             when 'shutting-down','terminated','stopping','stopped'
+                             when 'failed'
                                ui.color(state, :red)
-                             when 'pending'
-                               ui.color(state, :yellow)
+                             when 'succeeded'
+                               ui.color(state, :green)
                              else
-                               ui.color('ready', :green)
+                               ui.color(state, :yellow)
                              end
                            end
             rows << server.properties.storage_profile.os_disk.os_type.to_s
           end
           display_list(ui, cols, rows)
         rescue => error
-          ui.error "#{error.class} and #{error.message}"
+          if error.class == MsRestAzure::AzureOperationError && error.body
+            if error.body['error']['code']
+              ui.error("#{error.body['error']['message']}")
+            else
+              ui.error(error.body)
+            end
+          else
+            ui.error("#{error.message}")
+            ui.error("#{error.backtrace.join("\n")}")
+          end
+          exit
         end
       end
 

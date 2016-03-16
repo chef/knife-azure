@@ -26,13 +26,6 @@ class Chef
 
       banner "knife azurerm server show SERVER (options)"
 
-      option :azure_resource_group_name,
-        :short => "-r RESOURCE_GROUP_NAME",
-        :long => "--azure-resource-group-name RESOURCE_GROUP_NAME",
-        :description => "Required. The Resource Group name that acts as a
-                        container and holds related resources for an
-                        application in a group."
-
       def run
         $stdout.sync = true
         validate_arm_keys!(:azure_resource_group_name)
