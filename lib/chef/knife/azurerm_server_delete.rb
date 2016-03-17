@@ -112,7 +112,7 @@ class Chef
             end
           else
             ui.error("#{error.message}")
-            ui.error("#{error.backtrace.join("\n")}")
+            Chef::Log.debug("#{error.backtrace.join("\n")}")
           end
         end
       end
