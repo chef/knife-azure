@@ -978,5 +978,65 @@ describe Chef::Knife::AzurermServerCreate do
         end
       end
     end
+
+    describe "set_default_image_reference" do
+      it "raises error if both azure_image_os_type and image reference parameters are specified" do
+        @arm_server_instance.config[:azure_image_os_type] = "ubuntu"
+        @arm_server_instance.config[:azure_image_reference_publisher] = "publisher"
+        expect(@arm_server_instance.ui).to receive(:error)
+        expect{@arm_server_instance.send(:set_default_image_reference)}.to raise_error(SystemExit)
+      end
+
+      it "calls validation for azure_image_os_type if azure_image_os_type and image reference parameters are not given" do
+        Chef::Config[:knife].delete(:azure_image_reference_publisher)
+        Chef::Config[:knife].delete(:azure_image_reference_offer)
+        Chef::Config[:knife].delete(:azure_image_reference_sku)
+        expect(@arm_server_instance).to receive(:validate_arm_keys!).with(:azure_image_os_type)
+        expect(@arm_server_instance).to receive(:validate_arm_keys!).with(:azure_image_reference_publisher, :azure_image_reference_offer, :azure_image_reference_sku, :azure_image_reference_version)
+        @arm_server_instance.send(:set_default_image_reference)
+      end
+
+      it "sets default image reference parameters for azure_image_os_type=ubuntu" do
+        @arm_server_instance.config[:azure_image_os_type] = "ubuntu"
+        Chef::Config[:knife].delete(:azure_image_reference_publisher)
+        Chef::Config[:knife].delete(:azure_image_reference_offer)
+        Chef::Config[:knife].delete(:azure_image_reference_sku)
+        @arm_server_instance.send(:set_default_image_reference)
+        expect(@arm_server_instance.config[:azure_image_reference_publisher]).to be == "Canonical"
+        expect(@arm_server_instance.config[:azure_image_reference_offer]).to be == "UbuntuServer"
+        expect(@arm_server_instance.config[:azure_image_reference_sku]).to be == "14.04.2-LTS"
+      end
+
+      it "sets default image reference parameters for azure_image_os_type=centos" do
+        @arm_server_instance.config[:azure_image_os_type] = "centos"
+        Chef::Config[:knife].delete(:azure_image_reference_publisher)
+        Chef::Config[:knife].delete(:azure_image_reference_offer)
+        Chef::Config[:knife].delete(:azure_image_reference_sku)
+        @arm_server_instance.send(:set_default_image_reference)
+        expect(@arm_server_instance.config[:azure_image_reference_publisher]).to be == "OpenLogic"
+        expect(@arm_server_instance.config[:azure_image_reference_offer]).to be == "CentOS"
+        expect(@arm_server_instance.config[:azure_image_reference_sku]).to be == "7.1"
+      end
+
+      it "sets default image reference parameters for azure_image_os_type=windows" do
+        @arm_server_instance.config[:azure_image_os_type] = "windows"
+        Chef::Config[:knife].delete(:azure_image_reference_publisher)
+        Chef::Config[:knife].delete(:azure_image_reference_offer)
+        Chef::Config[:knife].delete(:azure_image_reference_sku)
+        @arm_server_instance.send(:set_default_image_reference)
+        expect(@arm_server_instance.config[:azure_image_reference_publisher]).to be == "MicrosoftWindowsServer"
+        expect(@arm_server_instance.config[:azure_image_reference_offer]).to be == "WindowsServer"
+        expect(@arm_server_instance.config[:azure_image_reference_sku]).to be == "2012-R2-Datacenter"
+      end
+
+      it "throws error if invalid azure_image_os_type is given" do
+        @arm_server_instance.config[:azure_image_os_type] = "abc"
+        Chef::Config[:knife].delete(:azure_image_reference_publisher)
+        Chef::Config[:knife].delete(:azure_image_reference_offer)
+        Chef::Config[:knife].delete(:azure_image_reference_sku)
+        expect(@arm_server_instance.ui).to receive(:error).with("Invalid value of --azure-image-os-type. Accepted values ubuntu|centos|windows")
+        expect{@arm_server_instance.send(:set_default_image_reference)}.to raise_error(SystemExit)
+      end
+    end
   end
 end
