@@ -51,107 +51,107 @@ module QueryAzureMock
     resource_group
   end
 
-  def stub_resource_client
-    resource_client = double("ResourceClient",
+  def stub_resource_management_client
+    resource_management_client = double("ResourceManagementClient",
       :resource_groups => double)
-    allow(resource_client.resource_groups).to receive_message_chain(
+    allow(resource_management_client.resource_groups).to receive_message_chain(
       :create_or_update => 'create_or_update',
       :value! => nil,
       :body => nil
     ).and_return(stub_resource_group_create_response)
-    resource_client
+    resource_management_client
   end
 
-  def stub_compute_client(user_supplied_value)
-    compute_client = double("ComputeClient",
+  def stub_compute_management_client(user_supplied_value)
+    compute_management_client = double("ComputeManagementClient",
       :virtual_machines => double,
       :virtual_machine_extensions => double,
       :virtual_machine_extension_images => double)
-    allow(compute_client.virtual_machines).to receive_message_chain(
+    allow(compute_management_client.virtual_machines).to receive_message_chain(
       :create_or_update => 'create_or_update',
       :value! => nil,
       :body => nil
     ).and_return(stub_virtual_machine_create_response)
-    allow(compute_client.virtual_machine_extensions).to receive_message_chain(
+    allow(compute_management_client.virtual_machine_extensions).to receive_message_chain(
       :create_or_update => 'create_or_update',
       :value! => nil,
       :body => nil
     ).and_return(stub_vm_extension_create_response(user_supplied_value))
-    allow(compute_client.virtual_machine_extension_images).to receive_message_chain(
+    allow(compute_management_client.virtual_machine_extension_images).to receive_message_chain(
       :list_versions,
       :value!,
       :body,
       :last,
       :name
     ).and_return('1210.12.10.100')
-    compute_client
+    compute_management_client
   end
 
-  def stub_storage_client
-    storage_client = double("StorageClient",
+  def stub_storage_management_client
+    storage_management_client = double("StorageManagementClient",
       :storage_accounts => double)
-    allow(storage_client.storage_accounts).to receive_message_chain(
+    allow(storage_management_client.storage_accounts).to receive_message_chain(
       :create => 'create',
       :value! => nil,
       :body => nil).and_return(stub_storage_account_create_response)
-    storage_client
+    storage_management_client
   end
 
-  def stub_network_client(platform)
-    network_client = double("NetworkClient",
+  def stub_network_resource_client(platform)
+    network_resource_client = double("NetworkResourceClient",
       :public_ipaddresses => double,
       :network_security_groups => double,
       :virtual_networks => double,
       :subnets => double,
       :network_interfaces => double,
       :security_rules => double)
-    allow(network_client.public_ipaddresses).to receive_message_chain(
+    allow(network_resource_client.public_ipaddresses).to receive_message_chain(
       :get => 'get',
       :value! => nil,
       :body => nil,
       :properties => nil,
       :ip_address => nil).and_return(stub_vm_public_ip_get_response)
-    allow(network_client.network_security_groups).to receive_message_chain(
+    allow(network_resource_client.network_security_groups).to receive_message_chain(
       :get,
       :value!,
       :body,
       :properties,
       :security_rules).and_return(['default_security_rule'])
     if platform == 'Windows'
-      allow(network_client.network_security_groups.get.value!.body.properties.security_rules[0]).to receive_message_chain(
+      allow(network_resource_client.network_security_groups.get.value!.body.properties.security_rules[0]).to receive_message_chain(
         :properties,
         :destination_port_range).and_return('3389')
     else
-      allow(network_client.network_security_groups.get.value!.body.properties.security_rules[0]).to receive_message_chain(
+      allow(network_resource_client.network_security_groups.get.value!.body.properties.security_rules[0]).to receive_message_chain(
         :properties,
         :destination_port_range).and_return('22')
     end
-    allow(network_client.virtual_networks).to receive_message_chain(
+    allow(network_resource_client.virtual_networks).to receive_message_chain(
       :create_or_update => 'create_or_update',
       :value! => nil,
       :body => nil).and_return(stub_virtual_network_create_response)
-    allow(network_client.subnets).to receive_message_chain(
+    allow(network_resource_client.subnets).to receive_message_chain(
       :create_or_update => 'create_or_update',
       :value! => nil,
       :body => nil).and_return(stub_subnet_create_response)
-    allow(network_client.network_interfaces).to receive_message_chain(
+    allow(network_resource_client.network_interfaces).to receive_message_chain(
       :create_or_update => 'create_or_update',
       :value! => nil,
       :body => nil).and_return(stub_network_interface_create_response)
-    allow(network_client.public_ipaddresses).to receive_message_chain(
+    allow(network_resource_client.public_ipaddresses).to receive_message_chain(
       :create_or_update => 'create_or_update',
       :value! => nil,
       :body => nil).and_return(stub_public_ip_config_create_response)
-    allow(network_client.network_security_groups).to receive_message_chain(
+    allow(network_resource_client.network_security_groups).to receive_message_chain(
       :create_or_update => 'create_or_update',
       :value! => nil,
       :body => nil).and_return(stub_network_security_group_create_response)
-    allow(network_client.security_rules).to receive_message_chain(
+    allow(network_resource_client.security_rules).to receive_message_chain(
       :create_or_update => 'create_or_update',
       :value! => nil,
       :body => nil).and_return(stub_default_security_rule_add_response(platform))
 
-    network_client
+    network_resource_client
   end
 
   def stub_virtual_machine_create_response

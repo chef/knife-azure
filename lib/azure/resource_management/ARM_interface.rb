@@ -235,16 +235,19 @@ module Azure
         resource_management_client.resource_groups.check_existence(resource_group_name).value!.body
       end
 
-      def set_platform(image_reference)
-        if image_reference =~ /WindowsServer.*/
-          @@platform = 'Windows'
-        else
-          @@platform = 'Linux'
+      def platform(image_reference)
+        @platform ||= begin
+          if image_reference =~ /WindowsServer.*/
+            platform = 'Windows'
+          else
+            platform = 'Linux'
+          end
+          platform
         end
       end
 
       def create_server(params = {})
-        set_platform(params[:azure_image_reference_offer])
+        platform(params[:azure_image_reference_offer])
         ## resource group creation
         if resource_group_exist?(params[:azure_resource_group_name])
           Chef::Log.info("Resource Group #{params[:azure_resource_group_name]} already exist. Skipping its creation.")
@@ -281,7 +284,7 @@ module Azure
         vm_details = OpenStruct.new
         vm_details.publicipaddress = vm_public_ip(params)
 
-        if @@platform == 'Windows'
+        if @platform == 'Windows'
           vm_details.rdpport = vm_default_port(params)
         else
           vm_details.sshport = vm_default_port(params)
@@ -338,7 +341,7 @@ module Azure
         os_profile.computer_name = params[:azure_vm_name]
         os_profile.secrets = []
 
-        if @@platform == 'Windows'
+        if @platform == 'Windows'
           windows_config = WindowsConfiguration.new
           windows_config.provision_vmagent = true
           windows_config.enable_automatic_updates = true
@@ -615,7 +618,7 @@ module Azure
         end
 
         security_rules = []
-        if @@platform == 'Windows'
+        if @platform == 'Windows'
           security_rules << add_security_rule('3389', "RDP", 1000, resource_group_name, vm_name, network_security_group)
         else
           security_rules << add_security_rule("22", "SSH", 1000, resource_group_name, vm_name, network_security_group)
@@ -697,16 +700,12 @@ module Azure
       end
 
       def delete_resource_group(resource_group_name)
-
         ui.info 'Resource group deletion takes some time. Please wait ...'
-
         begin
           print '.'
           promise = resource_management_client.resource_groups.delete(resource_group_name)
         end until promise.value!.body.nil?
-
         puts "\n"
-
       end
     end
   end
