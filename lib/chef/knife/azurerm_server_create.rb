@@ -178,7 +178,7 @@ class Chef
           :azure_service_location
         )
 
-        set_default_image_reference
+        set_default_image_reference!
 
         ssh_override_winrm if !is_image_windows?
 
@@ -267,44 +267,48 @@ class Chef
         end
       end
 
-      def set_default_image_reference
-        if locate_config_value(:azure_image_os_type)
-          if (locate_config_value(:azure_image_reference_publisher) || locate_config_value(:azure_image_reference_offer) || locate_config_value(:azure_image_reference_sku))
-            # if azure_image_os_type is given and other image reference parameters are also given,
-            # raise error
-            ui.error("Please specify either --azure-image-os-type OR other image reference parameters i.e.
-              --azure-image-reference-publisher, --azure-image-reference-offer, --azure-image-reference-sku, --azure-image-reference-version.")
-            exit 1
-          else
-            # if azure_image_os_type is given and other image reference parameters are not given,
-            # set default image reference parameters
-            case locate_config_value(:azure_image_os_type)
-            when "ubuntu"
-              config[:azure_image_reference_publisher] = "Canonical"
-              config[:azure_image_reference_offer] = "UbuntuServer"
-              config[:azure_image_reference_sku] = "14.04.2-LTS"
-            when "centos"
-              config[:azure_image_reference_publisher] = "OpenLogic"
-              config[:azure_image_reference_offer] = "CentOS"
-              config[:azure_image_reference_sku] = "7.1"
-            when "windows"
-              config[:azure_image_reference_publisher] = "MicrosoftWindowsServer"
-              config[:azure_image_reference_offer] = "WindowsServer"
-              config[:azure_image_reference_sku] = "2012-R2-Datacenter"
+      def set_default_image_reference!
+        begin
+          if locate_config_value(:azure_image_os_type)
+            if (locate_config_value(:azure_image_reference_publisher) || locate_config_value(:azure_image_reference_offer) || locate_config_value(:azure_image_reference_sku))
+              # if azure_image_os_type is given and other image reference parameters are also given,
+              # raise error
+              raise ArgumentError, 'Please specify either --azure-image-os-type OR other image reference parameters i.e.
+                --azure-image-reference-publisher, --azure-image-reference-offer, --azure-image-reference-sku, --azure-image-reference-version."'
             else
-              ui.error("Invalid value of --azure-image-os-type. Accepted values ubuntu|centos|windows")
-              exit 1
+              # if azure_image_os_type is given and other image reference parameters are not given,
+              # set default image reference parameters
+              case locate_config_value(:azure_image_os_type)
+              when "ubuntu"
+                config[:azure_image_reference_publisher] = "Canonical"
+                config[:azure_image_reference_offer] = "UbuntuServer"
+                config[:azure_image_reference_sku] = "14.04.2-LTS"
+              when "centos"
+                config[:azure_image_reference_publisher] = "OpenLogic"
+                config[:azure_image_reference_offer] = "CentOS"
+                config[:azure_image_reference_sku] = "7.1"
+              when "windows"
+                config[:azure_image_reference_publisher] = "MicrosoftWindowsServer"
+                config[:azure_image_reference_offer] = "WindowsServer"
+                config[:azure_image_reference_sku] = "2012-R2-Datacenter"
+              else
+                raise ArgumentError, 'Invalid value of --azure-image-os-type. Accepted values ubuntu|centos|windows'
+              end
+            end
+          else
+            if (locate_config_value(:azure_image_reference_publisher) && locate_config_value(:azure_image_reference_offer) && locate_config_value(:azure_image_reference_sku) && locate_config_value(:azure_image_reference_version))
+              # if azure_image_os_type is not given and other image reference parameters are given,
+              # do nothing
+            else
+              # if azure_image_os_type is not given and other image reference parameters are also not given,
+              # throw error for azure_image_os_type
+              validate_arm_keys!(:azure_image_os_type)
             end
           end
-        else
-          if (locate_config_value(:azure_image_reference_publisher) && locate_config_value(:azure_image_reference_offer) && locate_config_value(:azure_image_reference_sku) && locate_config_value(:azure_image_reference_version))
-            # if azure_image_os_type is not given and other image reference parameters are given,
-            # do nothing
-          else
-            # if azure_image_os_type is not given and other image reference parameters are also not given,
-            # throw error for azure_image_os_type
-            validate_arm_keys!(:azure_image_os_type)
-          end
+        rescue => error
+          ui.error("#{error.message}")
+          ui.error("#{error.backtrace.join("\n")}")
+          exit
         end
 
         # final verification for image reference parameters
