@@ -123,7 +123,7 @@ module Azure
             end
           else
             ui.error("#{error.message}")
-            ui.error("#{error.backtrace.join("\n")}")
+            Chef::Log.debug("#{error.backtrace.join("\n")}")
           end
           exit
         end
@@ -208,7 +208,7 @@ module Azure
             else
               details << ' -- '
             end
-            
+
             details << ui.color('FQDN', :bold, :cyan)
             unless public_ip_data.nil? or public_ip_data.properties.dns_settings.nil?
               details << public_ip_data.properties.dns_settings.fqdn
