@@ -308,7 +308,7 @@ describe Chef::Knife::AzurermServerCreate do
             :create_vm_extension).exactly(1).and_return(
               stub_vm_extension_create_response('NA'))
           expect(@service).to receive(
-            :get_vm_details).exactly(1).and_return(
+            :vm_details).exactly(1).and_return(
               stub_vm_details)
           @arm_server_instance.run
         end
@@ -364,7 +364,7 @@ describe Chef::Knife::AzurermServerCreate do
             :create_vm_extension).exactly(1).and_return(
               stub_vm_extension_create_response('NA'))
           expect(@service).to receive(
-            :get_vm_details).exactly(1).and_return(
+            :vm_details).exactly(1).and_return(
               stub_vm_details)
           @arm_server_instance.run
         end
@@ -383,8 +383,12 @@ describe Chef::Knife::AzurermServerCreate do
 
     describe "create_resource_group" do
       it "successfully returns resource group create response" do
-        response = @service.create_resource_group(
-          stub_resource_client, @params)
+        # response = @service.create_resource_group(
+        #   stub_resource_client, @params)
+        expect(@service).to receive(:resource_management_client).and_return(stub_resource_management_client)
+        response = @service.create_resource_group(@params)
+
+        # allow(@service).to receive(:create_resource_group).with(@params).and_return(response)
         expect(response.name).to_not be nil
         expect(response.id).to_not be nil
         expect(response.location).to_not be nil
@@ -398,8 +402,10 @@ describe Chef::Knife::AzurermServerCreate do
       end
 
       it "successfully returns virtual machine create response" do
-        response = @service.create_virtual_machine(
-          stub_compute_client('NA'), @params, 'Linux')
+        @platform = "Linux"
+        allow(@service).to receive(:set_platform).and_return("Linux")
+        expect(@service).to receive(:compute_management_client).and_return(stub_compute_management_client('NA'))
+        response = @service.create_virtual_machine(@params)
         expect(response.name).to_not be nil
         expect(response.id).to_not be nil
         expect(response.type).to_not be nil
@@ -423,28 +429,27 @@ describe Chef::Knife::AzurermServerCreate do
         expect(@service).to receive(
           :get_os_disk).and_return(
             stub_os_disk_get_response)
-        response = @service.create_storage_profile(
-          @storage_client, @params)
+        response = @service.create_storage_profile(@params)
         expect(response.image_reference).to_not be nil
         expect(response.os_disk).to_not be nil
         expect(response.data_disks).to be nil
       end
     end
 
-    describe "get_vm_details" do
+    describe "vm_details" do
       context 'for Linux' do
         before do
-          @platform = 'Linux'
+          @service.instance_variable_set(:@platform, "Linux")
         end
 
         it "successfully returns vm details response" do
           expect(@service).to receive(
-            :get_vm_public_ip).and_return(
+            :vm_public_ip).and_return(
               stub_vm_public_ip_get_response)
           expect(@service).to receive(
-            :get_vm_default_port).and_return(
-              stub_vm_default_port_get_response(@platform))
-          response = @service.get_vm_details(@params, @platform)
+            :vm_default_port).and_return(
+              stub_vm_default_port_get_response("Linux"))
+          response = @service.vm_details(stub_virtual_machine_create_response, stub_vm_extension_create_response('NA'), @params)
           expect(response.publicipaddress).to_not be nil
           expect(response.sshport).to be == '22'
         end
@@ -452,38 +457,40 @@ describe Chef::Knife::AzurermServerCreate do
 
       context 'for Windows' do
         before do
-          @platform = 'Windows'
+          @service.instance_variable_set(:@platform, "Windows")
         end
 
         it "successfully returns vm details response" do
           expect(@service).to receive(
-            :get_vm_public_ip).and_return(
+            :vm_public_ip).and_return(
               stub_vm_public_ip_get_response)
           expect(@service).to receive(
-            :get_vm_default_port).and_return(
-              stub_vm_default_port_get_response(@platform))
-          response = @service.get_vm_details(@params, @platform)
+            :vm_default_port).and_return(
+              stub_vm_default_port_get_response("Windows"))
+          response = @service.vm_details(stub_virtual_machine_create_response, stub_vm_extension_create_response('NA'), @params)
           expect(response.publicipaddress).to_not be nil
           expect(response.rdpport).to be == '3389'
         end
       end
     end
 
-    describe "get_vm_public_ip" do
+    describe "vm_public_ip" do
       it "successfully returns vm public ip response" do
-        response = @service.get_vm_public_ip(stub_network_client('Windows'), @params)
+        expect(@service).to receive(:network_resource_client).and_return(stub_network_resource_client('Windows'))
+        response = @service.vm_public_ip(@params)
         expect(response).to be == '1.2.3.4'
       end
     end
 
-    describe "get_vm_default_port" do
+    describe "vm_default_port" do
       context "for Linux" do
         before do
           @platform = 'Linux'
         end
 
         it "successfully returns vm default port response" do
-          response = @service.get_vm_default_port(stub_network_client(@platform), @params)
+          expect(@service).to receive(:network_resource_client).and_return(stub_network_resource_client(@platform))
+          response = @service.vm_default_port(@params)
           expect(response).to be == '22'
         end
       end
@@ -494,7 +501,8 @@ describe Chef::Knife::AzurermServerCreate do
         end
 
         it "successfully returns vm default port response" do
-          response = @service.get_vm_default_port(stub_network_client(@platform), @params)
+          expect(@service).to receive(:network_resource_client).and_return(stub_network_resource_client(@platform))
+          response = @service.vm_default_port(@params)
           expect(response).to be == '3389'
         end
       end
@@ -502,8 +510,8 @@ describe Chef::Knife::AzurermServerCreate do
 
     describe "create_storage_account" do
       it "successfully creates storage account" do
+        expect(@service).to receive(:storage_management_client).and_return(stub_storage_management_client)
         response = @service.create_storage_account(
-          stub_storage_client,
           @params[:azure_storage_account],
           @params[:azure_service_location],
           @params[:azure_storage_account_type],
@@ -552,6 +560,7 @@ describe Chef::Knife::AzurermServerCreate do
 
     describe "create_network_profile" do
       it "successfully returns network profile response" do
+        @platform = 'Linux'
         expect(@service).to receive(
           :create_virtual_network).and_return(
             stub_virtual_network_create_response)
@@ -561,10 +570,7 @@ describe Chef::Knife::AzurermServerCreate do
         expect(@service).to receive(
           :create_network_interface).and_return(
             stub_network_interface_create_response)
-        response = @service.create_network_profile(
-          @network_client,
-          @params,
-          'Linux')
+        response = @service.create_network_profile(@params)
         expect(response.network_interfaces).to_not be nil
         expect(response.network_interfaces).to be_a(Array)
       end
@@ -572,8 +578,8 @@ describe Chef::Knife::AzurermServerCreate do
 
     describe "create_virtual_network" do
       it "successfully creates virtual network" do
+        expect(@service).to receive(:network_resource_client).and_return(stub_network_resource_client('NA'))
         response = @service.create_virtual_network(
-          stub_network_client('NA'),
           @params[:azure_resource_group_name],
           @params[:azure_virtual_network_name],
           @params[:azure_service_location])
@@ -587,8 +593,8 @@ describe Chef::Knife::AzurermServerCreate do
 
     describe "create_subnet" do
       it "successfully creates subnet" do
+        expect(@service).to receive(:network_resource_client).and_return(stub_network_resource_client('NA'))
         response = @service.create_subnet(
-          stub_network_client('NA'),
           @params[:azure_resource_group_name],
           @params[:azure_subnet_name],
           stub_virtual_network_create_response)
@@ -602,6 +608,7 @@ describe Chef::Knife::AzurermServerCreate do
 
     describe "create_network_interface" do
       it "successfully creates network interface" do
+        expect(@service).to receive(:network_resource_client).and_return(stub_network_resource_client('NA'))
         expect(@service).to receive(
           :create_public_ip_config).and_return(
             stub_public_ip_config_create_response)
@@ -609,12 +616,10 @@ describe Chef::Knife::AzurermServerCreate do
           :create_network_security_group).and_return(
             stub_network_security_group_create_response)
         response = @service.create_network_interface(
-          stub_network_client('NA'),
           @params[:azure_resource_group_name],
           @params[:azure_vm_name],
           @params[:azure_service_location],
-          stub_subnet_create_response,
-          'NA')
+          stub_subnet_create_response)
         expect(response.name).to_not be nil
         expect(response.id).to_not be nil
         expect(response.location).to_not be nil
@@ -627,8 +632,8 @@ describe Chef::Knife::AzurermServerCreate do
 
     describe "create_public_ip_config" do
       it "successfully creates public ip configuration" do
+        expect(@service).to receive(:network_resource_client).and_return(stub_network_resource_client('NA'))
         response = @service.create_public_ip_config(
-          stub_network_client('NA'),
           @params[:azure_resource_group_name],
           @params[:azure_vm_name],
           @params[:azure_service_location])
@@ -643,15 +648,15 @@ describe Chef::Knife::AzurermServerCreate do
 
     describe "create_network_security_group" do
       it "successfully creates network security group" do
+        @platform = 'NA'
+        expect(@service).to receive(:network_resource_client).and_return(stub_network_resource_client('NA'))
         expect(@service).to receive(
           :add_security_rule).and_return(
             stub_default_security_rule_add_response('NA'))
         response = @service.create_network_security_group(
-          stub_network_client('NA'),
           @params[:azure_resource_group_name],
           @params[:azure_vm_name],
-          @params[:azure_service_location],
-          'NA')
+          @params[:azure_service_location])
         expect(response.name).to_not be nil
         expect(response.id).to_not be nil
         expect(response.location).to_not be nil
@@ -669,11 +674,11 @@ describe Chef::Knife::AzurermServerCreate do
         end
 
         it "successfully adds default security rule" do
+          expect(@service).to receive(:network_resource_client).and_return(stub_network_resource_client(@platform))
           response = @service.add_security_rule(
             @params[:ssh_port],
             "Port desc",
             "1000",
-            stub_network_client(@platform),
             @params[:azure_resource_group_name],
             @params[:azure_vm_name],
             stub_network_security_group_create_response)
@@ -699,11 +704,11 @@ describe Chef::Knife::AzurermServerCreate do
         end
 
         it "successfully adds default security rule" do
+          expect(@service).to receive(:network_resource_client).and_return(stub_network_resource_client(@platform))
           response = @service.add_security_rule(
             @params[:rdp_port],
             "Port desc",
             "1000",
-            stub_network_client(@platform),
             @params[:azure_resource_group_name],
             @params[:azure_vm_name],
             stub_network_security_group_create_response)
@@ -727,10 +732,9 @@ describe Chef::Knife::AzurermServerCreate do
     describe "create_vm_extension" do
       context "when user has supplied chef extension version value" do
         it "successfully creates virtual machine extension with the user supplied version value" do
+          expect(@service).to receive(:compute_management_client).and_return(stub_compute_management_client('yes'))
           expect(@service).to_not receive(:get_latest_chef_extension_version)
-          response = @service.create_vm_extension(
-            stub_compute_client('yes'),
-            @params)
+          response = @service.create_vm_extension(@params)
           expect(response.name).to be == 'test-vm-ext'
           expect(response.id).to_not be nil
           expect(response.type).to be == 'Microsoft.Compute/virtualMachines/extensions'
@@ -750,9 +754,8 @@ describe Chef::Knife::AzurermServerCreate do
 
         it "successfully creates virtual machine extension with the latest version" do
           expect(@service).to receive(:get_latest_chef_extension_version)
-          response = @service.create_vm_extension(
-            stub_compute_client('no'),
-            @params)
+          expect(@service).to receive(:compute_management_client).and_return(stub_compute_management_client('no'))
+          response = @service.create_vm_extension(@params)
           expect(response.name).to be == 'test-vm-ext'
           expect(response.id).to_not be nil
           expect(response.type).to be == 'Microsoft.Compute/virtualMachines/extensions'
@@ -768,8 +771,8 @@ describe Chef::Knife::AzurermServerCreate do
 
     describe "get_latest_chef_extension_version" do
       it "successfully returns latest Chef Extension version" do
-        response = @service.get_latest_chef_extension_version(
-          stub_compute_client('NA'), @params)
+        expect(@service).to receive(:compute_management_client).and_return(stub_compute_management_client('NA'))
+        response = @service.get_latest_chef_extension_version(@params)
         expect(response).to be == '1210.*'
       end
     end
