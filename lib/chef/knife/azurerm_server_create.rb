@@ -109,29 +109,13 @@ class Chef
         :description => "Optional. Specifies how the virtual machine should be created. options: 'fromImage' or 'attach' or 'empty'.",
         :default => 'fromImage'
 
-      option :azure_image_reference_publisher,
-        :long => "--azure-image-reference-publisher PUBLISHER_NAME",
-        :description => "Optional. Specifies the publisher of the image used to create the virtual machine.
-                          eg. OpenLogic, Canonical, MicrosoftWindowsServer"
-
-      option :azure_image_reference_offer,
-        :long => "--azure-image-reference-offer OFFER",
-        :description => "Optional. Specifies the offer of the image used to create the virtual machine.
-                          eg. CentOS, UbuntuServer, WindowsServer"
+      option :azure_image_os_type,
+        :long => "--azure-image-os-type OSTYPE",
+        :description => "Required. Specifies the image OS Type for which server needs to be created. Accepted values ubuntu|centos|windows"
 
       option :azure_image_reference_sku,
         :long => "--azure-image-reference-sku SKU",
         :description => "Optional. Specifies the SKU of the image used to create the virtual machine."
-
-      option :azure_image_reference_version,
-        :long => "--azure-image-reference-version VERSION",
-        :description => "Optional. Specifies the version of the image used to create the virtual machine.
-                          Default value is 'latest'",
-        :default => 'latest'
-
-      option :azure_image_os_type,
-        :long => "--azure-image-os-type OSTYPE",
-        :description => "Optional. Specifies the image OS Type for which server needs to be created. Accepted values ubuntu|centos|windows"
 
       option :azure_vm_size,
         :short => "-z SIZE",
@@ -270,40 +254,26 @@ class Chef
       def set_default_image_reference!
         begin
           if locate_config_value(:azure_image_os_type)
-            if (locate_config_value(:azure_image_reference_publisher) || locate_config_value(:azure_image_reference_offer) || locate_config_value(:azure_image_reference_sku))
-              # if azure_image_os_type is given and other image reference parameters are also given,
-              # raise error
-              raise ArgumentError, 'Please specify either --azure-image-os-type OR other image reference parameters i.e.
-                --azure-image-reference-publisher, --azure-image-reference-offer, --azure-image-reference-sku, --azure-image-reference-version."'
+            config[:azure_image_reference_version] = 'latest'
+            case locate_config_value(:azure_image_os_type)
+            when "ubuntu"
+              config[:azure_image_reference_publisher] = "Canonical"
+              config[:azure_image_reference_offer] = "UbuntuServer"
+              config[:azure_image_reference_sku] = locate_config_value(:azure_image_reference_sku) ? locate_config_value(:azure_image_reference_sku) : "14.04.2-LTS"
+            when "centos"
+              config[:azure_image_reference_publisher] = "OpenLogic"
+              config[:azure_image_reference_offer] = "CentOS"
+              config[:azure_image_reference_sku] = locate_config_value(:azure_image_reference_sku) ? locate_config_value(:azure_image_reference_sku) : "7.1"
+            when "windows"
+              config[:azure_image_reference_publisher] = "MicrosoftWindowsServer"
+              config[:azure_image_reference_offer] = "WindowsServer"
+              config[:azure_image_reference_sku] = locate_config_value(:azure_image_reference_sku) ? locate_config_value(:azure_image_reference_sku) : "2012-R2-Datacenter"
             else
-              # if azure_image_os_type is given and other image reference parameters are not given,
-              # set default image reference parameters
-              case locate_config_value(:azure_image_os_type)
-              when "ubuntu"
-                config[:azure_image_reference_publisher] = "Canonical"
-                config[:azure_image_reference_offer] = "UbuntuServer"
-                config[:azure_image_reference_sku] = "14.04.2-LTS"
-              when "centos"
-                config[:azure_image_reference_publisher] = "OpenLogic"
-                config[:azure_image_reference_offer] = "CentOS"
-                config[:azure_image_reference_sku] = "7.1"
-              when "windows"
-                config[:azure_image_reference_publisher] = "MicrosoftWindowsServer"
-                config[:azure_image_reference_offer] = "WindowsServer"
-                config[:azure_image_reference_sku] = "2012-R2-Datacenter"
-              else
-                raise ArgumentError, 'Invalid value of --azure-image-os-type. Accepted values ubuntu|centos|windows'
-              end
+              raise ArgumentError, 'Invalid value of --azure-image-os-type. Accepted values ubuntu|centos|windows'
             end
           else
-            if (locate_config_value(:azure_image_reference_publisher) && locate_config_value(:azure_image_reference_offer) && locate_config_value(:azure_image_reference_sku) && locate_config_value(:azure_image_reference_version))
-              # if azure_image_os_type is not given and other image reference parameters are given,
-              # do nothing
-            else
-              # if azure_image_os_type is not given and other image reference parameters are also not given,
-              # throw error for azure_image_os_type
-              validate_arm_keys!(:azure_image_os_type)
-            end
+            # if azure_image_os_type is not given, throw error for it
+            validate_arm_keys!(:azure_image_os_type)
           end
         rescue => error
           ui.error("#{error.message}")
