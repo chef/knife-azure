@@ -140,13 +140,13 @@ class Chef
         :default => 'Small',
         :proc => Proc.new { |si| Chef::Config[:knife][:azure_vm_size] = si }
 
-      option :azure_network_name,
-        :long => "--azure-network-name NETWORK_NAME",
-        :description => "Optional. Specifies the network of virtual machine"
+      option :azure_vnet_name,
+        :long => "--azure-vnet-name VNET_NAME",
+        :description => "Optional. Specifies the virtual network name"
 
-      option :azure_subnet_name,
-        :long => "--azure-subnet-name SUBNET_NAME",
-        :description => "Optional. Specifies the subnet of virtual machine"
+      option :azure_vnet_subnet_name,
+        :long => "--azure-vnet-subnet-name VNET_SUBNET_NAME",
+        :description => "Optional. Specifies the virtual network subnet name."
 
       option :identity_file,
         :long => "--identity-file FILENAME",
@@ -168,6 +168,23 @@ class Chef
         :long => "--cert-path PATH",
         :description => "SSL Certificate Path"
 
+      # option :vnet_name,
+      #   :long => "--vnet-name VNET_NAME",
+      #   :description => "the virtual network name
+      #     If this is an existing vnet then it must exists under the current resource group identified by resource-group
+      #     If this is an existing vnet then vnet-subnet-name is required
+      #     If no subnet exists with name vnet-subnet-name then a new subnet will be created
+      #     To create new subnet - vnet-subnet-address-prefix is required
+      #     A new vnet will be created if no vnet exists with name vnet-name in the current resource group
+      #     To create new vnet - vnet-address-prefix, vnet-subnet-name and vnet-subnet-address-prefix are required"
+
+      # option :vnet_subnet_name,
+      #   :long => "--vnet-subnet-name VNET_SUBNET_NAME",
+      #   :description => "the virtual network subnet name"
+
+      option :vnet_subnet_address_prefix,
+        :long => "--vnet-subnet-address-prefix VNET_SUBNET_ADDRESS_PREFIX",
+        :description => "the virtual network subnet address prefix in IPv4/CIDR format"
 
       def run
         $stdout.sync = true
@@ -177,6 +194,8 @@ class Chef
           :azure_vm_name,
           :azure_service_location
         )
+
+        validate_params!
 
         set_default_image_reference!
 
@@ -218,11 +237,12 @@ class Chef
           :azure_image_reference_sku => locate_config_value(:azure_image_reference_sku),
           :azure_image_reference_version => locate_config_value(:azure_image_reference_version),
           :winrm_user => locate_config_value(:winrm_user),
-          :azure_network_name => locate_config_value(:azure_network_name),
-          :azure_subnet_name => locate_config_value(:azure_subnet_name),
+          :azure_vnet_name => locate_config_value(:azure_vnet_name),
+          :azure_vnet_subnet_name => locate_config_value(:azure_vnet_subnet_name),
           :ssl_cert_fingerprint => locate_config_value(:thumbprint),
           :cert_path => locate_config_value(:cert_path),
-          :cert_password => locate_config_value(:cert_passphrase)
+          :cert_password => locate_config_value(:cert_passphrase),
+          :vnet_subnet_address_prefix => locate_config_value(:vnet_subnet_address_prefix)
         }
 
         server_def[:azure_storage_account] = locate_config_value(:azure_vm_name) if server_def[:azure_storage_account].nil?
@@ -250,6 +270,16 @@ class Chef
         end
 
         server_def
+      end
+
+      def validate_params!
+        if locate_config_value(:azure_vnet_name) && !locate_config_value(:azure_vnet_subnet_name)
+          raise ArgumentError, "If this is an existing vnet then vnet-subnet-name is required."
+        end
+
+        if locate_config_value(:azure_vnet_subnet_name) && !locate_config_value(:azure_vnet_name)
+          raise ArgumentError, "Provide vnet subnet name option along with vnet name."
+        end
       end
 
       private

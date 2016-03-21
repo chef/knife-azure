@@ -459,9 +459,10 @@ module Azure
         Chef::Log.info("Creating VirtualNetwork....")
         vnet = create_virtual_network(
           params[:azure_resource_group_name],
-          params[:azure_network_name],
+          params[:azure_vnet_name],
           params[:azure_service_location]
         )
+
         Chef::Log.info("VirtualNetwork creation successfull.")
         Chef::Log.info("Virtual Network name is: #{vnet.name}")
         Chef::Log.info("Virtual Network ID is: #{vnet.id}")
@@ -469,9 +470,10 @@ module Azure
         Chef::Log.info("Creating Subnet....")
         sbn = create_subnet(
           params[:azure_resource_group_name],
-          params[:azure_subnet_name],
+          params[:azure_vnet_subnet_name],
           vnet
         )
+
         Chef::Log.info("Subnet creation successfull.")
         Chef::Log.info("Subnet name is: #{sbn.name}")
         Chef::Log.info("Subnet ID is: #{sbn.id}")
@@ -493,42 +495,52 @@ module Azure
       end
 
       def create_virtual_network(resource_group_name, virtual_network_name, service_location)
-        address_space = AddressSpace.new
-        address_space.address_prefixes = ['10.0.0.0/16']
+        promise = network_resource_client.virtual_networks.get(resource_group_name, virtual_network_name)
 
-        vnet_props = VirtualNetworkPropertiesFormat.new
-        vnet_props.address_space = address_space
+        if promise.value!.body
+          vnet = promise.value!.body
+        else
+          address_space = AddressSpace.new
+          address_space.address_prefixes = ['10.0.0.0/16']
 
-        vnet_params = VirtualNetwork.new
-        vnet_params.name = virtual_network_name
-        vnet_params.location = service_location
-        vnet_params.properties = vnet_props
+          vnet_props = VirtualNetworkPropertiesFormat.new
+          vnet_props.address_space = address_space
 
-        begin
-          vnet = network_resource_client.virtual_networks.create_or_update(resource_group_name, vnet_params.name, vnet_params).value!.body
-        rescue Exception => e
-          Chef::Log.error("Failed to create the Virtual Network -- exception being rescued: #{e.to_s}")
-          backtrace_message = "#{e.class}: #{e}\n#{e.backtrace.join("\n")}"
-          Chef::Log.debug("#{backtrace_message}")
+          vnet_params = VirtualNetwork.new
+          vnet_params.name = virtual_network_name
+          vnet_params.location = service_location
+          vnet_params.properties = vnet_props
+
+          begin
+            vnet = network_resource_client.virtual_networks.create_or_update(resource_group_name, vnet_params.name, vnet_params).value!.body
+          rescue Exception => e
+            Chef::Log.error("Failed to create the Virtual Network -- exception being rescued: #{e.to_s}")
+            backtrace_message = "#{e.class}: #{e}\n#{e.backtrace.join("\n")}"
+            Chef::Log.debug("#{backtrace_message}")
+          end
         end
-
         vnet
       end
 
       def create_subnet(resource_group_name, subnet_name, virtual_network)
-        sbn_prop = SubnetPropertiesFormat.new
-        sbn_prop.address_prefix = '10.0.1.0/24'
+        promise = network_resource_client.subnets.get(resource_group_name, virtual_network.name, subnet_name)
+        if promise.value!.body
+          sbn = promise.value.body
+        else
+          sbn_prop = SubnetPropertiesFormat.new
+          sbn_prop.address_prefix = '10.0.1.0/24'
 
-        sbn_params = Subnet.new
-        sbn_params.name = subnet_name
-        sbn_params.properties = sbn_prop
+          sbn_params = Subnet.new
+          sbn_params.name = subnet_name
+          sbn_params.properties = sbn_prop
 
-        begin
-          sbn = network_resource_client.subnets.create_or_update(resource_group_name, virtual_network.name, sbn_params.name, sbn_params).value!.body
-        rescue Exception => e
-          Chef::Log.error("Failed to create the Subnet -- exception being rescued: #{e.to_s}")
-          backtrace_message = "#{e.class}: #{e}\n#{e.backtrace.join("\n")}"
-          Chef::Log.debug("#{backtrace_message}")
+          begin
+            sbn = network_resource_client.subnets.create_or_update(resource_group_name, virtual_network.name, sbn_params.name, sbn_params).value!.body
+          rescue Exception => e
+            Chef::Log.error("Failed to create the Subnet -- exception being rescued: #{e.to_s}")
+            backtrace_message = "#{e.class}: #{e}\n#{e.backtrace.join("\n")}"
+            Chef::Log.debug("#{backtrace_message}")
+          end
         end
 
         sbn
