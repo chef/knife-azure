@@ -982,11 +982,15 @@ describe Chef::Knife::AzurermServerCreate do
   end
 
   describe "set_default_image_reference" do
-    it "raises error and exits if azure_image_os_type is not specified" do
-      Chef::Config[:knife].delete(:azure_image_os_type)
-      @arm_server_instance.config.delete(:azure_image_os_type)
-      expect(@arm_server_instance.ui).to receive(:error)
-      expect{@arm_server_instance.send(:set_default_image_reference!)}.to raise_error(SystemExit)
+    it "calls validation for all 4 image reference parameters when os_type without sku is specified by user" do
+      @arm_server_instance.config[:azure_image_os_type] = "ubuntu"
+      expect(@arm_server_instance).to receive(:validate_arm_keys!).with(
+        :azure_image_reference_publisher,
+        :azure_image_reference_offer,
+        :azure_image_reference_sku,
+        :azure_image_reference_version)
+      expect(@arm_server_instance.ui).to_not receive(:error)
+      @arm_server_instance.send(:set_default_image_reference!)
     end
 
     it "calls validation for all 4 image reference parameters when os_type with sku is specified by user" do
@@ -1001,16 +1005,41 @@ describe Chef::Knife::AzurermServerCreate do
       @arm_server_instance.send(:set_default_image_reference!)
     end
 
-    it "calls validation for all 4 image reference parameters when os_type without sku is specified by user" do
-      @arm_server_instance.config[:azure_image_os_type] = "ubuntu"
-      @arm_server_instance.config.delete(:azure_image_reference_sku)
-      expect(@arm_server_instance).to receive(:validate_arm_keys!).with(
+    it "validate_arm_keys! raises error and exits if azure_image_os_type is not specified" do
+      @arm_server_instance.config.delete(:azure_image_os_type)
+      expect(@arm_server_instance.ui).to receive(:error)
+      expect{@arm_server_instance.validate_arm_keys!(
+        :azure_image_os_type)}.to raise_error(SystemExit)
+    end
+
+    it "validate_arm_keys! raises error and exits if image reference parameters are not specified" do
+      expect(@arm_server_instance.ui).to receive(:error).thrice
+      expect{@arm_server_instance.validate_arm_keys!(
         :azure_image_reference_publisher,
         :azure_image_reference_offer,
         :azure_image_reference_sku,
-        :azure_image_reference_version)
-      expect(@arm_server_instance.ui).to_not receive(:error)
+        :azure_image_reference_version)}.to raise_error(SystemExit)
+    end
+
+    it "calls validation for azure_image_os_type if azure_image_os_type and other image reference parameters are not given" do
+      @arm_server_instance.config.delete(:azure_image_os_type)
+      expect(@arm_server_instance).to receive(
+        :validate_arm_keys!).with(
+          :azure_image_os_type).and_raise(SystemExit)
       @arm_server_instance.send(:set_default_image_reference!)
+    end
+
+    it "raises error and exits if azure_image_os_type or other image reference parameters are not specified" do
+      @arm_server_instance.config.delete(:azure_image_os_type)
+      expect(@arm_server_instance.ui).to receive(:error)
+      expect{@arm_server_instance.send(:set_default_image_reference!)}.to raise_error(SystemExit)
+    end
+
+    it "raises error and exits if both azure_image_os_type and other image reference parameters like publisher or offer are specified" do
+      @arm_server_instance.config[:azure_image_os_type] = "ubuntu"
+      @arm_server_instance.config[:azure_image_reference_publisher] = "azure_image_reference_publisher"
+      expect(@arm_server_instance.ui).to receive(:error)
+      expect{@arm_server_instance.send(:set_default_image_reference!)}.to raise_error(SystemExit)
     end
 
     it "sets default image reference parameters for azure_image_os_type=ubuntu" do
@@ -1019,16 +1048,17 @@ describe Chef::Knife::AzurermServerCreate do
       expect(@arm_server_instance.config[:azure_image_reference_publisher]).to be == "Canonical"
       expect(@arm_server_instance.config[:azure_image_reference_offer]).to be == "UbuntuServer"
       expect(@arm_server_instance.config[:azure_image_reference_sku]).to be == "14.04.2-LTS"
-      expect(@arm_server_instance.config[:azure_image_reference_version]).to be == 'latest'
+      expect(@arm_server_instance.default_config[:azure_image_reference_version]).to be == 'latest'
     end
 
     it "sets default image reference parameters for azure_image_os_type=centos" do
       @arm_server_instance.config[:azure_image_os_type] = "centos"
+      @arm_server_instance.config[:azure_image_reference_version] = "6.5"
       @arm_server_instance.send(:set_default_image_reference!)
       expect(@arm_server_instance.config[:azure_image_reference_publisher]).to be == "OpenLogic"
       expect(@arm_server_instance.config[:azure_image_reference_offer]).to be == "CentOS"
       expect(@arm_server_instance.config[:azure_image_reference_sku]).to be == "7.1"
-      expect(@arm_server_instance.config[:azure_image_reference_version]).to be == 'latest'
+      expect(@arm_server_instance.config[:azure_image_reference_version]).to be == '6.5'
     end
 
     it "sets default image reference parameters for azure_image_os_type=windows" do
@@ -1037,7 +1067,7 @@ describe Chef::Knife::AzurermServerCreate do
       expect(@arm_server_instance.config[:azure_image_reference_publisher]).to be == "MicrosoftWindowsServer"
       expect(@arm_server_instance.config[:azure_image_reference_offer]).to be == "WindowsServer"
       expect(@arm_server_instance.config[:azure_image_reference_sku]).to be == "2012-R2-Datacenter"
-      expect(@arm_server_instance.config[:azure_image_reference_version]).to be == 'latest'
+      expect(@arm_server_instance.default_config[:azure_image_reference_version]).to be == 'latest'
     end
 
     it "overrides sku value for os_type when both azure_image_os_type and azure_image_reference_sku are given" do
@@ -1047,14 +1077,41 @@ describe Chef::Knife::AzurermServerCreate do
       expect(@arm_server_instance.config[:azure_image_reference_publisher]).to be == "MicrosoftWindowsServer"
       expect(@arm_server_instance.config[:azure_image_reference_offer]).to be == "WindowsServer"
       expect(@arm_server_instance.config[:azure_image_reference_sku]).to be == "2008-R2-SP1"
-      expect(@arm_server_instance.config[:azure_image_reference_version]).to be == 'latest'
+      expect(@arm_server_instance.default_config[:azure_image_reference_version]).to be == 'latest'
+    end
+
+    it "uses all 4 user supplied values for image reference parameters when os_type is not given" do
+      @arm_server_instance.config.delete(:azure_image_os_type)
+      @arm_server_instance.config[:azure_image_reference_publisher] = "OpenLogic"
+      @arm_server_instance.config[:azure_image_reference_offer] = "CentOS"
+      @arm_server_instance.config[:azure_image_reference_sku] = "6.7"
+      @arm_server_instance.config[:azure_image_reference_version] = "6.7.20150815"
+      @arm_server_instance.send(:set_default_image_reference!)
+      expect(@arm_server_instance.config[:azure_image_reference_publisher]).to be == "OpenLogic"
+      expect(@arm_server_instance.config[:azure_image_reference_offer]).to be == "CentOS"
+      expect(@arm_server_instance.config[:azure_image_reference_sku]).to be == "6.7"
+      expect(@arm_server_instance.config[:azure_image_reference_version]).to be == "6.7.20150815"
+    end
+
+    it "uses default value for version when other 3 image reference parameters are given by user except os_type" do
+      @arm_server_instance.config.delete(:azure_image_os_type)
+      @arm_server_instance.config.delete(:azure_image_reference_version)
+      @arm_server_instance.config[:azure_image_reference_publisher] = "Canonical"
+      @arm_server_instance.config[:azure_image_reference_offer] = "UbuntuServer"
+      @arm_server_instance.config[:azure_image_reference_sku] = "12.04.5-LTS"
+      @arm_server_instance.send(:set_default_image_reference!)
+      expect(@arm_server_instance.config[:azure_image_reference_publisher]).to be == "Canonical"
+      expect(@arm_server_instance.config[:azure_image_reference_offer]).to be == "UbuntuServer"
+      expect(@arm_server_instance.config[:azure_image_reference_sku]).to be == "12.04.5-LTS"
+      expect(@arm_server_instance.default_config[:azure_image_reference_version]).to be == "latest"
     end
 
     it "throws error if invalid azure_image_os_type is given" do
       @arm_server_instance.config[:azure_image_os_type] = "abc"
-      Chef::Config[:knife].delete(:azure_image_reference_publisher)
-      Chef::Config[:knife].delete(:azure_image_reference_offer)
-      Chef::Config[:knife].delete(:azure_image_reference_sku)
+      @arm_server_instance.config.delete(:azure_image_reference_publisher)
+      @arm_server_instance.config.delete(:azure_image_reference_offer)
+      @arm_server_instance.config.delete(:azure_image_reference_sku)
+      @arm_server_instance.config.delete(:azure_image_reference_version)
       expect(@arm_server_instance.ui).to receive(:error)
       expect{@arm_server_instance.send(:set_default_image_reference!)}.to raise_error(SystemExit)
     end
