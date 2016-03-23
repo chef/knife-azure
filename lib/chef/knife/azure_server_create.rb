@@ -753,8 +753,10 @@ class Chef
         bootstrap.config[:environment] = locate_config_value(:environment)
         # may be needed for vpc_mode
         bootstrap.config[:host_key_verify] = config[:host_key_verify]
-        bootstrap.config[:secret] = locate_config_value(:secret)
-        bootstrap.config[:secret_file] = locate_config_value(:secret_file)
+        Chef::Config[:knife][:secret] = config[:encrypted_data_bag_secret] if config[:encrypted_data_bag_secret]
+        Chef::Config[:knife][:secret_file] = config[:encrypted_data_bag_secret_file] if config[:encrypted_data_bag_secret_file]
+        bootstrap.config[:secret] = locate_config_value(:secret) || locate_config_value(:encrypted_data_bag_secret)
+        bootstrap.config[:secret_file] = locate_config_value(:secret_file) || locate_config_value(:encrypted_data_bag_secret_file)
         bootstrap.config[:bootstrap_install_command] = locate_config_value(:bootstrap_install_command)
         bootstrap.config[:bootstrap_wget_options] = locate_config_value(:bootstrap_wget_options)
         bootstrap.config[:bootstrap_curl_options] = locate_config_value(:bootstrap_curl_options)
