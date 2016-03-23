@@ -20,8 +20,11 @@
 
 require 'chef/knife/azure_base'
 require 'chef/knife/winrm_base'
-require 'chef/knife/bootstrap_windows_base'
+#require 'chef/knife/bootstrap_windows_base'
+#require 'securerandom'
+
 require 'securerandom'
+require 'chef/knife/bootstrap/bootstrapper'
 
 class Chef
   class Knife
@@ -29,7 +32,9 @@ class Chef
 
       include Knife::AzureBase
       include Knife::WinrmBase
-      include Knife::BootstrapWindowsBase
+#      include Knife::BootstrapWindowsBase
+
+       include Knife::Bootstrap::Bootstrapper
 
       deps do
         require 'readline'
@@ -39,12 +44,12 @@ class Chef
         require 'chef/knife/core/windows_bootstrap_context'
         Chef::Knife::Bootstrap.load_deps
       end
-
-      def load_winrm_deps
-        require 'winrm'
-        require 'chef/knife/winrm'
-        require 'chef/knife/bootstrap_windows_winrm'
-      end
+#
+#      def load_winrm_deps
+#        require 'winrm'
+#        require 'chef/knife/winrm'
+#        require 'chef/knife/bootstrap_windows_winrm'
+#      end
 
       banner "knife azure server create (options)"
 
