@@ -99,6 +99,14 @@ class Chef
               :default => false,
               :description => "Determines whether Chef Client will be un-installed from the VM or not. The default value is false."
 
+            option :secret,
+              :short => "-s SECRET",
+              :long  => "--secret ",
+              :description => "The secret key to use to encrypt data bag item values.  Can also be defaulted in your config with the key 'secret'"
+
+            option :secret_file,
+              :long => "--secret-file SECRET_FILE",
+              :description => "A file containing the secret key to use to encrypt data bag item values.  Can also be defaulted in your config with the key 'secret_file'"
   	  	  end
   	  	end
   	  end

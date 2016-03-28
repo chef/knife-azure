@@ -259,7 +259,13 @@ class Chef
           pub_config[:bootstrap_options] = {}
           pub_config[:bootstrap_options][:environment] = locate_config_value(:environment) if locate_config_value(:environment)
           pub_config[:bootstrap_options][:chef_node_name] = locate_config_value(:chef_node_name) if locate_config_value(:chef_node_name)
-          pub_config[:bootstrap_options][:encrypted_data_bag_secret] = locate_config_value(:encrypted_data_bag_secret) if locate_config_value(:encrypted_data_bag_secret)
+
+          if ( locate_config_value(:secret_file) || locate_config_value(:encrypted_data_bag_secret_file) ) && ( !locate_config_value(:secret) || !locate_config_value(:encrypted_data_bag_secret) )
+            pub_config[:bootstrap_options][:encrypted_data_bag_secret] = Chef::EncryptedDataBagItem.load_secret(config[:secret_file])
+          elsif locate_config_value(:encrypted_data_bag_secret) || locate_config_value(:secret)
+            pub_config[:bootstrap_options][:encrypted_data_bag_secret] = locate_config_value(:encrypted_data_bag_secret) || locate_config_value(:secret)
+          end
+
           pub_config[:bootstrap_options][:chef_server_url] = Chef::Config[:chef_server_url] if Chef::Config[:chef_server_url]
           pub_config[:bootstrap_options][:validation_client_name] = Chef::Config[:validation_client_name] if Chef::Config[:validation_client_name]
           pub_config[:bootstrap_options][:node_verify_api_cert] = locate_config_value(:node_verify_api_cert) ? "true" : "false" if config.key?(:node_verify_api_cert)
