@@ -270,27 +270,27 @@ class Chef
       def set_default_image_reference!
         begin
           if locate_config_value(:azure_image_os_type)
-            if (locate_config_value(:azure_image_reference_publisher) || locate_config_value(:azure_image_reference_offer) || locate_config_value(:azure_image_reference_sku))
-              # if azure_image_os_type is given and other image reference parameters are also given,
+            if (locate_config_value(:azure_image_reference_publisher) || locate_config_value(:azure_image_reference_offer))
+              # if azure_image_os_type is given and any of the other image reference parameters like publisher or offer are also given,
               # raise error
-              raise ArgumentError, 'Please specify either --azure-image-os-type OR other image reference parameters i.e.
+              raise ArgumentError, 'Please specify either --azure-image-os-type OR --azure-image-os-type with --azure-image-reference-sku or 4 image reference parameters i.e.
                 --azure-image-reference-publisher, --azure-image-reference-offer, --azure-image-reference-sku, --azure-image-reference-version."'
             else
-              # if azure_image_os_type is given and other image reference parameters are not given,
+              ## if azure_image_os_type is given (with or without azure-image-reference-sku) and other image reference parameters are not given,
               # set default image reference parameters
               case locate_config_value(:azure_image_os_type)
               when "ubuntu"
                 config[:azure_image_reference_publisher] = "Canonical"
                 config[:azure_image_reference_offer] = "UbuntuServer"
-                config[:azure_image_reference_sku] = "14.04.2-LTS"
+                config[:azure_image_reference_sku] = locate_config_value(:azure_image_reference_sku) ? locate_config_value(:azure_image_reference_sku) : "14.04.2-LTS"
               when "centos"
                 config[:azure_image_reference_publisher] = "OpenLogic"
                 config[:azure_image_reference_offer] = "CentOS"
-                config[:azure_image_reference_sku] = "7.1"
+                config[:azure_image_reference_sku] = locate_config_value(:azure_image_reference_sku) ? locate_config_value(:azure_image_reference_sku) : "7.1"
               when "windows"
                 config[:azure_image_reference_publisher] = "MicrosoftWindowsServer"
                 config[:azure_image_reference_offer] = "WindowsServer"
-                config[:azure_image_reference_sku] = "2012-R2-Datacenter"
+                config[:azure_image_reference_sku] = locate_config_value(:azure_image_reference_sku) ? locate_config_value(:azure_image_reference_sku) : "2012-R2-Datacenter"
               else
                 raise ArgumentError, 'Invalid value of --azure-image-os-type. Accepted values ubuntu|centos|windows'
               end

@@ -1,5 +1,4 @@
 require File.expand_path(File.dirname(__FILE__) + '/../spec_helper')
-require 'pry'
 
 module QueryAzureMock
   include AzureUtility
@@ -30,10 +29,6 @@ module QueryAzureMock
         azure_resource_group_name: 'test-rgrp',
         azure_vm_name: 'test-vm',
         azure_service_location: 'West Europe',
-        azure_image_reference_publisher: 'azure_image_reference_publisher',
-        azure_image_reference_offer: 'azure_image_reference_offer',
-        azure_image_reference_sku: 'azure_image_reference_sku',
-        azure_image_reference_version: 'azure_image_reference_version',
         ssh_user: 'test-user',
         validation_key: '/tmp/validation_key'
       }.each do |key, value|
