@@ -262,8 +262,8 @@ class Chef
 
           if ( locate_config_value(:secret_file) || locate_config_value(:encrypted_data_bag_secret_file) ) && ( !locate_config_value(:secret) || !locate_config_value(:encrypted_data_bag_secret) )
             pub_config[:bootstrap_options][:encrypted_data_bag_secret] = Chef::EncryptedDataBagItem.load_secret(config[:secret_file])
-          else
-            pub_config[:bootstrap_options][:encrypted_data_bag_secret] = locate_config_value(:encrypted_data_bag_secret) || locate_config_value(:secret) if locate_config_value(:encrypted_data_bag_secret) || locate_config_value(:secret)
+          elsif locate_config_value(:encrypted_data_bag_secret) || locate_config_value(:secret)
+            pub_config[:bootstrap_options][:encrypted_data_bag_secret] = locate_config_value(:encrypted_data_bag_secret) || locate_config_value(:secret)
           end
 
           pub_config[:bootstrap_options][:chef_server_url] = Chef::Config[:chef_server_url] if Chef::Config[:chef_server_url]
