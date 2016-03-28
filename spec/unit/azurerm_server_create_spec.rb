@@ -921,6 +921,18 @@ describe Chef::Knife::AzurermServerCreate do
 
           @arm_server_instance.get_chef_extension_public_params
         end
+
+        it "sets encrypted_databag_secret in public config" do
+          @arm_server_instance.config[:secret] = "secrettext"
+          public_config = "{\"client_rb\":\"chef_server_url \\t \\\"https://localhost:443\\\"\\nvalidation_client_name\\t\\\"chef-validator\\\"\",\"runlist\":\"\\\"getting-started\\\"\",\"autoUpdateClient\":\"false\",\"deleteChefConfig\":\"false\",\"uninstallChefClient\":\"true\",\"custom_json_attr\":{},\"bootstrap_options\":{\"chef_server_url\":\"https://localhost:443\",\"validation_client_name\":\"chef-validator\":\"encrypted_databag_secret\"}}"
+          @arm_server_instance.get_chef_extension_public_params
+        end
+
+        it "sets encrypted_databag_secret_file in public config" do
+          @arm_server_instance.config[:secret_file] = File.dirname(__FILE__) + "/assets/secret_file"
+          public_config = "{\"client_rb\":\"chef_server_url \\t \\\"https://localhost:443\\\"\\nvalidation_client_name\\t\\\"chef-validator\\\"\",\"runlist\":\"\\\"getting-started\\\"\",\"autoUpdateClient\":\"false\",\"deleteChefConfig\":\"false\",\"uninstallChefClient\":\"true\",\"custom_json_attr\":{},\"bootstrap_options\":{\"chef_server_url\":\"https://localhost:443\",\"validation_client_name\":\"chef-validator\":\"encrypted_databag_secret_file\"}}"
+          @arm_server_instance.get_chef_extension_public_params
+        end
       end
 
       context 'when validation key is not present', :chef_gte_12_only do
