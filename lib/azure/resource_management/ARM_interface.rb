@@ -525,7 +525,7 @@ module Azure
       def create_subnet(resource_group_name, subnet_name, virtual_network)
         promise = network_resource_client.subnets.get(resource_group_name, virtual_network.name, subnet_name)
         if promise.value!.body
-          sbn = promise.value.body
+          sbn = promise.value!.body
         else
           sbn_prop = SubnetPropertiesFormat.new
           sbn_prop.address_prefix = '10.0.1.0/24'
@@ -542,7 +542,6 @@ module Azure
             Chef::Log.debug("#{backtrace_message}")
           end
         end
-
         sbn
       end
 

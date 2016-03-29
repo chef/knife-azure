@@ -30,8 +30,8 @@ describe Chef::Knife::AzurermServerCreate do
       :azure_os_disk_name => 'azureosdiskname',
       :azure_os_disk_caching => 'azure_os_disk_caching',
       :azure_os_disk_create_option => 'azure_os_disk_create_option',
-      :azure_virtual_network_name => 'azure_virtual_network_name',
-      :azure_subnet_name => 'azure_subnet_name',
+      :azure_vnet_name => 'azure_virtual_network_name',
+      :azure_vnet_subnet_name => 'azure_subnet_name',
       :rdp_port => '3389',
       :ssh_port => '22',
       :chef_extension_publisher => 'chef_extension_publisher',
@@ -155,8 +155,8 @@ describe Chef::Knife::AzurermServerCreate do
           @storage_account_name_with_no_special_chars = 'azurestorageaccount'
           Chef::Config[:knife][:azure_os_disk_name] = 'azure_os_disk_name'
           @os_disk_name_with_no_special_chars = 'azureosdiskname'
-          Chef::Config[:knife][:azure_network_name] = 'azure_network_name'
-          Chef::Config[:knife][:azure_subnet_name] = 'azure_subnet_name'
+          Chef::Config[:knife][:azure_vnet_name] = 'azure_vnet_name'
+          Chef::Config[:knife][:azure_vnet_subnet_name] = 'azure_vnet_subnet_name'
           Chef::Config[:knife][:azure_vm_size] = 'Medium'
         end
 
@@ -172,12 +172,12 @@ describe Chef::Knife::AzurermServerCreate do
 
         it "azure_network_name provided by user so vm_name does not get assigned to it" do
           @server_params = @arm_server_instance.create_server_def
-          expect(@server_params[:azure_network_name]).to be == 'azure_network_name'
+          expect(@server_params[:azure_vnet_name]).to be == 'azure_vnet_name'
         end
 
         it "azure_subnet_name provided by user so vm_name does not get assigned to it" do
           @server_params = @arm_server_instance.create_server_def
-          expect(@server_params[:azure_subnet_name]).to be == 'azure_subnet_name'
+          expect(@server_params[:azure_vnet_subnet_name]).to be == 'azure_vnet_subnet_name'
         end
 
         it "azure_vm_size provided by user so default value does not get assigned to it" do
@@ -576,10 +576,10 @@ describe Chef::Knife::AzurermServerCreate do
 
     describe "create_virtual_network" do
       it "successfully creates virtual network" do
-        expect(@service).to receive(:network_resource_client).and_return(stub_network_resource_client('NA'))
+        allow(@service).to receive(:network_resource_client).and_return(stub_network_resource_client('NA'))
         response = @service.create_virtual_network(
           @params[:azure_resource_group_name],
-          @params[:azure_virtual_network_name],
+          @params[:azure_vnet_name],
           @params[:azure_service_location])
         expect(response.name).to_not be nil
         expect(response.id).to_not be nil
@@ -591,10 +591,10 @@ describe Chef::Knife::AzurermServerCreate do
 
     describe "create_subnet" do
       it "successfully creates subnet" do
-        expect(@service).to receive(:network_resource_client).and_return(stub_network_resource_client('NA'))
+        allow(@service).to receive(:network_resource_client).and_return(stub_network_resource_client('NA'))
         response = @service.create_subnet(
           @params[:azure_resource_group_name],
-          @params[:azure_subnet_name],
+          @params[:azure_vnet_subnet_name],
           stub_virtual_network_create_response)
         expect(response.name).to_not be nil
         expect(response.id).to_not be nil

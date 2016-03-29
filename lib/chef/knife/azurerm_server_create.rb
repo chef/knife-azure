@@ -195,14 +195,15 @@ class Chef
           :azure_service_location
         )
 
-        validate_params!
-
-        set_default_image_reference!
-
-        ssh_override_winrm if !is_image_windows?
-
-        Chef::Log.info("creating...")
         begin
+          validate_params!
+
+          set_default_image_reference!
+
+          ssh_override_winrm if !is_image_windows?
+
+          Chef::Log.info("creating...")
+
           vm_details = service.create_server(create_server_def)
         rescue => error
           if error.class == MsRestAzure::AzureOperationError && error.body
@@ -274,11 +275,11 @@ class Chef
 
       def validate_params!
         if locate_config_value(:azure_vnet_name) && !locate_config_value(:azure_vnet_subnet_name)
-          raise ArgumentError, "If this is an existing vnet then vnet-subnet-name is required."
+          raise ArgumentError, "If this is an existing vnet then --azure-vnet-subnet-name is required."
         end
 
         if locate_config_value(:azure_vnet_subnet_name) && !locate_config_value(:azure_vnet_name)
-          raise ArgumentError, "Provide vnet subnet name option along with vnet name."
+          raise ArgumentError, "Provide --azure-vnet-subnet-name option along with --azure-vnet-name."
         end
       end
 

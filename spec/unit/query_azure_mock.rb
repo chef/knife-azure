@@ -112,6 +112,14 @@ module QueryAzureMock
       :body,
       :properties,
       :security_rules).and_return(['default_security_rule'])
+    allow(network_resource_client.subnets).to receive_message_chain(
+      :get,
+      :value!,
+      :body).and_return(nil)
+    allow(network_resource_client.virtual_networks).to receive_message_chain(
+      :get,
+      :value!,
+      :body).and_return(nil)
     if platform == 'Windows'
       allow(network_resource_client.network_security_groups.get.value!.body.properties.security_rules[0]).to receive_message_chain(
         :properties,
@@ -267,7 +275,7 @@ module QueryAzureMock
 
   def stub_subnet_create_response
     subnet = OpenStruct.new
-    subnet.name = 'subnet_name'
+    subnet.name = 'azure_subnet_name'
     subnet.id = 'subnet_id'
     subnet.location = 'subnet_location'
     subnet.properties = OpenStruct.new
