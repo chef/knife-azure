@@ -381,12 +381,9 @@ describe Chef::Knife::AzurermServerCreate do
 
     describe "create_resource_group" do
       it "successfully returns resource group create response" do
-        # response = @service.create_resource_group(
-        #   stub_resource_client, @params)
         expect(@service).to receive(:resource_management_client).and_return(stub_resource_management_client)
         response = @service.create_resource_group(@params)
 
-        # allow(@service).to receive(:create_resource_group).with(@params).and_return(response)
         expect(response.name).to_not be nil
         expect(response.id).to_not be nil
         expect(response.location).to_not be nil
@@ -557,26 +554,50 @@ describe Chef::Knife::AzurermServerCreate do
     end
 
     describe "create_network_profile" do
-      it "successfully returns network profile response" do
-        @platform = 'Linux'
-        expect(@service).to receive(
-          :create_virtual_network).and_return(
-            stub_virtual_network_create_response)
-        expect(@service).to receive(
-          :create_subnet).and_return(
-            stub_subnet_create_response)
-        expect(@service).to receive(
-          :create_network_interface).and_return(
-            stub_network_interface_create_response)
-        response = @service.create_network_profile(@params)
-        expect(response.network_interfaces).to_not be nil
-        expect(response.network_interfaces).to be_a(Array)
+      context 'For non existing vent and subnet' do
+        it 'successfully returns network profile response' do
+          allow(@network_client).to receive_message_chain(:virtual_networks, :get).and_return(@network_promise)
+          allow(@network_promise).to receive_message_chain(:value!, :body).and_return(nil)
+
+          allow(@network_client).to receive_message_chain(:subnets, :get).and_return(@network_promise)
+          allow(@network_promise).to receive_message_chain(:value!, :body).and_return(nil)
+
+          @platform = 'Linux'
+          expect(@service).to receive(
+            :create_virtual_network).and_return(
+              stub_virtual_network_create_response)
+          expect(@service).to receive(
+            :create_subnet).and_return(
+              stub_subnet_create_response)
+          expect(@service).to receive(
+            :create_network_interface).and_return(
+              stub_network_interface_create_response)
+          response = @service.create_network_profile(@params)
+          expect(response.network_interfaces).to_not be nil
+          expect(response.network_interfaces).to be_a(Array)
+        end
+      end
+
+      context 'for exisitng vnet and subnet' do
+        it 'successfully returns network profile response' do
+          allow(@network_client).to receive_message_chain(:virtual_networks, :get).and_return(@network_promise)
+          allow(@network_promise).to receive_message_chain(:value!, :body).and_return(stub_vnet_get_response)
+
+          allow(@network_client).to receive_message_chain(:subnets, :get).and_return(@network_promise)
+          allow(@network_promise).to receive_message_chain(:value!, :body).and_return(stub_subnet_get_response)
+
+          @platform = 'Linux'
+          expect(@service).not_to receive(:create_virtual_network)
+          expect(@service).not_to receive(:create_subnet)
+          expect(@service).to receive(:create_network_interface).and_return(stub_network_interface_create_response)
+          @service.create_network_profile(@params)
+        end
       end
     end
 
     describe "create_virtual_network" do
       it "successfully creates virtual network" do
-        allow(@service).to receive(:network_resource_client).and_return(stub_network_resource_client('NA'))
+        expect(@service).to receive(:network_resource_client).and_return(stub_network_resource_client('NA'))
         response = @service.create_virtual_network(
           @params[:azure_resource_group_name],
           @params[:azure_vnet_name],
@@ -591,7 +612,7 @@ describe Chef::Knife::AzurermServerCreate do
 
     describe "create_subnet" do
       it "successfully creates subnet" do
-        allow(@service).to receive(:network_resource_client).and_return(stub_network_resource_client('NA'))
+        expect(@service).to receive(:network_resource_client).and_return(stub_network_resource_client('NA'))
         response = @service.create_subnet(
           @params[:azure_resource_group_name],
           @params[:azure_vnet_subnet_name],
