@@ -131,15 +131,16 @@ describe Chef::Knife::AzurermServerCreate do
         end
 
         it "azure_network_name not provided by user so vm_name gets assigned to it" do
-          Chef::Config[:knife].delete(:azure_network_name)
+          Chef::Config[:knife].delete(:azure_vnet_name)
           @server_params = @arm_server_instance.create_server_def
-          expect(@server_params[:azure_network_name]).to be == 'test-vm'
+          expect(@server_params[:azure_vnet_name]).to be == 'test-vm'
         end
 
         it "azure_subnet_name not provided by user so vm_name gets assigned to it" do
-          Chef::Config[:knife].delete(:azure_subnet_name)
+          Chef::Config[:knife].delete(:azure_vnet_subnet_name)
+          Chef::Config[:knife].delete(:azure_vnet_name)
           @server_params = @arm_server_instance.create_server_def
-          expect(@server_params[:azure_subnet_name]).to be == 'test-vm'
+          expect(@server_params[:azure_vnet_subnet_name]).to be == 'test-vm'
         end
 
         after do
