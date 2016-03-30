@@ -21,6 +21,7 @@
 require 'chef/knife/azure_base'
 require 'chef/knife/winrm_base'
 require 'securerandom'
+require 'chef/knife/bootstrap/bootstrap_options'
 require 'chef/knife/bootstrap/bootstrapper'
 
 class Chef
@@ -29,6 +30,7 @@ class Chef
 
       include Knife::AzureBase
       include Knife::WinrmBase
+      include Knife::Bootstrap::BootstrapOptions
       include Knife::Bootstrap::Bootstrapper
 
       deps do
@@ -43,22 +45,12 @@ class Chef
       banner "knife azure server create (options)"
 
       attr_accessor :initial_sleep_delay
-
-      option :forward_agent,
-        :short => "-A",
-        :long => "--forward-agent",
-        :description =>  "Enable SSH agent forwarding",
-        :boolean => true
+      
 
       option :bootstrap_protocol,
         :long => "--bootstrap-protocol protocol",
         :description => "Protocol to bootstrap windows servers. options: 'winrm' or 'ssh' or 'cloud-api'.",
-        :default => "winrm"
-
-      option :chef_node_name,
-        :short => "-N NAME",
-        :long => "--node-name NAME",
-        :description => "The Chef node name for your new node"
+        :default => "winrm"      
 
       option :ssh_user,
         :short => "-x USERNAME",
@@ -75,49 +67,6 @@ class Chef
         :long => "--ssh-port PORT",
         :description => "The ssh port. Default is 22. If --azure-connect-to-existing-dns set then default SSH port is random"
 
-      option :prerelease,
-        :long => "--prerelease",
-        :description => "Install the pre-release chef gems"
-
-      option :bootstrap_version,
-        :long => "--bootstrap-version VERSION",
-        :description => "The version of Chef to install",
-        :proc => Proc.new { |v| Chef::Config[:knife][:bootstrap_version] = v }
-
-      option :distro,
-        :short => "-d DISTRO",
-        :long => "--distro DISTRO",
-        :description => "Bootstrap a distro using a template. [DEPRECATED] Use --bootstrap-template option instead.",
-        :proc        => Proc.new { |v|
-          Chef::Log.warn("[DEPRECATED] -d / --distro option is deprecated. Use --bootstrap-template option instead.")
-          v
-        }
-
-      option :template_file,
-        :long => "--template-file TEMPLATE",
-        :description => "Full path to location of template to use. [DEPRECATED] Use -t / --bootstrap-template option instead.",
-        :proc        => Proc.new { |v|
-          Chef::Log.warn("[DEPRECATED] --template-file option is deprecated. Use -t / --bootstrap-template option instead.")
-          v
-        }
-
-      option :bootstrap_template,
-        :long => "--bootstrap-template TEMPLATE",
-        :description => "Bootstrap Chef using a built-in or custom template. Set to the full path of an erb template or use one of the built-in templates."
-
-      option :run_list,
-        :short => "-r RUN_LIST",
-        :long => "--run-list RUN_LIST",
-        :description => "Comma separated list of roles/recipes to apply",
-        :proc => lambda { |o| o.split(/[\s,]+/) },
-        :default => []
-
-      option :host_key_verify,
-        :long => "--[no-]host-key-verify",
-        :description => "Verify host key, enabled by default.",
-        :boolean => true,
-        :default => true
-
       option :node_ssl_verify_mode,
         :long        => "--node-ssl-verify-mode [peer|none]",
         :description => "Whether or not to verify the SSL cert for all HTTPS requests.",
@@ -131,61 +80,7 @@ class Chef
       option :node_verify_api_cert,
         :long        => "--[no-]node-verify-api-cert",
         :description => "Verify the SSL cert for HTTPS requests to the Chef server API.",
-        :boolean     => true
-
-      option :bootstrap_proxy,
-            :long => "--bootstrap-proxy PROXY_URL",
-            :description => "The proxy server for the node being bootstrapped",
-            :proc => Proc.new { |p| Chef::Config[:knife][:bootstrap_proxy] = p }
-
-      option :bootstrap_no_proxy,
-        :long => "--bootstrap-no-proxy [NO_PROXY_URL|NO_PROXY_IP]",
-        :description => "Do not proxy locations for the node being bootstrapped; this option is used internally by Opscode",
-        :proc => Proc.new { |np| Chef::Config[:knife][:bootstrap_no_proxy] = np }
-
-      option :bootstrap_url,
-        :long        => "--bootstrap-url URL",
-        :description => "URL to a custom installation script",
-        :proc        => Proc.new { |u| Chef::Config[:knife][:bootstrap_url] = u }
-
-      option :bootstrap_install_command,
-        :long        => "--bootstrap-install-command COMMANDS",
-        :description => "Custom command to install chef-client",
-        :proc        => Proc.new { |ic| Chef::Config[:knife][:bootstrap_install_command] = ic }
-
-      option :bootstrap_wget_options,
-        :long        => "--bootstrap-wget-options OPTIONS",
-        :description => "Add options to wget when installing chef-client",
-        :proc        => Proc.new { |wo| Chef::Config[:knife][:bootstrap_wget_options] = wo }
-
-      option :bootstrap_curl_options,
-        :long        => "--bootstrap-curl-options OPTIONS",
-        :description => "Add options to curl when install chef-client",
-        :proc        => Proc.new { |co| Chef::Config[:knife][:bootstrap_curl_options] = co }
-
-      option :bootstrap_vault_file,
-        :long        => '--bootstrap-vault-file VAULT_FILE',
-        :description => 'A JSON file with a list of vault(s) and item(s) to be updated'
-
-      option :bootstrap_vault_json,
-        :long        => '--bootstrap-vault-json VAULT_JSON',
-        :description => 'A JSON string with the vault(s) and item(s) to be updated'
-
-      option :bootstrap_vault_item,
-        :long        => '--bootstrap-vault-item VAULT_ITEM',
-        :description => 'A single vault and item to update as "vault:item"',
-        :proc        => Proc.new { |i|
-          (vault, item) = i.split(/:/)
-          Chef::Config[:knife][:bootstrap_vault_item] ||= {}
-          Chef::Config[:knife][:bootstrap_vault_item][vault] ||= []
-          Chef::Config[:knife][:bootstrap_vault_item][vault].push(item)
-          Chef::Config[:knife][:bootstrap_vault_item]
-        }
-
-      option :use_sudo_password,
-        :long => "--use-sudo-password",
-        :description => "Execute the bootstrap via sudo with password",
-        :boolean => false
+        :boolean     => true    
 
       option :azure_storage_account,
         :short => "-a NAME",
@@ -293,21 +188,6 @@ class Chef
         :long => "--identity-file-passphrase PASSWORD",
         :description => "SSH key passphrase. Optional, specify if passphrase for identity-file exists"
 
-      option :hint,
-        :long => "--hint HINT_NAME[=HINT_FILE]",
-        :description => "Specify Ohai Hint to be set on the bootstrap target.  Use multiple --hint options to specify multiple hints.",
-        :proc => Proc.new { |h|
-           Chef::Config[:knife][:hints] ||= {}
-           name, path = h.split("=")
-           Chef::Config[:knife][:hints][name] = path ? JSON.parse(::File.read(path)) : Hash.new
-        }
-
-      option :json_attributes,
-        :short => "-j JSON",
-        :long => "--json-attributes JSON",
-        :description => "A JSON string to be added to the first run of chef-client",
-        :proc => lambda { |o| JSON.parse(o) }
-
       option :thumbprint,
         :long => "--thumbprint THUMBPRINT",
         :description => "The thumprint of the ssl certificate"
@@ -320,12 +200,6 @@ class Chef
         :long => "--cert-path PATH",
         :description => "SSL Certificate Path"
 
-      option :auto_update_client,
-      :long => "--auto-update-client",
-      :boolean => true,
-      :default => false,
-      :description => "Set this flag to enable auto chef client update in azure chef extension. This flag should be used with cloud-api bootstrap protocol only"
-
       option :winrm_max_timeout,
         :long => "--winrm-max-timeout MINUTES",
         :description => "Set winrm maximum command timeout in minutes, useful for long bootstraps"
@@ -333,19 +207,7 @@ class Chef
       option :winrm_max_memorypershell,
         :long => "--winrm-max-memory-per-shell",
         :description => "Set winrm max memory per shell in MB"
-
-      option :delete_chef_extension_config,
-        :long => "--delete-chef-extension-config",
-        :boolean => true,
-        :default => false,
-        :description => "Determines whether Chef configuration files removed when Azure removes the Chef resource extension from the VM. This option is only valid for the 'cloud-api' bootstrap protocol. The default is false."
-
-      option :uninstall_chef_client,
-        :long => "--uninstall-chef-client",
-        :boolean => true,
-        :default => false,
-        :description => "Determines whether Chef Client will be un-installed from the VM or not. This option is only valid for the 'cloud-api' bootstrap protocol. The default value is false."
-
+     
       option :azure_domain_name,
         :long => "--azure-domain-name DOMAIN_NAME",
         :description => "Optional. Specifies the domain name to join. If the domains name is not specified, --azure-domain-user must specify the user principal name (UPN) format (user@fully-qualified-DNS-domain) or the fully-qualified-DNS-domain\\username format"
