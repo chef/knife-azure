@@ -142,7 +142,9 @@ class Chef
 
       option :azure_vnet_name,
         :long => "--azure-vnet-name VNET_NAME",
-        :description => "Optional. Specifies the virtual network name"
+        :description => "Optional. Specifies the virtual network name
+                        If this is an existing vnet then it must exists under the current resource group identified by resource-group
+                        If this is an existing vnet then vnet-subnet-name is required"
 
       option :azure_vnet_subnet_name,
         :long => "--azure-vnet-subnet-name VNET_SUBNET_NAME",
@@ -167,24 +169,6 @@ class Chef
       option :cert_path,
         :long => "--cert-path PATH",
         :description => "SSL Certificate Path"
-
-      # option :vnet_name,
-      #   :long => "--vnet-name VNET_NAME",
-      #   :description => "the virtual network name
-      #     If this is an existing vnet then it must exists under the current resource group identified by resource-group
-      #     If this is an existing vnet then vnet-subnet-name is required
-      #     If no subnet exists with name vnet-subnet-name then a new subnet will be created
-      #     To create new subnet - vnet-subnet-address-prefix is required
-      #     A new vnet will be created if no vnet exists with name vnet-name in the current resource group
-      #     To create new vnet - vnet-address-prefix, vnet-subnet-name and vnet-subnet-address-prefix are required"
-
-      # option :vnet_subnet_name,
-      #   :long => "--vnet-subnet-name VNET_SUBNET_NAME",
-      #   :description => "the virtual network subnet name"
-
-      option :vnet_subnet_address_prefix,
-        :long => "--vnet-subnet-address-prefix VNET_SUBNET_ADDRESS_PREFIX",
-        :description => "the virtual network subnet address prefix in IPv4/CIDR format"
 
       def run
         $stdout.sync = true
