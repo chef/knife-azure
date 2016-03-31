@@ -259,11 +259,11 @@ class Chef
 
       def validate_params!
         if locate_config_value(:azure_vnet_name) && !locate_config_value(:azure_vnet_subnet_name)
-          raise ArgumentError, "If this is an existing vnet then --azure-vnet-subnet-name is required."
+          raise ArgumentError,  "When a --azure-vnet-name is specified, the --azure-vnet-subnet-name must also be specified."
         end
 
         if locate_config_value(:azure_vnet_subnet_name) && !locate_config_value(:azure_vnet_name)
-          raise ArgumentError, "Provide --azure-vnet-subnet-name option along with --azure-vnet-name."
+          raise ArgumentError, "When --azure-vnet-subnet-name is specified, the --azure-vnet-name must also be specified."
         end
       end
 
