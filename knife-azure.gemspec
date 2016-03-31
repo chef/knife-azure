@@ -20,10 +20,10 @@ Gem::Specification.new do |s|
 
   s.add_dependency "nokogiri", ">= 1.5.5"
   s.add_dependency "knife-windows", "~> 1.0"
-  s.add_dependency "azure_mgmt_resources"
-  s.add_dependency "azure_mgmt_compute"
-  s.add_dependency "azure_mgmt_storage"
-  s.add_dependency "azure_mgmt_network"
+  s.add_dependency "azure_mgmt_resources", "0.2.1"
+  s.add_dependency "azure_mgmt_compute", "0.2.1"
+  s.add_dependency "azure_mgmt_storage", "0.2.1"
+  s.add_dependency "azure_mgmt_network", "0.2.1"
   s.add_development_dependency 'chef',  '~> 12.0', '>= 12.2.1'
   s.add_development_dependency "mixlib-config", "~> 2.0"
   s.add_development_dependency "equivalent-xml", "~> 0.2.9"
