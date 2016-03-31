@@ -283,6 +283,14 @@ module Azure
       def vm_image?(name)
         connection.images.is_vm_image(name)
       end
+
+      def add_extension(name, params = {})
+        ## TODO
+      end
+
+      def update_deployment
+        ## TODO
+      end
     end
   end
 end

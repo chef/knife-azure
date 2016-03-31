@@ -131,12 +131,14 @@ module Azure
         @url = xml_content(deployXML, 'Deployment Url')
         @roles = Hash.new
         rolesXML = deployXML.css('Deployment RoleInstanceList RoleInstance')
-        rolesXML.each do |roleXML|
+        rolesOsDiskXML = deployXML.css('Deployment RoleList Role OSVirtualHardDisk')
+        rolesXML.zip(rolesOsDiskXML).each do |roleXML,roleOsDiskXML|
           role = Role.new(@connection)
           role.parse(roleXML, hostedservicename, @name)
           if role.publicipaddress.to_s.empty?
             role.publicipaddress = xml_content(deployXML, 'VirtualIPs VirtualIP Address')
           end
+          role.parse_os_disk_xml(roleOsDiskXML)
           @roles[role.name] = role
         end
         @input_endpoints = Array.new

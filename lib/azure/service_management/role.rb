@@ -176,6 +176,7 @@ module Azure
     attr_accessor :sshport, :hostedservicename, :deployname, :thumbprint
     attr_accessor :winrmport
     attr_accessor :hostname, :tcpports, :udpports
+    attr_accessor :os_type, :os_version
 
       TCP_ENDPOINTS_MAPPING = { '3389' => 'Remote Desktop',
                               '5986' => 'PowerShell',
@@ -232,6 +233,11 @@ module Azure
           end
         end
       end
+    end
+
+    def parse_os_disk_xml(roleOsDiskXML)
+      @os_type = xml_content(roleOsDiskXML, 'OS')
+      @os_version = xml_content(roleOsDiskXML, 'SourceImageName')
     end
 
     # Expects endpoint_param_string to be in the form {localport}:{publicport}:{lb_set_name}:{lb_probe_path}
