@@ -140,13 +140,15 @@ class Chef
         :default => 'Small',
         :proc => Proc.new { |si| Chef::Config[:knife][:azure_vm_size] = si }
 
-      option :azure_network_name,
-        :long => "--azure-network-name NETWORK_NAME",
-        :description => "Optional. Specifies the network of virtual machine"
+      option :azure_vnet_name,
+        :long => "--azure-vnet-name VNET_NAME",
+        :description => "Optional. Specifies the virtual network name
+                        If this is an existing vnet then it must exists under the current resource group identified by resource-group
+                        If this is an existing vnet then vnet-subnet-name is required"
 
-      option :azure_subnet_name,
-        :long => "--azure-subnet-name SUBNET_NAME",
-        :description => "Optional. Specifies the subnet of virtual machine"
+      option :azure_vnet_subnet_name,
+        :long => "--azure-vnet-subnet-name VNET_SUBNET_NAME",
+        :description => "Optional. Specifies the virtual network subnet name."
 
       option :identity_file,
         :long => "--identity-file FILENAME",
@@ -168,7 +170,6 @@ class Chef
         :long => "--cert-path PATH",
         :description => "SSL Certificate Path"
 
-
       def run
         $stdout.sync = true
 
@@ -178,12 +179,15 @@ class Chef
           :azure_service_location
         )
 
-        set_default_image_reference!
-
-        ssh_override_winrm if !is_image_windows?
-
-        Chef::Log.info("creating...")
         begin
+          validate_params!
+
+          set_default_image_reference!
+
+          ssh_override_winrm if !is_image_windows?
+
+          Chef::Log.info("creating...")
+
           vm_details = service.create_server(create_server_def)
         rescue => error
           if error.class == MsRestAzure::AzureOperationError && error.body
@@ -218,11 +222,12 @@ class Chef
           :azure_image_reference_sku => locate_config_value(:azure_image_reference_sku),
           :azure_image_reference_version => locate_config_value(:azure_image_reference_version),
           :winrm_user => locate_config_value(:winrm_user),
-          :azure_network_name => locate_config_value(:azure_network_name),
-          :azure_subnet_name => locate_config_value(:azure_subnet_name),
+          :azure_vnet_name => locate_config_value(:azure_vnet_name),
+          :azure_vnet_subnet_name => locate_config_value(:azure_vnet_subnet_name),
           :ssl_cert_fingerprint => locate_config_value(:thumbprint),
           :cert_path => locate_config_value(:cert_path),
-          :cert_password => locate_config_value(:cert_passphrase)
+          :cert_password => locate_config_value(:cert_passphrase),
+          :vnet_subnet_address_prefix => locate_config_value(:vnet_subnet_address_prefix)
         }
 
         server_def[:azure_storage_account] = locate_config_value(:azure_vm_name) if server_def[:azure_storage_account].nil?
@@ -231,8 +236,8 @@ class Chef
         server_def[:azure_os_disk_name] = locate_config_value(:azure_vm_name) if server_def[:azure_os_disk_name].nil?
         server_def[:azure_os_disk_name] = server_def[:azure_os_disk_name].gsub(/[!@#$%^&*()_-]/,'')
 
-        server_def[:azure_network_name] = locate_config_value(:azure_vm_name) if server_def[:azure_network_name].nil?
-        server_def[:azure_subnet_name] = locate_config_value(:azure_vm_name) if server_def[:azure_subnet_name].nil?
+        server_def[:azure_vnet_name] = locate_config_value(:azure_vm_name) if server_def[:azure_vnet_name].nil?
+        server_def[:azure_vnet_subnet_name] = locate_config_value(:azure_vm_name) if locate_config_value(:azure_vnet_subnet_name).nil? && locate_config_value(:azure_vnet_name).nil?
 
         server_def[:chef_extension] = get_chef_extension_name
         server_def[:chef_extension_publisher] = get_chef_extension_publisher
@@ -250,6 +255,16 @@ class Chef
         end
 
         server_def
+      end
+
+      def validate_params!
+        if locate_config_value(:azure_vnet_name) && !locate_config_value(:azure_vnet_subnet_name)
+          raise ArgumentError,  "When a --azure-vnet-name is specified, the --azure-vnet-subnet-name must also be specified."
+        end
+
+        if locate_config_value(:azure_vnet_subnet_name) && !locate_config_value(:azure_vnet_name)
+          raise ArgumentError, "When --azure-vnet-subnet-name is specified, the --azure-vnet-name must also be specified."
+        end
       end
 
       private

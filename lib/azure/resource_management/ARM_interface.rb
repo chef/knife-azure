@@ -455,24 +455,52 @@ module Azure
         os_disk
       end
 
+      def vnet_exist?(resource_group_name, vnet_name)
+        begin
+          network_resource_client.virtual_networks.get(resource_group_name, vnet_name).value!.body
+        rescue
+          return false
+        end
+      end
+
+      def subnet_exist?(resource_group_name, vnet_name, subnet_name)
+        begin
+          network_resource_client.subnets.get(resource_group_name, vnet_name, subnet_name).value!.body
+        rescue
+          return false
+        end
+      end
+
       def create_network_profile(params)
-        Chef::Log.info("Creating VirtualNetwork....")
-        vnet = create_virtual_network(
-          params[:azure_resource_group_name],
-          params[:azure_network_name],
-          params[:azure_service_location]
-        )
-        Chef::Log.info("VirtualNetwork creation successfull.")
+        if vnet_exist?(params[:azure_resource_group_name], params[:azure_vnet_name])
+          vnet = network_resource_client.virtual_networks.get(params[:azure_resource_group_name], params[:azure_vnet_name]).value!.body
+          Chef::Log.info("Found existing vnet #{vnet.name}...")
+        else
+          Chef::Log.info("Creating VirtualNetwork....")
+          vnet = create_virtual_network(
+            params[:azure_resource_group_name],
+            params[:azure_vnet_name],
+            params[:azure_service_location]
+          )
+          Chef::Log.info("VirtualNetwork creation successfull.")
+        end
+
         Chef::Log.info("Virtual Network name is: #{vnet.name}")
         Chef::Log.info("Virtual Network ID is: #{vnet.id}")
 
-        Chef::Log.info("Creating Subnet....")
-        sbn = create_subnet(
-          params[:azure_resource_group_name],
-          params[:azure_subnet_name],
-          vnet
-        )
-        Chef::Log.info("Subnet creation successfull.")
+        if subnet_exist?(params[:azure_resource_group_name], vnet.name, params[:azure_vnet_subnet_name])
+          sbn = network_resource_client.subnets.get(params[:azure_resource_group_name], vnet.name, params[:azure_vnet_subnet_name]).value!.body
+          Chef::Log.info("Found subnet #{sbn.name} under virtual network #{vnet.name} ...")
+        else
+          Chef::Log.info("Creating Subnet....")
+          sbn = create_subnet(
+            params[:azure_resource_group_name],
+            params[:azure_vnet_subnet_name],
+            vnet
+          )
+          Chef::Log.info("Subnet creation successfull.")
+        end
+
         Chef::Log.info("Subnet name is: #{sbn.name}")
         Chef::Log.info("Subnet ID is: #{sbn.id}")
 
@@ -511,7 +539,6 @@ module Azure
           backtrace_message = "#{e.class}: #{e}\n#{e.backtrace.join("\n")}"
           Chef::Log.debug("#{backtrace_message}")
         end
-
         vnet
       end
 
@@ -530,7 +557,6 @@ module Azure
           backtrace_message = "#{e.class}: #{e}\n#{e.backtrace.join("\n")}"
           Chef::Log.debug("#{backtrace_message}")
         end
-
         sbn
       end
 
