@@ -18,7 +18,7 @@
 #
 
 require 'chef/knife/winrm_base'
-
+require 'chef/knife/bootstrap_windows_base'
 class Chef
   class Knife
     class Bootstrap
@@ -28,7 +28,7 @@ class Chef
           includer.class_eval do
 
             include Knife::WinrmBase
-
+            include Knife::BootstrapWindowsBase
             deps do
               require 'chef/knife/bootstrap'
               Chef::Knife::Bootstrap.load_deps
@@ -39,48 +39,6 @@ class Chef
               :long => "--forward-agent",
               :description =>  "Enable SSH agent forwarding",
               :boolean => true
-
-            option :chef_node_name,
-              :short => "-N NAME",
-              :long => "--node-name NAME",
-              :description => "The Chef node name for your new node"
-
-            option :prerelease,
-              :long => "--prerelease",
-              :description => "Install the pre-release chef gems"
-
-            option :bootstrap_version,
-              :long => "--bootstrap-version VERSION",
-              :description => "The version of Chef to install",
-              :proc => Proc.new { |v| Chef::Config[:knife][:bootstrap_version] = v }
-
-            option :distro,
-              :short => "-d DISTRO",
-              :long => "--distro DISTRO",
-              :description => "Bootstrap a distro using a template. [DEPRECATED] Use --bootstrap-template option instead.",
-              :proc        => Proc.new { |v|
-                  Chef::Log.warn("[DEPRECATED] -d / --distro option is deprecated. Use --bootstrap-template option instead.")
-                  v
-                }
-
-            option :template_file,
-              :long => "--template-file TEMPLATE",
-              :description => "Full path to location of template to use. [DEPRECATED] Use -t / --bootstrap-template option instead.",
-              :proc        => Proc.new { |v|
-                  Chef::Log.warn("[DEPRECATED] --template-file option is deprecated. Use -t / --bootstrap-template option instead.")
-                  v
-                }
-
-            option :bootstrap_template,
-              :long => "--bootstrap-template TEMPLATE",
-              :description => "Bootstrap Chef using a built-in or custom template. Set to the full path of an erb template or use one of the built-in templates."
-
-            option :run_list,
-              :short => "-r RUN_LIST",
-              :long => "--run-list RUN_LIST",
-              :description => "Comma separated list of roles/recipes to apply",
-              :proc => lambda { |o| o.split(/[\s,]+/) },
-              :default => []
 
             option :json_attributes,
               :short => "-j JSON",
@@ -94,25 +52,10 @@ class Chef
               :boolean => true,
               :default => true
 
-            option :bootstrap_proxy,
-              :long => "--bootstrap-proxy PROXY_URL",
-              :description => "The proxy server for the node being bootstrapped",
-              :proc => Proc.new { |p| Chef::Config[:knife][:bootstrap_proxy] = p }
-
-            option :bootstrap_no_proxy,
-              :long => "--bootstrap-no-proxy [NO_PROXY_URL|NO_PROXY_IP]",
-              :description => "Do not proxy locations for the node being bootstrapped; this option is used internally by Opscode",
-              :proc => Proc.new { |np| Chef::Config[:knife][:bootstrap_no_proxy] = np }
-
             option :bootstrap_url,
               :long        => "--bootstrap-url URL",
               :description => "URL to a custom installation script",
               :proc        => Proc.new { |u| Chef::Config[:knife][:bootstrap_url] = u }
-
-            option :bootstrap_install_command,
-              :long        => "--bootstrap-install-command COMMANDS",
-              :description => "Custom command to install chef-client",
-              :proc        => Proc.new { |ic| Chef::Config[:knife][:bootstrap_install_command] = ic }
 
             option :bootstrap_wget_options,
               :long        => "--bootstrap-wget-options OPTIONS",
@@ -124,38 +67,10 @@ class Chef
               :description => "Add options to curl when install chef-client",
               :proc        => Proc.new { |co| Chef::Config[:knife][:bootstrap_curl_options] = co }
 
-            option :bootstrap_vault_file,
-              :long        => '--bootstrap-vault-file VAULT_FILE',
-              :description => 'A JSON file with a list of vault(s) and item(s) to be updated'
-
-            option :bootstrap_vault_json,
-              :long        => '--bootstrap-vault-json VAULT_JSON',
-              :description => 'A JSON string with the vault(s) and item(s) to be updated'
-
-            option :bootstrap_vault_item,
-              :long        => '--bootstrap-vault-item VAULT_ITEM',
-              :description => 'A single vault and item to update as "vault:item"',
-              :proc        => Proc.new { |i|
-                  (vault, item) = i.split(/:/)
-                  Chef::Config[:knife][:bootstrap_vault_item] ||= {}
-                  Chef::Config[:knife][:bootstrap_vault_item][vault] ||= []
-                  Chef::Config[:knife][:bootstrap_vault_item][vault].push(item)
-                  Chef::Config[:knife][:bootstrap_vault_item]
-                }
-
             option :use_sudo_password,
               :long => "--use-sudo-password",
               :description => "Execute the bootstrap via sudo with password",
               :boolean => false
-
-            option :hint,
-              :long => "--hint HINT_NAME[=HINT_FILE]",
-              :description => "Specify Ohai Hint to be set on the bootstrap target.  Use multiple --hint options to specify multiple hints.",
-              :proc => Proc.new { |h|
-                  Chef::Config[:knife][:hints] ||= {}
-                  name, path = h.split("=")
-                  Chef::Config[:knife][:hints][name] = path ? JSON.parse(::File.read(path)) : Hash.new
-                }
 
             option :auto_update_client,
               :long => "--auto-update-client",
