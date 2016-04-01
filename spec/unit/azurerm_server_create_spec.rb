@@ -554,9 +554,10 @@ describe Chef::Knife::AzurermServerCreate do
       end
     end
 
-    describe "create_network_profile" do
-      context 'For non existing vent and subnet' do
+    describe 'create_network_profile' do
+      context 'vnet and subnet does not exist' do
         it 'successfully returns network profile response' do
+          # following alllow statements stubs vnet_exist? and subnet_exist? methods
           allow(@network_client).to receive_message_chain(:virtual_networks, :get).and_return(@network_promise)
           allow(@network_promise).to receive_message_chain(:value!, :body).and_return(nil)
 
@@ -579,8 +580,9 @@ describe Chef::Knife::AzurermServerCreate do
         end
       end
 
-      context 'for exisitng vnet and subnet' do
+      context 'vnet and subnet already exist' do
         it 'successfully returns network profile response' do
+          # following alllow statements stubs vnet_exist? and subnet_exist? methods
           allow(@network_client).to receive_message_chain(:virtual_networks, :get).and_return(@network_promise)
           allow(@network_promise).to receive_message_chain(:value!, :body).and_return(stub_vnet_get_response)
 
