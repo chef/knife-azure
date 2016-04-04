@@ -166,6 +166,12 @@ module Azure
       end
     end
 
+    def add(name, params)
+      role =Role.new(@connection)
+      roleExtensionXml = role.setup_extension(params)
+      role.update(name, params, roleExtensionXml)
+    end
+
     private :check_and_delete_role_and_resources, :check_and_delete_disks, :check_and_delete_service, :check_and_delete_storage
 
   end
@@ -176,7 +182,7 @@ module Azure
     attr_accessor :sshport, :hostedservicename, :deployname, :thumbprint
     attr_accessor :winrmport
     attr_accessor :hostname, :tcpports, :udpports
-    attr_accessor :os_type, :os_version
+    attr_accessor :role_xml, :os_type, :os_version
 
       TCP_ENDPOINTS_MAPPING = { '3389' => 'Remote Desktop',
                               '5986' => 'PowerShell',
@@ -235,9 +241,11 @@ module Azure
       end
     end
 
-    def parse_os_disk_xml(roleOsDiskXML)
-      @os_type = xml_content(roleOsDiskXML, 'OS')
-      @os_version = xml_content(roleOsDiskXML, 'SourceImageName')
+    def parse_role_list_xml(roleListXML)
+      @role_xml = roleListXML
+      os_disk_xml = roleListXML.css('OSVirtualHardDisk')
+      @os_type = xml_content(os_disk_xml, 'OS')
+      @os_version = xml_content(os_disk_xml, 'SourceImageName')
     end
 
     # Expects endpoint_param_string to be in the form {localport}:{publicport}:{lb_set_name}:{lb_probe_path}
@@ -553,6 +561,57 @@ module Azure
       servicecall = "hostedservices/#{params[:azure_dns_name]}/deployments" +
       "/#{params['deploy_name']}/roles"
       @connection.query_azure(servicecall, "post", roleXML.to_xml)
+    end
+
+    def setup_extension(params)
+      role_xml = params[:role_xml]
+
+      resource_extension_reference = Nokogiri::XML::Node.new('ResourceExtensionReference', role_xml)
+      resource_extension_reference['ReferenceName'] = params[:chef_extension]
+      resource_extension_reference['Publisher'] = params[:chef_extension_publisher]
+      resource_extension_reference['Name'] = params[:chef_extension]
+      resource_extension_reference['Version'] = params[:chef_extension_version]
+      resource_extension_reference['State'] = 'enable'
+
+      resource_extension_parameter_value = Nokogiri::XML::Node.new('ResourceExtensionParameterValue', role_xml)
+      if params[:chef_extension_public_param]
+        resource_extension_parameter_value['Key'] = 'PublicParams'
+        resource_extension_parameter_value['Value'] = Base64.encode64(params[:chef_extension_public_param])
+        resource_extension_parameter_value['Type'] = 'Public'
+      end
+
+      resource_extension_parameter_values = Nokogiri::XML::Node.new('ResourceExtensionParameterValues', role_xml)
+      resource_extension_parameter_values.add_next_sibling(resource_extension_parameter_value)
+
+      if params[:chef_extension_private_param]
+        resource_extension_parameter_value['Key'] = 'PrivateParams'
+        resource_extension_parameter_value['Value'] = Base64.encode64(params[:chef_extension_private_param])
+        resource_extension_parameter_value['Type'] = 'Private'
+      end
+
+      resource_extension_parameter_values.add_next_sibling(resource_extension_parameter_value)
+
+      resource_extension_reference.add_child(resource_extension_parameter_values)
+      resource_extension_references = Nokogiri::XML::Node.new('ResourceExtensionReferences', role_xml)
+      resource_extension_references['ResourceExtensionReference'] = resource_extension_reference
+      resource_extension_references.add_child(resource_extension_reference)
+      role_xml.add_child(resource_extension_references)
+
+      #provision_guest_agent = Nokogiri::XML::Node.new('ProvisionGuestAgent', role_xml)
+      role_xml['ProvisionGuestAgent'] = true
+
+      role_xml
+    end
+
+    def update(name, params, roleXML)
+      servicecall = "hostedservices/#{params[:azure_dns_name]}" +
+      "/deployments/#{params[:deploy_name]}/roles/#{name}"
+      ret_val = @connection.query_azure(servicecall, 'put', roleXML.to_xml)
+      error_code, error_message = error_from_response_xml(ret_val)
+      if error_code.length > 0
+        Chef::Log.debug(ret_val.to_s)
+        raise Chef::Log.fatal 'Unable to update role:' + error_code + ' : ' + error_message
+      end
     end
   end
 end

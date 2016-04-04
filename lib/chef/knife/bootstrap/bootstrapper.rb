@@ -225,10 +225,6 @@ class Chef
           bootstrap_common_params(bootstrap, server)
         end
 
-        def get_extension_provider_name_space
-          'Microsoft.Windows.Azure.Extensions'
-        end
-
         def get_chef_extension_name
           is_image_windows? ? "ChefClient" : "LinuxChefClient"
         end

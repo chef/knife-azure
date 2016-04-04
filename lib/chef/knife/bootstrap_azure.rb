@@ -41,9 +41,7 @@ class Chef
 
       	begin
           unless @name_args[0].nil?
-            service.add_extension({
-              name: @name_args[0], set_ext_params
-            })
+            service.add_extension(@name_args[0], set_ext_params)
           else
             raise ArgumentError, 'Please specify the SERVER name which needs to be bootstrapped via the Chef Extension.'
           end
@@ -56,20 +54,18 @@ class Chef
 
       def set_ext_params
         begin
-          server = service.find_server(
-            {name: @name_args[0],
-             azure_dns_name: locate_config_value(:azure_dns_name)
+          server = service.find_server({
+              name: @name_args[0],
+              azure_dns_name: locate_config_value(:azure_dns_name)
             })
 
+          ext_params = Hash.new
           case server.os_type.downcase
           when 'windows'
             ext_params[:chef_extension] = 'ChefClient'
           when 'linux'
-            if server.os_version.downcase.include? 'ubuntu' ||
-              server.os_version.downcase.include? 'debian' ||
-              server.os_version.downcase.include? 'rhel' ||
-              server.os_version.downcase.include? 'centos'
-                ext_params[:chef_extension] = 'LinuxChefClient'
+            if ['ubuntu', 'debian', 'rhel', 'centos'].any? { |platform| server.os_version.downcase.include? platform }
+              ext_params[:chef_extension] = 'LinuxChefClient'
             else
               raise 'OS version #{server.os_version} for OS type #{server.os_type} is not supported.'
             end
@@ -78,11 +74,13 @@ class Chef
           end
 
           ext_params[:azure_dns_name] = locate_config_value(:azure_dns_name)
+          ext_params[:deploy_name] = server.deployname
+          ext_params[:role_xml] = server.role_xml
           ext_params[:azure_vm_name] = @name_args[0]
-          ext_params[:provider_name_space] = get_extension_provider_name_space
+          ext_params[:chef_extension_publisher] = get_chef_extension_publisher
           ext_params[:chef_extension_version] = get_chef_extension_version(ext_params[:chef_extension])
-          ext_params[:chef_extension_public_param] = get_chef_extension_public_params
-          ext_params[:chef_extension_private_param] = get_chef_extension_private_params
+          ext_params[:chef_extension_public_param] = get_chef_extension_public_params.to_json
+          ext_params[:chef_extension_private_param] = get_chef_extension_private_params.to_json
         rescue => error
           ui.error("#{error.message}")
           Chef::Log.debug("#{error.backtrace.join("\n")}")

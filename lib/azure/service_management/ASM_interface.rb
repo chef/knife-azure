@@ -285,11 +285,13 @@ module Azure
       end
 
       def add_extension(name, params = {})
-        ## TODO
-      end
-
-      def update_deployment
-        ## TODO
+        begin
+          connection.roles.add(name, params)
+        rescue Exception => e
+          Chef::Log.error("Failed to add extension to the server -- exception being rescued: #{e.to_s}")
+          backtrace_message = "#{e.class}: #{e}\n#{e.backtrace.join("\n")}"
+          Chef::Log.debug("#{backtrace_message}")
+        end
       end
     end
   end
