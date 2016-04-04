@@ -518,6 +518,29 @@ knife azurerm server create
   -c ~/.chef/knife.rb
 ```
 
+User can use existing virtual network and subnet while server create by providing `--azure-vnet-name` and `--azure-vnet-subnet-name` options.
+
+Note:
+
+1. If these options are not given, default vnet and subnet with the VM name will be created.
+2. User needs to provide valid existing vnet name and subnet name otherwise it will raise vnet or subnet not found error.
+3. Vnet should belong to the same resource group that is provided in the command.
+4. Subnet should belong to the same vnet that is provided in the command.
+
+```
+knife azurerm server create
+  --azure-resource-group-name MyResourceGrpName
+  --azure-vm-name MyNewVMName
+  --azure-service-location 'WEST US'
+  --azure-image-os-type ubuntu
+  --ssh-user myuser --ssh-password mypassword
+  --azure-vm-size Small
+  --azure-vnet-name 'VnetName'
+  --azure-vnet-subnet-name 'VnetSubnetName'
+  -r "recipe[cbk1::rec1]"
+  -c ~/.chef/knife.rb
+```
+
 ### Azure Server Delete Subcommand
 Deletes an existing ARM server in the currently configured Azure account. By default, this does not delete the associated resource-group, associated node and client objects from the Chef server.
 For deleting associated resource-group along with server use --delete-resource-group flag.
