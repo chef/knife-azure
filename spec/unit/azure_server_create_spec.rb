@@ -866,56 +866,42 @@ describe Chef::Knife::AzureServerCreate do
       it "should set autoUpdateClient flag to true" do
         @server_instance.config[:auto_update_client] = true
         public_config = "{\"client_rb\":\"chef_server_url \\t \\\"https://localhost:443\\\"\\nvalidation_client_name\\t\\\"chef-validator\\\"\",\"runlist\":\"\\\"getting-started\\\"\",\"autoUpdateClient\":\"true\",\"deleteChefConfig\":\"false\",\"uninstallChefClient\":\"false\",\"custom_json_attr\":{},\"bootstrap_options\":{\"chef_server_url\":\"https://localhost:443\",\"validation_client_name\":\"chef-validator\"}}"
-
-        expect(Base64).to receive(:encode64).with(public_config)
         @server_instance.get_chef_extension_public_params
       end
 
       it "should set autoUpdateClient flag to false" do
         @server_instance.config[:auto_update_client] = false
         public_config = "{\"client_rb\":\"chef_server_url \\t \\\"https://localhost:443\\\"\\nvalidation_client_name\\t\\\"chef-validator\\\"\",\"runlist\":\"\\\"getting-started\\\"\",\"autoUpdateClient\":\"false\",\"deleteChefConfig\":\"false\",\"uninstallChefClient\":\"false\",\"custom_json_attr\":{},\"bootstrap_options\":{\"chef_server_url\":\"https://localhost:443\",\"validation_client_name\":\"chef-validator\"}}"
-
-        expect(Base64).to receive(:encode64).with(public_config)
         @server_instance.get_chef_extension_public_params
       end
 
       it "sets deleteChefConfig flag to true" do
         @server_instance.config[:delete_chef_extension_config] = true
         public_config = "{\"client_rb\":\"chef_server_url \\t \\\"https://localhost:443\\\"\\nvalidation_client_name\\t\\\"chef-validator\\\"\",\"runlist\":\"\\\"getting-started\\\"\",\"autoUpdateClient\":\"false\",\"deleteChefConfig\":\"true\",\"uninstallChefClient\":\"false\",\"custom_json_attr\":{},\"bootstrap_options\":{\"chef_server_url\":\"https://localhost:443\",\"validation_client_name\":\"chef-validator\"}}"
-
-        expect(Base64).to receive(:encode64).with(public_config)
         @server_instance.get_chef_extension_public_params
       end
 
       it "sets deleteChefConfig flag to false" do
         @server_instance.config[:delete_chef_extension_config] = false
         public_config = "{\"client_rb\":\"chef_server_url \\t \\\"https://localhost:443\\\"\\nvalidation_client_name\\t\\\"chef-validator\\\"\",\"runlist\":\"\\\"getting-started\\\"\",\"autoUpdateClient\":\"false\",\"deleteChefConfig\":\"false\",\"uninstallChefClient\":\"false\",\"custom_json_attr\":{},\"bootstrap_options\":{\"chef_server_url\":\"https://localhost:443\",\"validation_client_name\":\"chef-validator\"}}"
-
-        expect(Base64).to receive(:encode64).with(public_config)
         @server_instance.get_chef_extension_public_params
       end
 
       it "sets bootstrapVersion variable in public_config" do
         @server_instance.config[:bootstrap_version] = '12.4.2'
         public_config = "{\"client_rb\":\"chef_server_url \\t \\\"https://localhost:443\\\"\\nvalidation_client_name\\t\\\"chef-validator\\\"\",\"runlist\":\"\\\"getting-started\\\"\",\"autoUpdateClient\":\"false\",\"deleteChefConfig\":\"false\",\"uninstallChefClient\":\"false\",\"custom_json_attr\":{},\"bootstrap_options\":{\"chef_server_url\":\"https://localhost:443\",\"validation_client_name\":\"chef-validator\",\"bootstrap_version\":\"12.4.2\"}}"
-
-        expect(Base64).to receive(:encode64).with(public_config)
         @server_instance.get_chef_extension_public_params
       end
 
       it "sets uninstallChefClient flag to false" do
         @server_instance.config[:uninstall_chef_client] = false
         public_config = "{\"client_rb\":\"chef_server_url \\t \\\"https://localhost:443\\\"\\nvalidation_client_name\\t\\\"chef-validator\\\"\",\"runlist\":\"\\\"getting-started\\\"\",\"autoUpdateClient\":\"false\",\"deleteChefConfig\":\"false\",\"uninstallChefClient\":\"false\",\"custom_json_attr\":{},\"bootstrap_options\":{\"chef_server_url\":\"https://localhost:443\",\"validation_client_name\":\"chef-validator\"}}"
-
-        expect(Base64).to receive(:encode64).with(public_config)
         @server_instance.get_chef_extension_public_params
       end
 
       it "sets uninstallChefClient flag to true" do
         @server_instance.config[:uninstall_chef_client] = true
         public_config = "{\"client_rb\":\"chef_server_url \\t \\\"https://localhost:443\\\"\\nvalidation_client_name\\t\\\"chef-validator\\\"\",\"runlist\":\"\\\"getting-started\\\"\",\"autoUpdateClient\":\"false\",\"deleteChefConfig\":\"false\",\"uninstallChefClient\":\"true\",\"custom_json_attr\":{},\"bootstrap_options\":{\"chef_server_url\":\"https://localhost:443\",\"validation_client_name\":\"chef-validator\"}}"
-
-        expect(Base64).to receive(:encode64).with(public_config)
         @server_instance.get_chef_extension_public_params
       end
     end
@@ -993,7 +979,7 @@ describe Chef::Knife::AzureServerCreate do
         expect(server_config[:chef_extension_publisher]).to eq("Chef.Bootstrap.WindowsAzure")
         expect(server_config[:chef_extension_version]).to eq("11.*")
         expect(server_config).to include(:chef_extension_public_param)
-        expect(JSON.parse(Base64.decode64(server_config[:chef_extension_public_param]))["runlist"]).to eq(Chef::Config[:knife][:run_list].first.to_json)
+        expect(server_config[:chef_extension_public_param][:runlist]).to eq(Chef::Config[:knife][:run_list].first.to_json)
         expect(server_config).to include(:chef_extension_private_param)
       end
     end
@@ -1009,7 +995,6 @@ describe Chef::Knife::AzureServerCreate do
         allow_any_instance_of(Chef::Knife::Bootstrap::ClientBuilder).to receive(:client_path)
         allow(File).to receive(:read).and_return('foo')
         pri_config = { client_pem: 'foo' }
-        expect(Base64).to receive(:encode64).with(pri_config.to_json)
         @server_instance.get_chef_extension_private_params
       end
     end
@@ -1040,7 +1025,6 @@ describe Chef::Knife::AzureServerCreate do
 
       it "copies SSL certificate contents into chef_server_crt attribute of extension's private params" do
         pri_config = { validation_key: 'foo', chef_server_crt: 'foo' }
-        expect(Base64).to receive(:encode64).with(pri_config.to_json)
         @server_instance.get_chef_extension_private_params
       end
     end
