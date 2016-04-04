@@ -500,14 +500,14 @@ module Azure
                   if params[:chef_extension_public_param]
                     xml.ResourceExtensionParameterValue {
                       xml.Key "PublicParams"
-                      xml.Value params[:chef_extension_public_param]
+                      xml.Value Base64.encode64(params[:chef_extension_public_param].to_json)
                       xml.Type "Public"
                     }
                   end
                   if params[:chef_extension_private_param]
                     xml.ResourceExtensionParameterValue {
                       xml.Key "PrivateParams"
-                      xml.Value params[:chef_extension_private_param]
+                      xml.Value Base64.encode64(params[:chef_extension_private_param].to_json)
                       xml.Type "Private"
                     }
                   end
