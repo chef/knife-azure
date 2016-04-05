@@ -566,39 +566,99 @@ module Azure
     def setup_extension(params)
       role_xml = params[:role_xml]
 
-      resource_extension_reference = Nokogiri::XML::Node.new('ResourceExtensionReference', role_xml)
-      resource_extension_reference['ReferenceName'] = params[:chef_extension]
-      resource_extension_reference['Publisher'] = params[:chef_extension_publisher]
-      resource_extension_reference['Name'] = params[:chef_extension]
-      resource_extension_reference['Version'] = params[:chef_extension_version]
-      resource_extension_reference['State'] = 'enable'
+      resource_extension_references = role_xml.css('ResourceExtensionReferences')
+      add_resource_extension_references = resource_extension_references.nil?
 
-      resource_extension_parameter_value = Nokogiri::XML::Node.new('ResourceExtensionParameterValue', role_xml)
-      if params[:chef_extension_public_param]
-        resource_extension_parameter_value['Key'] = 'PublicParams'
-        resource_extension_parameter_value['Value'] = Base64.encode64(params[:chef_extension_public_param])
-        resource_extension_parameter_value['Type'] = 'Public'
+      resource_extension_references = Nokogiri::XML::Node.new('ResourceExtensionReferences', role_xml) if add_resource_extension_references
+
+      ext = nil
+      if !add_resource_extension_references
+        resource_extension_references.css('ReferenceName').each { |node| ext = node if node.content == params[:chef_extension] }
       end
 
-      resource_extension_parameter_values = Nokogiri::XML::Node.new('ResourceExtensionParameterValues', role_xml)
-      resource_extension_parameter_values.add_next_sibling(resource_extension_parameter_value)
+      add_resource_extension_reference = ext.nil?
 
-      if params[:chef_extension_private_param]
-        resource_extension_parameter_value['Key'] = 'PrivateParams'
-        resource_extension_parameter_value['Value'] = Base64.encode64(params[:chef_extension_private_param])
-        resource_extension_parameter_value['Type'] = 'Private'
+      if add_resource_extension_reference
+        resource_extension_reference = Nokogiri::XML::Node.new('ResourceExtensionReference', role_xml)
+
+        reference_name = Nokogiri::XML::Node.new('ReferenceName', role_xml)
+        reference_name.content = params[:chef_extension]
+        resource_extension_reference.add_child(reference_name)
+
+        publisher = Nokogiri::XML::Node.new('Publisher', role_xml)
+        publisher.content = params[:chef_extension_publisher]
+        resource_extension_reference.add_child(publisher)
+
+        name = Nokogiri::XML::Node.new('Name', role_xml)
+        name.content = params[:chef_extension]
+        resource_extension_reference.add_child(name)
+
+        version = Nokogiri::XML::Node.new('Version', role_xml)
+        version.content = params[:chef_extension_version]
+        resource_extension_reference.add_child(version)
+
+        state = Nokogiri::XML::Node.new('State', role_xml)
+        state.content = 'enable'
+        resource_extension_reference.add_child(state)
+
+        resource_extension_parameter_values = Nokogiri::XML::Node.new('ResourceExtensionParameterValues', role_xml)
+        if params[:chef_extension_public_param]
+          resource_extension_parameter_value = Nokogiri::XML::Node.new('ResourceExtensionParameterValue', role_xml)
+
+          key = Nokogiri::XML::Node.new('Key', role_xml)
+          key.content = 'PublicParams'
+          resource_extension_parameter_value.add_child(key)
+
+          value = Nokogiri::XML::Node.new('Value', role_xml)
+          value.content = Base64.encode64(params[:chef_extension_public_param])
+          resource_extension_parameter_value.add_child(value)
+
+          type = Nokogiri::XML::Node.new('Type', role_xml)
+          type.content = 'Public'
+          resource_extension_parameter_value.add_child(type)
+
+          resource_extension_parameter_values.add_child(resource_extension_parameter_value)
+        end
+
+        if params[:chef_extension_private_param]
+          resource_extension_parameter_value = Nokogiri::XML::Node.new('ResourceExtensionParameterValue', role_xml)
+
+          key = Nokogiri::XML::Node.new('Key', role_xml)
+          key.content = 'PrivateParams'
+          resource_extension_parameter_value.add_child(key)
+
+          value = Nokogiri::XML::Node.new('Value', role_xml)
+          value.content = Base64.encode64(params[:chef_extension_private_param])
+          resource_extension_parameter_value.add_child(value)
+
+          type = Nokogiri::XML::Node.new('Type', role_xml)
+          type.content = 'Private'
+          resource_extension_parameter_value.add_child(type)
+
+          resource_extension_parameter_values.add_child(resource_extension_parameter_value)
+        end
+
+        resource_extension_reference.add_child(resource_extension_parameter_values)
+        if add_resource_extension_references
+          resource_extension_references.add_child(resource_extension_reference)
+        else
+          resource_extension_references.last.add_child(resource_extension_reference)
+        end
+
+        provision_guest_agent = role_xml.css('ProvisionGuestAgent')
+        add_provision_guest_agent = provision_guest_agent.nil?
+
+        if add_provision_guest_agent
+          provision_guest_agent = Nokogiri::XML::Node.new('ProvisionGuestAgent', role_xml)
+          provision_guest_agent.content = true
+        else
+          provision_guest_agent.first.content = true
+        end
+
+        role_xml.add_child(provision_guest_agent) if add_provision_guest_agent
       end
 
-      resource_extension_parameter_values.add_next_sibling(resource_extension_parameter_value)
-
-      resource_extension_reference.add_child(resource_extension_parameter_values)
-      resource_extension_references = Nokogiri::XML::Node.new('ResourceExtensionReferences', role_xml)
-      resource_extension_references['ResourceExtensionReference'] = resource_extension_reference
-      resource_extension_references.add_child(resource_extension_reference)
-      role_xml.add_child(resource_extension_references)
-
-      #provision_guest_agent = Nokogiri::XML::Node.new('ProvisionGuestAgent', role_xml)
-      role_xml['ProvisionGuestAgent'] = true
+      role_xml.add_child(resource_extension_references) if add_resource_extension_references
 
       role_xml
     end
@@ -606,7 +666,7 @@ module Azure
     def update(name, params, roleXML)
       servicecall = "hostedservices/#{params[:azure_dns_name]}" +
       "/deployments/#{params[:deploy_name]}/roles/#{name}"
-      ret_val = @connection.query_azure(servicecall, 'put', roleXML.to_xml)
+      ret_val = @connection.query_azure(servicecall, 'put', roleXML.to_xml, '', true, true, 'application/xml')
       error_code, error_message = error_from_response_xml(ret_val)
       if error_code.length > 0
         Chef::Log.debug(ret_val.to_s)

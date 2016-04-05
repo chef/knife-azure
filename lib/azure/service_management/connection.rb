@@ -53,10 +53,11 @@ module Azure
                       body = '',
                       params = '',
                       wait = true,
-                      services = true)
+                      services = true,
+                      content_type = nil)
         Chef::Log.info 'calling ' + verb + ' ' + service_name + (wait ? " synchronously" : " asynchronously")
         Chef::Log.debug body unless body == ''
-        response = @rest.query_azure(service_name, verb, body, params, services)
+        response = @rest.query_azure(service_name, verb, body, params, services, content_type)
         if response.code.to_i == 200
           ret_val = Nokogiri::XML response.body
         elsif !wait && response.code.to_i == 202
