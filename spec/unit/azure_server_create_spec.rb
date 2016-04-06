@@ -335,7 +335,7 @@ describe Chef::Knife::AzureServerCreate do
       context "Domain join:" do
         before do
           Chef::Config[:knife][:azure_dns_name] = 'vmname'
-          @server_instance.stub(:is_image_windows?).and_return(true)
+          allow(@server_instance).to receive(:is_image_windows?).and_return(true)
           Chef::Config[:knife][:bootstrap_protocol] = 'winrm'
           Chef::Config[:knife][:winrm_user] = 'testuser'
           Chef::Config[:knife][:winrm_password] = 'winrm_password'
@@ -401,21 +401,21 @@ describe Chef::Knife::AzureServerCreate do
 
       it "should error if domain user is not specified for domain join" do
         Chef::Config[:knife][:azure_dns_name] = 'vmname'
-        @server_instance.stub(:is_image_windows?).and_return(true)
+        allow(@server_instance).to receive(:is_image_windows?).and_return(true)
 
         Chef::Config[:knife][:azure_domain_name] = 'testad.com'
         Chef::Config[:knife][:azure_domain_passwd] = 'domainuserpass'
-        @server_instance.ui.should_receive(:error).with('Must specify both --azure-domain-user and --azure-domain-passwd.')
+        expect(@server_instance.ui).to receive(:error).with('Must specify both --azure-domain-user and --azure-domain-passwd.')
         expect {@server_instance.run}.to raise_error(SystemExit)
       end
 
       it "should error if password for domain user is not specified for domain join" do
         Chef::Config[:knife][:azure_dns_name] = 'vmname'
-        @server_instance.stub(:is_image_windows?).and_return(true)
+        allow(@server_instance).to receive(:is_image_windows?).and_return(true)
 
         Chef::Config[:knife][:azure_domain_name] = 'testad.com'
         Chef::Config[:knife][:azure_domain_user] = 'domainuser'
-        @server_instance.ui.should_receive(:error).with('Must specify both --azure-domain-user and --azure-domain-passwd.')
+        expect(@server_instance.ui).to receive(:error).with('Must specify both --azure-domain-user and --azure-domain-passwd.')
         expect {@server_instance.run}.to raise_error(SystemExit)
       end
     end
@@ -863,46 +863,19 @@ describe Chef::Knife::AzureServerCreate do
     end
 
     context "get_chef_extension_public_params" do
-      it "should set autoUpdateClient flag to true" do
+      it "should set public config properly" do
         @server_instance.config[:auto_update_client] = true
-        public_config = "{\"client_rb\":\"chef_server_url \\t \\\"https://localhost:443\\\"\\nvalidation_client_name\\t\\\"chef-validator\\\"\",\"runlist\":\"\\\"getting-started\\\"\",\"autoUpdateClient\":\"true\",\"deleteChefConfig\":\"false\",\"uninstallChefClient\":\"false\",\"custom_json_attr\":{},\"bootstrap_options\":{\"chef_server_url\":\"https://localhost:443\",\"validation_client_name\":\"chef-validator\"}}"
-        @server_instance.get_chef_extension_public_params
-      end
-
-      it "should set autoUpdateClient flag to false" do
-        @server_instance.config[:auto_update_client] = false
-        public_config = "{\"client_rb\":\"chef_server_url \\t \\\"https://localhost:443\\\"\\nvalidation_client_name\\t\\\"chef-validator\\\"\",\"runlist\":\"\\\"getting-started\\\"\",\"autoUpdateClient\":\"false\",\"deleteChefConfig\":\"false\",\"uninstallChefClient\":\"false\",\"custom_json_attr\":{},\"bootstrap_options\":{\"chef_server_url\":\"https://localhost:443\",\"validation_client_name\":\"chef-validator\"}}"
-        @server_instance.get_chef_extension_public_params
-      end
-
-      it "sets deleteChefConfig flag to true" do
         @server_instance.config[:delete_chef_extension_config] = true
-        public_config = "{\"client_rb\":\"chef_server_url \\t \\\"https://localhost:443\\\"\\nvalidation_client_name\\t\\\"chef-validator\\\"\",\"runlist\":\"\\\"getting-started\\\"\",\"autoUpdateClient\":\"false\",\"deleteChefConfig\":\"true\",\"uninstallChefClient\":\"false\",\"custom_json_attr\":{},\"bootstrap_options\":{\"chef_server_url\":\"https://localhost:443\",\"validation_client_name\":\"chef-validator\"}}"
-        @server_instance.get_chef_extension_public_params
-      end
-
-      it "sets deleteChefConfig flag to false" do
-        @server_instance.config[:delete_chef_extension_config] = false
-        public_config = "{\"client_rb\":\"chef_server_url \\t \\\"https://localhost:443\\\"\\nvalidation_client_name\\t\\\"chef-validator\\\"\",\"runlist\":\"\\\"getting-started\\\"\",\"autoUpdateClient\":\"false\",\"deleteChefConfig\":\"false\",\"uninstallChefClient\":\"false\",\"custom_json_attr\":{},\"bootstrap_options\":{\"chef_server_url\":\"https://localhost:443\",\"validation_client_name\":\"chef-validator\"}}"
-        @server_instance.get_chef_extension_public_params
-      end
-
-      it "sets bootstrapVersion variable in public_config" do
         @server_instance.config[:bootstrap_version] = '12.4.2'
-        public_config = "{\"client_rb\":\"chef_server_url \\t \\\"https://localhost:443\\\"\\nvalidation_client_name\\t\\\"chef-validator\\\"\",\"runlist\":\"\\\"getting-started\\\"\",\"autoUpdateClient\":\"false\",\"deleteChefConfig\":\"false\",\"uninstallChefClient\":\"false\",\"custom_json_attr\":{},\"bootstrap_options\":{\"chef_server_url\":\"https://localhost:443\",\"validation_client_name\":\"chef-validator\",\"bootstrap_version\":\"12.4.2\"}}"
-        @server_instance.get_chef_extension_public_params
-      end
-
-      it "sets uninstallChefClient flag to false" do
         @server_instance.config[:uninstall_chef_client] = false
-        public_config = "{\"client_rb\":\"chef_server_url \\t \\\"https://localhost:443\\\"\\nvalidation_client_name\\t\\\"chef-validator\\\"\",\"runlist\":\"\\\"getting-started\\\"\",\"autoUpdateClient\":\"false\",\"deleteChefConfig\":\"false\",\"uninstallChefClient\":\"false\",\"custom_json_attr\":{},\"bootstrap_options\":{\"chef_server_url\":\"https://localhost:443\",\"validation_client_name\":\"chef-validator\"}}"
-        @server_instance.get_chef_extension_public_params
-      end
+        public_config = "{\"client_rb\":\"chef_server_url \\t \\\"https://localhost:443\\\"\\nvalidation_client_name\\t\\\"chef-validator\\\"\",\"runlist\":\"\\\"getting-started\\\"\",\"autoUpdateClient\":\"true\",\"deleteChefConfig\":\"true\",\"uninstallChefClient\":\"false\",\"custom_json_attr\":{},\"bootstrap_options\":{\"chef_server_url\":\"https://localhost:443\",\"validation_client_name\":\"chef-validator\",\"bootstrap_version\":\"12.4.2\"}}"
 
-      it "sets uninstallChefClient flag to true" do
-        @server_instance.config[:uninstall_chef_client] = true
-        public_config = "{\"client_rb\":\"chef_server_url \\t \\\"https://localhost:443\\\"\\nvalidation_client_name\\t\\\"chef-validator\\\"\",\"runlist\":\"\\\"getting-started\\\"\",\"autoUpdateClient\":\"false\",\"deleteChefConfig\":\"false\",\"uninstallChefClient\":\"true\",\"custom_json_attr\":{},\"bootstrap_options\":{\"chef_server_url\":\"https://localhost:443\",\"validation_client_name\":\"chef-validator\"}}"
-        @server_instance.get_chef_extension_public_params
+        expect(@server_instance).to receive(:get_chef_extension_name).and_return("LinuxChefClient")
+        expect(@server_instance).to receive(:get_chef_extension_publisher).and_return("Chef.Bootstrap.WindowsAzure")
+        allow(@server_instance).to receive(:get_chef_extension_version)
+        allow(@server_instance).to receive(:get_chef_extension_private_params)
+        expect(@server_instance).to receive(:get_chef_extension_public_params).and_return(public_config)
+        @server_instance.create_server_def
       end
     end
 
