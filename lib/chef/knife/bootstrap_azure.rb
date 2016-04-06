@@ -79,8 +79,8 @@ class Chef
           ext_params[:azure_vm_name] = @name_args[0]
           ext_params[:chef_extension_publisher] = get_chef_extension_publisher
           ext_params[:chef_extension_version] = get_chef_extension_version(ext_params[:chef_extension])
-          ext_params[:chef_extension_public_param] = get_chef_extension_public_params.to_json
-          ext_params[:chef_extension_private_param] = get_chef_extension_private_params.to_json
+          ext_params[:chef_extension_public_param] = get_chef_extension_public_params
+          ext_params[:chef_extension_private_param] = get_chef_extension_private_params
         rescue => error
           ui.error("#{error.message}")
           Chef::Log.debug("#{error.backtrace.join("\n")}")

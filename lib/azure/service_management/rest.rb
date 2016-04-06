@@ -43,7 +43,7 @@ module AzureAPI
       response = http_query(request_url, verb, body, params, content_type)
       if response.code.to_i == 307
         Chef::Log.debug "Redirect to #{response['Location']}"
-        response = http_query(response['Location'], verb, body, params)
+        response = http_query(response['Location'], verb, body, params, content_type)
       end
       @last_request_id = response['x-ms-request-id']
       response
@@ -63,10 +63,10 @@ module AzureAPI
       uri = URI.parse("#{@host_name}/#{@subscription_id}/operations/#{@last_request_id}")
       scheme = !uri.scheme ? "https://" : ""
       request_url = "#{scheme}#{@host_name}/#{@subscription_id}/operations/#{@last_request_id}"
-      response = http_query(request_url, 'get', '', '')
+      response = http_query(request_url, 'get', '', '', nil)
       if response.code.to_i == 307
         Chef::Log.debug "Redirect to #{response['Location']}"
-        response = http_query(response['Location'], 'get', '', '')
+        response = http_query(response['Location'], 'get', '', '', nil)
       end
       response
     end
