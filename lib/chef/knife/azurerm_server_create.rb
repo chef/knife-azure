@@ -16,7 +16,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-
 require 'chef/knife/azurerm_base'
 require 'securerandom'
 require 'chef/knife/bootstrap/azurerm_bootstrap_options'
@@ -172,7 +171,6 @@ class Chef
 
       def run
         $stdout.sync = true
-
         validate_arm_keys!(
           :azure_resource_group_name,
           :azure_vm_name,
@@ -264,6 +262,14 @@ class Chef
 
         if locate_config_value(:azure_vnet_subnet_name) && !locate_config_value(:azure_vnet_name)
           raise ArgumentError, "When --azure-vnet-subnet-name is specified, the --azure-vnet-name must also be specified."
+        end
+        
+        if !is_image_windows?
+          if (locate_config_value(:azure_vm_name).match /^(?=.*[a-zA-Z-])([a-zA-z0-9-]{1,64})$/).nil? 
+            raise ArgumentError, "VM name can only contain alphanumeric and hyphen(-) characters and maximun length cannot exceed 64 charachters."
+          end
+        elsif (locate_config_value(:azure_vm_name).match /^(?=.*[a-zA-Z-])([a-zA-z0-9-]{1,15})$/).nil?
+          raise ArgumentError, "VM name can only contain alphanumeric and hyphen(-) characters and maximun length cannot exceed 15 charachters."
         end
       end
 
