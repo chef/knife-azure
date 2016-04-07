@@ -20,8 +20,9 @@
 
 require 'chef/knife/azure_base'
 require 'chef/knife/winrm_base'
-require 'chef/knife/bootstrap_windows_base'
 require 'securerandom'
+require 'chef/knife/bootstrap/bootstrap_options'
+require 'chef/knife/bootstrap/bootstrapper'
 
 class Chef
   class Knife
@@ -29,7 +30,8 @@ class Chef
 
       include Knife::AzureBase
       include Knife::WinrmBase
-      include Knife::BootstrapWindowsBase
+      include Knife::Bootstrap::BootstrapOptions
+      include Knife::Bootstrap::Bootstrapper
 
       deps do
         require 'readline'
@@ -40,31 +42,15 @@ class Chef
         Chef::Knife::Bootstrap.load_deps
       end
 
-      def load_winrm_deps
-        require 'winrm'
-        require 'chef/knife/winrm'
-        require 'chef/knife/bootstrap_windows_winrm'
-      end
-
       banner "knife azure server create (options)"
 
       attr_accessor :initial_sleep_delay
 
-      option :forward_agent,
-        :short => "-A",
-        :long => "--forward-agent",
-        :description =>  "Enable SSH agent forwarding",
-        :boolean => true
 
       option :bootstrap_protocol,
         :long => "--bootstrap-protocol protocol",
         :description => "Protocol to bootstrap windows servers. options: 'winrm' or 'ssh' or 'cloud-api'.",
         :default => "winrm"
-
-      option :chef_node_name,
-        :short => "-N NAME",
-        :long => "--node-name NAME",
-        :description => "The Chef node name for your new node"
 
       option :ssh_user,
         :short => "-x USERNAME",
@@ -81,49 +67,6 @@ class Chef
         :long => "--ssh-port PORT",
         :description => "The ssh port. Default is 22. If --azure-connect-to-existing-dns set then default SSH port is random"
 
-      option :prerelease,
-        :long => "--prerelease",
-        :description => "Install the pre-release chef gems"
-
-      option :bootstrap_version,
-        :long => "--bootstrap-version VERSION",
-        :description => "The version of Chef to install",
-        :proc => Proc.new { |v| Chef::Config[:knife][:bootstrap_version] = v }
-
-      option :distro,
-        :short => "-d DISTRO",
-        :long => "--distro DISTRO",
-        :description => "Bootstrap a distro using a template. [DEPRECATED] Use --bootstrap-template option instead.",
-        :proc        => Proc.new { |v|
-          Chef::Log.warn("[DEPRECATED] -d / --distro option is deprecated. Use --bootstrap-template option instead.")
-          v
-        }
-
-      option :template_file,
-        :long => "--template-file TEMPLATE",
-        :description => "Full path to location of template to use. [DEPRECATED] Use -t / --bootstrap-template option instead.",
-        :proc        => Proc.new { |v|
-          Chef::Log.warn("[DEPRECATED] --template-file option is deprecated. Use -t / --bootstrap-template option instead.")
-          v
-        }
-
-      option :bootstrap_template,
-        :long => "--bootstrap-template TEMPLATE",
-        :description => "Bootstrap Chef using a built-in or custom template. Set to the full path of an erb template or use one of the built-in templates."
-
-      option :run_list,
-        :short => "-r RUN_LIST",
-        :long => "--run-list RUN_LIST",
-        :description => "Comma separated list of roles/recipes to apply",
-        :proc => lambda { |o| o.split(/[\s,]+/) },
-        :default => []
-
-      option :host_key_verify,
-        :long => "--[no-]host-key-verify",
-        :description => "Verify host key, enabled by default.",
-        :boolean => true,
-        :default => true
-
       option :node_ssl_verify_mode,
         :long        => "--node-ssl-verify-mode [peer|none]",
         :description => "Whether or not to verify the SSL cert for all HTTPS requests.",
@@ -138,60 +81,6 @@ class Chef
         :long        => "--[no-]node-verify-api-cert",
         :description => "Verify the SSL cert for HTTPS requests to the Chef server API.",
         :boolean     => true
-
-      option :bootstrap_proxy,
-            :long => "--bootstrap-proxy PROXY_URL",
-            :description => "The proxy server for the node being bootstrapped",
-            :proc => Proc.new { |p| Chef::Config[:knife][:bootstrap_proxy] = p }
-
-      option :bootstrap_no_proxy,
-        :long => "--bootstrap-no-proxy [NO_PROXY_URL|NO_PROXY_IP]",
-        :description => "Do not proxy locations for the node being bootstrapped; this option is used internally by Opscode",
-        :proc => Proc.new { |np| Chef::Config[:knife][:bootstrap_no_proxy] = np }
-
-      option :bootstrap_url,
-        :long        => "--bootstrap-url URL",
-        :description => "URL to a custom installation script",
-        :proc        => Proc.new { |u| Chef::Config[:knife][:bootstrap_url] = u }
-
-      option :bootstrap_install_command,
-        :long        => "--bootstrap-install-command COMMANDS",
-        :description => "Custom command to install chef-client",
-        :proc        => Proc.new { |ic| Chef::Config[:knife][:bootstrap_install_command] = ic }
-
-      option :bootstrap_wget_options,
-        :long        => "--bootstrap-wget-options OPTIONS",
-        :description => "Add options to wget when installing chef-client",
-        :proc        => Proc.new { |wo| Chef::Config[:knife][:bootstrap_wget_options] = wo }
-
-      option :bootstrap_curl_options,
-        :long        => "--bootstrap-curl-options OPTIONS",
-        :description => "Add options to curl when install chef-client",
-        :proc        => Proc.new { |co| Chef::Config[:knife][:bootstrap_curl_options] = co }
-
-      option :bootstrap_vault_file,
-        :long        => '--bootstrap-vault-file VAULT_FILE',
-        :description => 'A JSON file with a list of vault(s) and item(s) to be updated'
-
-      option :bootstrap_vault_json,
-        :long        => '--bootstrap-vault-json VAULT_JSON',
-        :description => 'A JSON string with the vault(s) and item(s) to be updated'
-
-      option :bootstrap_vault_item,
-        :long        => '--bootstrap-vault-item VAULT_ITEM',
-        :description => 'A single vault and item to update as "vault:item"',
-        :proc        => Proc.new { |i|
-          (vault, item) = i.split(/:/)
-          Chef::Config[:knife][:bootstrap_vault_item] ||= {}
-          Chef::Config[:knife][:bootstrap_vault_item][vault] ||= []
-          Chef::Config[:knife][:bootstrap_vault_item][vault].push(item)
-          Chef::Config[:knife][:bootstrap_vault_item]
-        }
-
-      option :use_sudo_password,
-        :long => "--use-sudo-password",
-        :description => "Execute the bootstrap via sudo with password",
-        :boolean => false
 
       option :azure_storage_account,
         :short => "-a NAME",
@@ -299,21 +188,6 @@ class Chef
         :long => "--identity-file-passphrase PASSWORD",
         :description => "SSH key passphrase. Optional, specify if passphrase for identity-file exists"
 
-      option :hint,
-        :long => "--hint HINT_NAME[=HINT_FILE]",
-        :description => "Specify Ohai Hint to be set on the bootstrap target.  Use multiple --hint options to specify multiple hints.",
-        :proc => Proc.new { |h|
-           Chef::Config[:knife][:hints] ||= {}
-           name, path = h.split("=")
-           Chef::Config[:knife][:hints][name] = path ? JSON.parse(::File.read(path)) : Hash.new
-        }
-
-      option :json_attributes,
-        :short => "-j JSON",
-        :long => "--json-attributes JSON",
-        :description => "A JSON string to be added to the first run of chef-client",
-        :proc => lambda { |o| JSON.parse(o) }
-
       option :thumbprint,
         :long => "--thumbprint THUMBPRINT",
         :description => "The thumprint of the ssl certificate"
@@ -326,12 +200,6 @@ class Chef
         :long => "--cert-path PATH",
         :description => "SSL Certificate Path"
 
-      option :auto_update_client,
-      :long => "--auto-update-client",
-      :boolean => true,
-      :default => false,
-      :description => "Set this flag to enable auto chef client update in azure chef extension. This flag should be used with cloud-api bootstrap protocol only"
-
       option :winrm_max_timeout,
         :long => "--winrm-max-timeout MINUTES",
         :description => "Set winrm maximum command timeout in minutes, useful for long bootstraps"
@@ -339,18 +207,6 @@ class Chef
       option :winrm_max_memorypershell,
         :long => "--winrm-max-memory-per-shell",
         :description => "Set winrm max memory per shell in MB"
-
-      option :delete_chef_extension_config,
-        :long => "--delete-chef-extension-config",
-        :boolean => true,
-        :default => false,
-        :description => "Determines whether Chef configuration files removed when Azure removes the Chef resource extension from the VM. This option is only valid for the 'cloud-api' bootstrap protocol. The default is false."
-
-      option :uninstall_chef_client,
-        :long => "--uninstall-chef-client",
-        :boolean => true,
-        :default => false,
-        :description => "Determines whether Chef Client will be un-installed from the VM or not. This option is only valid for the 'cloud-api' bootstrap protocol. The default value is false."
 
       option :azure_domain_name,
         :long => "--azure-domain-name DOMAIN_NAME",
@@ -536,56 +392,6 @@ class Chef
         return extension_status
       end
 
-
-      def tcp_test_winrm(ip_addr, port)
-        hostname = ip_addr
-        socket = TCPSocket.new(hostname, port)
-        return true
-        rescue SocketError
-          sleep 2
-          false
-        rescue Errno::ETIMEDOUT
-          false
-        rescue Errno::EPERM
-          false
-        rescue Errno::ECONNREFUSED
-          sleep 2
-          false
-        rescue Errno::EHOSTUNREACH
-          sleep 2
-          false
-        rescue Errno::ENETUNREACH
-          sleep 2
-          false
-      end
-
-      def tcp_test_ssh(fqdn, sshport)
-        tcp_socket = TCPSocket.new(fqdn, sshport)
-        readable = IO.select([tcp_socket], nil, nil, 5)
-        if readable
-          Chef::Log.debug("sshd accepting connections on #{fqdn}, banner is #{tcp_socket.gets}")
-          yield
-          true
-        else
-          false
-        end
-      rescue SocketError
-        sleep 2
-        false
-      rescue Errno::ETIMEDOUT
-        false
-      rescue Errno::EPERM
-        false
-      rescue Errno::ECONNREFUSED
-        sleep 2
-        false
-      rescue Errno::EHOSTUNREACH
-        sleep 2
-        false
-      ensure
-        tcp_socket && tcp_socket.close
-      end
-
       def run
         $stdout.sync = true
 
@@ -612,155 +418,6 @@ class Chef
         msg_server_summary(server)
 
         bootstrap_exec(server) unless locate_config_value(:bootstrap_protocol) == 'cloud-api'
-      end
-
-      def default_bootstrap_template
-        is_image_windows? ? 'windows-chef-client-msi' : 'chef-full'
-      end
-
-      def bootstrap_exec(server)
-        fqdn = server.publicipaddress
-
-        if is_image_windows?
-          if locate_config_value(:bootstrap_protocol) == 'ssh'
-            port = server.sshport
-            print "#{ui.color("Waiting for sshd on #{fqdn}:#{port}", :magenta)}"
-
-            print(".") until tcp_test_ssh(fqdn,port) {
-              sleep @initial_sleep_delay ||= 10
-              puts("done")
-            }
-
-          elsif locate_config_value(:bootstrap_protocol) == 'winrm'
-            port = server.winrmport
-
-            print "#{ui.color("Waiting for winrm on #{fqdn}:#{port}", :magenta)}"
-
-            print(".") until tcp_test_winrm(fqdn,port) {
-              sleep @initial_sleep_delay ||= 10
-              puts("done")
-            }
-          end
-
-          puts("\n")
-          bootstrap_for_windows_node(server,fqdn, port).run
-        else
-          unless server && server.publicipaddress && server.sshport
-            Chef::Log.fatal("server not created")
-            exit 1
-          end
-
-          port = server.sshport
-
-          print ui.color("Waiting for sshd on #{fqdn}:#{port}", :magenta)
-
-          print(".") until tcp_test_ssh(fqdn,port) {
-            sleep @initial_sleep_delay ||= 10
-            puts("done")
-          }
-
-          puts("\n")
-          bootstrap_for_node(server,fqdn,port).run
-        end
-
-        msg_server_summary(server)
-      end
-
-      def load_cloud_attributes_in_hints(server)
-        # Modify global configuration state to ensure hint gets set by knife-bootstrap
-        # Query azure and load necessary attributes.
-        cloud_attributes = {}
-        cloud_attributes["public_ip"] = server.publicipaddress
-        cloud_attributes["vm_name"] = server.name
-        cloud_attributes["public_fqdn"] = server.hostedservicename.to_s + ".cloudapp.net"
-        cloud_attributes["public_ssh_port"] = server.sshport if server.sshport
-        cloud_attributes["public_winrm_port"] = server.winrmport if server.winrmport
-
-        Chef::Config[:knife][:hints] ||= {}
-        Chef::Config[:knife][:hints]["azure"] ||= cloud_attributes
-
-      end
-
-      def bootstrap_common_params(bootstrap, server)
-        bootstrap.config[:run_list] = config[:run_list]
-        bootstrap.config[:prerelease] = config[:prerelease]
-        bootstrap.config[:first_boot_attributes] = locate_config_value(:json_attributes) || {}
-        bootstrap.config[:bootstrap_version] = locate_config_value(:bootstrap_version)
-        bootstrap.config[:distro] = locate_config_value(:distro) || default_bootstrap_template
-        # setting bootstrap_template value to template_file for backward
-        bootstrap.config[:template_file] = locate_config_value(:template_file) || locate_config_value(:bootstrap_template)
-        bootstrap.config[:node_ssl_verify_mode] = locate_config_value(:node_ssl_verify_mode)
-        bootstrap.config[:node_verify_api_cert] = locate_config_value(:node_verify_api_cert)
-        bootstrap.config[:bootstrap_no_proxy] = locate_config_value(:bootstrap_no_proxy)
-        bootstrap.config[:bootstrap_url] = locate_config_value(:bootstrap_url)
-        bootstrap.config[:bootstrap_vault_file] = locate_config_value(:bootstrap_vault_file)
-        bootstrap.config[:bootstrap_vault_json] = locate_config_value(:bootstrap_vault_json)
-        bootstrap.config[:bootstrap_vault_item] = locate_config_value(:bootstrap_vault_item)
-
-        load_cloud_attributes_in_hints(server)
-        bootstrap
-      end
-
-      def bootstrap_for_windows_node(server, fqdn, port)
-        if locate_config_value(:bootstrap_protocol) == 'winrm'
-
-            load_winrm_deps
-            if not Chef::Platform.windows?
-              require 'gssapi'
-            end
-
-            bootstrap = Chef::Knife::BootstrapWindowsWinrm.new
-
-            bootstrap.config[:winrm_user] = locate_config_value(:winrm_user) || 'Administrator'
-            bootstrap.config[:winrm_password] = locate_config_value(:winrm_password)
-            bootstrap.config[:winrm_transport] = locate_config_value(:winrm_transport)
-            bootstrap.config[:winrm_authentication_protocol] = locate_config_value(:winrm_authentication_protocol)
-            bootstrap.config[:winrm_port] = port
-            bootstrap.config[:auth_timeout] = locate_config_value(:auth_timeout)
-            # Todo: we should skip cert generate in case when winrm_ssl_verify_mode=verify_none
-            bootstrap.config[:winrm_ssl_verify_mode] = locate_config_value(:winrm_ssl_verify_mode)
-        elsif locate_config_value(:bootstrap_protocol) == 'ssh'
-            bootstrap = Chef::Knife::BootstrapWindowsSsh.new
-            bootstrap.config[:ssh_user] = locate_config_value(:ssh_user)
-            bootstrap.config[:ssh_password] = locate_config_value(:ssh_password)
-            bootstrap.config[:forward_agent] = locate_config_value(:forward_agent)
-            bootstrap.config[:ssh_port] = port
-            bootstrap.config[:identity_file] = locate_config_value(:identity_file)
-            bootstrap.config[:host_key_verify] = locate_config_value(:host_key_verify)
-        else
-            ui.error("Unsupported Bootstrapping Protocol. Supported : winrm, ssh")
-            exit 1
-        end
-        bootstrap.name_args = [fqdn]
-        bootstrap.config[:chef_node_name] = config[:chef_node_name] || server.name
-        bootstrap.config[:encrypted_data_bag_secret] = locate_config_value(:encrypted_data_bag_secret)
-        bootstrap.config[:encrypted_data_bag_secret_file] = locate_config_value(:encrypted_data_bag_secret_file)
-        bootstrap.config[:msi_url] = locate_config_value(:msi_url)
-        bootstrap.config[:install_as_service] = locate_config_value(:install_as_service)
-        bootstrap_common_params(bootstrap, server)
-      end
-
-      def bootstrap_for_node(server,fqdn,port)
-        bootstrap = Chef::Knife::Bootstrap.new
-        bootstrap.name_args = [fqdn]
-        bootstrap.config[:ssh_user] = locate_config_value(:ssh_user)
-        bootstrap.config[:ssh_password] = locate_config_value(:ssh_password)
-        bootstrap.config[:ssh_port] = port
-        bootstrap.config[:identity_file] = locate_config_value(:identity_file)
-        bootstrap.config[:chef_node_name] = locate_config_value(:chef_node_name) || server.name
-        bootstrap.config[:use_sudo] = true unless locate_config_value(:ssh_user) == 'root'
-        bootstrap.config[:use_sudo_password] = true if bootstrap.config[:use_sudo]
-        bootstrap.config[:environment] = locate_config_value(:environment)
-        # may be needed for vpc_mode
-        bootstrap.config[:host_key_verify] = config[:host_key_verify]
-        Chef::Config[:knife][:secret] = config[:encrypted_data_bag_secret] if config[:encrypted_data_bag_secret]
-        Chef::Config[:knife][:secret_file] = config[:encrypted_data_bag_secret_file] if config[:encrypted_data_bag_secret_file]
-        bootstrap.config[:secret] = locate_config_value(:secret) || locate_config_value(:encrypted_data_bag_secret)
-        bootstrap.config[:secret_file] = locate_config_value(:secret_file) || locate_config_value(:encrypted_data_bag_secret_file)
-        bootstrap.config[:bootstrap_install_command] = locate_config_value(:bootstrap_install_command)
-        bootstrap.config[:bootstrap_wget_options] = locate_config_value(:bootstrap_wget_options)
-        bootstrap.config[:bootstrap_curl_options] = locate_config_value(:bootstrap_curl_options)
-        bootstrap_common_params(bootstrap, server)
       end
 
       def validate_params!
@@ -931,88 +588,6 @@ class Chef
         server_def[:azure_domain_ou_dn] = locate_config_value(:azure_domain_ou_dn)
 
         server_def
-      end
-
-      def get_chef_extension_name
-        is_image_windows? ? "ChefClient" : "LinuxChefClient"
-      end
-
-      def get_chef_extension_publisher
-        "Chef.Bootstrap.WindowsAzure"
-      end
-
-      # get latest version
-      def get_chef_extension_version
-        if locate_config_value(:azure_chef_extension_version)
-          Chef::Config[:knife][:azure_chef_extension_version]
-        else
-          extensions = service.get_extension(get_chef_extension_name, get_chef_extension_publisher)
-          extensions.css("Version").max.text.split(".").first + ".*"
-        end
-      end
-
-      def get_chef_extension_public_params
-        pub_config = Hash.new
-        if(locate_config_value(:azure_extension_client_config))
-          pub_config[:client_rb] = File.read(locate_config_value(:azure_extension_client_config))
-        else
-          pub_config[:client_rb] = "chef_server_url \t #{Chef::Config[:chef_server_url].to_json}\nvalidation_client_name\t#{Chef::Config[:validation_client_name].to_json}"
-        end
-
-        pub_config[:runlist] = locate_config_value(:run_list).empty? ? "" : locate_config_value(:run_list).join(",").to_json
-        pub_config[:autoUpdateClient] = locate_config_value(:auto_update_client) ? "true" : "false"
-        pub_config[:deleteChefConfig] = locate_config_value(:delete_chef_extension_config) ? "true" : "false"
-        pub_config[:uninstallChefClient] = locate_config_value(:uninstall_chef_client) ? "true" : "false"
-        pub_config[:custom_json_attr] = locate_config_value(:json_attributes) || {}
-
-        # bootstrap attributes
-        pub_config[:bootstrap_options] = {}
-        pub_config[:bootstrap_options][:environment] = locate_config_value(:environment) if locate_config_value(:environment)
-        pub_config[:bootstrap_options][:chef_node_name] = config[:chef_node_name] if config[:chef_node_name]
-        pub_config[:bootstrap_options][:encrypted_data_bag_secret] = locate_config_value(:encrypted_data_bag_secret) if locate_config_value(:encrypted_data_bag_secret)
-        pub_config[:bootstrap_options][:chef_server_url] = Chef::Config[:chef_server_url] if Chef::Config[:chef_server_url]
-        pub_config[:bootstrap_options][:validation_client_name] = Chef::Config[:validation_client_name] if Chef::Config[:validation_client_name]
-        pub_config[:bootstrap_options][:node_verify_api_cert] = locate_config_value(:node_verify_api_cert) ? "true" : "false" if config.key?(:node_verify_api_cert)
-        pub_config[:bootstrap_options][:bootstrap_version] = locate_config_value(:bootstrap_version) if locate_config_value(:bootstrap_version)
-        pub_config[:bootstrap_options][:node_ssl_verify_mode] = locate_config_value(:node_ssl_verify_mode) if locate_config_value(:node_ssl_verify_mode)
-        pub_config[:bootstrap_options][:bootstrap_proxy] = locate_config_value(:bootstrap_proxy) if locate_config_value(:bootstrap_proxy)
-        Base64.encode64(pub_config.to_json)
-      end
-
-      def get_chef_extension_private_params
-        pri_config = Hash.new
-
-        # validator less bootstrap support for bootstrap protocol cloud-api
-        if (Chef::Config[:validation_key] && !File.exist?(File.expand_path(Chef::Config[:validation_key])))
-
-          if Chef::VERSION.split('.').first.to_i == 11
-            ui.error('Unable to find validation key. Please verify your configuration file for validation_key config value.')
-            exit 1
-          end
-
-          client_builder = Chef::Knife::Bootstrap::ClientBuilder.new(
-            chef_config: Chef::Config,
-            knife_config: config,
-            ui: ui,
-          )
-
-          client_builder.run
-          key_path = client_builder.client_path
-          pri_config[:client_pem] = File.read(key_path)
-        else
-          pri_config[:validation_key] = File.read(Chef::Config[:validation_key])
-        end
-
-        # SSL cert bootstrap support
-        if locate_config_value(:cert_path)
-          if File.exist?(File.expand_path(locate_config_value(:cert_path)))
-            pri_config[:chef_server_crt] = File.read(locate_config_value(:cert_path))
-          else
-            ui.error('Specified SSL certificate does not exist.')
-            exit 1
-          end
-        end
-        Base64.encode64(pri_config.to_json)
       end
 
       private
