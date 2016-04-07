@@ -963,11 +963,10 @@ describe Chef::Knife::AzureServerCreate do
         Chef::Config[:knife] = { chef_node_name: 'foo.example.com' }
       end
 
-      it 'calls get chef extension private params and adds client pem in json object' do
-        allow_any_instance_of(Chef::Knife::Bootstrap::ClientBuilder).to receive(:run)
-        allow_any_instance_of(Chef::Knife::Bootstrap::ClientBuilder).to receive(:client_path)
-        allow(File).to receive(:read).and_return('foo')
-        pri_config = { client_pem: 'foo' }
+      it 'uses Chef ClientBuilder to generate client_pem' do
+        expect_any_instance_of(Chef::Knife::Bootstrap::ClientBuilder).to receive(:run)
+        expect_any_instance_of(Chef::Knife::Bootstrap::ClientBuilder).to receive(:client_path)
+        expect(File).to receive(:read)
         @server_instance.get_chef_extension_private_params
       end
     end
@@ -984,21 +983,6 @@ describe Chef::Knife::AzureServerCreate do
       it 'raises an error and exits' do
         expect(@server_instance.ui).to receive(:error).with('Specified SSL certificate does not exist.')
         expect { @server_instance.get_chef_extension_private_params }.to raise_error(SystemExit)
-      end
-    end
-
-    context 'when SSL certificate file option is passed and file exist physically' do
-      before do
-        allow_any_instance_of(Chef::Knife::Bootstrap::ClientBuilder).to receive(:run)
-        allow_any_instance_of(Chef::Knife::Bootstrap::ClientBuilder).to receive(:client_path)
-        allow(File).to receive(:exist?).and_return(true)
-        allow(File).to receive(:read).and_return('foo')
-        @server_instance.config[:cert_path] = '~/my_cert.crt'
-      end
-
-      it "copies SSL certificate contents into chef_server_crt attribute of extension's private params" do
-        pri_config = { validation_key: 'foo', chef_server_crt: 'foo' }
-        @server_instance.get_chef_extension_private_params
       end
     end
 
