@@ -166,7 +166,7 @@ module Azure
       end
     end
 
-    def add(name, params)
+    def update(name, params)
       role =Role.new(@connection)
       roleExtensionXml = role.setup_extension(params)
       role.update(name, params, roleExtensionXml)
@@ -564,8 +564,9 @@ module Azure
     end
 
     def setup_extension(params)
-      role_xml = update_role_xml(params[:role_xml], params)
+      role_xml = update_role_xml(params[:role_xml], params) ## add Chef Extension config in VM's role_xml
 
+      ## create new XML (with Chef Extension config and other pre-existing VM config) using the role_xml retrieved from the VM
       builder = Nokogiri::XML::Builder.new do |xml|
         xml.PersistentVMRole(
           'xmlns' => 'http://schemas.microsoft.com/windowsazure',
@@ -581,18 +582,23 @@ module Azure
         }
       end
 
-      builder.to_xml.gsub("&lt\;","<").gsub("&gt\;",">")
+      builder.doc.to_xml.gsub("&lt\;","<").gsub("&gt\;",">")
     end
 
     def update_role_xml(roleXML, params)
-      resource_extension_references = roleXML.css('ResourceExtensionReferences')
-      add_resource_extension_references = resource_extension_references.nil?
+      add_resource_extension_references = roleXML.at_css('ResourceExtensionReferences').nil?
 
-      resource_extension_references = Nokogiri::XML::Node.new('ResourceExtensionReferences', roleXML) if add_resource_extension_references
+      if add_resource_extension_references
+        resource_extension_references = Nokogiri::XML::Node.new('ResourceExtensionReferences', roleXML)
+      else
+        resource_extension_references = roleXML.css('ResourceExtensionReferences')
+      end
 
       ext = nil
       if !add_resource_extension_references
-        resource_extension_references.css('ReferenceName').each { |node| ext = node if node.content == params[:chef_extension] }
+        if !resource_extension_references.at_css('ReferenceName').nil?
+          resource_extension_references.css('ReferenceName').each { |node| ext = node if node.content == params[:chef_extension] }
+        end
       end
 
       add_resource_extension_reference = ext.nil?
@@ -615,10 +621,6 @@ module Azure
         version = Nokogiri::XML::Node.new('Version', roleXML)
         version.content = params[:chef_extension_version]
         resource_extension_reference.add_child(version)
-
-        state = Nokogiri::XML::Node.new('State', roleXML)
-        state.content = 'enable'
-        resource_extension_reference.add_child(state)
 
         resource_extension_parameter_values = Nokogiri::XML::Node.new('ResourceExtensionParameterValues', roleXML)
         if params[:chef_extension_public_param]
@@ -658,19 +660,26 @@ module Azure
         end
 
         resource_extension_reference.add_child(resource_extension_parameter_values)
+
+        state = Nokogiri::XML::Node.new('State', roleXML)
+        state.content = 'enable'
+        resource_extension_reference.add_child(state)
+
         if add_resource_extension_references
           resource_extension_references.add_child(resource_extension_reference)
         else
           resource_extension_references.last.add_child(resource_extension_reference)
         end
 
-        provision_guest_agent = roleXML.css('ProvisionGuestAgent')
-        add_provision_guest_agent = provision_guest_agent.nil?
+        roleXML.add_child(resource_extension_references) if add_resource_extension_references
+
+        add_provision_guest_agent = roleXML.at_css('ProvisionGuestAgent').nil?
 
         if add_provision_guest_agent
           provision_guest_agent = Nokogiri::XML::Node.new('ProvisionGuestAgent', roleXML)
           provision_guest_agent.content = true
         else
+          provision_guest_agent = roleXML.css('ProvisionGuestAgent')
           provision_guest_agent.first.content = true
         end
 
@@ -678,8 +687,6 @@ module Azure
       else
         raise "Chef Extension is already installed on the server #{params[:azure_dns_name]}."
       end
-
-      roleXML.add_child(resource_extension_references) if add_resource_extension_references
 
       roleXML
     end

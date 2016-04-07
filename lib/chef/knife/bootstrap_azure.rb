@@ -40,10 +40,11 @@ class Chef
         validate_asm_keys!(:azure_dns_name)
 
       	begin
-          unless @name_args[0].nil?
+          if @name_args.length == 1
             service.add_extension(@name_args[0], set_ext_params)
           else
-            raise ArgumentError, 'Please specify the SERVER name which needs to be bootstrapped via the Chef Extension.'
+            raise ArgumentError, 'Please specify the SERVER name which needs to be bootstrapped via the Chef Extension.' if @name_args.length == 0
+            raise ArgumentError, 'Please specify only one SERVER name which needs to be bootstrapped via the Chef Extension.' if @name_args.length > 1
           end
         rescue => error
           ui.error("#{error.message}")
@@ -58,6 +59,10 @@ class Chef
               name: @name_args[0],
               azure_dns_name: locate_config_value(:azure_dns_name)
             })
+
+          if !server.instance_of? Azure::Role
+            raise "Server #{@name_args[0]} does not exist under the hosted service #{locate_config_value(:azure_dns_name)}."
+          end
 
           ext_params = Hash.new
           case server.os_type.downcase
