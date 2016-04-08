@@ -61,7 +61,8 @@ class Chef
             })
 
           if !server.instance_of? Azure::Role
-            raise "Server #{@name_args[0]} does not exist under the hosted service #{locate_config_value(:azure_dns_name)}."
+            raise "Server #{@name_args[0]} does not exist under the hosted service #{locate_config_value(:azure_dns_name)}." if !server.nil?
+            raise "Hosted service #{locate_config_value(:azure_dns_name)} does not exist." if server.nil?
           end
 
           ext_params = Hash.new
@@ -72,10 +73,10 @@ class Chef
             if ['ubuntu', 'debian', 'rhel', 'centos'].any? { |platform| server.os_version.downcase.include? platform }
               ext_params[:chef_extension] = 'LinuxChefClient'
             else
-              raise 'OS version #{server.os_version} for OS type #{server.os_type} is not supported.'
+              raise "OS version #{server.os_version} for OS type #{server.os_type} is not supported."
             end
           else
-            raise 'OS type #{server.os_type} is not supported.'
+            raise "OS type #{server.os_type} is not supported."
           end
 
           ext_params[:azure_dns_name] = locate_config_value(:azure_dns_name)

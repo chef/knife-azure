@@ -167,7 +167,7 @@ module Azure
     end
 
     def update(name, params)
-      role =Role.new(@connection)
+      role = Role.new(@connection)
       roleExtensionXml = role.setup_extension(params)
       role.update(name, params, roleExtensionXml)
     end
