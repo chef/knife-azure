@@ -685,7 +685,7 @@ module Azure
 
         roleXML.add_child(provision_guest_agent) if add_provision_guest_agent
       else
-        raise "Chef Extension is already installed on the server #{params[:azure_dns_name]}."
+        raise "Chef Extension is already installed on the server #{params[:azure_vm_name]}."
       end
 
       roleXML
@@ -698,7 +698,7 @@ module Azure
       error_code, error_message = error_from_response_xml(ret_val)
       if error_code.length > 0
         Chef::Log.debug(ret_val.to_s)
-        raise Chef::Log.fatal 'Unable to update role:' + error_code + ' : ' + error_message
+        raise 'Unable to update role:' + error_code + ' : ' + error_message
       end
     end
   end

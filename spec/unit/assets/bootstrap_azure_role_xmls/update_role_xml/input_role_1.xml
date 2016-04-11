@@ -1,0 +1,31 @@
+<Role i:type="PersistentVMRole">
+  <RoleName>test-vm-cnt</RoleName>
+  <OsVersion/>
+  <RoleType>PersistentVMRole</RoleType>
+  <ConfigurationSets>
+    <ConfigurationSet i:type="NetworkConfigurationSet">
+      <ConfigurationSetType>NetworkConfiguration</ConfigurationSetType>
+      <InputEndpoints>
+        <InputEndpoint>
+          <LocalPort>22</LocalPort>
+          <Name>SSH</Name>
+          <Port>22</Port>
+          <Protocol>tcp</Protocol>
+          <Vip>11.12.13.14</Vip>
+          <EnableDirectServerReturn>false</EnableDirectServerReturn>
+        </InputEndpoint>
+      </InputEndpoints>
+      <SubnetNames/>
+    </ConfigurationSet>
+  </ConfigurationSets>
+  <DataVirtualHardDisks/>
+  <OSVirtualHardDisk>
+    <HostCaching>ReadWrite</HostCaching>
+    <DiskName>test-vm-cnt-0-201304290754500763</DiskName>
+    <MediaLink>https://portalvhdsfgcxv403pxfdgbjwb.blob.core.windows.net/vhds/test-dns-test-vm-cnt-2012-01-11.vhd</MediaLink>
+    <SourceImageName>842c8b9c6cvxzcvxzcv048xvbvge2323qe4c3__OpenLogic-CentOS-67-20140205</SourceImageName>
+    <OS>Linux</OS>
+  </OSVirtualHardDisk>
+  <RoleSize>Small</RoleSize>
+  <ProvisionGuestAgent>true</ProvisionGuestAgent>
+</Role>
