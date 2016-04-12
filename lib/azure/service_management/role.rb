@@ -564,9 +564,15 @@ module Azure
     end
 
     def setup_extension(params)
-      role_xml = update_role_xml(params[:role_xml], params) ## add Chef Extension config in VM's role_xml
+      ## add Chef Extension config in role_xml retrieved from the server
+      role_xml = update_role_xml_for_extension(params[:role_xml], params)
 
-      ## create new XML (with Chef Extension config and other pre-existing VM config) using the role_xml retrieved from the VM
+      ## role_xml can't be used for update as it has additional tags like
+      ## role_name, osversion etc. which update API does not support, also the
+      ## xml is the child of parent node 'Deployment' in XML, so instead of
+      ## modifying the role_xml to fit for our requirements, we create
+      ## new XML (with Chef Extension config and other pre-existing VM config)
+      ## using the required values of the updated role_xml
       builder = Nokogiri::XML::Builder.new do |xml|
         xml.PersistentVMRole(
           'xmlns' => 'http://schemas.microsoft.com/windowsazure',
@@ -585,7 +591,9 @@ module Azure
       builder.doc.to_xml.gsub("&lt\;","<").gsub("&gt\;",">")
     end
 
-    def update_role_xml(roleXML, params)
+    def update_role_xml_for_extension(roleXML, params)
+      ## check if 'ResourceExtensionReferences' node already exist in the XML,
+      ## if no add it, else retrieve the object of the existing node
       add_resource_extension_references = roleXML.at_css('ResourceExtensionReferences').nil?
 
       if add_resource_extension_references
@@ -594,6 +602,9 @@ module Azure
         resource_extension_references = roleXML.css('ResourceExtensionReferences')
       end
 
+      ## check if Azure Chef Extension is already installed on the given server,
+      ## if no than install it, else raise error saying that the extension is
+      ## already installed
       ext = nil
       if !add_resource_extension_references
         if !resource_extension_references.at_css('ReferenceName').nil?
@@ -603,6 +614,7 @@ module Azure
 
       add_resource_extension_reference = ext.nil?
 
+      ## create Azure Chef Extension config and add it in the role_xml
       if add_resource_extension_reference
         resource_extension_reference = Nokogiri::XML::Node.new('ResourceExtensionReference', roleXML)
 
@@ -684,7 +696,7 @@ module Azure
         end
 
         roleXML.add_child(provision_guest_agent) if add_provision_guest_agent
-      else
+      else ## raise error as Chef Extension is already installed on the server
         raise "Chef Extension is already installed on the server #{params[:azure_vm_name]}."
       end
 

@@ -268,17 +268,17 @@ describe Chef::Knife::BootstrapAzure do
     before do
       @role = Azure::Role.new('connection')
       updated_role_xml = Nokogiri::XML(readFile('bootstrap_azure_role_xmls/setup_extension/updated_role.xml'))
-      allow(@role).to receive(:update_role_xml).and_return(updated_role_xml)
-      @update_role_xml = Nokogiri::XML(readFile('bootstrap_azure_role_xmls/setup_extension/update_role.xml'))
+      allow(@role).to receive(:update_role_xml_for_extension).and_return(updated_role_xml)
+      @update_role_xml_for_extension = Nokogiri::XML(readFile('bootstrap_azure_role_xmls/setup_extension/update_role.xml'))
     end
 
     it 'creates new xml for update role' do
       response = @role.setup_extension({})
-      expect(response).to eq(@update_role_xml.to_xml)
+      expect(response).to eq(@update_role_xml_for_extension.to_xml)
     end
   end
 
-  describe 'update_role_xml' do
+  describe 'update_role_xml_for_extension' do
     before do
       @params = {
         :chef_extension_publisher => 'Chef.Bootstrap.WindowsAzure',
@@ -292,52 +292,52 @@ describe Chef::Knife::BootstrapAzure do
 
     context 'ResourceExtensionReferences node is not present in role xml' do
       before do
-        @input_role_1_xml = Nokogiri::XML(readFile('bootstrap_azure_role_xmls/update_role_xml/input_role_1.xml'))
-        @output_role_1_xml = Nokogiri::XML(readFile('bootstrap_azure_role_xmls/update_role_xml/output_role_1.xml'))
+        @input_role_1_xml = Nokogiri::XML(readFile('bootstrap_azure_role_xmls/update_role_xml_for_extension/input_role_1.xml'))
+        @output_role_1_xml = Nokogiri::XML(readFile('bootstrap_azure_role_xmls/update_role_xml_for_extension/output_role_1.xml'))
         @params[:chef_extension] = 'LinuxChefClient'
       end
 
       it 'adds ResourceExtensionReferences node with ChefExtension config' do
-        response = @role.update_role_xml(@input_role_1_xml.at_css('Role'), @params)
+        response = @role.update_role_xml_for_extension(@input_role_1_xml.at_css('Role'), @params)
         expect(response.to_xml).to eq(@output_role_1_xml.at_css('Role').to_xml)
       end
     end
 
     context 'ResourceExtensionReferences node is present in xml but it is empty' do
       before do
-        @input_role_2_xml = Nokogiri::XML(readFile('bootstrap_azure_role_xmls/update_role_xml/input_role_2.xml'))
-        @output_role_2_xml = Nokogiri::XML(readFile('bootstrap_azure_role_xmls/update_role_xml/output_role_2.xml'))
+        @input_role_2_xml = Nokogiri::XML(readFile('bootstrap_azure_role_xmls/update_role_xml_for_extension/input_role_2.xml'))
+        @output_role_2_xml = Nokogiri::XML(readFile('bootstrap_azure_role_xmls/update_role_xml_for_extension/output_role_2.xml'))
         @params[:chef_extension] = 'ChefClient'
       end
 
       it 'updates ResourceExtensionReferences node with ChefExtension config' do
-        response = @role.update_role_xml(@input_role_2_xml.at_css('Role'), @params)
+        response = @role.update_role_xml_for_extension(@input_role_2_xml.at_css('Role'), @params)
         expect(response.to_xml).to eq(@output_role_2_xml.at_css('Role').to_xml)
       end
     end
 
     context 'ResourceExtensionReferences node is present in role xml but ChefExtension is not installed on the server' do
       before do
-        @input_role_3_xml = Nokogiri::XML(readFile('bootstrap_azure_role_xmls/update_role_xml/input_role_3.xml'))
-        @output_role_3_xml = Nokogiri::XML(readFile('bootstrap_azure_role_xmls/update_role_xml/output_role_3.xml'))
+        @input_role_3_xml = Nokogiri::XML(readFile('bootstrap_azure_role_xmls/update_role_xml_for_extension/input_role_3.xml'))
+        @output_role_3_xml = Nokogiri::XML(readFile('bootstrap_azure_role_xmls/update_role_xml_for_extension/output_role_3.xml'))
         @params[:chef_extension] = 'ChefClient'
       end
 
       it 'adds ChefExtension config in ResourceExtensionReferences node' do
-        response = @role.update_role_xml(@input_role_3_xml.at_css('Role'), @params)
+        response = @role.update_role_xml_for_extension(@input_role_3_xml.at_css('Role'), @params)
         expect(response.to_xml).to eq(@output_role_3_xml.at_css('Role').to_xml)
       end
     end
 
     context 'ResourceExtensionReferences node is present in role xml and ChefExtension is already installed on the server' do
       before do
-        @input_role_4_xml = Nokogiri::XML(readFile('bootstrap_azure_role_xmls/update_role_xml/input_role_4.xml'))
+        @input_role_4_xml = Nokogiri::XML(readFile('bootstrap_azure_role_xmls/update_role_xml_for_extension/input_role_4.xml'))
         @params[:chef_extension] = 'LinuxChefClient'
         @params[:azure_vm_name] = 'test-vm-01'
       end
 
       it 'raises an error with message as \'ChefExtension is already installed on the server\'' do
-        expect { @role.update_role_xml(@input_role_4_xml.at_css('Role'), @params) }.to raise_error('Chef Extension is already installed on the server test-vm-01.')
+        expect { @role.update_role_xml_for_extension(@input_role_4_xml.at_css('Role'), @params) }.to raise_error('Chef Extension is already installed on the server test-vm-01.')
       end
     end
   end
