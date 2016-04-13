@@ -969,6 +969,14 @@ describe Chef::Knife::AzurermServerCreate do
           response = @arm_server_instance.get_chef_extension_public_params
           expect(response).to be == public_config
         end
+
+        it "should set extendedLogs flag to true" do
+          @arm_server_instance.config[:extended_logs] = true
+          public_config = {client_rb: "chef_server_url \t \"https://localhost:443\"\nvalidation_client_name\t\"chef-validator\"", runlist: "\"getting-started\"", autoUpdateClient: "false", deleteChefConfig: "false", uninstallChefClient: "false", :extendedLogs: "true", custom_json_attr: {}, bootstrap_options: { chef_server_url: "https://localhost:443", validation_client_name: "chef-validator"}}
+
+          response = @arm_server_instance.get_chef_extension_public_params
+          expect(response).to be == public_config
+        end
       end
 
       context 'when validation key is not present', :chef_gte_12_only do
