@@ -89,7 +89,13 @@ class Chef
               :boolean => true,
               :default => false,
               :description => "Determines whether Chef Client will be un-installed from the VM or not. This option is only valid for the 'cloud-api' bootstrap protocol. The default value is false."
-                
+
+            option :extended_logs,
+              :long => "--extended-logs",
+              :boolean => true,
+              :default => false,
+              :description => "Optional. Provide this option when --bootstrap-protocol is set to 'cloud-api'. It shows chef converge logs in detail."
+
   	  	  end
   	  	end
   	  end
