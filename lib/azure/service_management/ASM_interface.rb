@@ -55,11 +55,7 @@ module Azure
                              ui.color('ready', :green)
                            end
                          end
-          if server.publicipaddress.to_s.empty?
-            rows << @connection.query_azure("hostedservices/#{server.deployname}/deploymentslots/Production", "get").at_css('VirtualIPs VirtualIP Address').text
-          else
-            rows << server.publicipaddress.to_s
-          end
+          rows << server.publicipaddress.to_s
           rows << server.sshport.to_s
           rows << server.winrmport.to_s
         end
@@ -129,11 +125,7 @@ module Azure
               details << role.winrmport
             end
             details << ui.color('Public IP', :bold, :cyan)
-            if role.publicipaddress.to_s.empty?
-              details << @connection.query_azure("hostedservices/#{role.deployname}/deploymentslots/Production", "get").at_css('VirtualIPs VirtualIP Address').text
-            else
-              details << role.publicipaddress.to_s
-            end
+            details << role.publicipaddress.to_s
 
             unless role.thumbprint.empty?
               details << ui.color('Thumbprint', :bold, :cyan)
