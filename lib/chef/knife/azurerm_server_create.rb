@@ -16,6 +16,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+
 require 'chef/knife/azurerm_base'
 require 'securerandom'
 require 'chef/knife/bootstrap/azurerm_bootstrap_options'
@@ -171,6 +172,7 @@ class Chef
 
       def run
         $stdout.sync = true
+
         validate_arm_keys!(
           :azure_resource_group_name,
           :azure_vm_name,
