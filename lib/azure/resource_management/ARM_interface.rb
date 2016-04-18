@@ -161,11 +161,8 @@ module Azure
 
       def show_server(name, resource_group)
         begin
-          promise = compute_management_client.virtual_machines.get(resource_group, name)
-          result = promise.value!
-
-          unless result.nil?
-            server = result.body
+          server = find_server(resource_group, name)
+          if server
             network_interface_name = server.properties.network_profile.network_interfaces[0].id.split('/')[-1]
             network_interface_data = network_resource_client.network_interfaces.get(resource_group, network_interface_name).value!.body
             public_ip_id_data = network_interface_data.properties.ip_configurations[0].properties.public_ipaddress
@@ -219,14 +216,26 @@ module Azure
             end
 
             puts ui.list(details, :columns_across, 2)
-
-          else
-            puts "There is no server with name #{name} or resource_group #{resource_group}. Please provide correct details."
           end
-
         rescue => error
           puts "#{error.body["error"]["message"]}"
         end
+      end
+
+      def find_server(resource_group, name)
+        begin
+          promise = compute_management_client.virtual_machines.get(resource_group, name)
+          result = promise.value!
+
+          unless result.nil?
+            server = result.body
+          else
+            ui.error("There is no server with name #{name} or resource_group #{resource_group}. Please provide correct details.")
+          end
+        rescue => error
+          ui.error("#{error.body["error"]["message"]}")
+        end
+        server
       end
 
       def virtual_machine_exist?(resource_group_name, vm_name)
