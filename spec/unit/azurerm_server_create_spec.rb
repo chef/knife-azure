@@ -85,6 +85,42 @@ describe Chef::Knife::AzurermServerCreate do
         expect {@arm_server_instance.run}.to raise_error(SystemExit)
       end
 
+      it "vm name validation success for Linux" do
+        Chef::Config[:knife][:azure_vm_name] = 'test-vm1234'
+        allow(@arm_server_instance).to receive(:is_image_windows?).and_return(false)
+        expect{@arm_server_instance.validate_params!}.to_not raise_error(ArgumentError)
+      end
+
+      it "vm name validation success for Windows" do
+        Chef::Config[:knife][:azure_vm_name] = 'test-vm1234'
+        allow(@arm_server_instance).to receive(:is_image_windows?).and_return(true)
+        expect{@arm_server_instance.validate_params!}.to_not raise_error(ArgumentError)
+      end
+
+      it "vm name validation failure for name containing special characters for Linux" do
+        Chef::Config[:knife][:azure_vm_name] = 'test_vm1234!@#'
+        allow(@arm_server_instance).to receive(:is_image_windows?).and_return(false)
+        expect{@arm_server_instance.validate_params!}.to raise_error(ArgumentError)
+      end
+
+      it "vm name validation failure for name containing special characters for Windows" do
+        Chef::Config[:knife][:azure_vm_name] = 'test_vm1234!@#'
+        allow(@arm_server_instance).to receive(:is_image_windows?).and_return(true)
+        expect{@arm_server_instance.validate_params!}.to raise_error(ArgumentError)
+      end
+
+      it "vm name validation failure for name containing more than 15 characters for Windows" do
+        Chef::Config[:knife][:azure_vm_name] = 'testvm123123123123'
+        allow(@arm_server_instance).to receive(:is_image_windows?).and_return(true)
+        expect{@arm_server_instance.validate_params!}.to raise_error(ArgumentError)
+      end
+
+     it "vm name validation failure for name containing more than 64 characters for Linux" do
+        Chef::Config[:knife][:azure_vm_name] = 'testvm123123123123123123123123123123123123123123123123123123123123123123123123123123123123123'
+        allow(@arm_server_instance).to receive(:is_image_windows?).and_return(false)
+        expect{@arm_server_instance.validate_params!}.to raise_error(ArgumentError)
+      end
+
       it "azure_service_location" do
         Chef::Config[:knife].delete(:azure_service_location)
         expect(@arm_server_instance.ui).to receive(:error)
