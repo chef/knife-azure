@@ -134,6 +134,9 @@ module Azure
         rolesXML.each do |roleXML|
           role = Role.new(@connection)
           role.parse(roleXML, hostedservicename, @name)
+          if role.publicipaddress.to_s.empty?
+            role.publicipaddress = xml_content(deployXML, 'VirtualIPs VirtualIP Address')
+          end
           @roles[role.name] = role
         end
         @input_endpoints = Array.new

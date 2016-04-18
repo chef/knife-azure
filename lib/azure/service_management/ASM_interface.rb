@@ -125,7 +125,8 @@ module Azure
               details << role.winrmport
             end
             details << ui.color('Public IP', :bold, :cyan)
-            details << role.publicipaddress
+            details << role.publicipaddress.to_s
+
             unless role.thumbprint.empty?
               details << ui.color('Thumbprint', :bold, :cyan)
               details << role.thumbprint
