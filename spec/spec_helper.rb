@@ -19,6 +19,8 @@ require 'chef/knife/azurerm_server_delete'
 require 'chef/knife/azurerm_server_create'
 require 'chef/knife/bootstrap_azure'
 
+require 'chef/knife/bootstrap_azurerm'
+
 require 'fileutils'
 require "securerandom"
 require 'knife-azure/version'
