@@ -30,12 +30,6 @@ class Chef
 
       banner "knife bootstrap azurerm SERVER (options)"
 
-      option :azure_vm_name,
-        :long => "--azure-vm-name NAME",
-        :description => "Required. Specifies the name for the virtual machine.
-                        The name must be unique within the ResourceGroup.
-                        The azure vm name cannot be more than 15 characters long"
-
       option :azure_service_location,
         :short => "-m LOCATION",
         :long => "--azure-service-location LOCATION",
@@ -44,16 +38,16 @@ class Chef
         :proc        => Proc.new { |lo| Chef::Config[:knife][:azure_service_location] = lo }
 
       def run
-        Chef::Log.info("Validating...")
+        ui.log("Validating...")
         validate_arm_keys!(:azure_resource_group_name, :azure_service_location)
 
         begin
            if @name_args.length == 1
-            Chef::Log.info("Creating VirtualMachineExtension....")
+            ui.log("Creating VirtualMachineExtension....")
             vm_extension = service.create_vm_extension(set_ext_params)
-            Chef::Log.info("VirtualMachineExtension creation successfull.")
-            Chef::Log.info("Virtual Machine Extension name is: #{vm_extension.name}")
-            Chef::Log.info("Virtual Machine Extension ID is: #{vm_extension.id}")
+            ui.log("VirtualMachineExtension creation successfull.")
+            ui.log("Virtual Machine Extension name is: #{vm_extension.name}")
+            ui.log("Virtual Machine Extension ID is: #{vm_extension.id}")
            else
              raise ArgumentError, 'Please specify the SERVER name which needs to be bootstrapped via the Chef Extension.' if @name_args.length == 0
              raise ArgumentError, 'Please specify only one SERVER name which needs to be bootstrapped via the Chef Extension.' if @name_args.length > 1
@@ -68,24 +62,31 @@ class Chef
       def set_ext_params
         begin
           server = service.find_server(locate_config_value(:azure_resource_group_name), name_args[0])
-
-          ext_params = Hash.new
-          case server.properties.storage_profile.os_disk.os_type.downcase
-          when 'windows'
-            ext_params[:chef_extension] = 'ChefClient'
-          when 'linux'
-            ext_params[:chef_extension] = 'LinuxChefClient'
+          if service.extension_already_installed?(server)
+            raise "Virtual machine #{server.name} already has Chef extension installed on it."
           else
-            raise "OS type #{server.os_type} is not supported."
-          end
+            ext_params = Hash.new
+            case server.properties.storage_profile.os_disk.os_type.downcase
+            when 'windows'
+              ext_params[:chef_extension] = 'ChefClient'
+            when 'linux'
+              if ['ubuntu', 'debian', 'rhel', 'centos'].any? { |platform| server.properties.storage_profile.image_reference.offer.downcase.include? platform }
+                ext_params[:chef_extension] = 'LinuxChefClient'
+              else
+                raise "Offer #{server.properties.storage_profile.image_reference.offer} is not supported in the extension."
+              end
+            else
+              raise "OS type #{server.properties.storage_profile.os_disk.os_type} is not supported."
+            end
 
-          ext_params[:azure_resource_group_name] = locate_config_value(:azure_resource_group_name)
-          ext_params[:azure_vm_name] = @name_args[0]
-          ext_params[:azure_service_location] = locate_config_value(:azure_service_location)
-          ext_params[:chef_extension_publisher] = get_chef_extension_publisher
-          ext_params[:chef_extension_version] = get_chef_extension_version(ext_params[:chef_extension])
-          ext_params[:chef_extension_public_param] = get_chef_extension_public_params
-          ext_params[:chef_extension_private_param] = get_chef_extension_private_params
+            ext_params[:azure_resource_group_name] = locate_config_value(:azure_resource_group_name)
+            ext_params[:azure_vm_name] = @name_args[0]
+            ext_params[:azure_service_location] = locate_config_value(:azure_service_location)
+            ext_params[:chef_extension_publisher] = get_chef_extension_publisher
+            ext_params[:chef_extension_version] = get_chef_extension_version(ext_params[:chef_extension])
+            ext_params[:chef_extension_public_param] = get_chef_extension_public_params
+            ext_params[:chef_extension_private_param] = get_chef_extension_private_params
+          end
         rescue => error
           ui.error("#{error.message}")
           Chef::Log.debug("#{error.backtrace.join("\n")}")

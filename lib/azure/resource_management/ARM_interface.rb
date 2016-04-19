@@ -749,7 +749,7 @@ module Azure
         vm_ext_props.protected_settings = params[:chef_extension_private_param]
 
         vm_ext = VirtualMachineExtension.new
-        vm_ext.name = params[:azure_vm_name]
+        vm_ext.name = params[:chef_extension]
         vm_ext.location = params[:azure_service_location]
         vm_ext.properties = vm_ext_props
 
@@ -767,6 +767,13 @@ module Azure
         end
 
         vm_extension
+      end
+
+      def extension_already_installed?(server)
+        server.resources.each do |extension|
+          return true if extension.properties.publisher == "Chef.Bootstrap.WindowsAzure"
+        end if server.resources
+        false
       end
 
       def get_latest_chef_extension_version(params)
