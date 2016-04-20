@@ -17,9 +17,13 @@ describe Chef::Knife::BootstrapAzurerm do
     @bootstrap_azurerm_instance.name_args = ['test-vm-01']
     Chef::Config[:knife][:azure_resource_group_name] = 'test-rgp-01'
     Chef::Config[:knife][:azure_service_location] = 'West US'
+
+    @compute_client = double("ComputeManagementClient")
+    allow(@bootstrap_azurerm_instance.service).to receive(
+      :compute_management_client).and_return(@compute_client)
   end
 
-  describe "parameters validation" do
+  context "parameters validation" do
     it "raises error when server name is not given in the args" do
       allow(@bootstrap_azurerm_instance.name_args).to receive(:length).and_return(0)
       expect(@bootstrap_azurerm_instance.ui).to receive(:log).with('Validating...')
@@ -48,6 +52,7 @@ describe Chef::Knife::BootstrapAzurerm do
     it "raises error when more than one server name is specified" do
       @bootstrap_azurerm_instance.name_args = ['test-vm-01', 'test-vm-02', 'test-vm-03']
       expect(@bootstrap_azurerm_instance.name_args.length).to be == 3
+      expect(@bootstrap_azurerm_instance.ui).to receive(:log).with('Validating...')
       expect(@service).to_not receive(:create_vm_extension)
       expect(@bootstrap_azurerm_instance.ui).to receive(
         :error).with('Please specify only one SERVER name which needs to be bootstrapped via the Chef Extension.')
@@ -59,10 +64,119 @@ describe Chef::Knife::BootstrapAzurerm do
       expect(@bootstrap_azurerm_instance.name_args.length).to be == 1
       expect(@service).to_not receive(:create_vm_extension)
       expect(@service).to receive(:find_server).and_return(nil)
+      expect(@bootstrap_azurerm_instance.ui).to receive(:log).twice
       expect(@bootstrap_azurerm_instance.ui).to receive(
         :error).with("The given server 'test-vm-01' does not exist under resource group 'test-rgp-01'")
       expect(Chef::Log).to receive(:debug)
       expect {@bootstrap_azurerm_instance.run}.to raise_error(SystemExit)
+    end
+
+    it "raises error if the extension is already installed on the server" do
+      @server = double("server", :name => "foo")
+      expect(@bootstrap_azurerm_instance.name_args.length).to be == 1
+      expect(@bootstrap_azurerm_instance.ui).to receive(:log).twice
+      allow(@service).to receive(:find_server).and_return(@server)
+      allow(@service).to receive(:extension_already_installed?).and_return(true)
+      expect(@bootstrap_azurerm_instance.ui).to receive(:error).with("Virtual machine foo already has Chef extension installed on it.")
+      expect(Chef::Log).to receive(:debug)
+      expect {@bootstrap_azurerm_instance.run}.to raise_error(SystemExit)
+    end
+  end
+
+  context "set_ext_params" do
+    it "sets ChefClient extension in the ext_params for windows" do
+      @server = double("server")
+      allow(@service).to receive(:find_server).and_return(@server)
+      allow(@service).to receive(:extension_already_installed?).and_return(false)
+      allow(@server).to receive_message_chain(:properties, :storage_profile, :os_disk, :os_type).and_return("windows")
+      allow(@bootstrap_azurerm_instance).to receive(:get_chef_extension_version).and_return("1210.*")
+      allow(@bootstrap_azurerm_instance).to receive(:get_chef_extension_public_params).and_return("public_params")
+      allow(@bootstrap_azurerm_instance).to receive(:get_chef_extension_private_params).and_return("private_params")
+      response = @bootstrap_azurerm_instance.set_ext_params
+      expect(response[:chef_extension]).to be == 'ChefClient'
+      expect(response[:azure_resource_group_name]).to be == 'test-rgp-01'
+      expect(response[:azure_vm_name]).to be == 'test-vm-01'
+      expect(response[:azure_service_location]).to be == 'West US'
+      expect(response[:chef_extension_publisher]).to be == 'Chef.Bootstrap.WindowsAzure'
+      expect(response[:chef_extension_version]).to be == '1210.*'
+      expect(response[:chef_extension_public_param]).to be == 'public_params'
+      expect(response[:chef_extension_private_param]).to be == 'private_params'
+    end
+
+    it "sets LinuxChefClient extension in the ext_params for linux" do
+      @server = double("server")
+      allow(@service).to receive(:find_server).and_return(@server)
+      allow(@service).to receive(:extension_already_installed?).and_return(false)
+      allow(@server).to receive_message_chain(:properties, :storage_profile, :os_disk, :os_type).and_return("linux")
+      allow(@server).to receive_message_chain(:properties, :storage_profile, :image_reference, :offer).and_return("ubuntu")
+      allow(@bootstrap_azurerm_instance).to receive(:get_chef_extension_version).and_return("1210.*")
+      allow(@bootstrap_azurerm_instance).to receive(:get_chef_extension_public_params).and_return("public_params")
+      allow(@bootstrap_azurerm_instance).to receive(:get_chef_extension_private_params).and_return("private_params")
+      response = @bootstrap_azurerm_instance.set_ext_params
+      expect(response[:chef_extension]).to be == 'LinuxChefClient'
+      expect(response[:azure_resource_group_name]).to be == 'test-rgp-01'
+      expect(response[:azure_vm_name]).to be == 'test-vm-01'
+      expect(response[:azure_service_location]).to be == 'West US'
+      expect(response[:chef_extension_publisher]).to be == 'Chef.Bootstrap.WindowsAzure'
+      expect(response[:chef_extension_version]).to be == '1210.*'
+      expect(response[:chef_extension_public_param]).to be == 'public_params'
+      expect(response[:chef_extension_private_param]).to be == 'private_params'
+    end
+
+    it "raises error if an offer of OS_type linux is not supported" do
+      @server = double("server")
+      allow(@service).to receive(:find_server).and_return(@server)
+      allow(@service).to receive(:extension_already_installed?).and_return(false)
+      allow(@server).to receive_message_chain(:properties, :storage_profile, :os_disk, :os_type).and_return("linux")
+      allow(@server).to receive_message_chain(:properties, :storage_profile, :image_reference, :offer).and_return("abc")
+      expect(@bootstrap_azurerm_instance.ui).to receive(:log).twice
+      expect(@bootstrap_azurerm_instance.ui).to receive(:error).with("Offer abc is not supported in the extension.")
+      expect(Chef::Log).to receive(:debug)
+      expect {@bootstrap_azurerm_instance.run}.to raise_error(SystemExit)
+    end
+  end
+
+  context "when correct parameters are given" do
+    it "creates VM extension" do
+      @server = double("server", :name => "foo", :id => 1)
+      allow(@service).to receive(:find_server).and_return(@server)
+      allow(@service).to receive(:extension_already_installed?).and_return(false)
+      allow(@server).to receive_message_chain(:properties, :storage_profile, :os_disk, :os_type).and_return("linux")
+      allow(@server).to receive_message_chain(:properties, :storage_profile, :image_reference, :offer).and_return("ubuntu")
+      allow(@bootstrap_azurerm_instance.ui).to receive(:log)
+      allow(@bootstrap_azurerm_instance).to receive(:get_chef_extension_version).and_return("1210.*")
+      allow(@bootstrap_azurerm_instance).to receive(:get_chef_extension_public_params).and_return("public_params")
+      allow(@bootstrap_azurerm_instance).to receive(:get_chef_extension_private_params).and_return("private_params")
+      expect(@bootstrap_azurerm_instance).to receive(:create_vm_extension)
+      @bootstrap_azurerm_instance.run
+    end
+  end
+
+  context "find_server" do
+    it "returns error if the server or resource group doesn't exist" do
+      promise = double("promise", :value! => nil)
+      allow(@compute_client).to receive_message_chain(:virtual_machines, :get).and_return(promise)
+      expect(@bootstrap_azurerm_instance.ui).to receive(:log).twice
+      expect(@bootstrap_azurerm_instance.ui).to receive(:error).thrice
+      expect(Chef::Log).to receive(:debug)
+      expect {@bootstrap_azurerm_instance.run}.to raise_error(SystemExit)
+      @service.find_server('test-vm-01', 'test-rgp-01')
+    end
+  end
+
+  context "extension_already_installed?" do
+    it "returns true if the VM has chef extension installed" do
+      extension = double("extension", :properties => double(:publisher => "Chef.Bootstrap.WindowsAzure"))
+      @server = double("server", :resources => [extension])
+      extension_installed = @service.extension_already_installed?(@server)
+      expect(extension_installed).to be(true)
+    end
+
+    it "returns false if the VM doesn't have chef extension installed" do
+      extension = double("extension", :properties => double(:publisher => "publisher"))
+      @server = double("server", :resources => [extension])
+      extension_installed = @service.extension_already_installed?(@server)
+      expect(extension_installed).to be(false)
     end
   end
 end
