@@ -771,7 +771,7 @@ module Azure
 
       def extension_already_installed?(server)
         server.resources.each do |extension|
-          return true if extension.properties.publisher == "Chef.Bootstrap.WindowsAzure"
+          return true if (extension.properties.type == "ChefClient" || extension.properties.type == "LinuxChefClient")
         end if server.resources
         false
       end

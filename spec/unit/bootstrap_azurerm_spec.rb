@@ -165,15 +165,22 @@ describe Chef::Knife::BootstrapAzurerm do
   end
 
   context "extension_already_installed?" do
-    it "returns true if the VM has chef extension installed" do
-      extension = double("extension", :properties => double(:publisher => "Chef.Bootstrap.WindowsAzure"))
+    it "returns true if the VM has ChefClient extension installed" do
+      extension = double("extension", :properties => double(:type => "ChefClient"))
+      @server = double("server", :resources => [extension])
+      extension_installed = @service.extension_already_installed?(@server)
+      expect(extension_installed).to be(true)
+    end
+
+    it "returns true if the VM has LinuxChefClient extension installed" do
+      extension = double("extension", :properties => double(:type => "LinuxChefClient"))
       @server = double("server", :resources => [extension])
       extension_installed = @service.extension_already_installed?(@server)
       expect(extension_installed).to be(true)
     end
 
     it "returns false if the VM doesn't have chef extension installed" do
-      extension = double("extension", :properties => double(:publisher => "publisher"))
+      extension = double("extension", :properties => double(:type => "some_type"))
       @server = double("server", :resources => [extension])
       extension_installed = @service.extension_already_installed?(@server)
       expect(extension_installed).to be(false)
