@@ -170,6 +170,12 @@ class Chef
         :long => "--cert-path PATH",
         :description => "SSL Certificate Path"
 
+      option :server_count,
+        :long => "--server-count COUNT",
+        :description => "Number of servers to create with same configuration.
+                                    Maximum count is 5. Default value is 1.",
+        :default => 1
+
       def run
         $stdout.sync = true
 
@@ -202,7 +208,7 @@ class Chef
           exit
         end
 
-        msg_server_summary(vm_details)
+        msg_server_summary(vm_details) if locate_config_value(:server_count).to_i == 1
       end
 
       def create_server_def
@@ -226,7 +232,8 @@ class Chef
           :ssl_cert_fingerprint => locate_config_value(:thumbprint),
           :cert_path => locate_config_value(:cert_path),
           :cert_password => locate_config_value(:cert_passphrase),
-          :vnet_subnet_address_prefix => locate_config_value(:vnet_subnet_address_prefix)
+          :vnet_subnet_address_prefix => locate_config_value(:vnet_subnet_address_prefix),
+          :server_count => locate_config_value(:server_count)
         }
 
         server_def[:azure_storage_account] = locate_config_value(:azure_vm_name) if server_def[:azure_storage_account].nil?
@@ -264,13 +271,17 @@ class Chef
         if locate_config_value(:azure_vnet_subnet_name) && !locate_config_value(:azure_vnet_name)
           raise ArgumentError, "When --azure-vnet-subnet-name is specified, the --azure-vnet-name must also be specified."
         end
-        
+
         if !is_image_windows?
-          if (locate_config_value(:azure_vm_name).match /^(?=.*[a-zA-Z-])([a-zA-z0-9-]{1,64})$/).nil? 
+          if (locate_config_value(:azure_vm_name).match /^(?=.*[a-zA-Z-])([a-zA-z0-9-]{1,64})$/).nil?
             raise ArgumentError, "VM name can only contain alphanumeric and hyphen(-) characters and maximun length cannot exceed 64 charachters."
           end
         elsif (locate_config_value(:azure_vm_name).match /^(?=.*[a-zA-Z-])([a-zA-z0-9-]{1,15})$/).nil?
           raise ArgumentError, "VM name can only contain alphanumeric and hyphen(-) characters and maximun length cannot exceed 15 charachters."
+        end
+
+        if locate_config_value(:server_count).to_i > 5
+          raise ArgumentError, "Maximum allowed value of --server-count is 5."
         end
       end
 
