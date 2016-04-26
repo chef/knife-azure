@@ -266,29 +266,36 @@ module Azure
         if virtual_machine_exist?(params[:azure_resource_group_name], params[:azure_vm_name])
           ui.log("INFO:Virtual Machine #{params[:azure_vm_name]} already exist under the Resource Group #{params[:azure_resource_group_name]}. Exiting for now.")
         else
+          if(params[:server_count].to_i > 1)
+            ui.log("Deploying multiple VirtualMachines....")
+            deployment = create_virtual_machine_using_template(params)
+            ui.log("Deployment of multiple VMs is successfull.")
+            ui.log("Deployment name is: #{deployment.name}")
+            ui.log("Deployment ID is: #{deployment.id}")
 
-        if(params[:server_count].to_i > 1)
-          ui.log("Deploying multiple VirtualMachines....")
-          deployment = create_virtual_machine_using_template(params)
+            ui.log("Following VMs have been created...")
+            deployment.properties.dependencies.each do |deploy|
+              if deploy.resource_type == "Microsoft.Compute/virtualMachines"
+                ui.log("-------------------------------")
+                ui.log("Virtual Machine name is: #{deploy.resource_name}")
+                ui.log("Virtual Machine ID is: #{deploy.id}")
+              end
+            end
+          else
+            ui.log("Creating VirtualMachine....")
+            virtual_machine = create_virtual_machine(params)
+            ui.log("VirtualMachine creation successfull.")
+            Chef::Log.info("Virtual Machine name is: #{virtual_machine.name}")
+            Chef::Log.info("Virtual Machine ID is: #{virtual_machine.id}")
 
-          ui.log("Deployment of multiple VMs is successfull.")
-          ui.log("Deployment name is: #{deployment.name}")
-          ui.log("Deployment ID is: #{deployment.id}")
-        else
-          ui.log("Creating VirtualMachine....\n\n")
-          virtual_machine = create_virtual_machine(params)
-          ui.log("VirtualMachine creation successfull.")
-          Chef::Log.info("Virtual Machine name is: #{virtual_machine.name}")
-          Chef::Log.info("Virtual Machine ID is: #{virtual_machine.id}")
+            ui.log("Creating VirtualMachineExtension....")
+            vm_extension = create_vm_extension(params)
+            ui.log("VirtualMachineExtension creation successfull.")
+            Chef::Log.info("Virtual Machine Extension name is: #{vm_extension.name}")
+            Chef::Log.info("Virtual Machine Extension ID is: #{vm_extension.id}")
 
-          ui.log("Creating VirtualMachineExtension....")
-          vm_extension = create_vm_extension(params)
-          ui.log("VirtualMachineExtension creation successfull.")
-          Chef::Log.info("Virtual Machine Extension name is: #{vm_extension.name}")
-          Chef::Log.info("Virtual Machine Extension ID is: #{vm_extension.id}")
-
-          vm_details = vm_details(virtual_machine, vm_extension, params)
-        end
+            vm_details = vm_details(virtual_machine, vm_extension, params)
+          end
         end
       end
 
@@ -349,11 +356,8 @@ module Azure
       end
 
       def create_virtual_machine_using_template(params)
-        if @platform == 'Windows'
-        else
-          template = create_deployment_template_for_linux(params)
-          parameters = create_deployment_parameters_for_linux(params)
-        end
+        template = create_deployment_template(params)
+        parameters = create_deployment_parameters(params, @platform)
 
         deploy_prop = DeploymentProperties.new
         deploy_prop.template = template
