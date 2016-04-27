@@ -311,57 +311,57 @@ module Azure::ARM
       }
     end
 
-      def create_deployment_parameters(params, platform)
-        if platform == 'Windows'
-          admin_user = params[:winrm_user]
-          admin_password = params[:admin_password]
-        else
-          admin_user = params[:ssh_user]
-          admin_password = params[:ssh_password]
-        end
-
-        parameters = {
-          "adminUserName" => {
-            "value" => "#{admin_user}"
-          },
-          "adminPassword"=> {
-            "value"=> "#{admin_password}"
-          },
-          "dnsLabelPrefix"=> {
-            "value"=> "#{params[:azure_vm_name]}"
-          },
-          "imageSKU"=> {
-            "value"=> "#{params[:azure_image_reference_sku]}"
-          },
-          "numberOfInstances" => {
-            "value" => "#{params[:server_count]}".to_i
-          },
-          "validation_key"=> {
-            "value"=> "#{params[:chef_extension_private_param][:validation_key]}"
-          },
-          "chef_server_url"=> {
-            "value"=> "#{params[:chef_extension_public_param][:bootstrap_options][:chef_server_url]}"
-          },
-          "validation_client_name"=> {
-            "value"=> "#{params[:chef_extension_public_param][:bootstrap_options][:validation_client_name]}"
-          },
-          "runlist" => {
-            "value" => "#{params[:chef_extension_public_param][:runlist]}"
-          },
-          "autoUpdateClient" => {
-            "value" => "#{params[:chef_extension_public_param][:autoUpdateClient]}"
-          },
-          "deleteChefConfig" => {
-            "value" => "#{params[:chef_extension_public_param][:deleteChefConfig]}"
-          },
-          "uninstallChefClient" => {
-            "value" => "#{params[:chef_extension_public_param][:uninstallChefClient]}"
-          },
-          "chef_node_name" => {
-            "value"=> "#{params[:chef_extension_public_param][:bootstrap_options][:chef_node_name]}"
-          }
-        }
+    def create_deployment_parameters(params, platform)
+      if platform == 'Windows'
+        admin_user = params[:winrm_user]
+        admin_password = params[:admin_password]
+      else
+        admin_user = params[:ssh_user]
+        admin_password = params[:ssh_password]
       end
+
+      parameters = {
+        "adminUserName" => {
+          "value" => "#{admin_user}"
+        },
+        "adminPassword"=> {
+          "value"=> "#{admin_password}"
+        },
+        "dnsLabelPrefix"=> {
+          "value"=> "#{params[:azure_vm_name]}"
+        },
+        "imageSKU"=> {
+          "value"=> "#{params[:azure_image_reference_sku]}"
+        },
+        "numberOfInstances" => {
+          "value" => "#{params[:server_count]}".to_i
+        },
+        "validation_key"=> {
+          "value"=> "#{params[:chef_extension_private_param][:validation_key]}"
+        },
+        "chef_server_url"=> {
+          "value"=> "#{params[:chef_extension_public_param][:bootstrap_options][:chef_server_url]}"
+        },
+        "validation_client_name"=> {
+          "value"=> "#{params[:chef_extension_public_param][:bootstrap_options][:validation_client_name]}"
+        },
+        "runlist" => {
+          "value" => "#{params[:chef_extension_public_param][:runlist]}"
+        },
+        "autoUpdateClient" => {
+          "value" => "#{params[:chef_extension_public_param][:autoUpdateClient]}"
+        },
+        "deleteChefConfig" => {
+          "value" => "#{params[:chef_extension_public_param][:deleteChefConfig]}"
+        },
+        "uninstallChefClient" => {
+          "value" => "#{params[:chef_extension_public_param][:uninstallChefClient]}"
+        },
+        "chef_node_name" => {
+          "value"=> "#{params[:chef_extension_public_param][:bootstrap_options][:chef_node_name]}"
+        }
+      }
+    end
 
   end
 end
