@@ -721,7 +721,8 @@ module Azure
           params[:azure_service_location],
           params[:chef_extension_publisher],
           params[:chef_extension]).value!.body.last.name
-        ext_version = ext_version.split(".").first + ".*"
+        ext_version_split_values = ext_version.split(".")  
+        ext_version = ext_version_split_values[0] + "." + ext_version_split_values[1]
         ext_version
       end
 

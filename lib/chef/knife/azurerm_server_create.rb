@@ -317,7 +317,7 @@ class Chef
               when "debian"
                 config[:azure_image_reference_publisher] = "credativ"
                 config[:azure_image_reference_offer] = "Debian"
-                config[:azure_image_reference_sku] = locate_config_value(:azure_image_reference_sku) ? locate_config_value(:azure_image_reference_sku) : "9-DAILY"
+                config[:azure_image_reference_sku] = locate_config_value(:azure_image_reference_sku) ? locate_config_value(:azure_image_reference_sku) : "8"
               when "windows"
                 config[:azure_image_reference_publisher] = "MicrosoftWindowsServer"
                 config[:azure_image_reference_offer] = "WindowsServer"

@@ -1161,7 +1161,7 @@ describe Chef::Knife::AzurermServerCreate do
       @arm_server_instance.send(:set_default_image_reference!)
       expect(@arm_server_instance.config[:azure_image_reference_publisher]).to be == "credativ"
       expect(@arm_server_instance.config[:azure_image_reference_offer]).to be == "Debian"
-      expect(@arm_server_instance.config[:azure_image_reference_sku]).to be == "9-DAILY"
+      expect(@arm_server_instance.config[:azure_image_reference_sku]).to be == "8"
       expect(@arm_server_instance.config[:azure_image_reference_version]).to be == 'latest'
     end
 
