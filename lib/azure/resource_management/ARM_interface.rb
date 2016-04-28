@@ -25,16 +25,12 @@ module Azure
   class ResourceManagement
     class ARMInterface < AzureInterface
       include Azure::ARM::ARMBase
-
       include Azure::ARM::Resources
       include Azure::ARM::Resources::Models
-
       include Azure::ARM::Compute
       include Azure::ARM::Compute::Models
-
       include Azure::ARM::Storage
       include Azure::ARM::Storage::Models
-
       include Azure::ARM::Network
       include Azure::ARM::Network::Models
 
@@ -48,7 +44,7 @@ module Azure
       end
 
       def resource_management_client
-        @resource_management_client ||= begin
+          @resource_management_client ||= begin
           resource_management_client = ResourceManagementClient.new(@credentials)
           resource_management_client.subscription_id = @azure_subscription_id
           resource_management_client
@@ -250,10 +246,11 @@ module Azure
         platform(params[:azure_image_reference_offer])
         ## resource group creation
         if resource_group_exist?(params[:azure_resource_group_name])
-          Chef::Log.info("Resource Group #{params[:azure_resource_group_name]} already exist. Skipping its creation.")
-          Chef::Log.info("Adding new VM #{params[:azure_vm_name]} to this resource group.")
+          ui.log("INFO:Resource Group #{params[:azure_resource_group_name]} already exist. Skipping its creation.")
+          ui.log("INFO:Adding new VM #{params[:azure_vm_name]} to this resource group.")
         else
-          Chef::Log.info("Creating ResourceGroup....")
+          ui.log("Creating ResourceGroup.... #{("\n")} ")
+
           resource_group = create_resource_group(params)
           Chef::Log.info("ResourceGroup creation successfull.")
           Chef::Log.info("Resource Group name is: #{resource_group.name}")
@@ -262,15 +259,15 @@ module Azure
 
         ## virtual machine creation
         if virtual_machine_exist?(params[:azure_resource_group_name], params[:azure_vm_name])
-          Chef::Log.info("Virtual Machine #{params[:azure_vm_name]} already exist under the Resource Group #{params[:azure_resource_group_name]}. Exiting for now.")
+          ui.log("INFO:Virtual Machine #{params[:azure_vm_name]} already exist under the Resource Group #{params[:azure_resource_group_name]}. Exiting for now.")
         else
-          Chef::Log.info("Creating VirtualMachine....")
+          ui.log("Creating VirtualMachine.... #{("\n")} ")
           virtual_machine = create_virtual_machine(params)
           Chef::Log.info("VirtualMachine creation successfull.")
           Chef::Log.info("Virtual Machine name is: #{virtual_machine.name}")
           Chef::Log.info("Virtual Machine ID is: #{virtual_machine.id}")
 
-          Chef::Log.info("Creating VirtualMachineExtension....")
+          ui.log("Creating VirtualMachineExtension.... #{("\n")} ")
           vm_extension = create_vm_extension(params)
           Chef::Log.info("VirtualMachineExtension creation successfull.")
           Chef::Log.info("Virtual Machine Extension name is: #{vm_extension.name}")
@@ -281,8 +278,8 @@ module Azure
       end
 
       def vm_details(virtual_machine, vm_extension, params)
-        vm_details = OpenStruct.new
-        vm_details.publicipaddress = vm_public_ip(params)
+          vm_details = OpenStruct.new
+          vm_details.publicipaddress = vm_public_ip(params)
 
         if @platform == 'Windows'
           vm_details.rdpport = vm_default_port(params)
@@ -302,7 +299,6 @@ module Azure
         vm_details.resources.type = vm_extension.properties.type
         vm_details.resources.type_handler_version = vm_extension.properties.type_handler_version
         vm_details.resources.provisioning_state = vm_extension.properties.provisioning_state
-
         vm_details
       end
 
@@ -376,7 +372,9 @@ module Azure
         begin
           virtual_machine = compute_management_client.virtual_machines.create_or_update(params[:azure_resource_group_name], vm_params.name, vm_params).value!.body
         rescue Exception => e
-          Chef::Log.error("Failed to create the Virtual Machine -- exception being rescued: #{e.to_s}")
+        ui.log("Failed to create the virtual machine, use verbose mode for more details")          
+        Chef::Log.error("Failed to create the Virtual Machine -- exception being rescued: #{e.to_s}")
+             
           backtrace_message = "#{e.class}: #{e}\n#{e.backtrace.join("\n")}"
           Chef::Log.debug("#{backtrace_message}")
         end
@@ -385,7 +383,8 @@ module Azure
       end
 
       def create_storage_profile(params)
-        Chef::Log.info("Creating Storage Account....")
+        ui.log("Creating Storage Account.... #{("\n")} ")
+       
         storage_account = create_storage_account(
           params[:azure_storage_account],
           params[:azure_service_location],
@@ -393,11 +392,12 @@ module Azure
           params[:azure_resource_group_name]
         )
 
-        Chef::Log.info("StorageAccount creation successfull.")
         virtual_hard_disk = get_vhd(
           params[:azure_storage_account],
           params[:azure_os_disk_name]
         )
+
+        Chef::Log.info("StorageAccount creation successfull.")
 
         storage_profile = StorageProfile.new
         storage_profile.image_reference = get_image_reference(
@@ -431,7 +431,6 @@ module Azure
       def get_vhd(storage_account_name, os_disk_name)
         virtual_hard_disk = VirtualHardDisk.new
         virtual_hard_disk.uri = "http://#{storage_account_name}.blob.core.windows.net/vhds/#{os_disk_name}.vhd"
-
         virtual_hard_disk
       end
 
@@ -441,7 +440,6 @@ module Azure
         image_reference.offer = offer
         image_reference.sku = sku
         image_reference.version = version
-
         image_reference
       end
 
@@ -451,7 +449,6 @@ module Azure
         os_disk.vhd = virtual_hard_disk
         os_disk.caching = os_disk_caching
         os_disk.create_option = os_disk_create_option
-
         os_disk
       end
 
@@ -474,46 +471,50 @@ module Azure
       def create_network_profile(params)
         if vnet_exist?(params[:azure_resource_group_name], params[:azure_vnet_name])
           vnet = network_resource_client.virtual_networks.get(params[:azure_resource_group_name], params[:azure_vnet_name]).value!.body
-          Chef::Log.info("Found existing vnet #{vnet.name}...")
+        
+            Chef::Log.info("Found existing vnet #{vnet.name}...")       
         else
-          Chef::Log.info("Creating VirtualNetwork....")
-          vnet = create_virtual_network(
+            ui.log("Creating VirtualNetwork.... #{("\n")} ")
+            vnet = create_virtual_network(
             params[:azure_resource_group_name],
             params[:azure_vnet_name],
             params[:azure_service_location]
           )
-          Chef::Log.info("VirtualNetwork creation successfull.")
+         
+            Chef::Log.info("VirtualNetwork creation successfull.")
         end
+            Chef::Log.info("Virtual Network name is: #{vnet.name}")        
 
-        Chef::Log.info("Virtual Network name is: #{vnet.name}")
-        Chef::Log.info("Virtual Network ID is: #{vnet.id}")
+            Chef::Log.info("Virtual Network ID is: #{vnet.id}")
 
         if subnet_exist?(params[:azure_resource_group_name], vnet.name, params[:azure_vnet_subnet_name])
           sbn = network_resource_client.subnets.get(params[:azure_resource_group_name], vnet.name, params[:azure_vnet_subnet_name]).value!.body
-          Chef::Log.info("Found subnet #{sbn.name} under virtual network #{vnet.name} ...")
-        else
-          Chef::Log.info("Creating Subnet....")
-          sbn = create_subnet(
+            
+            Chef::Log.info("Found subnet #{sbn.name} under virtual network #{vnet.name} ...")
+
+       else
+            ui.log("Creating Subnet.... #{("\n")} ")
+            sbn = create_subnet(
             params[:azure_resource_group_name],
             params[:azure_vnet_subnet_name],
             vnet
           )
-          Chef::Log.info("Subnet creation successfull.")
+            Chef::Log.info("Subnet creation successfull.")
         end
 
-        Chef::Log.info("Subnet name is: #{sbn.name}")
-        Chef::Log.info("Subnet ID is: #{sbn.id}")
+            Chef::Log.info("Subnet name is: #{sbn.name}")
+            Chef::Log.info("Subnet ID is: #{sbn.id}")
 
-        Chef::Log.info("Creating NetworkInterface....")
-        nic = create_network_interface(
+            ui.log("Creating NetworkInterface.... #{("\n")} ")
+            nic = create_network_interface(
           params[:azure_resource_group_name],
           params[:azure_vm_name],
           params[:azure_service_location],
           sbn
         )
-        Chef::Log.info("NetworkInterface creation successfull.")
-        Chef::Log.info("Network Interface name is: #{nic.name}")
-        Chef::Log.info("Network Interface ID is: #{nic.id}")
+           Chef::Log.info("NetworkInterface creation successfull.")
+           Chef::Log.info("Network Interface name is: #{nic.name}")
+           Chef::Log.info("Network Interface ID is: #{nic.id}")
 
         network_profile = NetworkProfile.new
         network_profile.network_interfaces = [nic]
@@ -727,7 +728,7 @@ module Azure
       end
 
       def delete_resource_group(resource_group_name)
-        ui.info 'Resource group deletion takes some time. Please wait ...'
+          ui.info 'Resource group deletion takes some time. Please wait ...'
         begin
           print '.'
           promise = resource_management_client.resource_groups.delete(resource_group_name)
