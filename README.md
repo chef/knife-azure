@@ -568,7 +568,7 @@ knife azurerm server create
   --azure-service-location 'WEST US'
   --azure-image-reference-publisher 'credativ'
   --azure-image-reference-offer 'Debian'
-  --azure-image-reference-sku '8'
+  --azure-image-reference-sku '7'
   --azure-image-reference-version 'latest'
   --ssh-user myuser --ssh-password mypassword
   --azure-vm-size Small

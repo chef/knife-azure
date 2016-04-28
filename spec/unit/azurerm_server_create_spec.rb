@@ -831,7 +831,7 @@ describe Chef::Knife::AzurermServerCreate do
       it "successfully returns latest Chef Extension version" do
         expect(@service).to receive(:compute_management_client).and_return(stub_compute_management_client('NA'))
         response = @service.get_latest_chef_extension_version(@params)
-        expect(response).to be == '1210.*'
+        expect(response).to be == '1210.12'
       end
     end
 
