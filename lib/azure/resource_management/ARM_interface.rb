@@ -15,12 +15,10 @@
 
 require 'azure/azure_interface'
 require 'azure/resource_management/ARM_base'
-
 require 'azure_mgmt_resources'
 require 'azure_mgmt_compute'
 require 'azure_mgmt_storage'
 require 'azure_mgmt_network'
-
 module Azure
   class ResourceManagement
     class ARMInterface < AzureInterface
@@ -33,7 +31,6 @@ module Azure
       include Azure::ARM::Storage::Models
       include Azure::ARM::Network
       include Azure::ARM::Network::Models
-
       attr_accessor :connection
 
       def initialize(params = {})
@@ -249,8 +246,7 @@ module Azure
           ui.log("INFO:Resource Group #{params[:azure_resource_group_name]} already exist. Skipping its creation.")
           ui.log("INFO:Adding new VM #{params[:azure_vm_name]} to this resource group.")
         else
-          ui.log("Creating ResourceGroup.... #{("\n")} ")
-
+          ui.log("Creating ResourceGroup....\n\n")
           resource_group = create_resource_group(params)
           Chef::Log.info("ResourceGroup creation successfull.")
           Chef::Log.info("Resource Group name is: #{resource_group.name}")
@@ -261,7 +257,7 @@ module Azure
         if virtual_machine_exist?(params[:azure_resource_group_name], params[:azure_vm_name])
           ui.log("INFO:Virtual Machine #{params[:azure_vm_name]} already exist under the Resource Group #{params[:azure_resource_group_name]}. Exiting for now.")
         else
-          ui.log("Creating VirtualMachine.... #{("\n")} ")
+          ui.log("Creating VirtualMachine....\n\n")
           virtual_machine = create_virtual_machine(params)
           Chef::Log.info("VirtualMachine creation successfull.")
           Chef::Log.info("Virtual Machine name is: #{virtual_machine.name}")
@@ -372,8 +368,8 @@ module Azure
         begin
           virtual_machine = compute_management_client.virtual_machines.create_or_update(params[:azure_resource_group_name], vm_params.name, vm_params).value!.body
         rescue Exception => e
-        ui.log("Failed to create the virtual machine, use verbose mode for more details")          
-        Chef::Log.error("Failed to create the Virtual Machine -- exception being rescued: #{e.to_s}")
+          ui.log("Failed to create the virtual machine, use verbose mode for more details")          
+          Chef::Log.error("Failed to create the Virtual Machine -- exception being rescued: #{e.to_s}")
              
           backtrace_message = "#{e.class}: #{e}\n#{e.backtrace.join("\n")}"
           Chef::Log.debug("#{backtrace_message}")
@@ -383,7 +379,7 @@ module Azure
       end
 
       def create_storage_profile(params)
-        ui.log("Creating Storage Account.... #{("\n")} ")
+        ui.log("Creating Storage Account.... \n\n ")
        
         storage_account = create_storage_account(
           params[:azure_storage_account],
@@ -474,7 +470,7 @@ module Azure
         
             Chef::Log.info("Found existing vnet #{vnet.name}...")       
         else
-            ui.log("Creating VirtualNetwork.... #{("\n")} ")
+            ui.log("Creating VirtualNetwork....\n\n")
             vnet = create_virtual_network(
             params[:azure_resource_group_name],
             params[:azure_vnet_name],
@@ -493,7 +489,7 @@ module Azure
             Chef::Log.info("Found subnet #{sbn.name} under virtual network #{vnet.name} ...")
 
        else
-            ui.log("Creating Subnet.... #{("\n")} ")
+            ui.log("Creating Subnet....\n\n")
             sbn = create_subnet(
             params[:azure_resource_group_name],
             params[:azure_vnet_subnet_name],
@@ -505,16 +501,16 @@ module Azure
             Chef::Log.info("Subnet name is: #{sbn.name}")
             Chef::Log.info("Subnet ID is: #{sbn.id}")
 
-            ui.log("Creating NetworkInterface.... #{("\n")} ")
+            ui.log("Creating NetworkInterface....\n\n")
             nic = create_network_interface(
           params[:azure_resource_group_name],
           params[:azure_vm_name],
           params[:azure_service_location],
           sbn
         )
-           Chef::Log.info("NetworkInterface creation successfull.")
-           Chef::Log.info("Network Interface name is: #{nic.name}")
-           Chef::Log.info("Network Interface ID is: #{nic.id}")
+            Chef::Log.info("NetworkInterface creation successfull.")
+            Chef::Log.info("Network Interface name is: #{nic.name}")
+            Chef::Log.info("Network Interface ID is: #{nic.id}")
 
         network_profile = NetworkProfile.new
         network_profile.network_interfaces = [nic]
