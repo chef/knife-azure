@@ -21,6 +21,7 @@ require 'chef/knife/azurerm_base'
 require 'securerandom'
 require 'chef/knife/bootstrap/azurerm_bootstrap_options'
 require 'chef/knife/bootstrap/bootstrapper'
+
 class Chef
   class Knife
     class AzurermServerCreate < Knife
@@ -177,6 +178,7 @@ class Chef
           :azure_vm_name,
           :azure_service_location
         )
+
         begin
           validate_params!
 
@@ -184,8 +186,8 @@ class Chef
 
           ssh_override_winrm if !is_image_windows?
 
-        
-         vm_details = service.create_server(create_server_def)
+
+          vm_details = service.create_server(create_server_def)
         rescue => error
           if error.class == MsRestAzure::AzureOperationError && error.body
             if error.body['error']['code']
