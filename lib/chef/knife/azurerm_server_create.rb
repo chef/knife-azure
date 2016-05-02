@@ -177,11 +177,10 @@ class Chef
           :azure_vm_name,
           :azure_service_location
         )
-     
         begin
           validate_params!
 
-           set_default_image_reference!
+          set_default_image_reference!
 
           ssh_override_winrm if !is_image_windows?
 
