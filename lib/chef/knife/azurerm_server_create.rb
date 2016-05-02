@@ -186,7 +186,6 @@ class Chef
 
           ssh_override_winrm if !is_image_windows?
 
-          Chef::Log.info("creating...")
 
           vm_details = service.create_server(create_server_def)
         rescue => error
