@@ -831,7 +831,7 @@ describe Chef::Knife::AzurermServerCreate do
       it "successfully returns latest Chef Extension version" do
         expect(@service).to receive(:compute_management_client).and_return(stub_compute_management_client('NA'))
         response = @service.get_latest_chef_extension_version(@params)
-        expect(response).to be == '1210.*'
+        expect(response).to be == '1210.12'
       end
     end
 
@@ -1145,6 +1145,24 @@ describe Chef::Knife::AzurermServerCreate do
       expect(@arm_server_instance.config[:azure_image_reference_offer]).to be == "CentOS"
       expect(@arm_server_instance.config[:azure_image_reference_sku]).to be == "7.1"
       expect(@arm_server_instance.config[:azure_image_reference_version]).to be == '6.5'
+    end
+
+    it "sets default image reference parameters for azure_image_os_type=rhel" do
+      @arm_server_instance.config[:azure_image_os_type] = "rhel"
+      @arm_server_instance.send(:set_default_image_reference!)
+      expect(@arm_server_instance.config[:azure_image_reference_publisher]).to be == "RedHat"
+      expect(@arm_server_instance.config[:azure_image_reference_offer]).to be == "RHEL"
+      expect(@arm_server_instance.config[:azure_image_reference_sku]).to be == "7.2"
+      expect(@arm_server_instance.config[:azure_image_reference_version]).to be == 'latest'
+    end
+
+    it "sets default image reference parameters for azure_image_os_type=debian" do
+      @arm_server_instance.config[:azure_image_os_type] = "debian"
+      @arm_server_instance.send(:set_default_image_reference!)
+      expect(@arm_server_instance.config[:azure_image_reference_publisher]).to be == "credativ"
+      expect(@arm_server_instance.config[:azure_image_reference_offer]).to be == "Debian"
+      expect(@arm_server_instance.config[:azure_image_reference_sku]).to be == "7"
+      expect(@arm_server_instance.config[:azure_image_reference_version]).to be == 'latest'
     end
 
     it "sets default image reference parameters for azure_image_os_type=windows" do
