@@ -429,7 +429,7 @@ This subcommand provisions a new server in Azure and then performs a Chef bootst
 
 User can either provide just `--azure-image-os-type` or other image reference parameters i.e. `--azure-image-reference-publisher`, `--azure-image-reference-offer`, `--azure-image-reference-sku` and `--azure-image-reference-version` to specify the image.
 
-Accepted values for `--azure-image-os-type` are `ubuntu`, `centos`, `redhat`, `debian ` and `windows`. It creates the server using standard image parameters for respective OS. However, they can be overridden using `--azure-image-reference-publisher`, `--azure-image-reference-offer`, `--azure-image-reference-sku` and `--azure-image-reference-version` options.
+Accepted values for `--azure-image-os-type` are `ubuntu`, `centos`, `rhel`, `debian ` and `windows`. It creates the server using standard image parameters for respective OS. However, they can be overridden using `--azure-image-reference-publisher`, `--azure-image-reference-offer`, `--azure-image-reference-sku` and `--azure-image-reference-version` options.
 `--azure-image-os-type` option should not be used with other image reference parameters.
 
 To see a list of commonly used image parameters, please refer https://azure.microsoft.com/en-in/documentation/articles/resource-groups-vm-searching/#table-of-commonly-used-images
@@ -518,14 +518,14 @@ knife azurerm server create
   -c ~/.chef/knife.rb
 ```
 
-For Redhat:
+For Rhel:
 
 ```
 knife azurerm server create
   --azure-resource-group-name MyResourceGrpName
   --azure-vm-name MyNewVMName
   --azure-service-location 'WEST US'
-  --azure-image-os-type redhat
+  --azure-image-os-type rhel
   --ssh-user myuser --ssh-password mypassword
   --azure-vm-size Small
   -r "recipe[cbk1::rec1]"

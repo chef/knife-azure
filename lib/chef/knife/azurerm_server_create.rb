@@ -310,7 +310,7 @@ class Chef
                 config[:azure_image_reference_publisher] = "OpenLogic"
                 config[:azure_image_reference_offer] = "CentOS"
                 config[:azure_image_reference_sku] = locate_config_value(:azure_image_reference_sku) ? locate_config_value(:azure_image_reference_sku) : "7.1"
-              when "redhat"
+              when "rhel"
                 config[:azure_image_reference_publisher] = "RedHat"
                 config[:azure_image_reference_offer] = "RHEL"
                 config[:azure_image_reference_sku] = locate_config_value(:azure_image_reference_sku) ? locate_config_value(:azure_image_reference_sku) : "7.2"

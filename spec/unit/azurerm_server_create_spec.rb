@@ -1147,8 +1147,8 @@ describe Chef::Knife::AzurermServerCreate do
       expect(@arm_server_instance.config[:azure_image_reference_version]).to be == '6.5'
     end
 
-    it "sets default image reference parameters for azure_image_os_type=redhat" do
-      @arm_server_instance.config[:azure_image_os_type] = "redhat"
+    it "sets default image reference parameters for azure_image_os_type=rhel" do
+      @arm_server_instance.config[:azure_image_os_type] = "rhel"
       @arm_server_instance.send(:set_default_image_reference!)
       expect(@arm_server_instance.config[:azure_image_reference_publisher]).to be == "RedHat"
       expect(@arm_server_instance.config[:azure_image_reference_offer]).to be == "RHEL"
@@ -1161,7 +1161,7 @@ describe Chef::Knife::AzurermServerCreate do
       @arm_server_instance.send(:set_default_image_reference!)
       expect(@arm_server_instance.config[:azure_image_reference_publisher]).to be == "credativ"
       expect(@arm_server_instance.config[:azure_image_reference_offer]).to be == "Debian"
-      expect(@arm_server_instance.config[:azure_image_reference_sku]).to be == "8"
+      expect(@arm_server_instance.config[:azure_image_reference_sku]).to be == "7"
       expect(@arm_server_instance.config[:azure_image_reference_version]).to be == 'latest'
     end
 
