@@ -402,7 +402,7 @@ class Chef
 
         validate_params!
 
-        ssh_override_winrm if %w(ssh cloud-api).include?(locate_config_value(:bootstrap_protocol)) and !is_image_windows?
+        ssh_override_winrm if !is_image_windows?
 
         Chef::Log.info("creating...")
 

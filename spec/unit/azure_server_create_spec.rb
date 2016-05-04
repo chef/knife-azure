@@ -652,21 +652,21 @@ describe Chef::Knife::AzureServerCreate do
       end
 
       it "successful bootstrap of windows instance" do
-        expect(@server_instance).to receive(:is_image_windows?).exactly(5).times.and_return(true)
+        expect(@server_instance).to receive(:is_image_windows?).exactly(6).times.and_return(true)
         expect(@server_instance).to receive(:wait_until_virtual_machine_ready).exactly(1).times.and_return(true)
         @server_instance.run
       end
 
       it "sets encrypted data bag secret parameter" do
         Chef::Config[:knife][:encrypted_data_bag_secret] = 'test_encrypted_data_bag_secret'
-        expect(@server_instance).to receive(:is_image_windows?).exactly(5).times.and_return(true)
+        expect(@server_instance).to receive(:is_image_windows?).exactly(6).times.and_return(true)
         @server_instance.run
         expect(@bootstrap.config[:encrypted_data_bag_secret]).to be == 'test_encrypted_data_bag_secret'
       end
 
       it "sets encrypted data bag secret file parameter" do
         Chef::Config[:knife][:encrypted_data_bag_secret_file] = 'test_encrypted_data_bag_secret_file'
-        expect(@server_instance).to receive(:is_image_windows?).exactly(5).times.and_return(true)
+        expect(@server_instance).to receive(:is_image_windows?).exactly(6).times.and_return(true)
         @server_instance.run
         expect(@bootstrap.config[:encrypted_data_bag_secret_file]).to be == 'test_encrypted_data_bag_secret_file'
       end
