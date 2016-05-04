@@ -599,6 +599,24 @@ knife azurerm server create
   -c ~/.chef/knife.rb
 ```
 
+#### --server-count option
+User can pass `--server-count` option to specify the number of servers to be created with same configuration.
+```
+--server-count COUNT         Number of servers to create with same configuration. Maximum count is 5. Default value is 1.
+
+Command:
+knife azurerm server create
+--azure-resource-group-name MyResourceGrpName
+--azure-vm-name MyNewVMName
+--azure-service-location 'WEST US'
+--azure-image-os-type centos
+--azure-vm-size Small
+--server-count 3
+-x myuser -P mypassword
+```
+This will create 3 VMs with names: `MyNewVMName0`, `MyNewVMName1` and `MyNewVMName2`
+
+
 ### Azure Server Delete Subcommand
 Deletes an existing ARM server in the currently configured Azure account. By default, this does not delete the associated resource-group, associated node and client objects from the Chef server.
 For deleting associated resource-group along with server use --delete-resource-group flag.
