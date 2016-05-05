@@ -230,7 +230,6 @@ class Chef
         :long => "--azure-extension-client-config CLIENT_PATH",
         :description => "Optional. Path to a client.rb file for use by the bootstrapped node. Only honored when --bootstrap-protocol is set to `cloud-api`."
 
-
       def wait_until_virtual_machine_ready(retry_interval_in_seconds = 30)
         vm_status = nil
 
@@ -471,6 +470,11 @@ class Chef
           ui.error("--auto-update-client option works with --bootstrap-protocol cloud-api") if locate_config_value(:auto_update_client)
           ui.error("--delete-chef-extension-config option works with --bootstrap-protocol cloud-api") if locate_config_value(:delete_chef_extension_config)
           ui.error("--uninstall-chef-client option works with --bootstrap-protocol cloud-api") if locate_config_value(:uninstall_chef_client)
+          exit 1
+        end
+
+        if locate_config_value(:extended_logs) && locate_config_value(:bootstrap_protocol) != 'cloud-api'
+          ui.error("--extended-logs option works with --bootstrap-protocol cloud-api")
           exit 1
         end
       end
