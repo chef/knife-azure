@@ -17,6 +17,8 @@ describe Chef::Knife::BootstrapAzure do
     Chef::Config[:knife][:azure_dns_name] = 'test-dns-01'
     @bootstrap_azure_instance.name_args = ['test-vm-01']
     @server_role = Azure::Role.new('connection')
+    allow(@bootstrap_azure_instance.ui).to receive(:info)
+    allow(@bootstrap_azure_instance).to receive(:puts)
   end
 
   describe 'parameters validation' do
@@ -34,12 +36,6 @@ describe Chef::Knife::BootstrapAzure do
 
     it "raises error when azure_api_host_name is not specified" do
       Chef::Config[:knife].delete(:azure_api_host_name)
-      expect(@bootstrap_azure_instance.ui).to receive(:error)
-      expect {@bootstrap_azure_instance.run}.to raise_error(SystemExit)
-    end
-
-    it "raises error when azure_dns_name is not specified" do
-      Chef::Config[:knife].delete(:azure_dns_name)
       expect(@bootstrap_azure_instance.ui).to receive(:error)
       expect {@bootstrap_azure_instance.run}.to raise_error(SystemExit)
     end
@@ -82,6 +78,18 @@ describe Chef::Knife::BootstrapAzure do
         :find_server).and_return(nil)
       expect(@bootstrap_azure_instance.ui).to receive(
         :error).with('Hosted service test-dns-01 does not exist.')
+      expect(Chef::Log).to receive(:debug)
+      expect {@bootstrap_azure_instance.run}.to raise_error(SystemExit)
+    end
+
+    it "raises error when hosted service name is not given but invalid server name is given" do
+      Chef::Config[:knife].delete(:azure_dns_name)
+      expect(@bootstrap_azure_instance.name_args.length).to be == 1
+      expect(@service).to_not receive(:add_extension)
+      expect(@service).to receive(
+        :find_server).and_return(nil)
+      expect(@bootstrap_azure_instance.ui).to receive(
+        :error).with('Server test-vm-01 does not exist.')
       expect(Chef::Log).to receive(:debug)
       expect {@bootstrap_azure_instance.run}.to raise_error(SystemExit)
     end
@@ -232,10 +240,12 @@ describe Chef::Knife::BootstrapAzure do
 
   describe 'add_extension' do
     it 'calls role update and prints success message on successful completion' do
+      expect(@service.ui).to receive(:info).with(
+        'Started with Chef Extension deployment on the server test-vm-01...')
       expect(@service).to receive_message_chain(
         :connection, :roles, :update)
-      expect(@service).to receive_message_chain(
-        :ui, :info).with('Successfully deployed Chef Extension on the server test-vm-01.')
+      expect(@service.ui).to receive(:info).with(
+        "\nSuccessfully deployed Chef Extension on the server test-vm-01.")
       @service.add_extension(@bootstrap_azure_instance.name_args[0])
     end
 
@@ -270,6 +280,7 @@ describe Chef::Knife::BootstrapAzure do
       updated_role_xml = Nokogiri::XML(readFile('bootstrap_azure_role_xmls/setup_extension/updated_role.xml'))
       allow(@role).to receive(:update_role_xml_for_extension).and_return(updated_role_xml)
       @update_role_xml_for_extension = Nokogiri::XML(readFile('bootstrap_azure_role_xmls/setup_extension/update_role.xml'))
+      allow(@role).to receive(:puts)
     end
 
     it 'creates new xml for update role' do
@@ -346,6 +357,7 @@ describe Chef::Knife::BootstrapAzure do
     before do
       @role = Azure::Role.new('connection')
       @role.connection = double('Connection')
+      allow(@role).to receive(:puts)
     end
 
     it 'does not raise error on update role success' do

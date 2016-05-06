@@ -565,6 +565,7 @@ module Azure
 
     def setup_extension(params)
       ## add Chef Extension config in role_xml retrieved from the server
+      puts "Adding Chef Extension config in server role..."
       role_xml = update_role_xml_for_extension(params[:role_xml], params)
 
       ## role_xml can't be used for update as it has additional tags like
@@ -704,6 +705,7 @@ module Azure
     end
 
     def update(name, params, roleXML)
+      puts "Updating server role..."
       servicecall = "hostedservices/#{params[:azure_dns_name]}" +
       "/deployments/#{params[:deploy_name]}/roles/#{name}"
       ret_val = @connection.query_azure(servicecall, 'put', roleXML, '', true, true, 'application/xml')

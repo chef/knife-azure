@@ -33,13 +33,13 @@ class Chef
       option :azure_dns_name,
         :short => "-d DNS_NAME",
         :long => "--azure-dns-name DNS_NAME",
-        :description => "The DNS prefix name that is used to access the cloud service to execute particular Chef Extension operation under an existing virtual machine of that cloud service/deployment."
+        :description => "Optional. The DNS prefix name that is used to access the cloud service."
 
       def run
-      	Chef::Log.info("Validating...")
-        validate_asm_keys!(:azure_dns_name)
+        ui.info "Validating..."
+        validate_asm_keys!
 
-      	begin
+        begin
           if @name_args.length == 1
             service.add_extension(@name_args[0], set_ext_params)
           else
@@ -55,16 +55,26 @@ class Chef
 
       def set_ext_params
         begin
+          ui.info "Looking for the server #{@name_args[0]}..."
           server = service.find_server({
               name: @name_args[0],
               azure_dns_name: locate_config_value(:azure_dns_name)
             })
 
           if !server.instance_of? Azure::Role
-            raise "Server #{@name_args[0]} does not exist under the hosted service #{locate_config_value(:azure_dns_name)}." if !server.nil?
-            raise "Hosted service #{locate_config_value(:azure_dns_name)} does not exist." if server.nil?
+            if server.nil?
+              if !locate_config_value(:azure_dns_name).nil?
+                raise "Hosted service #{locate_config_value(:azure_dns_name)} does not exist."
+              else
+                raise "Server #{@name_args[0]} does not exist."
+              end
+            else
+              raise "Server #{@name_args[0]} does not exist under the hosted service #{locate_config_value(:azure_dns_name)}."
+            end
           end
 
+          ui.info "\nServer #{@name_args[0]} found."
+          ui.info "Setting the Chef Extension parameters."
           ext_params = Hash.new
           case server.os_type.downcase
           when 'windows'
@@ -79,7 +89,7 @@ class Chef
             raise "OS type #{server.os_type} is not supported."
           end
 
-          ext_params[:azure_dns_name] = locate_config_value(:azure_dns_name)
+          ext_params[:azure_dns_name] = server.hostedservicename || locate_config_value(:azure_dns_name)
           ext_params[:deploy_name] = server.deployname
           ext_params[:role_xml] = server.role_xml
           ext_params[:azure_vm_name] = @name_args[0]
