@@ -406,7 +406,7 @@ class Chef
       end
 
       def fetch_extension(role)
-        ext_list_xml = role.at_css("ResourceExtensionStatusList ResourceExtensionStatus")
+        ext_list_xml = role.css("ResourceExtensionStatusList ResourceExtensionStatus")
         ext_list_xml.each do |ext|
           if ext.at_css("HandlerName").text == "Chef.Bootstrap.WindowsAzure.LinuxChefClient" || ext.at_css("HandlerName").text == "Chef.Bootstrap.WindowsAzure.ChefClient"
             return ext
@@ -415,8 +415,8 @@ class Chef
       end
 
       def fetch_substatus(extension)
-        substatus_list_xml = extension.at_css("ExtensionSettingStatus SubStatusList")
-        return nil if substatus_list_xml.nil?
+        return nil if extension.at_css("ExtensionSettingStatus SubStatusList SubStatus").nil?
+        substatus_list_xml = extension.css("ExtensionSettingStatus SubStatusList SubStatus")
         substatus_list_xml.each do |substatus|
           if substatus.at_css("Name").text == "Chef Client run logs"
             return substatus
@@ -425,6 +425,7 @@ class Chef
       end
 
       def fetch_chef_client_logs(fetch_process_start_time)
+        puts "\n\n######## chef-client run logs fetch process started ########\n\n"
         ## fetch server details ##
         role = fetch_role
         if role != nil
@@ -437,10 +438,10 @@ class Chef
               ## chef-client run logs becomes available ##
               name = substatus.at_css("Name").text
               status = substatus.at_css("Status").text
-              message = substatus.at_css("FormattedMessage Message")
+              message = substatus.at_css("Message").text
 
               ## printing the logs ##
-              puts "\n\n######## Please find the chef-client run details below ########\n\n"
+              puts "\n\n******** Please find the chef-client run details below ********\n\n"
               print "----> chef-client run status: "
               case status
               when "success"
