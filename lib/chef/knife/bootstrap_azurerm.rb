@@ -18,14 +18,14 @@
 #
 
 require 'chef/knife/azurerm_base'
-require 'chef/knife/bootstrap/azurerm_bootstrap_options'
+require 'chef/knife/bootstrap/common_bootstrap_options'
 require 'chef/knife/bootstrap/bootstrapper'
 
 class Chef
   class Knife
     class BootstrapAzurerm < Knife
       include Knife::AzurermBase
-      include Knife::Bootstrap::AzurermBootstrapOptions
+      include Knife::Bootstrap::CommonBootstrapOptions
       include Knife::Bootstrap::Bootstrapper
 
       banner "knife bootstrap azurerm SERVER (options)"
