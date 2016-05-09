@@ -424,8 +424,7 @@ class Chef
         end
       end
 
-      def fetch_chef_client_logs(fetch_process_start_time)
-        puts "\n\n######## chef-client run logs fetch process started ########\n\n"
+      def fetch_chef_client_logs(fetch_process_start_time, fetch_process_wait_timeout)
         ## fetch server details ##
         role = fetch_role
         if role != nil
@@ -444,29 +443,31 @@ class Chef
               puts "\n\n******** Please find the chef-client run details below ********\n\n"
               print "----> chef-client run status: "
               case status
-              when "success"
+              when "Success"
                 ## chef-client run succeeded ##
                 color = :green
-              when "error"
+              when "Error"
                 ## chef-client run failed ##
                 color = :red
-              when "transitioning"
+              when "Transitioning"
                 ## chef-client run did not complete within maximum timeout of 30 minutes ##
                 ## fetch whatever logs available under the chef-client.log file ##
-                color = :orange
+                color = :yellow
               end
               puts "#{ui.color(status, color, :bold)}"
               puts "----> chef-client run logs: "
-              puts "\n#{message}\n\n"  ## message field of substatus contains the chef-client run logs ##
+              puts "\n#{message}\n"  ## message field of substatus contains the chef-client run logs ##
             else
               ## unavailability of the substatus field indicates that chef-client run is not completed yet on the server ##
               fetch_process_wait_time = ((Time.now - fetch_process_start_time) / 60).round
-              if fetch_process_wait_time <= 30  ## wait for maximum 30 minutes until chef-client run logs becomes available ##
+              if fetch_process_wait_time <= fetch_process_wait_timeout  ## wait for maximum 30 minutes until chef-client run logs becomes available ##
+                puts "\n\nWaiting minute: #{ui.color(fetch_process_wait_time.to_s, :cyan, :bold)}, Timeout minutes: #{ui.color(fetch_process_wait_timeout.to_s, :cyan, :bold)}"
+                puts "Sleep interval (in seconds): #{ui.color(30.to_s, :cyan, :bold)}\n\n"
                 sleep 30
-                fetch_chef_client_logs(fetch_process_start_time)
+                fetch_chef_client_logs(fetch_process_start_time, fetch_process_wait_timeout)
               else
                 ## wait time exceeded 30 minutes timeout ##
-                ui.error "chef-client run logs could not be fetched since fetch process exceeded wait timeout of 30 minutes."
+                ui.error "\nchef-client run logs could not be fetched since fetch process exceeded wait timeout of #{fetch_process_wait_timeout} minutes.\n"
               end
             end
           else
@@ -501,7 +502,11 @@ class Chef
 
         service.create_server(create_server_def)
         wait_until_virtual_machine_ready()
-        fetch_chef_client_logs(Time.now) if locate_config_value(:bootstrap_protocol) == 'cloud-api' && locate_config_value(:extended_logs)
+        if locate_config_value(:bootstrap_protocol) == 'cloud-api' && locate_config_value(:extended_logs)
+          puts "\n\n######## chef-client run logs fetch process started ########\n\n"
+          fetch_chef_client_logs(Time.now, 30)
+          puts "######## chef-client run logs fetch process completed ########\n\n\n"
+        end
         server = service.get_role_server(locate_config_value(:azure_dns_name), locate_config_value(:azure_vm_name))
         msg_server_summary(server)
 
