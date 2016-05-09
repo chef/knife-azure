@@ -998,4 +998,62 @@ describe Chef::Knife::AzureServerCreate do
       end
     end
   end
+
+  describe "extended_logs feature for cloud-api bootstrap protocol" do
+    describe "run" do
+      before do
+        Chef::Config[:knife][:ssh_password] = 'ssh_password'
+        allow(Chef::Log).to receive(:info)
+        allow(@server_instance).to receive(:validate_asm_keys!)
+        allow(@server_instance).to receive(:validate_params!)
+        allow(@server_instance).to receive(:get_dns_name)
+        allow(@server_instance.service).to receive(:create_server)
+        allow(@server_instance).to receive(:create_server_def)
+        allow(@server_instance).to receive(:wait_until_virtual_machine_ready)
+        allow(@server_instance.service).to receive(:get_role_server)
+        allow(@server_instance).to receive(:msg_server_summary)
+        allow(@server_instance).to receive(:bootstrap_exec)
+      end
+
+      context "bootstrap_protocol is not cloud-api and extended_logs is false" do
+        before do
+          Chef::Config[:knife][:bootstrap_protocol] = 'winrm'
+          @server_instance.config[:extended_logs] = false
+        end
+
+        it "does not invoke fetch_chef_client_logs method" do
+          expect(@server_instance).to_not receive(:fetch_chef_client_logs)
+          @server_instance.run
+        end
+      end
+
+      context "bootstrap_protocol is cloud-api" do
+        before do
+          Chef::Config[:knife][:bootstrap_protocol] = 'cloud-api'
+        end
+
+        context "extended_logs is false" do
+          before do
+            @server_instance.config[:extended_logs] = false
+          end
+
+          it "does not invoke fetch_chef_client_logs method" do
+            expect(@server_instance).to_not receive(:fetch_chef_client_logs)
+            @server_instance.run
+          end
+        end
+
+        context "extended_logs is true" do
+          before do
+            @server_instance.config[:extended_logs] = true
+          end
+
+          it "invoke fetch_chef_client_logs method" do
+            expect(@server_instance).to receive(:fetch_chef_client_logs)
+            @server_instance.run
+          end
+        end
+      end
+    end
+  end
 end
