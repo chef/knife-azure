@@ -166,6 +166,12 @@ module Azure
       end
     end
 
+    def update(name, params)
+      role = Role.new(@connection)
+      roleExtensionXml = role.setup_extension(params)
+      role.update(name, params, roleExtensionXml)
+    end
+
     private :check_and_delete_role_and_resources, :check_and_delete_disks, :check_and_delete_service, :check_and_delete_storage
 
   end
@@ -176,6 +182,7 @@ module Azure
     attr_accessor :sshport, :hostedservicename, :deployname, :thumbprint
     attr_accessor :winrmport
     attr_accessor :hostname, :tcpports, :udpports
+    attr_accessor :role_xml, :os_type, :os_version
 
       TCP_ENDPOINTS_MAPPING = { '3389' => 'Remote Desktop',
                               '5986' => 'PowerShell',
@@ -232,6 +239,13 @@ module Azure
           end
         end
       end
+    end
+
+    def parse_role_list_xml(roleListXML)
+      @role_xml = roleListXML
+      os_disk_xml = roleListXML.css('OSVirtualHardDisk')
+      @os_type = xml_content(os_disk_xml, 'OS')
+      @os_version = xml_content(os_disk_xml, 'SourceImageName')
     end
 
     # Expects endpoint_param_string to be in the form {localport}:{publicport}:{lb_set_name}:{lb_probe_path}
@@ -547,6 +561,159 @@ module Azure
       servicecall = "hostedservices/#{params[:azure_dns_name]}/deployments" +
       "/#{params['deploy_name']}/roles"
       @connection.query_azure(servicecall, "post", roleXML.to_xml)
+    end
+
+    def setup_extension(params)
+      ## add Chef Extension config in role_xml retrieved from the server
+      puts "Adding Chef Extension config in server role..."
+      role_xml = update_role_xml_for_extension(params[:role_xml], params)
+
+      ## role_xml can't be used for update as it has additional tags like
+      ## role_name, osversion etc. which update API does not support, also the
+      ## xml is the child of parent node 'Deployment' in XML, so instead of
+      ## modifying the role_xml to fit for our requirements, we create
+      ## new XML (with Chef Extension config and other pre-existing VM config)
+      ## using the required values of the updated role_xml
+      builder = Nokogiri::XML::Builder.new do |xml|
+        xml.PersistentVMRole(
+          'xmlns' => 'http://schemas.microsoft.com/windowsazure',
+          'xmlns:i' => 'http://www.w3.org/2001/XMLSchema-instance'
+        ) {
+            xml.ConfigurationSets role_xml.at_css('ConfigurationSets').children if !role_xml.at_css('ConfigurationSets').nil?
+            xml.ResourceExtensionReferences role_xml.at_css('ResourceExtensionReferences').children if !role_xml.at_css('ResourceExtensionReferences').nil?
+            xml.AvailabilitySetName role_xml.at_css('AvailabilitySetName').children if !role_xml.at_css('AvailabilitySetName').nil?
+            xml.DataVirtualHardDisks role_xml.at_css('DataVirtualHardDisks').children if !role_xml.at_css('DataVirtualHardDisks').nil?
+            xml.OSVirtualHardDisk role_xml.at_css('OSVirtualHardDisk').children if !role_xml.at_css('OSVirtualHardDisk').nil?
+            xml.RoleSize role_xml.at_css('RoleSize').children if !role_xml.at_css('RoleSize').nil?
+            xml.ProvisionGuestAgent role_xml.at_css('ProvisionGuestAgent').children if !role_xml.at_css('ProvisionGuestAgent').nil?
+        }
+      end
+
+      builder.doc.to_xml.gsub("&lt\;","<").gsub("&gt\;",">")
+    end
+
+    def update_role_xml_for_extension(roleXML, params)
+      ## check if 'ResourceExtensionReferences' node already exist in the XML,
+      ## if no add it, else retrieve the object of the existing node
+      add_resource_extension_references = roleXML.at_css('ResourceExtensionReferences').nil?
+
+      if add_resource_extension_references
+        resource_extension_references = Nokogiri::XML::Node.new('ResourceExtensionReferences', roleXML)
+      else
+        resource_extension_references = roleXML.css('ResourceExtensionReferences')
+      end
+
+      ## check if Azure Chef Extension is already installed on the given server,
+      ## if no than install it, else raise error saying that the extension is
+      ## already installed
+      ext = nil
+      if !add_resource_extension_references
+        if !resource_extension_references.at_css('ReferenceName').nil?
+          resource_extension_references.css('ReferenceName').each { |node| ext = node if node.content == params[:chef_extension] }
+        end
+      end
+
+      add_resource_extension_reference = ext.nil?
+
+      ## create Azure Chef Extension config and add it in the role_xml
+      if add_resource_extension_reference
+        resource_extension_reference = Nokogiri::XML::Node.new('ResourceExtensionReference', roleXML)
+
+        reference_name = Nokogiri::XML::Node.new('ReferenceName', roleXML)
+        reference_name.content = params[:chef_extension]
+        resource_extension_reference.add_child(reference_name)
+
+        publisher = Nokogiri::XML::Node.new('Publisher', roleXML)
+        publisher.content = params[:chef_extension_publisher]
+        resource_extension_reference.add_child(publisher)
+
+        name = Nokogiri::XML::Node.new('Name', roleXML)
+        name.content = params[:chef_extension]
+        resource_extension_reference.add_child(name)
+
+        version = Nokogiri::XML::Node.new('Version', roleXML)
+        version.content = params[:chef_extension_version]
+        resource_extension_reference.add_child(version)
+
+        resource_extension_parameter_values = Nokogiri::XML::Node.new('ResourceExtensionParameterValues', roleXML)
+        if params[:chef_extension_public_param]
+          resource_extension_parameter_value = Nokogiri::XML::Node.new('ResourceExtensionParameterValue', roleXML)
+
+          key = Nokogiri::XML::Node.new('Key', roleXML)
+          key.content = 'PublicParams'
+          resource_extension_parameter_value.add_child(key)
+
+          value = Nokogiri::XML::Node.new('Value', roleXML)
+          value.content = Base64.encode64(params[:chef_extension_public_param].to_json)
+          resource_extension_parameter_value.add_child(value)
+
+          type = Nokogiri::XML::Node.new('Type', roleXML)
+          type.content = 'Public'
+          resource_extension_parameter_value.add_child(type)
+
+          resource_extension_parameter_values.add_child(resource_extension_parameter_value)
+        end
+
+        if params[:chef_extension_private_param]
+          resource_extension_parameter_value = Nokogiri::XML::Node.new('ResourceExtensionParameterValue', roleXML)
+
+          key = Nokogiri::XML::Node.new('Key', roleXML)
+          key.content = 'PrivateParams'
+          resource_extension_parameter_value.add_child(key)
+
+          value = Nokogiri::XML::Node.new('Value', roleXML)
+          value.content = Base64.encode64(params[:chef_extension_private_param].to_json)
+          resource_extension_parameter_value.add_child(value)
+
+          type = Nokogiri::XML::Node.new('Type', roleXML)
+          type.content = 'Private'
+          resource_extension_parameter_value.add_child(type)
+
+          resource_extension_parameter_values.add_child(resource_extension_parameter_value)
+        end
+
+        resource_extension_reference.add_child(resource_extension_parameter_values)
+
+        state = Nokogiri::XML::Node.new('State', roleXML)
+        state.content = 'enable'
+        resource_extension_reference.add_child(state)
+
+        if add_resource_extension_references
+          resource_extension_references.add_child(resource_extension_reference)
+        else
+          resource_extension_references.last.add_child(resource_extension_reference)
+        end
+
+        roleXML.add_child(resource_extension_references) if add_resource_extension_references
+
+        add_provision_guest_agent = roleXML.at_css('ProvisionGuestAgent').nil?
+
+        if add_provision_guest_agent
+          provision_guest_agent = Nokogiri::XML::Node.new('ProvisionGuestAgent', roleXML)
+          provision_guest_agent.content = true
+        else
+          provision_guest_agent = roleXML.css('ProvisionGuestAgent')
+          provision_guest_agent.first.content = true
+        end
+
+        roleXML.add_child(provision_guest_agent) if add_provision_guest_agent
+      else ## raise error as Chef Extension is already installed on the server
+        raise "Chef Extension is already installed on the server #{params[:azure_vm_name]}."
+      end
+
+      roleXML
+    end
+
+    def update(name, params, roleXML)
+      puts "Updating server role..."
+      servicecall = "hostedservices/#{params[:azure_dns_name]}" +
+      "/deployments/#{params[:deploy_name]}/roles/#{name}"
+      ret_val = @connection.query_azure(servicecall, 'put', roleXML, '', true, true, 'application/xml')
+      error_code, error_message = error_from_response_xml(ret_val)
+      if error_code.length > 0
+        Chef::Log.debug(ret_val.to_s)
+        raise 'Unable to update role:' + error_code + ' : ' + error_message
+      end
     end
   end
 end

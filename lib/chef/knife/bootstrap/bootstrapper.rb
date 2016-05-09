@@ -234,11 +234,12 @@ class Chef
         end
 
         # get latest version
-        def get_chef_extension_version
+        def get_chef_extension_version(chef_extension_name = nil)
           if locate_config_value(:azure_chef_extension_version)
             Chef::Config[:knife][:azure_chef_extension_version]
           else
-            extensions = service.get_extension(get_chef_extension_name, get_chef_extension_publisher)
+            chef_extension_name = chef_extension_name.nil? ? get_chef_extension_name : chef_extension_name
+            extensions = service.get_extension(chef_extension_name, get_chef_extension_publisher)
             extensions.css("Version").max.text.split(".").first + ".*"
           end
         end

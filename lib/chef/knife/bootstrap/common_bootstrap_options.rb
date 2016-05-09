@@ -20,7 +20,7 @@
 class Chef
   class Knife
     class Bootstrap
-      module AzurermBootstrapOptions
+      module CommonBootstrapOptions
 
         def self.included(includer)
           includer.class_eval do

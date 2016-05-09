@@ -33,26 +33,27 @@ module AzureAPI
                     verb = 'get',
                     body = '',
                     params = '',
-                    services = true)
+                    services = true,
+                    content_type = nil)
       svc_str = services ? '/services' : ''
       uri = URI.parse("#{@host_name}/#{@subscription_id}#{svc_str}/#{service_name}")
       scheme = !uri.scheme ? "https://" : ""
       request_url = "#{scheme}#{@host_name}/#{@subscription_id}#{svc_str}/#{service_name}"
       print '.'
-      response = http_query(request_url, verb, body, params)
+      response = http_query(request_url, verb, body, params, content_type)
       if response.code.to_i == 307
         Chef::Log.debug "Redirect to #{response['Location']}"
-        response = http_query(response['Location'], verb, body, params)
+        response = http_query(response['Location'], verb, body, params, content_type)
       end
       @last_request_id = response['x-ms-request-id']
       response
     end
 
-    def http_query(request_url, verb, body, params)
+    def http_query(request_url, verb, body, params, content_type = nil)
       uri = URI.parse(request_url)
       uri.query = params
       http = http_setup(uri)
-      request = request_setup(uri, verb, body)
+      request = request_setup(uri, verb, body, content_type)
       response = http.request(request)
       @last_request_id = response['x-ms-request-id']
       response
@@ -89,7 +90,7 @@ module AzureAPI
         http.key = OpenSSL::PKey::RSA.new(@pem_file)
       http
     end
-    def request_setup(uri, verb, body)
+    def request_setup(uri, verb, body, content_type)
       if verb == 'get'
         request = Net::HTTP::Get.new(uri.request_uri)
       elsif verb == 'post'
@@ -99,7 +100,7 @@ module AzureAPI
       elsif verb == 'put'
         request = Net::HTTP::Put.new(uri.request_uri)
       end
-      text = verb == 'put'
+      text = verb == 'put' && content_type.nil?
       request["x-ms-version"] = "2014-05-01"
       request["content-type"] = text ? "text/plain" : "application/xml"
       request["accept"] = "application/xml"

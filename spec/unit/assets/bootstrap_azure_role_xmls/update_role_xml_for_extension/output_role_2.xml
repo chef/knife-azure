@@ -1,0 +1,34 @@
+<Role i:type="PersistentVMRole">
+  <RoleName>test-vm-win</RoleName>
+  <OsVersion/>
+  <RoleType>PersistentVMRole</RoleType>
+  <ConfigurationSets>
+    <ConfigurationSet i:type="NetworkConfigurationSet">
+      <ConfigurationSetType>NetworkConfiguration</ConfigurationSetType>
+      <InputEndpoints>
+        <InputEndpoint>
+          <LocalPort>3389</LocalPort>
+          <Name>RDP</Name>
+          <Port>57666</Port>
+          <Protocol>tcp</Protocol>
+          <Vip>14.13.12.11</Vip>
+          <EnableDirectServerReturn>false</EnableDirectServerReturn>
+        </InputEndpoint>
+      </InputEndpoints>
+      <SubnetNames/>
+    </ConfigurationSet>
+  </ConfigurationSets>
+  <ResourceExtensionReferences><ResourceExtensionReference><ReferenceName>ChefClient</ReferenceName><Publisher>Chef.Bootstrap.WindowsAzure</Publisher><Name>ChefClient</Name><Version>1210.12</Version><ResourceExtensionParameterValues><ResourceExtensionParameterValue><Key>PublicParams</Key><Value>Ik15UHVibGljUGFyYW1zVmFsdWUi
+</Value><Type>Public</Type></ResourceExtensionParameterValue><ResourceExtensionParameterValue><Key>PrivateParams</Key><Value>Ik15UHJpdmF0ZVBhcmFtc1ZhbHVlIg==
+</Value><Type>Private</Type></ResourceExtensionParameterValue></ResourceExtensionParameterValues><State>enable</State></ResourceExtensionReference></ResourceExtensionReferences>
+  <DataVirtualHardDisks/>
+  <OSVirtualHardDisk>
+    <HostCaching>ReadWrite</HostCaching>
+    <DiskName>test-vm-cnt-test-vm-win-0-201105240534190032</DiskName>
+    <MediaLink>https://portalvhdsdfsdjf5djfb3iwb.blob.core.windows.net/vhds/test-dns-test-vm-win-2015-01-30.vhd</MediaLink>
+    <SourceImageName>a6dfsdfwerfdfc0bc8f24rwefsd4ds01__Windows-Server-2012-R2-20141128-en.us-127GB.vhd</SourceImageName>
+    <OS>Windows</OS>
+  </OSVirtualHardDisk>
+  <RoleSize>Small</RoleSize>
+  <ProvisionGuestAgent>true</ProvisionGuestAgent>
+</Role>

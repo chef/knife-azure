@@ -283,6 +283,18 @@ module Azure
       def vm_image?(name)
         connection.images.is_vm_image(name)
       end
+
+      def add_extension(name, params = {})
+        begin
+          ui.info "Started with Chef Extension deployment on the server #{name}..."
+          connection.roles.update(name, params)
+          ui.info "\nSuccessfully deployed Chef Extension on the server #{name}."
+        rescue Exception => e
+          Chef::Log.error("Failed to add extension to the server -- exception being rescued: #{e.to_s}")
+          backtrace_message = "#{e.class}: #{e}\n#{e.backtrace.join("\n")}"
+          Chef::Log.debug("#{backtrace_message}")
+        end
+      end
     end
   end
 end
