@@ -1055,5 +1055,89 @@ describe Chef::Knife::AzureServerCreate do
         end
       end
     end
+
+    describe "fetch_chef_client_logs" do
+      context "role not found" do
+        before do
+          allow(@server_instance).to receive(
+            :fetch_role).and_return(nil)
+        end
+
+        it "displays role not found error" do
+          expect(@server_instance.ui).to receive(:error).with(
+            "chef-client run logs could not be fetched since role vm002 could not be found.")
+          @server_instance.fetch_chef_client_logs(nil, nil)
+        end
+      end
+
+      context "extension not found" do
+        before do
+          allow(@server_instance).to receive(
+            :fetch_role).and_return('vm002')
+          allow(@server_instance).to receive(
+            :fetch_extension).and_return(nil)
+        end
+
+        it "displays extension not found error" do
+          expect(@server_instance.ui).to receive(:error).with(
+            "Unable to find Chef extension under role vm002.")
+          @server_instance.fetch_chef_client_logs(nil, nil)
+        end
+      end
+
+      context "substatus not found in server role response" do
+        before do
+          allow(@server_instance).to receive(
+            :fetch_role).and_return('vm002')
+          allow(@server_instance).to receive(
+            :fetch_extension).and_return('extension')
+          allow(@server_instance).to receive(
+            :fetch_substatus).and_return(nil)
+          @start_time = Time.now
+        end
+
+        context "wait time has not exceeded wait timeout limit" do
+          it "displays wait messages and re-invokes fetch_chef_client_logs method recursively" do
+            @server_instance.instance_eval do
+              class << self
+                alias_method :fetch_chef_client_logs_mocked, :fetch_chef_client_logs
+              end
+            end
+            expect(@server_instance).to receive(:puts).exactly(2).times
+            expect(@server_instance).to receive(:sleep).with(30)
+            expect(@server_instance).to receive(
+              :fetch_chef_client_logs).with(@start_time, 30)
+            @server_instance.fetch_chef_client_logs_mocked(@start_time, 30)
+          end
+        end
+
+        context "wait time has exceeded wait timeout limit" do
+          it "displays wait timeout exceeded message" do
+            expect(@server_instance.ui).to receive(:error).with(
+              "\nchef-client run logs could not be fetched since fetch process exceeded wait timeout of -1 minutes.\n")
+            @server_instance.fetch_chef_client_logs(@start_time, -1)
+          end
+        end
+      end
+
+      context "substatus found in server role response" do
+        before do
+          @substatus = readXMLFromFile('substatus_xml.xml')
+          allow(@server_instance).to receive(
+            :fetch_role).and_return('vm002')
+          allow(@server_instance).to receive(
+            :fetch_extension).and_return('extension')
+          allow(@server_instance).to receive(
+            :fetch_substatus).and_return(@substatus)
+        end
+
+        it "displays chef-client run logs and exit status to the user" do
+          expect(@server_instance).to receive(
+            :puts).exactly(4).times
+          expect(@server_instance).to receive(:print)
+          @server_instance.fetch_chef_client_logs(@start_time, 30)
+        end
+      end
+    end
   end
 end
