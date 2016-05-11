@@ -1122,13 +1122,12 @@ describe Chef::Knife::AzureServerCreate do
 
       context "substatus found in server role response" do
         before do
-          @substatus = readXMLFromFile('substatus_xml.xml')
-          allow(@server_instance).to receive(
-            :fetch_role).and_return('vm002')
-          allow(@server_instance).to receive(
-            :fetch_extension).and_return('extension')
-          allow(@server_instance).to receive(
-            :fetch_substatus).and_return(@substatus)
+          Chef::Config[:knife][:azure_vm_name] = 'vm04'
+          allow(@server_instance.service).to receive(
+            :deployment_name).and_return('deploymentExtension')
+          deployment = Nokogiri::XML readFile('extension_deployment_xml.xml')
+          allow(@server_instance.service).to receive(
+            :deployment).and_return(deployment)
         end
 
         it "displays chef-client run logs and exit status to the user" do
@@ -1139,5 +1138,129 @@ describe Chef::Knife::AzureServerCreate do
         end
       end
     end
+
+    describe "fetch_role" do
+      context "role not found" do
+        before do
+          Chef::Config[:knife][:azure_vm_name] = 'vm09'
+        end
+
+        it "returns nil" do
+          response = fetch_role_from_xml
+          expect(response).to be nil
+        end
+      end
+
+      context "role found" do
+        before do
+          Chef::Config[:knife][:azure_vm_name] = 'vm01'
+        end
+
+        it "returns the role" do
+          response = fetch_role_from_xml
+          expect(response).to_not be nil
+          expect(response.at_css('RoleName').text).to eq 'vm01'
+        end
+      end
+    end
+
+    describe "fetch_extension" do
+      context "extension not found" do
+        before do
+          Chef::Config[:knife][:azure_vm_name] = 'vm01'
+          @role = fetch_role_from_xml
+        end
+
+        it "returns nil" do
+          response = @server_instance.fetch_extension(@role)
+          expect(response).to be nil
+        end
+      end
+
+      context "extension found" do
+        context "for Windows platform" do
+          before do
+            Chef::Config[:knife][:azure_vm_name] = 'vm02'
+            @role = fetch_role_from_xml
+          end
+
+          it "returns the extension" do
+            response = @server_instance.fetch_extension(@role)
+            expect(response).to_not be nil
+            expect(response.at_css('HandlerName').text).to eq \
+              'Chef.Bootstrap.WindowsAzure.ChefClient'
+          end
+        end
+
+        context "for Linux platform" do
+          before do
+            Chef::Config[:knife][:azure_vm_name] = 'vm03'
+            @role = fetch_role_from_xml
+          end
+
+          it "returns the extension" do
+            response = @server_instance.fetch_extension(@role)
+            expect(response).to_not be nil
+            expect(response.at_css('HandlerName').text).to eq \
+              'Chef.Bootstrap.WindowsAzure.LinuxChefClient'
+          end
+        end
+      end
+    end
+
+    describe "fetch_substatus" do
+      context "substatus list not found" do
+        before do
+          Chef::Config[:knife][:azure_vm_name] = 'vm02'
+          role = fetch_role_from_xml
+          @extension = @server_instance.fetch_extension(role)
+        end
+
+        it "returns nil" do
+          response = @server_instance.fetch_substatus(@extension)
+          expect(response).to be nil
+        end
+      end
+
+      context "substatus list found" do
+        context "but it does not contain chef-client run logs substatus" do
+          before do
+            Chef::Config[:knife][:azure_vm_name] = 'vm03'
+            role = fetch_role_from_xml
+            @extension = @server_instance.fetch_extension(role)
+          end
+
+          it "returns nil" do
+            response = @server_instance.fetch_substatus(@extension)
+            expect(response).to be nil
+          end
+        end
+
+        context "and it do contain chef-client run logs substatus" do
+          before do
+            Chef::Config[:knife][:azure_vm_name] = 'vm04'
+            role = fetch_role_from_xml
+            @extension = @server_instance.fetch_extension(role)
+          end
+
+          it "returns the substatus" do
+            response = @server_instance.fetch_substatus(@extension)
+            expect(response).to_not be nil
+            expect(response.at_css('Name').text).to eq 'Chef Client run logs'
+            expect(response.at_css('Status').text).to eq 'Success'
+            expect(response.at_css('Message').text).to eq 'MyChefClientRunLogs'
+          end
+        end
+      end
+    end
+  end
+
+  def fetch_role_from_xml
+    allow(@server_instance.service).to receive(
+      :deployment_name).and_return('deploymentExtension')
+    deployment = Nokogiri::XML readFile('extension_deployment_xml.xml')
+    allow(@server_instance.service).to receive(
+      :deployment).and_return(deployment)
+    @server_instance.fetch_role
   end
 end

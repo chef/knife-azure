@@ -1,8 +1,0 @@
-<SubStatus>
-  <Name>Chef Client run logs</Name>
-  <Status>Success</Status>
-  <FormattedMessage>
-    <Language>en-US</Language>
-    <Message>MyChefClientRunLogs</Message>
-  </FormattedMessage>
-</SubStatus>

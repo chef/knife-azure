@@ -403,6 +403,7 @@ class Chef
             end
           end
         end
+        return nil
       end
 
       def fetch_extension(role)
@@ -412,6 +413,7 @@ class Chef
             return ext
           end
         end
+        return nil
       end
 
       def fetch_substatus(extension)
@@ -422,6 +424,7 @@ class Chef
             return substatus
           end
         end
+        return nil
       end
 
       def fetch_chef_client_logs(fetch_process_start_time, fetch_process_wait_timeout)

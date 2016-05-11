@@ -62,10 +62,6 @@ module AzureSpecHelper
     File.read(File.dirname(__FILE__) + "/unit/assets/#{filename}")
   end
 
-  def readXMLFromFile filename
-    File.open(File.dirname(__FILE__) + "/unit/assets/#{filename}") { |f| Nokogiri::XML(f) }
-  end
-
   def get_publish_settings_file_path filename
     File.dirname(__FILE__) + "/unit/assets/publish-settings-files/#{filename}"
   end
