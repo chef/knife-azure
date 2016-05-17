@@ -15,6 +15,7 @@
 
 require 'azure/azure_interface'
 require 'azure/resource_management/ARM_base'
+require 'azure/resource_management/ARM_deployment_template'
 
 require 'azure_mgmt_resources'
 require 'azure_mgmt_compute'
@@ -25,6 +26,7 @@ module Azure
   class ResourceManagement
     class ARMInterface < AzureInterface
       include Azure::ARM::ARMBase
+      include Azure::ARM::ARMDeploymentTemplate
 
       include Azure::ARM::Resources
       include Azure::ARM::Resources::Models
@@ -264,19 +266,36 @@ module Azure
         if virtual_machine_exist?(params[:azure_resource_group_name], params[:azure_vm_name])
           ui.log("INFO:Virtual Machine #{params[:azure_vm_name]} already exist under the Resource Group #{params[:azure_resource_group_name]}. Exiting for now.")
         else
-          ui.log("Creating VirtualMachine....\n\n")
-          virtual_machine = create_virtual_machine(params)
-          Chef::Log.info("VirtualMachine creation successfull.")
-          Chef::Log.info("Virtual Machine name is: #{virtual_machine.name}")
-          Chef::Log.info("Virtual Machine ID is: #{virtual_machine.id}")
+          if(params[:server_count].to_i > 1)
+            ui.log("Deploying multiple VirtualMachines....")
+            deployment = create_virtual_machine_using_template(params)
+            ui.log("Deployment of multiple VMs is successfull.")
+            ui.log("Deployment name is: #{deployment.name}")
+            ui.log("Deployment ID is: #{deployment.id}")
 
-          ui.log("Creating VirtualMachineExtension.... #{("\n")} ")
-          vm_extension = create_vm_extension(params)
-          Chef::Log.info("VirtualMachineExtension creation successfull.")
-          Chef::Log.info("Virtual Machine Extension name is: #{vm_extension.name}")
-          Chef::Log.info("Virtual Machine Extension ID is: #{vm_extension.id}")
+            ui.log("Following VMs have been created...")
+            deployment.properties.dependencies.each do |deploy|
+              if deploy.resource_type == "Microsoft.Compute/virtualMachines"
+                ui.log("-------------------------------")
+                ui.log("Virtual Machine name is: #{deploy.resource_name}")
+                ui.log("Virtual Machine ID is: #{deploy.id}")
+              end
+            end
+          else
+            ui.log("Creating VirtualMachine....")
+            virtual_machine = create_virtual_machine(params)
+            ui.log("VirtualMachine creation successfull.")
+            Chef::Log.info("Virtual Machine name is: #{virtual_machine.name}")
+            Chef::Log.info("Virtual Machine ID is: #{virtual_machine.id}")
 
-          vm_details = vm_details(virtual_machine, vm_extension, params)
+            ui.log("Creating VirtualMachineExtension....")
+            vm_extension = create_vm_extension(params)
+            ui.log("VirtualMachineExtension creation successfull.")
+            Chef::Log.info("Virtual Machine Extension name is: #{vm_extension.name}")
+            Chef::Log.info("Virtual Machine Extension ID is: #{vm_extension.id}")
+
+            vm_details = vm_details(virtual_machine, vm_extension, params)
+          end
         end
       end
 
@@ -302,7 +321,7 @@ module Azure
         vm_details.resources.type = vm_extension.properties.type
         vm_details.resources.type_handler_version = vm_extension.properties.type_handler_version
         vm_details.resources.provisioning_state = vm_extension.properties.provisioning_state
-      
+
         vm_details
       end
 
@@ -334,6 +353,28 @@ module Azure
         end
 
         resource_group
+      end
+
+      def create_virtual_machine_using_template(params)
+        template = create_deployment_template(params)
+        parameters = create_deployment_parameters(params, @platform)
+
+        deploy_prop = DeploymentProperties.new
+        deploy_prop.template = template
+        deploy_prop.parameters = parameters
+        deploy_prop.mode = 'Incremental'
+
+        deploy_params = Deployment.new
+        deploy_params.properties = deploy_prop
+
+        begin
+          deployment = resource_management_client.deployments.create_or_update(params[:azure_resource_group_name], "#{params[:azure_vm_name]}_deploy", deploy_params).value!.body
+        rescue Exception => e
+          Chef::Log.error("Failed to create the Virtual Machine -- exception being rescued: #{e.to_s}")
+          backtrace_message = "#{e.class}: #{e}\n#{e.backtrace.join("\n")}"
+          Chef::Log.debug("#{backtrace_message}")
+        end
+        deployment
       end
 
       def create_virtual_machine(params)
@@ -376,7 +417,7 @@ module Azure
         begin
           virtual_machine = compute_management_client.virtual_machines.create_or_update(params[:azure_resource_group_name], vm_params.name, vm_params).value!.body
         rescue Exception => e
-          ui.log("Failed to create the virtual machine, use verbose mode for more details")          
+          ui.log("Failed to create the virtual machine, use verbose mode for more details")
           Chef::Log.error("Failed to create the Virtual Machine -- exception being rescued: #{e.to_s}")
           backtrace_message = "#{e.class}: #{e}\n#{e.backtrace.join("\n")}"
           Chef::Log.debug("#{backtrace_message}")
@@ -472,7 +513,7 @@ module Azure
       def create_network_profile(params)
         if vnet_exist?(params[:azure_resource_group_name], params[:azure_vnet_name])
           vnet = network_resource_client.virtual_networks.get(params[:azure_resource_group_name], params[:azure_vnet_name]).value!.body
-          Chef::Log.info("Found existing vnet #{vnet.name}...") 
+          Chef::Log.info("Found existing vnet #{vnet.name}...")
         else
           ui.log("Creating VirtualNetwork....\n\n")
           vnet = create_virtual_network(
@@ -482,14 +523,14 @@ module Azure
           )
           Chef::Log.info("VirtualNetwork creation successfull.")
         end
-          
-        Chef::Log.info("Virtual Network name is: #{vnet.name}")        
+
+        Chef::Log.info("Virtual Network name is: #{vnet.name}")
 
         Chef::Log.info("Virtual Network ID is: #{vnet.id}")
 
         if subnet_exist?(params[:azure_resource_group_name], vnet.name, params[:azure_vnet_subnet_name])
           sbn = network_resource_client.subnets.get(params[:azure_resource_group_name], vnet.name, params[:azure_vnet_subnet_name]).value!.body
-            
+
           Chef::Log.info("Found subnet #{sbn.name} under virtual network #{vnet.name} ...")
 
        else
@@ -722,7 +763,7 @@ module Azure
           params[:azure_service_location],
           params[:chef_extension_publisher],
           params[:chef_extension]).value!.body.last.name
-        ext_version_split_values = ext_version.split(".")  
+        ext_version_split_values = ext_version.split(".")
         ext_version = ext_version_split_values[0] + "." + ext_version_split_values[1]
         ext_version
       end

@@ -147,7 +147,7 @@ describe Chef::Knife::AzurermServerCreate do
     end
 
     context "optional parameters" do
-      context "not given by user" do
+      context "when not given by user" do
         before do
           @vm_name_with_no_special_chars = 'testvm'
           Chef::Config[:knife][:ssh_password] = 'ssh_password'
@@ -179,12 +179,17 @@ describe Chef::Knife::AzurermServerCreate do
           expect(@server_params[:azure_vnet_subnet_name]).to be == 'test-vm'
         end
 
+        it "should assign default value 1 to the server_count when not provided by the user" do
+          @server_params = @arm_server_instance.create_server_def
+          expect(@server_params[:server_count]).to be == 1
+        end
+
         after do
           Chef::Config[:knife].delete(:ssh_password)
         end
       end
 
-      context "given by user" do
+      context "when given by user" do
         before do
           @vm_name_with_no_special_chars = 'testvm'
           Chef::Config[:knife][:ssh_password] = 'ssh_password'
@@ -195,6 +200,7 @@ describe Chef::Knife::AzurermServerCreate do
           Chef::Config[:knife][:azure_vnet_name] = 'azure_vnet_name'
           Chef::Config[:knife][:azure_vnet_subnet_name] = 'azure_vnet_subnet_name'
           Chef::Config[:knife][:azure_vm_size] = 'Medium'
+          Chef::Config[:knife][:server_count] = 3
         end
 
         it "azure_storage_account provided by user so vm_name does not get assigned to it" do
@@ -222,6 +228,11 @@ describe Chef::Knife::AzurermServerCreate do
           expect(@server_params[:azure_vm_size]).to be == 'Medium'
         end
 
+        it "should set the value of server_count as provided by the user" do
+          @server_params = @arm_server_instance.create_server_def
+          expect(@server_params[:server_count]).to be == 3
+        end
+
         after do
           Chef::Config[:knife].delete(:ssh_password)
           Chef::Config[:knife].delete(:azure_storage_account)
@@ -229,6 +240,7 @@ describe Chef::Knife::AzurermServerCreate do
           Chef::Config[:knife].delete(:azure_network_name)
           Chef::Config[:knife].delete(:azure_subnet_name)
           Chef::Config[:knife].delete(:azure_vm_size)
+          Chef::Config[:knife].delete(:server_count)
         end
       end
     end
@@ -412,6 +424,42 @@ describe Chef::Knife::AzurermServerCreate do
             :value, :nil?).and_return(
               false)
           @arm_server_instance.run
+        end
+      end
+
+      context "for multiple VM creation" do
+        before do
+          Chef::Config[:knife][:server_count] = 3
+
+          expect(@arm_server_instance).to receive(
+            :is_image_windows?).at_least(3).and_return(false)
+
+          allow(@resource_client).to receive_message_chain(
+            :resource_groups, :check_existence).and_return(
+              @resource_promise)
+          allow(@resource_promise).to receive_message_chain(
+            :value!, :body).and_return(
+              false)
+          allow(@service).to receive(
+            :create_resource_group).and_return(
+              stub_resource_group_create_response)
+
+          allow(@service).to receive(:virtual_machine_exist?).and_return(false)
+        end
+
+        it "uses template for VM creation" do
+          deployment = double("deployment", :name => "name", :id => "id", :properties => double)
+          allow(deployment.properties).to receive(:dependencies).and_return([])
+          allow(@service.ui).to receive(:log).at_least(:once)
+          expect(@service).to receive(:create_virtual_machine_using_template).and_return(deployment)
+          expect(@service).not_to receive(:create_virtual_machine)
+          expect(@service).not_to receive(:create_vm_extension)
+          expect(@service).not_to receive(:vm_details)
+          @arm_server_instance.run
+        end
+
+        after do
+          Chef::Config[:knife].delete(:server_count)
         end
       end
     end
@@ -1218,6 +1266,133 @@ describe Chef::Knife::AzurermServerCreate do
       @arm_server_instance.config.delete(:azure_image_reference_version)
       expect(@arm_server_instance.ui).to receive(:error)
       expect{@arm_server_instance.send(:set_default_image_reference!)}.to raise_error(SystemExit)
+    end
+  end
+
+  describe "create_virtual_machine_using_template" do
+    before do
+      @params[:server_count] = 3
+      allow(@service).to receive(:resource_management_client).and_return(@resource_client)
+    end
+
+    it "creates deployment template and deployment parameters" do
+      expect(@service).to receive(:create_deployment_template).with(@params)
+      expect(@service).to receive(:create_deployment_parameters)
+      expect(@resource_client).to receive_message_chain(
+          :deployments, :create_or_update).and_return(
+            @resource_promise)
+      @service.create_virtual_machine_using_template(@params)
+    end
+
+    it "raises exception if deployment is not successful" do
+      expect(@service).to receive(:create_deployment_template).with(@params)
+      expect(@service).to receive(:create_deployment_parameters)
+      allow(@resource_client).to receive_message_chain(
+          :deployments, :create_or_update).and_raise(Exception)
+      expect(Chef::Log).to receive(:error)
+      expect(Chef::Log).to receive(:debug)
+      @service.create_virtual_machine_using_template(@params)
+    end
+
+    after do
+      @params.delete(:server_count)
+    end
+  end
+
+  describe "create_deployment_template" do
+    before do
+      bootstrap_options = {:chef_server_url => "url",
+        :validation_client_name => "client_name"}
+      @params[:chef_extension_public_param] = {:bootstrap_options => bootstrap_options}
+
+      {
+        :azure_image_reference_publisher => 'OpenLogic',
+        :azure_image_reference_offer => 'CentOS',
+        :azure_image_reference_sku => '6.5',
+        :azure_image_reference_version => 'latest',
+        :ssh_user => 'ssh_user',
+        :server_count => 3
+      }.each do |key, value|
+          @params[key] = value
+        end
+    end
+
+    it "sets the parameters which are passed in the template" do
+      template = @service.create_deployment_template(@params)
+
+      expect(template["variables"]["imagePublisher"]).to be == "OpenLogic"
+      expect(template["variables"]["imageOffer"]).to be == "CentOS"
+      expect(template["variables"]["OSDiskName"]).to be == "azureosdiskname"
+      expect(template["variables"]["nicName"]).to be == "test-vm"
+      expect(template["variables"]["subnetName"]).to be == "azure_subnet_name"
+      expect(template["variables"]["storageAccountType"]).to be == "azure_storage_account_type"
+      expect(template["variables"]["publicIPAddressName"]).to be == "test-vm"
+      expect(template["variables"]["vmStorageAccountContainerName"]).to be == "test-vm"
+      expect(template["variables"]["vmName"]).to be == "test-vm"
+      expect(template["variables"]["vmSize"]).to be == "Standard_D1"
+      expect(template["variables"]["virtualNetworkName"]).to be == "azure_virtual_network_name"
+      expect(template["variables"]["vmExtensionName"]).to be == "chef_extension"
+
+      extension = ""
+      template["resources"].each do |resource|
+        extension = resource if resource["type"] == "Microsoft.Compute/virtualMachines/extensions"
+      end
+
+      expect(extension["name"]).to be == "[concat(variables('vmName'),copyIndex(),'/', variables('vmExtensionName'))]"
+      expect(extension["properties"]["publisher"]).to be == "chef_extension_publisher"
+      expect(extension["properties"]["type"]).to be == "chef_extension"
+      expect(extension["properties"]["typeHandlerVersion"]).to be == "11.10.1"
+      expect(extension["properties"]["settings"]["bootstrap_options"]["chef_node_name"]).to be(nil)
+      expect(extension["properties"]["settings"]["bootstrap_options"]["chef_server_url"]).to be == "[parameters('chef_server_url')]"
+      expect(extension["properties"]["settings"]["bootstrap_options"]["validation_client_name"]).to be == "[parameters('validation_client_name')]"
+      expect(extension["properties"]["settings"]["runlist"]).to be == "[parameters('runlist')]"
+      expect(extension["properties"]["settings"]["autoUpdateClient"]).to be == "[parameters('autoUpdateClient')]"
+      expect(extension["properties"]["settings"]["deleteChefConfig"]).to be == "[parameters('deleteChefConfig')]"
+      expect(extension["properties"]["settings"]["uninstallChefClient"]).to be == "[parameters('uninstallChefClient')]"
+    end
+
+    after do
+      @params.delete(:server_count)
+    end
+  end
+
+  describe "create_deployment_parameters" do
+    before do
+      bootstrap_options = {:chef_server_url => "url",
+        :validation_client_name => "client_name"}
+      @params[:chef_extension_public_param] = {:bootstrap_options => bootstrap_options}
+      @params[:chef_extension_private_param] = {:validation_key => "validation_key"}
+      {
+        :azure_image_reference_publisher => 'OpenLogic',
+        :azure_image_reference_offer => 'CentOS',
+        :azure_image_reference_sku => '6.5',
+        :azure_image_reference_version => 'latest',
+        :ssh_user => 'ssh_user',
+        :server_count => 3
+      }.each do |key, value|
+          @params[key] = value
+        end
+    end
+
+    it "sets the parameters which are passed in the template" do
+      parameters = @service.create_deployment_parameters(@params, "Windows")
+
+      expect(parameters["adminUserName"]["value"]).to be == "winrm_user"
+      expect(parameters["adminPassword"]["value"]).to be == "admin_password"
+      expect(parameters["dnsLabelPrefix"]["value"]).to be == "test-vm"
+      expect(parameters["imageSKU"]["value"]).to be == "6.5"
+      expect(parameters["numberOfInstances"]["value"]).to be == 3
+      expect(parameters["validation_key"]["value"]).to be == "validation_key"
+      expect(parameters["chef_server_url"]["value"]).to be == "url"
+      expect(parameters["validation_client_name"]["value"]).to be == "client_name"
+      expect(parameters["runlist"]["value"]).to be == ""
+      expect(parameters["autoUpdateClient"]["value"]).to be == ""
+      expect(parameters["deleteChefConfig"]["value"]).to be == ""
+      expect(parameters["uninstallChefClient"]["value"]).to be == ""
+    end
+
+    after do
+      @params.delete(:server_count)
     end
   end
 end
