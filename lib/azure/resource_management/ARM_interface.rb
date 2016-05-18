@@ -269,6 +269,7 @@ module Azure
           if(params[:server_count].to_i > 1)
             ui.log("Deploying multiple VirtualMachines....")
             deployment = create_virtual_machine_using_template(params)
+
             ui.log("Deployment of multiple VMs is successfull.")
             ui.log("Deployment name is: #{deployment.name}")
             ui.log("Deployment ID is: #{deployment.id}")
@@ -279,6 +280,7 @@ module Azure
                 ui.log("-------------------------------")
                 ui.log("Virtual Machine name is: #{deploy.resource_name}")
                 ui.log("Virtual Machine ID is: #{deploy.id}")
+                show_server(deploy.resource_name, params[:azure_resource_group_name])
               end
             end
           else
