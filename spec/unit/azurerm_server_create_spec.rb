@@ -449,9 +449,16 @@ describe Chef::Knife::AzurermServerCreate do
 
         it "uses template for VM creation" do
           deployment = double("deployment", :name => "name", :id => "id", :properties => double)
-          allow(deployment.properties).to receive(:dependencies).and_return([])
+          @deploy1 = double("deploy1", :resource_type => "Microsoft.Compute/virtualMachines", :resource_name => "MyVM0", :id => "/subscriptions/e00d2b3f-3b94-4dfc-ae8e-ca34c8ba1a99/resourceGroups/vjgroup/providers/Microsoft.Compute/virtualMachines/MyVM0
+")
+          @deploy2 = double("deploy2", :resource_type => "Microsoft.Compute/virtualMachines", :resource_name => "MyVM1", :id => "/subscriptions/e00d2b3f-3b94-4dfc-ae8e-ca34c8ba1a99/resourceGroups/vjgroup/providers/Microsoft.Compute/virtualMachines/MyVM1
+")
+          @deploy3 = double("deploy3", :resource_type => "Microsoft.Compute/virtualMachines", :resource_name => "MyVM2", :id => "/subscriptions/e00d2b3f-3b94-4dfc-ae8e-ca34c8ba1a99/resourceGroups/vjgroup/providers/Microsoft.Compute/virtualMachines/MyVM2
+")
+          allow(deployment.properties).to receive(:dependencies).and_return([@deploy1, @deploy2, @deploy3])
           allow(@service.ui).to receive(:log).at_least(:once)
           expect(@service).to receive(:create_virtual_machine_using_template).and_return(deployment)
+          expect(@service).to receive(:show_server).thrice
           expect(@service).not_to receive(:create_virtual_machine)
           expect(@service).not_to receive(:create_vm_extension)
           expect(@service).not_to receive(:vm_details)
