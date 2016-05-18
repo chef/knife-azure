@@ -348,15 +348,11 @@ describe Chef::Knife::AzurermServerCreate do
           expect(@compute_promise).to receive_message_chain(
             :value, :nil?).and_return(
               true)
-          expect(@service).to receive(
-            :create_virtual_machine).exactly(1).and_return(
-              stub_virtual_machine_create_response)
-          expect(@service).to receive(
-            :create_vm_extension).exactly(1).and_return(
-              stub_vm_extension_create_response('NA'))
-          expect(@service).to receive(
-            :vm_details).exactly(1).and_return(
-              stub_vm_details)
+          expect(@service).to receive(:create_virtual_machine_using_template).exactly(1).and_return(stub_virtual_machine_create_response)
+          expect(@service).to receive(:show_server).once
+          expect(@compute_promise).to receive(:value!).and_return(stub_vm_details)
+          # expect(@service).to receive(:create_vm_extension).exactly(1).and_return(stub_vm_extension_create_response('NA'))
+          # expect(@service).to receive(:vm_details).exactly(1).and_return(stub_vm_details)
           @arm_server_instance.run
         end
 

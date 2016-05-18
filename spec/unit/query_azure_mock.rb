@@ -153,20 +153,34 @@ module QueryAzureMock
     network_resource_client
   end
 
+  # def stub_virtual_machine_create_response
+  #   virtual_machine = double("VirtualMachine",
+  #     :name => 'test-vm',
+  #     :id => 'myvm',
+  #     :type => 'Microsoft.Compute/virtualMachines',
+  #     :properties => double,
+  #     :location => 'West Europe')
+  #   allow(virtual_machine.properties).to receive_message_chain(
+  #     :storage_profile,
+  #     :os_disk,
+  #     :os_type).and_return('Test_OS_Type')
+  #   allow(virtual_machine.properties).to receive(
+  #     :provisioning_state).and_return('Succeeded')
+  #   virtual_machine
+  # end
+
   def stub_virtual_machine_create_response
-    virtual_machine = double("VirtualMachine",
-      :name => 'test-vm',
-      :id => 'myvm',
-      :type => 'Microsoft.Compute/virtualMachines',
-      :properties => double,
-      :location => 'West Europe')
-    allow(virtual_machine.properties).to receive_message_chain(
-      :storage_profile,
-      :os_disk,
-      :os_type).and_return('Test_OS_Type')
-    allow(virtual_machine.properties).to receive(
+    deploy = double("deploy1", :resource_type => "Microsoft.Compute/virtualMachines", :resource_name => "MyVM",
+      :id => "/subscriptions/e00d2b3f-3b94-4dfc-ae8e-ca34c8ba1a99/resourceGroups/vjgroup/providers/Microsoft.Compute/virtualMachines/MyVM0")
+    deployment = double("Deployment",
+      :name => 'test-deployment',
+      :id => 'id',
+      :properties => double)
+    allow(deployment.properties).to receive_message_chain(
+      :dependencies).and_return([deploy])
+    allow(deployment.properties).to receive(
       :provisioning_state).and_return('Succeeded')
-    virtual_machine
+    deployment
   end
 
   def stub_vm_details

@@ -23,63 +23,48 @@ module Azure::ARM
       if params[:chef_extension_public_param][:bootstrap_options][:chef_node_name]
         chef_node_name = "[concat(parameters('chef_node_name'),copyIndex())]"
       end
-      
-      if(params[:server_count].to_i > 1)
-       # publicIPAddresses Resource Variables
-  
-        publicIPAddressName = "[concat(variables('publicIPAddressName'),copyIndex())]"            
-        domainNameLabel = "[concat(parameters('dnsLabelPrefix'), copyIndex())]"
-        
-        
-       #networkInterfaces Resource Variables
 
+      if(params[:server_count].to_i > 1)
+        # publicIPAddresses Resource Variables
+        publicIPAddressName = "[concat(variables('publicIPAddressName'),copyIndex())]"
+        domainNameLabel = "[concat(parameters('dnsLabelPrefix'), copyIndex())]"
+
+        # networkInterfaces Resource Variables
         nicName = "[concat(variables('nicName'),copyIndex())]"
         depNic1 = "[concat('Microsoft.Network/publicIPAddresses/', concat(variables('publicIPAddressName'),copyIndex()))]"
         pubId = "[resourceId('Microsoft.Network/publicIPAddresses',concat(variables('publicIPAddressName'),copyIndex()))]"
-           
-        #virtualMachines Resource Variables
 
+        # virtualMachines Resource Variables
         vmName = "[concat(variables('vmName'),copyIndex())]"
         depVm2="[concat('Microsoft.Network/networkInterfaces/', variables('nicName'), copyIndex())]"
         computerName = "[concat(variables('vmName'),copyIndex())]"
         uri = "[concat('http://',variables('storageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',concat(variables('vmName'),copyIndex()),'.vhd')]"
         netid = "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('nicName'), copyIndex()))]"
 
-        #Extension Variables
-
+        # Extension Variables
         extName = "[concat(variables('vmName'),copyIndex(),'/', variables('vmExtensionName'))]"
         depExt = "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'), copyIndex())]"
-
-      else 
-
-# publicIPAddresses Resource Variables
-
+      else
+        # publicIPAddresses Resource Variables
         publicIPAddressName = "[variables('publicIPAddressName')]"
         domainNameLabel = "[parameters('dnsLabelPrefix')]"
-        
-        #networkInterfaces Resource Variables
 
+        # networkInterfaces Resource Variables
         nicName = "[concat(variables('nicName'))]"
         depNic1 = "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]"
-  
         pubId = "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]"
-        
-        #virtualMachines Resource Variables
 
+        # virtualMachines Resource Variables
         vmName = "[variables('vmName')]"
         depVm2="[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
         computerName = "[variables('vmName')]"
         uri = "[concat('http://',variables('storageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',variables('vmName'),'.vhd')]"
         netid = "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]"
-      
-      #Extension Variables
 
+        # Extension Variables
         extName = "[concat(variables('vmName'),'/', variables('vmExtensionName'))]"
         depExt = "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
-
-end 
-
-
+      end
 
       template = {
         "$schema"=> "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
