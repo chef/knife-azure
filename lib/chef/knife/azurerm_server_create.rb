@@ -176,6 +176,15 @@ class Chef
                                     Maximum count is 5. Default value is 1.",
         :default => 1
 
+      option :ohai_hints,
+        :long => "--ohai-hints HINT_OPTIONS",
+        :description => "Hint option names to be set in Ohai configuration. \
+          Default value is 'default' which defaults to the following list: \
+          public_ip_address, vm_name, public_fqdn, port, platform. \
+          However user can also pass any comma separated combination of \
+          the default values.",
+        :default => 'default'
+
       def run
         $stdout.sync = true
 
@@ -261,6 +270,30 @@ class Chef
         server_def
       end
 
+      def supported_ohai_hints
+        [
+          'default',
+          'public_ip_address',
+          'vm_name',
+          'public_fqdn',
+          'port',
+          'platform'
+        ]
+      end
+
+      def is_supported_ohai_hint?(hint)
+        supported_ohai_hints.any? { |supported_ohai_hint| hint.include? supported_ohai_hint }
+      end
+
+      def validate_ohai_hints
+        hint_values = locate_config_value(:ohai_hints).split(',')
+        hint_values.each do |hint|
+          if ! is_supported_ohai_hint?(hint)
+            raise ArgumentError, "Ohai Hint name #{hint} passed is not supported. Please run the command help to identify the supported values."
+          end
+        end
+      end
+
       def validate_params!
         if locate_config_value(:azure_vnet_name) && !locate_config_value(:azure_vnet_subnet_name)
           raise ArgumentError,  "When a --azure-vnet-name is specified, the --azure-vnet-subnet-name must also be specified."
@@ -287,6 +320,8 @@ class Chef
         if locate_config_value(:server_count).to_i > 5
           raise ArgumentError, "Maximum allowed value of --server-count is 5."
         end
+
+        validate_ohai_hints
       end
 
       private

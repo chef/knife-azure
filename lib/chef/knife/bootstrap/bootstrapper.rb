@@ -244,6 +244,28 @@ class Chef
           end
         end
 
+        def default_hint_options
+          [
+            'public_ip_address',
+            'vm_name',
+            'public_fqdn',
+            'port',
+            'platform'
+          ]
+        end
+
+        def ohai_hints
+          hint_values = locate_config_value(:ohai_hints)
+
+          if hint_values.casecmp('default').zero? || hint_values.downcase.include?('default')
+            hints = default_hint_options
+          else
+            hints = hint_values.split(',')
+          end
+
+          hints
+        end
+
         def get_chef_extension_public_params
           pub_config = Hash.new
           if(locate_config_value(:azure_extension_client_config))
@@ -258,6 +280,7 @@ class Chef
           pub_config[:uninstallChefClient] = locate_config_value(:uninstall_chef_client) ? "true" : "false"
           pub_config[:custom_json_attr] = locate_config_value(:json_attributes) || {}
           pub_config[:extendedLogs] = locate_config_value(:extended_logs) ? "true" : "false"
+          pub_config[:hints] = ohai_hints
 
           # bootstrap attributes
           pub_config[:bootstrap_options] = {}
