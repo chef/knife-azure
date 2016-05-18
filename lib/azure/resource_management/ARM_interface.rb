@@ -161,11 +161,8 @@ module Azure
 
       def show_server(name, resource_group)
         begin
-          promise = compute_management_client.virtual_machines.get(resource_group, name)
-          result = promise.value!
-
-          unless result.nil?
-            server = result.body
+          server = find_server(resource_group, name)
+          if server
             network_interface_name = server.properties.network_profile.network_interfaces[0].id.split('/')[-1]
             network_interface_data = network_resource_client.network_interfaces.get(resource_group, network_interface_name).value!.body
             public_ip_id_data = network_interface_data.properties.ip_configurations[0].properties.public_ipaddress
@@ -219,14 +216,26 @@ module Azure
             end
 
             puts ui.list(details, :columns_across, 2)
-
-          else
-            puts "There is no server with name #{name} or resource_group #{resource_group}. Please provide correct details."
           end
-
         rescue => error
           puts "#{error.body["error"]["message"]}"
         end
+      end
+
+      def find_server(resource_group, name)
+        begin
+          promise = compute_management_client.virtual_machines.get(resource_group, name)
+          result = promise.value!
+
+          unless result.nil?
+            server = result.body
+          else
+            ui.error("There is no server with name #{name} or resource_group #{resource_group}. Please provide correct details.")
+          end
+        rescue => error
+          ui.error("#{error.body["error"]["message"]}")
+        end
+        server
       end
 
       def virtual_machine_exist?(resource_group_name, vm_name)
@@ -740,7 +749,7 @@ module Azure
         vm_ext_props.protected_settings = params[:chef_extension_private_param]
 
         vm_ext = VirtualMachineExtension.new
-        vm_ext.name = params[:azure_vm_name]
+        vm_ext.name = params[:chef_extension]
         vm_ext.location = params[:azure_service_location]
         vm_ext.properties = vm_ext_props
 
@@ -752,12 +761,31 @@ module Azure
             vm_ext
           ).value!.body
         rescue Exception => e
-          Chef::Log.error("Failed to create the Virtual Machine Extension -- exception being rescued: #{e.to_s}")
+          Chef::Log.error("Failed to create the Virtual Machine Extension -- exception being rescued.")
+
+          if e.class == MsRestAzure::AzureOperationError && e.body
+            if e.body['error']['code'] == 'DeploymentFailed'
+              ui.error("#{error.body['error']['message']}")
+            else
+              ui.error(e.body)
+            end
+          else
+            ui.error("#{error.message}")
+            Chef::Log.debug("#{error.backtrace.join("\n")}")
+          end
+
           backtrace_message = "#{e.class}: #{e}\n#{e.backtrace.join("\n")}"
           Chef::Log.debug("#{backtrace_message}")
         end
 
         vm_extension
+      end
+
+      def extension_already_installed?(server)
+        server.resources.each do |extension|
+          return true if (extension.properties.type == "ChefClient" || extension.properties.type == "LinuxChefClient")
+        end if server.resources
+        false
       end
 
       def get_latest_chef_extension_version(params)
