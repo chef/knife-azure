@@ -761,7 +761,19 @@ module Azure
             vm_ext
           ).value!.body
         rescue Exception => e
-          Chef::Log.error("Failed to create the Virtual Machine Extension -- exception being rescued: #{e.to_s}")
+          Chef::Log.error("Failed to create the Virtual Machine Extension -- exception being rescued.")
+
+          if e.class == MsRestAzure::AzureOperationError && e.body
+            if e.body['error']['code'] == 'DeploymentFailed'
+              ui.error("#{error.body['error']['message']}")
+            else
+              ui.error(e.body)
+            end
+          else
+            ui.error("#{error.message}")
+            Chef::Log.debug("#{error.backtrace.join("\n")}")
+          end
+
           backtrace_message = "#{e.class}: #{e}\n#{e.backtrace.join("\n")}"
           Chef::Log.debug("#{backtrace_message}")
         end

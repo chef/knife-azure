@@ -45,17 +45,27 @@ class Chef
            if @name_args.length == 1
             ui.log("Creating VirtualMachineExtension....")
             vm_extension = service.create_vm_extension(set_ext_params)
-            ui.log("VirtualMachineExtension creation successfull.")
-            ui.log("Virtual Machine Extension name is: #{vm_extension.name}")
-            ui.log("Virtual Machine Extension ID is: #{vm_extension.id}")
+            if vm_extension
+              ui.log("VirtualMachineExtension creation successfull.")
+              ui.log("Virtual Machine Extension name is: #{vm_extension.name}")
+              ui.log("Virtual Machine Extension ID is: #{vm_extension.id}")
+            end
            else
              raise ArgumentError, 'Please specify the SERVER name which needs to be bootstrapped via the Chef Extension.' if @name_args.length == 0
              raise ArgumentError, 'Please specify only one SERVER name which needs to be bootstrapped via the Chef Extension.' if @name_args.length > 1
            end
          rescue => error
-           ui.error("#{error.message}")
-           Chef::Log.debug("#{error.backtrace.join("\n")}")
-           exit
+          if error.class == MsRestAzure::AzureOperationError && error.body
+            if error.body['error']['code'] == 'DeploymentFailed'
+              ui.error("#{error.body['error']['message']}")
+            else
+              ui.error(error.body)
+            end
+          else
+            ui.error("#{error.message}")
+            Chef::Log.debug("#{error.backtrace.join("\n")}")
+          end
+          exit
          end
       end
 
