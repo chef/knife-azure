@@ -16,7 +16,6 @@
 require 'azure/azure_interface'
 require 'azure/resource_management/ARM_base'
 require 'azure/resource_management/ARM_deployment_template'
-
 require 'azure_mgmt_resources'
 require 'azure_mgmt_compute'
 require 'azure_mgmt_storage'
@@ -278,7 +277,6 @@ module Azure
           if(params[:server_count].to_i > 1)
             ui.log("Deploying multiple VirtualMachines....")
             deployment = create_virtual_machine_using_template(params)
-
             ui.log("Deployment of multiple VMs is successfull.")
             ui.log("Deployment name is: #{deployment.name}")
             ui.log("Deployment ID is: #{deployment.id}")
@@ -293,19 +291,32 @@ module Azure
               end
             end
           else
-            ui.log("Creating VirtualMachine....")
-            virtual_machine = create_virtual_machine(params)
+            ui.log("Creating  VirtualMachine....")
+            #virtual_machine = create_virtual_machine(params)
+            deployment = create_virtual_machine_using_template(params)
             ui.log("VirtualMachine creation successfull.")
-            Chef::Log.info("Virtual Machine name is: #{virtual_machine.name}")
-            Chef::Log.info("Virtual Machine ID is: #{virtual_machine.id}")
+            ui.log("VirtualMachine creation successfull.")
+            ui.log("Deployment of Single VMs is successfull.")
+            ui.log("Deployment name is: #{deployment.name}")
+            ui.log("Deployment ID is: #{deployment.id}")
+            ui.log("Following VMs have been created...")
+            deployment.properties.dependencies.each do |deploy|
+              if deploy.resource_type == "Microsoft.Compute/virtualMachines"
+                ui.log("-------------------------------")
+                ui.log("Virtual Machine name is: #{deploy.resource_name}")
+                ui.log("Virtual Machine ID is: #{deploy.id}")
+              end
+            end
+            #Chef::Log.info("Virtual Machine name is: #{virtual_machine.name}")
+            #Chef::Log.info("Virtual Machine ID is: #{virtual_machine.id}")
 
-            ui.log("Creating VirtualMachineExtension....")
-            vm_extension = create_vm_extension(params)
-            ui.log("VirtualMachineExtension creation successfull.")
-            Chef::Log.info("Virtual Machine Extension name is: #{vm_extension.name}")
-            Chef::Log.info("Virtual Machine Extension ID is: #{vm_extension.id}")
+           # ui.log("Creating VirtualMachineExtension....")
+           # vm_extension = create_vm_extension(params)
+           # ui.log("VirtualMachineExtension creation successfull.")
+           # Chef::Log.info("Virtual Machine Extension name is: #{vm_extension.name}")
+           # Chef::Log.info("Virtual Machine Extension ID is: #{vm_extension.id}")
 
-            vm_details = vm_details(virtual_machine, vm_extension, params)
+           # vm_details = vm_details(virtual_machine, vm_extension, params)
           end
         end
       end
@@ -368,6 +379,7 @@ module Azure
 
       def create_virtual_machine_using_template(params)
         template = create_deployment_template(params)
+
         parameters = create_deployment_parameters(params, @platform)
 
         deploy_prop = DeploymentProperties.new

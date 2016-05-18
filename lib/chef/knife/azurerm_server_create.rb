@@ -208,7 +208,7 @@ class Chef
           exit
         end
 
-        msg_server_summary(vm_details) if locate_config_value(:server_count).to_i == 1
+        #msg_server_summary(vm_details) if locate_config_value(:server_count).to_i == 1
       end
 
       def create_server_def
