@@ -37,9 +37,11 @@ describe Chef::Knife::AzurermServerCreate do
       :chef_extension_publisher => 'chef_extension_publisher',
       :chef_extension => 'chef_extension',
       :chef_extension_version => '11.10.1',
-      :chef_extension_public_param => 'chef_extension_public_param',
-      :chef_extension_private_param => 'chef_extension_private_param',
-      :latest_chef_extension_version => '1210.12'
+      :chef_extension_private_param => { :validation_key => '37284723sdjfhsdkfsfd' },
+      :latest_chef_extension_version => '1210.12',
+      :chef_extension_public_param => {
+        :bootstrap_options => {}
+      }
     }
 
     allow(File).to receive(:exist?).and_return(true)
@@ -348,11 +350,8 @@ describe Chef::Knife::AzurermServerCreate do
           expect(@compute_promise).to receive_message_chain(
             :value, :nil?).and_return(
               true)
-          expect(@service).to receive(:create_virtual_machine_using_template).exactly(1).and_return(stub_virtual_machine_create_response)
-          expect(@service).to receive(:show_server).once
-          expect(@compute_promise).to receive(:value!).and_return(stub_vm_details)
-          # expect(@service).to receive(:create_vm_extension).exactly(1).and_return(stub_vm_extension_create_response('NA'))
-          # expect(@service).to receive(:vm_details).exactly(1).and_return(stub_vm_details)
+          expect(@service).to receive(:create_virtual_machine_using_template).exactly(1).and_return(stub_deployments_create_response)
+          expect(@service).to receive(:show_server).with("MyVM", "test-rgrp")
           @arm_server_instance.run
         end
 
@@ -391,25 +390,6 @@ describe Chef::Knife::AzurermServerCreate do
           allow(@service).to receive(
             :create_resource_group).and_return(
               stub_resource_group_create_response)
-        end
-
-        it "create virtual machine when it does not exist already and also installs extension on it" do
-          expect(@compute_client).to receive_message_chain(
-            :virtual_machines, :get).and_return(
-              @compute_promise)
-          expect(@compute_promise).to receive_message_chain(
-            :value, :nil?).and_return(
-              true)
-          expect(@service).to receive(
-            :create_virtual_machine).exactly(1).and_return(
-              stub_virtual_machine_create_response)
-          expect(@service).to receive(
-            :create_vm_extension).exactly(1).and_return(
-              stub_vm_extension_create_response('NA'))
-          expect(@service).to receive(
-            :vm_details).exactly(1).and_return(
-              stub_vm_details)
-          @arm_server_instance.run
         end
 
         it "skip virtual machine creation when it does exist already" do
@@ -478,23 +458,22 @@ describe Chef::Knife::AzurermServerCreate do
       end
     end
 
-    describe "create_virtual_machine" do
-      before do
-        allow(@service).to receive(:create_storage_profile)
-        allow(@service).to receive(:create_network_profile)
+    describe "create_single_virtual_machine_using_template" do
+
+      it "creates deployment template and deployment parameters" do
+        expect(@service).to receive(:create_deployment_template).with(@params)
+        expect(@service).to receive(:create_deployment_parameters)
+        expect(@service).to receive(:resource_management_client).and_return(stub_resource_management_client)
+        @service.create_virtual_machine_using_template(@params)
       end
 
       it "successfully returns virtual machine create response" do
         @platform = "Linux"
         allow(@service).to receive(:set_platform).and_return("Linux")
-        expect(@service).to receive(:compute_management_client).and_return(stub_compute_management_client('NA'))
-        response = @service.create_virtual_machine(@params)
+        expect(@service).to receive(:resource_management_client).and_return(stub_resource_management_client)
+        response = @service.create_virtual_machine_using_template(@params)
         expect(response.name).to_not be nil
         expect(response.id).to_not be nil
-        expect(response.type).to_not be nil
-        expect(response.properties).to_not be nil
-        expect(response.properties.provisioning_state).to_not be 'Succeeded'
-        expect(response.location).to_not be nil
       end
     end
 
@@ -1272,7 +1251,7 @@ describe Chef::Knife::AzurermServerCreate do
     end
   end
 
-  describe "create_virtual_machine_using_template" do
+  describe "create_multiple_virtual_machine_using_template" do
     before do
       @params[:server_count] = 3
       allow(@service).to receive(:resource_management_client).and_return(@resource_client)

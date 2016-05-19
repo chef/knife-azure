@@ -48,13 +48,26 @@ module QueryAzureMock
 
   def stub_resource_management_client
     resource_management_client = double("ResourceManagementClient",
-      :resource_groups => double)
+      :resource_groups => double, :deployments => double)
     allow(resource_management_client.resource_groups).to receive_message_chain(
       :create_or_update => 'create_or_update',
       :value! => nil,
       :body => nil
     ).and_return(stub_resource_group_create_response)
+
+    allow(resource_management_client.deployments).to receive_message_chain(
+      :create_or_update => 'create_or_update',
+      :value! => nil,
+      :body => nil
+      ).and_return(stub_deployments_response)
     resource_management_client
+  end
+
+  def stub_deployments_response
+    deployments = OpenStruct.new
+    deployments.name = 'test-deployment'
+    deployments.id = 'xxx-xxxx-xxxx'
+    deployments
   end
 
   def stub_compute_management_client(user_supplied_value)
@@ -153,23 +166,23 @@ module QueryAzureMock
     network_resource_client
   end
 
-  # def stub_virtual_machine_create_response
-  #   virtual_machine = double("VirtualMachine",
-  #     :name => 'test-vm',
-  #     :id => 'myvm',
-  #     :type => 'Microsoft.Compute/virtualMachines',
-  #     :properties => double,
-  #     :location => 'West Europe')
-  #   allow(virtual_machine.properties).to receive_message_chain(
-  #     :storage_profile,
-  #     :os_disk,
-  #     :os_type).and_return('Test_OS_Type')
-  #   allow(virtual_machine.properties).to receive(
-  #     :provisioning_state).and_return('Succeeded')
-  #   virtual_machine
-  # end
-
   def stub_virtual_machine_create_response
+    virtual_machine = double("VirtualMachine",
+      :name => 'test-vm',
+      :id => 'myvm',
+      :type => 'Microsoft.Compute/virtualMachines',
+      :properties => double,
+      :location => 'West Europe')
+    allow(virtual_machine.properties).to receive_message_chain(
+      :storage_profile,
+      :os_disk,
+      :os_type).and_return('Test_OS_Type')
+    allow(virtual_machine.properties).to receive(
+      :provisioning_state).and_return('Succeeded')
+    virtual_machine
+  end
+
+  def stub_deployments_create_response
     deploy = double("deploy1", :resource_type => "Microsoft.Compute/virtualMachines", :resource_name => "MyVM",
       :id => "/subscriptions/e00d2b3f-3b94-4dfc-ae8e-ca34c8ba1a99/resourceGroups/vjgroup/providers/Microsoft.Compute/virtualMachines/MyVM0")
     deployment = double("Deployment",
