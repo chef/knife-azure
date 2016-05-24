@@ -16,7 +16,6 @@
 require 'azure/azure_interface'
 require 'azure/resource_management/ARM_base'
 require 'azure/resource_management/ARM_deployment_template'
-
 require 'azure_mgmt_resources'
 require 'azure_mgmt_compute'
 require 'azure_mgmt_storage'
@@ -131,7 +130,7 @@ module Azure
         end
       end
 
-       def delete_server(resource_group_name, vm_name)
+      def delete_server(resource_group_name, vm_name)
         promise = compute_management_client.virtual_machines.get(resource_group_name, vm_name)
         if promise.value! && promise.value!.body.name == vm_name
           puts "\n\n"
@@ -259,7 +258,7 @@ module Azure
 
       def create_server(params = {})
         platform(params[:azure_image_reference_offer])
-        ## resource group creation
+        # resource group creation
         if resource_group_exist?(params[:azure_resource_group_name])
           ui.log("INFO:Resource Group #{params[:azure_resource_group_name]} already exist. Skipping its creation.")
           ui.log("INFO:Adding new VM #{params[:azure_vm_name]} to this resource group.")
@@ -271,41 +270,26 @@ module Azure
           Chef::Log.info("Resource Group ID is: #{resource_group.id}")
         end
 
-        ## virtual machine creation
+        # virtual machine creation
         if virtual_machine_exist?(params[:azure_resource_group_name], params[:azure_vm_name])
           ui.log("INFO:Virtual Machine #{params[:azure_vm_name]} already exist under the Resource Group #{params[:azure_resource_group_name]}. Exiting for now.")
         else
-          if(params[:server_count].to_i > 1)
-            ui.log("Deploying multiple VirtualMachines....")
-            deployment = create_virtual_machine_using_template(params)
+          ui.log("Creating Virtual Machine....")
+          deployment = create_virtual_machine_using_template(params)
+          ui.log("Virtual Machine creation successfull.") unless deployment.nil?
 
-            ui.log("Deployment of multiple VMs is successfull.")
+          unless deployment.nil?
             ui.log("Deployment name is: #{deployment.name}")
             ui.log("Deployment ID is: #{deployment.id}")
-
-            ui.log("Following VMs have been created...")
             deployment.properties.dependencies.each do |deploy|
               if deploy.resource_type == "Microsoft.Compute/virtualMachines"
+                ui.log("VM Details ...")
                 ui.log("-------------------------------")
                 ui.log("Virtual Machine name is: #{deploy.resource_name}")
                 ui.log("Virtual Machine ID is: #{deploy.id}")
                 show_server(deploy.resource_name, params[:azure_resource_group_name])
               end
             end
-          else
-            ui.log("Creating VirtualMachine....")
-            virtual_machine = create_virtual_machine(params)
-            ui.log("VirtualMachine creation successfull.")
-            Chef::Log.info("Virtual Machine name is: #{virtual_machine.name}")
-            Chef::Log.info("Virtual Machine ID is: #{virtual_machine.id}")
-
-            ui.log("Creating VirtualMachineExtension....")
-            vm_extension = create_vm_extension(params)
-            ui.log("VirtualMachineExtension creation successfull.")
-            Chef::Log.info("Virtual Machine Extension name is: #{vm_extension.name}")
-            Chef::Log.info("Virtual Machine Extension ID is: #{vm_extension.id}")
-
-            vm_details = vm_details(virtual_machine, vm_extension, params)
           end
         end
       end
@@ -368,6 +352,7 @@ module Azure
 
       def create_virtual_machine_using_template(params)
         template = create_deployment_template(params)
+
         parameters = create_deployment_parameters(params, @platform)
 
         deploy_prop = DeploymentProperties.new
@@ -378,13 +363,7 @@ module Azure
         deploy_params = Deployment.new
         deploy_params.properties = deploy_prop
 
-        begin
-          deployment = resource_management_client.deployments.create_or_update(params[:azure_resource_group_name], "#{params[:azure_vm_name]}_deploy", deploy_params).value!.body
-        rescue Exception => e
-          Chef::Log.error("Failed to create the Virtual Machine -- exception being rescued: #{e.to_s}")
-          backtrace_message = "#{e.class}: #{e}\n#{e.backtrace.join("\n")}"
-          Chef::Log.debug("#{backtrace_message}")
-        end
+        deployment = resource_management_client.deployments.create_or_update(params[:azure_resource_group_name], "#{params[:azure_vm_name]}_deploy", deploy_params).value!.body
         deployment
       end
 

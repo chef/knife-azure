@@ -192,23 +192,20 @@ class Chef
 
           ssh_override_winrm if !is_image_windows?
 
-
           vm_details = service.create_server(create_server_def)
         rescue => error
           if error.class == MsRestAzure::AzureOperationError && error.body
-            if error.body['error']['code']
+            if error.body['error']['code'] == 'DeploymentFailed'
               ui.error("#{error.body['error']['message']}")
             else
               ui.error(error.body)
             end
           else
             ui.error("#{error.message}")
-            Chef::Log.debug("#{error.backtrace.join("\n")}")
           end
+          Chef::Log.debug("#{error.backtrace.join("\n")}")
           exit
         end
-
-        msg_server_summary(vm_details) if locate_config_value(:server_count).to_i == 1
       end
 
       def create_server_def

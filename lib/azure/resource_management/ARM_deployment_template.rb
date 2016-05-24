@@ -24,6 +24,48 @@ module Azure::ARM
         chef_node_name = "[concat(parameters('chef_node_name'),copyIndex())]"
       end
 
+      if(params[:server_count].to_i > 1)
+        # publicIPAddresses Resource Variables
+        publicIPAddressName = "[concat(variables('publicIPAddressName'),copyIndex())]"
+        domainNameLabel = "[concat(parameters('dnsLabelPrefix'), copyIndex())]"
+
+        # networkInterfaces Resource Variables
+        nicName = "[concat(variables('nicName'),copyIndex())]"
+        depNic1 = "[concat('Microsoft.Network/publicIPAddresses/', concat(variables('publicIPAddressName'),copyIndex()))]"
+        pubId = "[resourceId('Microsoft.Network/publicIPAddresses',concat(variables('publicIPAddressName'),copyIndex()))]"
+
+        # virtualMachines Resource Variables
+        vmName = "[concat(variables('vmName'),copyIndex())]"
+        depVm2="[concat('Microsoft.Network/networkInterfaces/', variables('nicName'), copyIndex())]"
+        computerName = "[concat(variables('vmName'),copyIndex())]"
+        uri = "[concat('http://',variables('storageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',concat(variables('vmName'),copyIndex()),'.vhd')]"
+        netid = "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('nicName'), copyIndex()))]"
+
+        # Extension Variables
+        extName = "[concat(variables('vmName'),copyIndex(),'/', variables('vmExtensionName'))]"
+        depExt = "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'), copyIndex())]"
+      else
+        # publicIPAddresses Resource Variables
+        publicIPAddressName = "[variables('publicIPAddressName')]"
+        domainNameLabel = "[parameters('dnsLabelPrefix')]"
+
+        # networkInterfaces Resource Variables
+        nicName = "[concat(variables('nicName'))]"
+        depNic1 = "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]"
+        pubId = "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]"
+
+        # virtualMachines Resource Variables
+        vmName = "[variables('vmName')]"
+        depVm2="[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
+        computerName = "[variables('vmName')]"
+        uri = "[concat('http://',variables('storageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',variables('vmName'),'.vhd')]"
+        netid = "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]"
+
+        # Extension Variables
+        extName = "[concat(variables('vmName'),'/', variables('vmExtensionName'))]"
+        depExt = "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
+      end
+
       template = {
         "$schema"=> "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
         "contentVersion"=> "1.0.0.0",
@@ -157,7 +199,7 @@ module Azure::ARM
           {
             "apiVersion"=> "[variables('apiVersion')]",
             "type" => "Microsoft.Network/publicIPAddresses",
-            "name" => "[concat(variables('publicIPAddressName'),copyIndex())]",
+            "name" => publicIPAddressName,
             "location"=> "[resourceGroup().location]",
             "copy"=> {
               "name" => "publicIPLoop",
@@ -166,7 +208,7 @@ module Azure::ARM
             "properties" => {
               "publicIPAllocationMethod" => "[variables('publicIPAddressType')]",
               "dnsSettings" => {
-                "domainNameLabel" => "[concat(parameters('dnsLabelPrefix'), copyIndex())]"
+                "domainNameLabel" => domainNameLabel
               }
             }
           },
@@ -194,14 +236,14 @@ module Azure::ARM
           {
             "apiVersion"=> "[variables('apiVersion')]",
             "type"=> "Microsoft.Network/networkInterfaces",
-            "name"=> "[concat(variables('nicName'),copyIndex())]",
+            "name"=> nicName,
             "location"=> "[resourceGroup().location]",
             "copy" => {
               "name" => "nicLoop",
               "count" => "[parameters('numberOfInstances')]"
             },
             "dependsOn" => [
-              "[concat('Microsoft.Network/publicIPAddresses/', concat(variables('publicIPAddressName'),copyIndex()))]",
+              depNic1,
               "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
             ],
             "properties"=> {
@@ -211,7 +253,7 @@ module Azure::ARM
                   "properties"=> {
                     "privateIPAllocationMethod"=> "Dynamic",
                     "publicIPAddress"=> {
-                      "id"=> "[resourceId('Microsoft.Network/publicIPAddresses',concat(variables('publicIPAddressName'),copyIndex()))]"
+                      "id"=> pubId
                     },
                     "subnet"=> {
                       "id"=> "[variables('subnetRef')]"
@@ -224,7 +266,7 @@ module Azure::ARM
           {
             "apiVersion"=> "[variables('apiVersion')]",
             "type"=> "Microsoft.Compute/virtualMachines",
-            "name"=> "[concat(variables('vmName'),copyIndex())]",
+            "name"=> vmName,
             "location"=> "[resourceGroup().location]",
             "copy" => {
               "name" => "vmLoop",
@@ -232,14 +274,14 @@ module Azure::ARM
             },
             "dependsOn"=> [
               "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
-              "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'), copyIndex())]",
+              depVm2,
             ],
             "properties"=> {
               "hardwareProfile"=> {
                 "vmSize"=> "[variables('vmSize')]"
               },
               "osProfile"=> {
-                "computerName"=> "[concat(variables('vmName'),copyIndex())]",
+                "computerName"=> computerName,
                 "adminUserName"=> "[parameters('adminUserName')]",
                 "adminPassword"=> "[parameters('adminPassword')]"
               },
@@ -253,8 +295,7 @@ module Azure::ARM
                 "osDisk"=> {
                   "name"=> "[variables('OSDiskName')]",
                   "vhd"=> {
-                    "uri"=> "[concat('http://',variables('storageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',concat(variables('vmName'),copyIndex()),'.vhd')]"
-                  },
+                    "uri"=> uri                  },
                   "caching"=> "ReadWrite",
                   "createOption"=> "FromImage"
                 }
@@ -262,7 +303,7 @@ module Azure::ARM
               "networkProfile"=> {
                 "networkInterfaces"=> [
                   {
-                    "id"=> "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('nicName'), copyIndex()))]"
+                    "id"=> netid
                   }
                 ]
               },
@@ -276,7 +317,7 @@ module Azure::ARM
           },
           {
             "type" => "Microsoft.Compute/virtualMachines/extensions",
-            "name" => "[concat(variables('vmName'),copyIndex(),'/', variables('vmExtensionName'))]",
+            "name" => extName,
             "apiVersion" => "2015-05-01-preview",
             "location" => "[resourceGroup().location]",
             "copy" => {
@@ -284,7 +325,7 @@ module Azure::ARM
               "count" => "[parameters('numberOfInstances')]"
             },
             "dependsOn" => [
-              "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'), copyIndex())]"
+              depExt
             ],
             "properties" => {
               "publisher" => "#{params[:chef_extension_publisher]}",
