@@ -274,15 +274,9 @@ module Azure
         if virtual_machine_exist?(params[:azure_resource_group_name], params[:azure_vm_name])
           ui.log("INFO:Virtual Machine #{params[:azure_vm_name]} already exist under the Resource Group #{params[:azure_resource_group_name]}. Exiting for now.")
         else
-          if(params[:server_count].to_i > 1)
-            ui.log("Deploying multiple VirtualMachines....")
-            deployment = create_virtual_machine_using_template(params)
-            ui.log("Deployment of multiple VMs is successfull.") unless deployment.nil?
-          else
-            ui.log("Creating  VirtualMachine....")
-            deployment = create_virtual_machine_using_template(params)
-            ui.log("VirtualMachine creation successfull.") unless deployment.nil?
-          end
+          ui.log("Creating Virtual Machine....")
+          deployment = create_virtual_machine_using_template(params)
+          ui.log("Virtual Machine creation successfull.") unless deployment.nil?
 
           unless deployment.nil?
             ui.log("Deployment name is: #{deployment.name}")
