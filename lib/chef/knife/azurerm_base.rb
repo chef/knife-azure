@@ -19,6 +19,7 @@
 
 require 'chef/knife'
 require 'azure/resource_management/ARM_interface'
+require 'mixlib/shellout'
 
 class Chef
   class Knife
@@ -62,17 +63,36 @@ class Chef
       def validate_arm_keys!(*keys)
         Chef::Log.warn('Azurerm subcommands are experimental and of alpha quality. Not suitable for production use. Please use ASM subcommands for production.')
         parse_publish_settings_file(locate_config_value(:azure_publish_settings_file)) if(locate_config_value(:azure_publish_settings_file) != nil)
-        mandatory_keys = [:azure_tenant_id, :azure_subscription_id, :azure_client_id, :azure_client_secret]
-        mandatory_keys.concat(keys)
+
+        if(locate_config_value(:azure_tenant_id).nil? && locate_config_value(:azure_subscription_id).nil? && locate_config_value(:azure_client_id).nil? && locate_config_value(:azure_client_secret).nil?)
+          validate_azure_login
+        end
 
         errors = []
-        mandatory_keys.each do |k|
+        keys.each do |k|
           if locate_config_value(k).nil?
             errors << "You did not provide a valid '#{pretty_key(k)}' value. Please set knife[:#{k}] in your knife.rb."
           end
         end
         if errors.each{|e| ui.error(e)}.any?
           exit 1
+        end
+      end
+
+      def validate_azure_login
+        err_string = "Please run XPLAT's 'azure login' command OR specify azure_tenant_id, azure_subscription_id, azure_client_id, azure_client_secret in your knife.rb"
+        if Chef::Platform.windows?
+          # cmdkey command is used for accessing windows credential manager
+          xplat_creds_cmd = Mixlib::ShellOut.new("cmdkey /list | grep AzureXplatCli")
+          result = xplat_creds_cmd.run_command
+          if result.stdout.nil? || result.stdout.empty?
+            raise err_string
+          end
+        else
+          home_dir = File.expand_path('~')
+          if !File.exists?(home_dir + "/.azure/accessTokens.json")
+            raise err_string
+          end
         end
       end
 
