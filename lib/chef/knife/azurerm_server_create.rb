@@ -178,11 +178,11 @@ class Chef
 
       option :ohai_hints,
         :long => "--ohai-hints HINT_OPTIONS",
-        :description => "Hint option names to be set in Ohai configuration. \
-          Default value is 'default' which defaults to the following list: \
-          public_ip_address, vm_name, public_fqdn, port, platform. \
-          However user can also pass any comma separated combination of \
-          the default values.",
+        :description => "Hint option names to be set in Ohai configuration \
+          of the target node. Supported values are: public_ip_address, \
+          vm_name, public_fqdn and platform. User can pass any comma \
+          separated combination of these values. Default value is 'default' \
+          which corresponds to the supported values list mentioned here.",
         :default => 'default'
 
       def run
@@ -272,11 +272,9 @@ class Chef
 
       def supported_ohai_hints
         [
-          'default',
           'public_ip_address',
           'vm_name',
           'public_fqdn',
-          'port',
           'platform'
         ]
       end
@@ -289,7 +287,8 @@ class Chef
         hint_values = locate_config_value(:ohai_hints).split(',')
         hint_values.each do |hint|
           if ! is_supported_ohai_hint?(hint)
-            raise ArgumentError, "Ohai Hint name #{hint} passed is not supported. Please run the command help to identify the supported values."
+            raise ArgumentError, "Ohai Hint name #{hint} passed is not supported. \
+              Please run the command help to see the list of supported values."
           end
         end
       end
@@ -321,7 +320,7 @@ class Chef
           raise ArgumentError, "Maximum allowed value of --server-count is 5."
         end
 
-        validate_ohai_hints
+        validate_ohai_hints if ! locate_config_value(:ohai_hints).casecmp('default').zero?
       end
 
       private

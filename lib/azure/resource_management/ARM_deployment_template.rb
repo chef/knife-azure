@@ -19,6 +19,25 @@
 module Azure::ARM
   module ARMDeploymentTemplate
 
+    def ohai_hints(hint_names)
+      hints_json = {}
+
+      hint_names.each do |hint_name|
+        case hint_name
+        when 'public_ip_address'
+          hints_json['public_ip'] = '\"[reference(\'publicIPAddressName\').ipAddress]\"'
+        when 'vm_name'
+          hints_json['vm_name'] = '\"[reference(\'vmName\')]\"'
+        when 'public_fqdn'
+          hints_json['public_fqdn'] = '\"[reference(\'publicIPAddressName\').dnsSettings.fqdn]\"'
+        when 'platform'
+          hints_json['platform'] = '\"[concat(reference(\'vmName\').storageProfile.imageReference.offer, concat(\' \', reference(\'vmName\').storageProfile.imageReference.sku))]\"'
+        end
+      end
+
+      hints_json
+    end
+
     def create_deployment_template(params)
       if params[:chef_extension_public_param][:bootstrap_options][:chef_node_name]
         chef_node_name = "[concat(parameters('chef_node_name'),copyIndex())]"
@@ -65,6 +84,8 @@ module Azure::ARM
         extName = "[concat(variables('vmName'),'/', variables('vmExtensionName'))]"
         depExt = "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
       end
+
+      hints_json = ohai_hints(params[:chef_extension_public_param][:hints])
 
       template = {
         "$schema"=> "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
@@ -341,7 +362,8 @@ module Azure::ARM
                 "autoUpdateClient" => "[parameters('autoUpdateClient')]",
                 "deleteChefConfig" => "[parameters('deleteChefConfig')]",
                 "uninstallChefClient" => "[parameters('uninstallChefClient')]",
-                "validation_key_format" => "[parameters('validation_key_format')]"
+                "validation_key_format" => "[parameters('validation_key_format')]",
+                "hints" => hints_json
               },
               "protectedSettings" => {
                 "validation_key" => "[parameters('validation_key')]",
