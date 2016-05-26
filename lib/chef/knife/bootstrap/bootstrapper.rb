@@ -246,7 +246,6 @@ class Chef
 
         def default_hint_options
           [
-            'public_ip_address',
             'vm_name',
             'public_fqdn',
             'platform'

@@ -179,10 +179,10 @@ class Chef
       option :ohai_hints,
         :long => "--ohai-hints HINT_OPTIONS",
         :description => "Hint option names to be set in Ohai configuration \
-          of the target node. Supported values are: public_ip_address, \
-          vm_name, public_fqdn and platform. User can pass any comma \
-          separated combination of these values. Default value is 'default' \
-          which corresponds to the supported values list mentioned here.",
+          of the target node. Supported values are: vm_name, public_fqdn and \
+          platform. User can pass any comma separated combination of these \
+          values. Default value is 'default' which corresponds to the supported \
+          values list mentioned here.",
         :default => 'default'
 
       def run
@@ -272,7 +272,6 @@ class Chef
 
       def supported_ohai_hints
         [
-          'public_ip_address',
           'vm_name',
           'public_fqdn',
           'platform'
