@@ -20,6 +20,7 @@
 # Using FFI to call CredRead function
 require 'chef'
 require 'mixlib/shellout'
+require 'ffi'
 
 module Azure::ARM
 
