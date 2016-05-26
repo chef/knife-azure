@@ -20,6 +20,7 @@
 require 'chef/knife'
 require 'azure/resource_management/ARM_interface'
 require 'mixlib/shellout'
+require 'time'
 
 class Chef
   class Knife
@@ -42,13 +43,10 @@ class Chef
       end
 
       def service
+        details = check_authentication_method()
+        details.update(:azure_subscription_id => locate_config_value(:azure_subscription_id))
         @service ||= begin
-                      service = Azure::ResourceManagement::ARMInterface.new(
-                        :azure_subscription_id => locate_config_value(:azure_subscription_id),
-                        :azure_tenant_id => locate_config_value(:azure_tenant_id),
-                        :azure_client_id => locate_config_value(:azure_client_id),
-                        :azure_client_secret => locate_config_value(:azure_client_secret)
-                      )
+                      service = Azure::ResourceManagement::ARMInterface.new(details)
                     end
         @service.ui = ui
         @service
@@ -63,9 +61,12 @@ class Chef
       def validate_arm_keys!(*keys)
         Chef::Log.warn('Azurerm subcommands are experimental and of alpha quality. Not suitable for production use. Please use ASM subcommands for production.')
         parse_publish_settings_file(locate_config_value(:azure_publish_settings_file)) if(locate_config_value(:azure_publish_settings_file) != nil)
+        keys.push(:azure_subscription_id)
 
-        if(locate_config_value(:azure_tenant_id).nil? && locate_config_value(:azure_subscription_id).nil? && locate_config_value(:azure_client_id).nil? && locate_config_value(:azure_client_secret).nil?)
+        if(locate_config_value(:azure_tenant_id).nil? || locate_config_value(:azure_client_id).nil? || locate_config_value(:azure_client_secret).nil?)
           validate_azure_login
+        else
+           keys.concat([:azure_tenant_id, :azure_client_id, :azure_client_secret])
         end
 
         errors = []
@@ -78,6 +79,33 @@ class Chef
           exit 1
         end
       end
+
+      def check_authentication_method
+        if(!locate_config_value(:azure_tenant_id).nil? && !locate_config_value(:azure_client_id).nil? && !locate_config_value(:azure_client_secret).nil?)
+          return {:azure_tenant_id => locate_config_value(:azure_tenant_id), :azure_client_id => locate_config_value(:azure_client_id), :azure_client_secret => locate_config_value(:azure_client_secret)}
+        elsif Chef::Platform.windows?
+          token_details = token_details_for_windows()
+        else
+          token_details = token_details_for_linux()
+        end
+        check_token_validity(token_details)
+        return token_details
+      end
+
+      def token_details_for_linux
+        home_dir = File.expand_path('~')
+        file = File.read(home_dir + '/.azure/accessTokens.json')
+        file = eval(file)
+        token_details = {:tokentype => file[1][:tokenType], :user => file[1][:userId], :token => file[1][:accessToken], :clientid => file[1][:_clientId], :expiry_time => file[1][:expiresOn], :refreshtoken => file[1][:refreshToken]}
+        return token_details
+      end
+
+      def check_token_validity(token_details)    
+        time_difference = Time.parse(token_details[:expiry_time]) - Time.now.utc
+        if time_difference <= 0
+          raise "Token has expired, please run any azure command like azure vm list to get new token from refresh token else run azure login command"
+        end
+      end    
 
       def validate_azure_login
         err_string = "Please run XPLAT's 'azure login' command OR specify azure_tenant_id, azure_subscription_id, azure_client_id, azure_client_secret in your knife.rb"
