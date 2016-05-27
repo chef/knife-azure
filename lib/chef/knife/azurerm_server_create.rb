@@ -195,10 +195,10 @@ class Chef
           vm_details = service.create_server(create_server_def)
         rescue => error
           if error.class == MsRestAzure::AzureOperationError && error.body
-            if error.body['error']['code'] == 'DeploymentFailed'
+            if error.response.body['error']['code'] == 'DeploymentFailed'
               ui.error("#{error.body['error']['message']}")
             else
-              ui.error(error.body)
+              ui.error(error.response.body)
             end
           else
             ui.error("#{error.message}")
@@ -247,6 +247,7 @@ class Chef
         server_def[:chef_extension_version] = locate_config_value(:azure_chef_extension_version)
         server_def[:chef_extension_public_param] = get_chef_extension_public_params
         server_def[:chef_extension_private_param] = get_chef_extension_private_params
+        server_def[:auto_upgrade_minor_version] = false
 
         if is_image_windows?
           server_def[:admin_password] = locate_config_value(:winrm_password)
@@ -270,6 +271,10 @@ class Chef
         end
 
         if !is_image_windows?
+          if locate_config_value(:winrm_user).nil? ||  locate_config_value(:winrm_password).nil?
+            raise ArgumentError, "Please provide --winrm-user and --winrm-password options for Windows option."
+          end
+
           if (locate_config_value(:azure_vm_name).match /^(?=.*[a-zA-Z-])([a-zA-z0-9-]{1,64})$/).nil?
             raise ArgumentError, "VM name can only contain alphanumeric and hyphen(-) characters and maximun length cannot exceed 64 charachters."
           end

@@ -344,7 +344,8 @@ module Azure::ARM
                 "validation_key_format" => "[parameters('validation_key_format')]"
               },
               "protectedSettings" => {
-                "validation_key" => "[parameters('validation_key')]"
+                "validation_key" => "[parameters('validation_key')]",
+                "autoUpgradeMinorVersion" => "#{params[:auto_upgrade_minor_version]}",
               }
             }
           }
