@@ -25,11 +25,11 @@ module Azure::ARM
       hint_names.each do |hint_name|
         case hint_name
         when 'vm_name'
-          hints_json['vm_name'] = "[reference(#{resource_ids['vmId']}).osProfile.computerName]"
+          hints_json['vm_name'] = "[reference(#{resource_ids['vmId']}).osProfile.computerName]" if !hints_json.has_key? 'vm_name'
         when 'public_fqdn'
-          hints_json['public_fqdn'] = "[reference(#{resource_ids['pubId']}).dnsSettings.fqdn]"
+          hints_json['public_fqdn'] = "[reference(#{resource_ids['pubId']}).dnsSettings.fqdn]" if !hints_json.has_key? 'public_fqdn'
         when 'platform'
-          hints_json['platform'] = "[concat(reference(#{resource_ids['vmId']}).storageProfile.imageReference.offer, concat(' ', reference(#{resource_ids['vmId']}).storageProfile.imageReference.sku))]"
+          hints_json['platform'] = "[concat(reference(#{resource_ids['vmId']}).storageProfile.imageReference.offer, concat(' ', reference(#{resource_ids['vmId']}).storageProfile.imageReference.sku))]" if !hints_json.has_key? 'platform'
         end
       end
 
