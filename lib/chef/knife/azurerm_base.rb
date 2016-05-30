@@ -25,7 +25,12 @@ require 'time'
 class Chef
   class Knife
     module AzurermBase
-
+      
+      if Chef::Platform.windows?
+        require 'azure/resource_management/windows_credentials'
+        include Azure::ARM::WindowsCredentials
+      end
+ 
       def self.included(includer)
         includer.class_eval do
 
