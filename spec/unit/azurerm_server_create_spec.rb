@@ -39,7 +39,8 @@ describe Chef::Knife::AzurermServerCreate do
       :chef_extension_private_param => { :validation_key => '37284723sdjfhsdkfsfd' },
       :latest_chef_extension_version => '1210.12',
       :chef_extension_public_param => {
-        :bootstrap_options => {}
+        :bootstrap_options => {},
+        :hints => ['vm_name', 'public_fqdn', 'platform']
       }
     }
 
@@ -152,6 +153,12 @@ describe Chef::Knife::AzurermServerCreate do
         Chef::Config[:knife].delete(:winrm_password)
         allow(@arm_server_instance).to receive(:is_image_windows?).and_return(true)
         expect{@arm_server_instance.validate_params!}.to raise_error(ArgumentError)
+      end
+
+      it "exits when incorrect Ohai Hints are given by the user" do
+        @arm_server_instance.config[:ohai_hints] = 'vm_name,mac_address'
+        expect(@arm_server_instance.ui).to receive(:error)
+        expect {@arm_server_instance.run}.to raise_error(SystemExit)
       end
     end
 
@@ -974,7 +981,7 @@ describe Chef::Knife::AzurermServerCreate do
       context "get_chef_extension_public_params" do
         it "should set autoUpdateClient flag to true" do
           @arm_server_instance.config[:auto_update_client] = true
-          public_config = {client_rb: "chef_server_url \t \"https://localhost:443\"\nvalidation_client_name\t\"chef-validator\"", runlist: "\"getting-started\"", autoUpdateClient: "true", deleteChefConfig: "false", uninstallChefClient: "false", extendedLogs: "false", custom_json_attr: {}, bootstrap_options: { chef_server_url: "https://localhost:443", validation_client_name: "chef-validator"}}
+          public_config = {client_rb: "chef_server_url \t \"https://localhost:443\"\nvalidation_client_name\t\"chef-validator\"", runlist: "\"getting-started\"", autoUpdateClient: "true", deleteChefConfig: "false", uninstallChefClient: "false", extendedLogs: "false", custom_json_attr: {}, hints: ["vm_name", "public_fqdn", "platform"], bootstrap_options: { chef_server_url: "https://localhost:443", validation_client_name: "chef-validator"}}
 
           response = @arm_server_instance.get_chef_extension_public_params
           expect(response).to be == public_config
@@ -983,7 +990,7 @@ describe Chef::Knife::AzurermServerCreate do
         it "should set autoUpdateClient flag to false" do
           @arm_server_instance.config[:auto_update_client] = false
 
-          public_config = {client_rb: "chef_server_url \t \"https://localhost:443\"\nvalidation_client_name\t\"chef-validator\"", runlist: "\"getting-started\"", autoUpdateClient: "false", deleteChefConfig: "false", uninstallChefClient: "false", extendedLogs: "false", custom_json_attr: {}, bootstrap_options: { chef_server_url: "https://localhost:443", validation_client_name: "chef-validator"}}
+          public_config = {client_rb: "chef_server_url \t \"https://localhost:443\"\nvalidation_client_name\t\"chef-validator\"", runlist: "\"getting-started\"", autoUpdateClient: "false", deleteChefConfig: "false", uninstallChefClient: "false", extendedLogs: "false", custom_json_attr: {}, hints: ["vm_name", "public_fqdn", "platform"], bootstrap_options: { chef_server_url: "https://localhost:443", validation_client_name: "chef-validator"}}
 
           response = @arm_server_instance.get_chef_extension_public_params
           expect(response).to be == public_config
@@ -991,7 +998,7 @@ describe Chef::Knife::AzurermServerCreate do
 
         it "sets deleteChefConfig flag to true" do
           @arm_server_instance.config[:delete_chef_extension_config] = true
-          public_config = {client_rb: "chef_server_url \t \"https://localhost:443\"\nvalidation_client_name\t\"chef-validator\"", runlist: "\"getting-started\"", autoUpdateClient: "false", deleteChefConfig: "true", uninstallChefClient: "false", extendedLogs: "false", custom_json_attr: {}, bootstrap_options: { chef_server_url: "https://localhost:443", validation_client_name: "chef-validator"}}
+          public_config = {client_rb: "chef_server_url \t \"https://localhost:443\"\nvalidation_client_name\t\"chef-validator\"", runlist: "\"getting-started\"", autoUpdateClient: "false", deleteChefConfig: "true", uninstallChefClient: "false", extendedLogs: "false", custom_json_attr: {}, hints: ["vm_name", "public_fqdn", "platform"], bootstrap_options: { chef_server_url: "https://localhost:443", validation_client_name: "chef-validator"}}
 
           response = @arm_server_instance.get_chef_extension_public_params
           expect(response).to be == public_config
@@ -1000,7 +1007,7 @@ describe Chef::Knife::AzurermServerCreate do
 
         it "sets deleteChefConfig flag to false" do
           @arm_server_instance.config[:delete_chef_extension_config] = false
-          public_config = {client_rb: "chef_server_url \t \"https://localhost:443\"\nvalidation_client_name\t\"chef-validator\"", runlist: "\"getting-started\"", autoUpdateClient: "false", deleteChefConfig: "false", uninstallChefClient: "false", extendedLogs: "false", custom_json_attr: {}, bootstrap_options: { chef_server_url: "https://localhost:443", validation_client_name: "chef-validator"}}
+          public_config = {client_rb: "chef_server_url \t \"https://localhost:443\"\nvalidation_client_name\t\"chef-validator\"", runlist: "\"getting-started\"", autoUpdateClient: "false", deleteChefConfig: "false", uninstallChefClient: "false", extendedLogs: "false", custom_json_attr: {}, hints: ["vm_name", "public_fqdn", "platform"], bootstrap_options: { chef_server_url: "https://localhost:443", validation_client_name: "chef-validator"}}
 
           response = @arm_server_instance.get_chef_extension_public_params
           expect(response).to be == public_config
@@ -1008,7 +1015,7 @@ describe Chef::Knife::AzurermServerCreate do
 
         it "sets bootstrapVersion variable in public_config" do
           @arm_server_instance.config[:bootstrap_version] = '12.4.2'
-          public_config = {:client_rb=>"chef_server_url \t \"https://localhost:443\"\nvalidation_client_name\t\"chef-validator\"", :runlist=>"\"getting-started\"", :autoUpdateClient=>"false", :deleteChefConfig=>"false", :uninstallChefClient=>"false", extendedLogs: "false", :custom_json_attr=>{}, :bootstrap_options=>{:chef_server_url=>"https://localhost:443", :validation_client_name=>"chef-validator", :bootstrap_version=>"12.4.2"}}
+          public_config = {:client_rb=>"chef_server_url \t \"https://localhost:443\"\nvalidation_client_name\t\"chef-validator\"", :runlist=>"\"getting-started\"", :autoUpdateClient=>"false", :deleteChefConfig=>"false", :uninstallChefClient=>"false", extendedLogs: "false", :custom_json_attr=>{}, :hints=>["vm_name", "public_fqdn", "platform"], :bootstrap_options=>{:chef_server_url=>"https://localhost:443", :validation_client_name=>"chef-validator", :bootstrap_version=>"12.4.2"}}
 
           response = @arm_server_instance.get_chef_extension_public_params
           expect(response).to be == public_config
@@ -1016,7 +1023,7 @@ describe Chef::Knife::AzurermServerCreate do
 
         it "sets uninstallChefClient flag to false" do
           @arm_server_instance.config[:uninstall_chef_client] = false
-          public_config = {:client_rb=>"chef_server_url \t \"https://localhost:443\"\nvalidation_client_name\t\"chef-validator\"", :runlist=>"\"getting-started\"", :autoUpdateClient=>"false", :deleteChefConfig=>"false", :uninstallChefClient=>"false", extendedLogs: "false", :custom_json_attr=>{}, :bootstrap_options=>{:chef_server_url=>"https://localhost:443", :validation_client_name=>"chef-validator"}}
+          public_config = {:client_rb=>"chef_server_url \t \"https://localhost:443\"\nvalidation_client_name\t\"chef-validator\"", :runlist=>"\"getting-started\"", :autoUpdateClient=>"false", :deleteChefConfig=>"false", :uninstallChefClient=>"false", extendedLogs: "false", :custom_json_attr=>{}, :hints=>["vm_name", "public_fqdn", "platform"], :bootstrap_options=>{:chef_server_url=>"https://localhost:443", :validation_client_name=>"chef-validator"}}
 
           response = @arm_server_instance.get_chef_extension_public_params
           expect(response).to be == public_config
@@ -1024,7 +1031,7 @@ describe Chef::Knife::AzurermServerCreate do
 
         it "sets uninstallChefClient flag to true" do
           @arm_server_instance.config[:uninstall_chef_client] = true
-          public_config = {:client_rb=>"chef_server_url \t \"https://localhost:443\"\nvalidation_client_name\t\"chef-validator\"", :runlist=>"\"getting-started\"", :autoUpdateClient=>"false", :deleteChefConfig=>"false", :uninstallChefClient=>"true", extendedLogs: "false", :custom_json_attr=>{}, :bootstrap_options=>{:chef_server_url=>"https://localhost:443", :validation_client_name=>"chef-validator"}}
+          public_config = {:client_rb=>"chef_server_url \t \"https://localhost:443\"\nvalidation_client_name\t\"chef-validator\"", :runlist=>"\"getting-started\"", :autoUpdateClient=>"false", :deleteChefConfig=>"false", :uninstallChefClient=>"true", extendedLogs: "false", :custom_json_attr=>{}, :hints=>["vm_name", "public_fqdn", "platform"], :bootstrap_options=>{:chef_server_url=>"https://localhost:443", :validation_client_name=>"chef-validator"}}
 
           response = @arm_server_instance.get_chef_extension_public_params
           expect(response).to be == public_config
@@ -1032,7 +1039,7 @@ describe Chef::Knife::AzurermServerCreate do
 
         it "sets encrypted_databag_secret in public config" do
           @arm_server_instance.config[:secret] = "secrettext"
-          public_config = {:client_rb=>"chef_server_url \t \"https://localhost:443\"\nvalidation_client_name\t\"chef-validator\"", :runlist=>"\"getting-started\"", :autoUpdateClient=>"false", :deleteChefConfig=>"false", :uninstallChefClient=>"false", extendedLogs: "false", :custom_json_attr=>{}, :bootstrap_options=>{:encrypted_data_bag_secret=>"secrettext", :chef_server_url=>"https://localhost:443", :validation_client_name=>"chef-validator"}}
+          public_config = {:client_rb=>"chef_server_url \t \"https://localhost:443\"\nvalidation_client_name\t\"chef-validator\"", :runlist=>"\"getting-started\"", :autoUpdateClient=>"false", :deleteChefConfig=>"false", :uninstallChefClient=>"false", extendedLogs: "false", :custom_json_attr=>{}, :hints=>["vm_name", "public_fqdn", "platform"], :bootstrap_options=>{:encrypted_data_bag_secret=>"secrettext", :chef_server_url=>"https://localhost:443", :validation_client_name=>"chef-validator"}}
 
           response = @arm_server_instance.get_chef_extension_public_params
           expect(response).to be == public_config
@@ -1040,17 +1047,34 @@ describe Chef::Knife::AzurermServerCreate do
 
         it "sets encrypted_databag_secret_file in public config" do
           @arm_server_instance.config[:secret_file] = File.dirname(__FILE__) + "/assets/secret_file"
-          public_config = {:client_rb=>"chef_server_url \t \"https://localhost:443\"\nvalidation_client_name\t\"chef-validator\"", :runlist=>"\"getting-started\"", :autoUpdateClient=>"false", :deleteChefConfig=>"false", :uninstallChefClient=>"false", extendedLogs: "false", :custom_json_attr=>{}, :bootstrap_options=>{:encrypted_data_bag_secret=>"PgIxStCmMDsuIw3ygRhmdMtStpc9EMiWisQXoP", :chef_server_url=>"https://localhost:443", :validation_client_name=>"chef-validator"}}
+          public_config = {:client_rb=>"chef_server_url \t \"https://localhost:443\"\nvalidation_client_name\t\"chef-validator\"", :runlist=>"\"getting-started\"", :autoUpdateClient=>"false", :deleteChefConfig=>"false", :uninstallChefClient=>"false", extendedLogs: "false", :custom_json_attr=>{}, :hints=>["vm_name", "public_fqdn", "platform"], :bootstrap_options=>{:encrypted_data_bag_secret=>"PgIxStCmMDsuIw3ygRhmdMtStpc9EMiWisQXoP", :chef_server_url=>"https://localhost:443", :validation_client_name=>"chef-validator"}}
           response = @arm_server_instance.get_chef_extension_public_params
           expect(response).to be == public_config
         end
 
         it "should set extendedLogs flag to true" do
           @arm_server_instance.config[:extended_logs] = true
-          public_config = {client_rb: "chef_server_url \t \"https://localhost:443\"\nvalidation_client_name\t\"chef-validator\"", runlist: "\"getting-started\"", autoUpdateClient: "false", deleteChefConfig: "false", uninstallChefClient: "false", extendedLogs: "true", custom_json_attr: {}, bootstrap_options: { chef_server_url: "https://localhost:443", validation_client_name: "chef-validator"}}
-
+          public_config = {client_rb: "chef_server_url \t \"https://localhost:443\"\nvalidation_client_name\t\"chef-validator\"", runlist: "\"getting-started\"", autoUpdateClient: "false", deleteChefConfig: "false", uninstallChefClient: "false", extendedLogs: "true", custom_json_attr: {}, :hints=>["vm_name", "public_fqdn", "platform"], bootstrap_options: { chef_server_url: "https://localhost:443", validation_client_name: "chef-validator"}}
           response = @arm_server_instance.get_chef_extension_public_params
           expect(response).to be == public_config
+        end
+
+        context 'service is an instance_of ARM' do
+          it 'invokes ohai_hints method' do
+            expect(@arm_server_instance).to receive(:ohai_hints)
+            @arm_server_instance.get_chef_extension_public_params
+          end
+        end
+
+        context 'service is not an instance_of ARM' do
+          before do
+            allow(@service).to receive(:instance_of?).and_return(false)
+          end
+
+          it 'does not invoke ohai_hints method' do
+            expect(@arm_server_instance).to_not receive(:ohai_hints)
+            @arm_server_instance.get_chef_extension_public_params
+          end
         end
       end
 
@@ -1302,7 +1326,10 @@ describe Chef::Knife::AzurermServerCreate do
     before do
       bootstrap_options = {:chef_server_url => "url",
         :validation_client_name => "client_name"}
-      @params[:chef_extension_public_param] = {:bootstrap_options => bootstrap_options}
+      @params[:chef_extension_public_param] = { :hints =>
+        ['vm_name', 'public_fqdn', 'platform'],
+        :bootstrap_options => bootstrap_options
+      }
 
       {
         :azure_image_reference_publisher => 'OpenLogic',
@@ -1314,6 +1341,11 @@ describe Chef::Knife::AzurermServerCreate do
       }.each do |key, value|
           @params[key] = value
         end
+
+      @hints_json = { "vm_name" => "[reference(resourceId('Microsoft.Compute/virtualMachines', concat(variables('vmName'),copyIndex()))).osProfile.computerName]",
+        "public_fqdn" => "[reference(resourceId('Microsoft.Network/publicIPAddresses',concat(variables('publicIPAddressName'),copyIndex()))).dnsSettings.fqdn]",
+        "platform" => "[concat(reference(resourceId('Microsoft.Compute/virtualMachines', concat(variables('vmName'),copyIndex()))).storageProfile.imageReference.offer, concat(' ', reference(resourceId('Microsoft.Compute/virtualMachines', concat(variables('vmName'),copyIndex()))).storageProfile.imageReference.sku))]"
+      }
     end
 
     it "sets the parameters which are passed in the template" do
@@ -1348,6 +1380,7 @@ describe Chef::Knife::AzurermServerCreate do
       expect(extension["properties"]["settings"]["autoUpdateClient"]).to be == "[parameters('autoUpdateClient')]"
       expect(extension["properties"]["settings"]["deleteChefConfig"]).to be == "[parameters('deleteChefConfig')]"
       expect(extension["properties"]["settings"]["uninstallChefClient"]).to be == "[parameters('uninstallChefClient')]"
+      expect(extension["properties"]["settings"]["hints"]).to be == @hints_json
     end
 
     after do
@@ -1422,5 +1455,140 @@ describe Chef::Knife::AzurermServerCreate do
         @service.create_virtual_machine_using_template(@params)
       end
     end
+  end
+
+  describe 'supported_ohai_hints' do
+    it 'returns the list of supported values' do
+      response = @arm_server_instance.supported_ohai_hints
+      expect(response).to be == ohai_hints_values
+    end
+  end
+
+  describe 'format_ohai_hints' do
+    context 'no input given by user' do
+      it 'formats the default input for Ohai Hints where the expected result is same as the default value' do
+        response = @arm_server_instance.format_ohai_hints('default')
+        expect(response).to be == 'default'
+      end
+    end
+
+    context 'input given by user in correct format' do
+      it 'formats the user input for Ohai Hints where the expected result is same as the user\'s input' do
+        response = @arm_server_instance.format_ohai_hints('public_fqdn,vm_name')
+        expect(response).to be == 'public_fqdn,vm_name'
+      end
+    end
+
+    context 'input given by user with incorrect syntax' do
+      it 'formats the user input for Ohai Hints where the expected result is the value with correct syntax' do
+        response = @arm_server_instance.format_ohai_hints('public_fqdn,vm_name,')
+        expect(response).to be == 'public_fqdn,vm_name'
+      end
+    end
+
+    context 'input given by user in incorrect syntax and incorrect format' do
+      it 'formats the user input for Ohai Hints where the expected result is the value in correct syntax and correct format' do
+        response = @arm_server_instance.format_ohai_hints('public_fqdn , vm_name, platform ,,')
+        expect(response).to be == 'public_fqdn,vm_name,platform'
+      end
+    end
+
+    context 'input given by user in incorrect format' do
+      it 'formats the user input for Ohai Hints where the expected result is the value in correct format' do
+        response = @arm_server_instance.format_ohai_hints(' public_fqdn ,platform , vm_name ')
+        expect(response).to be == 'public_fqdn,platform,vm_name'
+      end
+    end
+  end
+
+  describe 'is_supported_ohai_hint?' do
+    context 'supported value given by user' do
+      it 'returns true' do
+        response = @arm_server_instance.is_supported_ohai_hint?('platform')
+        expect(response).to be true
+      end
+    end
+
+    context 'unsupported value given by user' do
+      it 'returns false' do
+        response = @arm_server_instance.is_supported_ohai_hint?('mac_address')
+        expect(response).to be false
+      end
+    end
+  end
+
+  describe 'validate_ohai_hints' do
+    context 'correct input by user' do
+      before do
+        @arm_server_instance.config[:ohai_hints] = 'vm_name,platform'
+      end
+
+      it 'does not raise error' do
+        expect { @arm_server_instance.validate_ohai_hints }.to_not raise_error
+      end
+    end
+
+    context 'incorrect input by user' do
+      before do
+        @arm_server_instance.default_config[:ohai_hints] = 'public_fqdn,vm_name,platform,mac_address'
+      end
+
+      it 'do raise error' do
+        expect { @arm_server_instance.validate_ohai_hints }.to raise_error(
+          ArgumentError)
+      end
+    end
+  end
+
+  describe 'default_hint_options' do
+    it 'returns the list of default hint values' do
+      response = @arm_server_instance.default_hint_options
+      expect(response).to be == ohai_hints_values
+    end
+  end
+
+  describe 'ohai_hints in bootstrapper' do
+    context 'no input given by user' do
+      it 'returns default values for Ohai Hints' do
+        response = @arm_server_instance.ohai_hints
+        expect(response).to be == ohai_hints_values
+      end
+    end
+
+    context 'input given by user' do
+      before do
+        @arm_server_instance.config[:ohai_hints] = 'platform,vm_name'
+      end
+
+      it 'returns the input given by user' do
+        response = @arm_server_instance.ohai_hints
+        expect(response[0]).to be == 'platform'
+        expect(response[1]).to be == 'vm_name'
+      end
+    end
+  end
+
+  describe 'ohai_hints in arm_deployment_template' do
+    before do
+      @hint_names = ohai_hints_values
+      @resource_ids = { "vmId" =>
+        "resourceId('Microsoft.Compute/virtualMachines', variables('vmName'))",
+        "pubId" => "resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))" }
+    end
+
+    it 'returns the json for the given hint names to be set in the template for Ohai Hints configuration' do
+      response = @service.ohai_hints(@hint_names, @resource_ids)
+      expect(response['vm_name']).to be == "[reference(resourceId('Microsoft.Compute/virtualMachines', variables('vmName'))).osProfile.computerName]"
+      expect(response['public_fqdn']).to be == "[reference(resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))).dnsSettings.fqdn]"
+      expect(response['platform']).to be == "[concat(reference(resourceId('Microsoft.Compute/virtualMachines', variables('vmName'))).storageProfile.imageReference.offer, concat(' ', reference(resourceId('Microsoft.Compute/virtualMachines', variables('vmName'))).storageProfile.imageReference.sku))]"
+    end
+  end
+
+  def ohai_hints_values
+    [
+      'vm_name',
+      'public_fqdn',
+      'platform'
+    ]
   end
 end
