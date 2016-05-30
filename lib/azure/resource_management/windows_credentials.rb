@@ -101,10 +101,11 @@ module Azure::ARM
           credential[:token] = access_token[0].split(":")[1] if access_token
           credential[:refresh_token] = refresh_token[0].split(":")[1] if refresh_token
           credential[:clientid] = clientid[0].split(":")[1] if clientid
-          credential[:expiry_time] = expiry_time[0].split(":")[1] if expiry_time
+          credential[:expiry_time] = expiry_time[0].split("expiresOn:")[1].gsub("\\","") if expiry_time
         else
           raise "TargetName Not Found"
         end
+        credential
       end
 
       def target_name
@@ -117,8 +118,11 @@ module Azure::ARM
           raise "Azure Credentials not found. Please run xplat's 'azure login' command"
         else
           result.stdout.split("\n").each do |target|
+            # three credentials get created in windows credential manager for xplat-cli
+            # two of them end with --0-2 and --1-2. They don't have accessToken and refreshToken
+            # in the credentialBlob. Avoiding those 2
             if !target.include?("--")
-              target_name = target.strip
+              target_name = target.gsub("Target:","").strip
               break
             end
           end
