@@ -270,11 +270,13 @@ class Chef
           raise ArgumentError, "When --azure-vnet-subnet-name is specified, the --azure-vnet-name must also be specified."
         end
 
-        if !is_image_windows?
+        if is_image_windows?
           if locate_config_value(:winrm_user).nil? ||  locate_config_value(:winrm_password).nil?
             raise ArgumentError, "Please provide --winrm-user and --winrm-password options for Windows option."
           end
+        end
 
+        if !is_image_windows?
           if (locate_config_value(:azure_vm_name).match /^(?=.*[a-zA-Z-])([a-zA-z0-9-]{1,64})$/).nil?
             raise ArgumentError, "VM name can only contain alphanumeric and hyphen(-) characters and maximun length cannot exceed 64 charachters."
           end
