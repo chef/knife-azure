@@ -123,7 +123,7 @@ class Chef
           end
         else
           home_dir = File.expand_path('~')
-          if !File.exists?(home_dir + "/.azure/accessTokens.json")
+          if !File.exists?(home_dir + "/.azure/accessTokens.json") || File.size?(home_dir + '/.azure/accessTokens.json') <= 2
             raise err_string
           end
         end
