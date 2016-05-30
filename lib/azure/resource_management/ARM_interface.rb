@@ -274,6 +274,7 @@ module Azure
         if virtual_machine_exist?(params[:azure_resource_group_name], params[:azure_vm_name])
           ui.log("INFO:Virtual Machine #{params[:azure_vm_name]} already exist under the Resource Group #{params[:azure_resource_group_name]}. Exiting for now.")
         else
+          params[:chef_extension_version] = params[:chef_extension_version].nil? ? get_latest_chef_extension_version(params) : params[:chef_extension_version]
           ui.log("Creating Virtual Machine....")
           deployment = create_virtual_machine_using_template(params)
           ui.log("Virtual Machine creation successfull.") unless deployment.nil?

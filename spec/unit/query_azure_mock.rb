@@ -30,7 +30,8 @@ module QueryAzureMock
         azure_vm_name: 'test-vm',
         azure_service_location: 'West Europe',
         ssh_user: 'test-user',
-        validation_key: '/tmp/validation_key'
+        validation_key: '/tmp/validation_key',
+        winrm_password: 'admin_password'
       }.each do |key, value|
           Chef::Config[:knife][key] = value
         end

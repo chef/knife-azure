@@ -195,10 +195,10 @@ class Chef
           vm_details = service.create_server(create_server_def)
         rescue => error
           if error.class == MsRestAzure::AzureOperationError && error.body
-            if error.body['error']['code'] == 'DeploymentFailed'
+            if error.response.body['error']['code'] == 'DeploymentFailed'
               ui.error("#{error.body['error']['message']}")
             else
-              ui.error(error.body)
+              ui.error(error.response.body)
             end
           else
             ui.error("#{error.message}")
@@ -247,6 +247,7 @@ class Chef
         server_def[:chef_extension_version] = locate_config_value(:azure_chef_extension_version)
         server_def[:chef_extension_public_param] = get_chef_extension_public_params
         server_def[:chef_extension_private_param] = get_chef_extension_private_params
+        server_def[:auto_upgrade_minor_version] = false
 
         if is_image_windows?
           server_def[:admin_password] = locate_config_value(:winrm_password)
@@ -267,6 +268,12 @@ class Chef
 
         if locate_config_value(:azure_vnet_subnet_name) && !locate_config_value(:azure_vnet_name)
           raise ArgumentError, "When --azure-vnet-subnet-name is specified, the --azure-vnet-name must also be specified."
+        end
+
+        if is_image_windows?
+          if locate_config_value(:winrm_user).nil? ||  locate_config_value(:winrm_password).nil?
+            raise ArgumentError, "Please provide --winrm-user and --winrm-password options for Windows option."
+          end
         end
 
         if !is_image_windows?

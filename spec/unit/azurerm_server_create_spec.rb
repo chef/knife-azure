@@ -21,7 +21,6 @@ describe Chef::Knife::AzurermServerCreate do
       :azure_service_location => Chef::Config[:knife][:azure_service_location],
       :azure_vm_name => Chef::Config[:knife][:azure_vm_name],
       :winrm_user => 'winrm_user',
-      :admin_password => 'admin_password',
       :ssh_user => Chef::Config[:knife][:ssh_user],
       :ssh_password => 'ssh_password',
       :azure_vm_size => 'azure_vm_size',
@@ -43,6 +42,7 @@ describe Chef::Knife::AzurermServerCreate do
         :bootstrap_options => {}
       }
     }
+
 
     allow(File).to receive(:exist?).and_return(true)
     allow(File).to receive(:read).and_return('foo')
@@ -145,6 +145,13 @@ describe Chef::Knife::AzurermServerCreate do
         Chef::Config[:knife].delete(:azure_image_reference_sku)
         expect(@arm_server_instance.ui).to receive(:error)
         expect {@arm_server_instance.run}.to raise_error(SystemExit)
+      end
+
+      it "winrm user and password error if not provided for windows image" do
+        Chef::Config[:knife].delete(:winrm_user)
+        Chef::Config[:knife].delete(:winrm_password)
+        allow(@arm_server_instance).to receive(:is_image_windows?).and_return(true)
+        expect{@arm_server_instance.validate_params!}.to raise_error(ArgumentError)
       end
     end
 
@@ -324,7 +331,8 @@ describe Chef::Knife::AzurermServerCreate do
             :azure_image_reference_offer => 'CentOS',
             :azure_image_reference_sku => '6.5',
             :azure_image_reference_version => 'latest',
-            :ssh_user => 'ssh_user'
+            :ssh_user => 'ssh_user',
+            :azure_chef_extension_version => '1210.12'
           }.each do |key, value|
               Chef::Config[:knife][key] = value
             end
@@ -406,6 +414,7 @@ describe Chef::Knife::AzurermServerCreate do
       context "for multiple VM creation" do
         before do
           Chef::Config[:knife][:server_count] = 3
+          Chef::Config[:knife][:azure_chef_extension_version] = '1210.12'
 
           expect(@arm_server_instance).to receive(
             :is_image_windows?).at_least(3).and_return(false)
@@ -1375,6 +1384,35 @@ describe Chef::Knife::AzurermServerCreate do
 
     after do
       @params.delete(:server_count)
+    end
+  end
+
+  describe "set chef extension version parameter" do
+    before do
+      @params[:server_count] = 3
+      allow(@service).to receive(:resource_management_client).and_return(@resource_client)
+    end
+
+    context "when user has supplied chef extension version value" do
+      it "successfully creates virtual machine extension with the user supplied version value" do
+        expect(@service).to receive(:compute_management_client).and_return(stub_compute_management_client('yes'))
+        expect(@service).to_not receive(:get_latest_chef_extension_version)
+        expect(params[:chef_extension_version]) == '11.10.1'
+        @service.create_virtual_machine_using_template(@params)
+      end
+    end
+
+    context "when user has not supplied chef extension version value" do
+      before do
+        @params.delete(:chef_extension_version)
+      end
+
+      it "successfully creates virtual machine extension with the latest version" do
+        expect(@service).to receive(:get_latest_chef_extension_version)
+        expect(@service).to receive(:compute_management_client).and_return(stub_compute_management_client('no'))
+        expect(params[:chef_extension_version]) == '1210.12'
+        @service.create_virtual_machine_using_template(@params)
+      end
     end
   end
 end
