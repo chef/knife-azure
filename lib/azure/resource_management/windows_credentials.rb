@@ -118,10 +118,12 @@ module Azure::ARM
           raise "Azure Credentials not found. Please run xplat's 'azure login' command"
         else
           result.stdout.split("\n").each do |target|
-            # three credentials get created in windows credential manager for xplat-cli
-            # two of them end with --0-2 and --1-2. They don't have accessToken and refreshToken
-            # in the credentialBlob. Avoiding those 2
-            if !target.include?("--")
+            # Three credentials get created in windows credential manager for xplat-cli
+            # One of them is for common tanent id, which can't be used
+            # Two of them end with --0-2 and --1-2. The one ending with --1-2 doesn't have
+            # accessToken and refreshToken in the credentialBlob.
+            # Selecting the one ending with --0-2
+            if !target.include?("common::") && target.include?("--0-2")
               target_name = target.gsub("Target:","").strip
               break
             end
