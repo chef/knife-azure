@@ -1433,9 +1433,9 @@ describe Chef::Knife::AzurermServerCreate do
 
     context "when user has supplied chef extension version value" do
       it "successfully creates virtual machine extension with the user supplied version value" do
-        expect(@service).to receive(:compute_management_client).and_return(stub_compute_management_client('yes'))
+        # expect(@service).to receive(:compute_management_client).and_return(stub_compute_management_client('yes'))
         expect(@service).to_not receive(:get_latest_chef_extension_version)
-        expect(params[:chef_extension_version]) == '11.10.1'
+        expect(@params[:chef_extension_version]) == '11.10.1'
         @service.create_virtual_machine_using_template(@params)
       end
     end
@@ -1448,7 +1448,10 @@ describe Chef::Knife::AzurermServerCreate do
       it "successfully creates virtual machine extension with the latest version" do
         expect(@service).to receive(:get_latest_chef_extension_version)
         expect(@service).to receive(:compute_management_client).and_return(stub_compute_management_client('no'))
-        expect(params[:chef_extension_version]) == '1210.12'
+        expect(@params[:chef_extension_version]) == '1210.12'
+        expect(@resource_client).to receive_message_chain(
+          :deployments, :create_or_update).and_return(
+            @resource_promise)
         @service.create_virtual_machine_using_template(@params)
       end
     end

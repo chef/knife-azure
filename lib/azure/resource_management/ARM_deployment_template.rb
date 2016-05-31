@@ -196,6 +196,18 @@ module Azure::ARM
               "metadata" => {
                 "description"=> "Format in which Validation Key is given. e.g. plaintext, base64encoded"
               }
+            },
+            "client_rb" => {
+              "type" => "string",
+              "metadata" => {
+                "description" => "Optional. Path to a client.rb file for use by the bootstrapped node."
+              }
+            },
+            "bootstrap_version" => {
+              "type" => "string",
+              "metadata" => {
+                "description" => "Optional. The version of Chef to install."
+              }
             }
         },
         "variables"=> {
@@ -212,7 +224,7 @@ module Azure::ARM
           "publicIPAddressType"=> "Dynamic",
           "vmStorageAccountContainerName"=> "#{params[:azure_vm_name]}",
           "vmName"=> "#{params[:azure_vm_name]}",
-          "vmSize"=> "Standard_D1",
+          "vmSize"=> "#{params[:vm_size]}",
           "virtualNetworkName"=> "#{params[:azure_vnet_name]}",
           "vnetID"=> "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
           "subnetRef"=> "[concat(variables('vnetID'),'/subnets/',variables('subnetName'))]",
@@ -368,14 +380,16 @@ module Azure::ARM
                 "bootstrap_options" => {
                   "chef_node_name" => chef_node_name,
                   "chef_server_url" => "[parameters('chef_server_url')]",
-                  "validation_client_name" => "[parameters('validation_client_name')]"
+                  "validation_client_name" => "[parameters('validation_client_name')]",
+                  "bootstrap_version" => "[parameters('bootstrap_version')]"
                 },
                 "runlist" => "[parameters('runlist')]",
                 "autoUpdateClient" => "[parameters('autoUpdateClient')]",
                 "deleteChefConfig" => "[parameters('deleteChefConfig')]",
                 "uninstallChefClient" => "[parameters('uninstallChefClient')]",
                 "validation_key_format" => "[parameters('validation_key_format')]",
-                "hints" => hints_json
+                "hints" => hints_json,
+                "client_rb" => "[parameters('client_rb')]"
               },
               "protectedSettings" => {
                 "validation_key" => "[parameters('validation_key')]",
@@ -435,6 +449,12 @@ module Azure::ARM
         },
         "chef_node_name" => {
           "value"=> "#{params[:chef_extension_public_param][:bootstrap_options][:chef_node_name]}"
+        },
+        "client_rb" => {
+          "value" => "#{params[:chef_extension_public_param][:client_rb]}"
+        },
+        "bootstrap_version" => {
+          "value" => "#{params[:chef_extension_public_param][:bootstrap_options][:bootstrap_version]}"
         }
       }
     end
