@@ -101,7 +101,7 @@ class Chef
         home_dir = File.expand_path('~')
         file = File.read(home_dir + '/.azure/accessTokens.json')
         file = eval(file)
-        token_details = {:tokentype => file[1][:tokenType], :user => file[1][:userId], :token => file[1][:accessToken], :clientid => file[1][:_clientId], :expiry_time => file[1][:expiresOn], :refreshtoken => file[1][:refreshToken]}
+        token_details = {:tokentype => file[-1][:tokenType], :user => file[-1][:userId], :token => file[-1][:accessToken], :clientid => file[-1][:_clientId], :expiry_time => file[-1][:expiresOn], :refreshtoken => file[-1][:refreshToken]}
         return token_details
       end
 

@@ -131,7 +131,7 @@ class Chef
 
       option :azure_image_os_type,
         :long => "--azure-image-os-type OSTYPE",
-        :description => "Optional. Specifies the image OS Type for which server needs to be created. Accepted values ubuntu|centos|windows"
+        :description => "Optional. Specifies the image OS Type for which server needs to be created. Accepted values ubuntu|centos|rhel|debian|windows"
 
       option :azure_vm_size,
         :short => "-z SIZE",
