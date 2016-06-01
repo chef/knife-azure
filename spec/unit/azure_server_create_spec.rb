@@ -868,7 +868,8 @@ describe Chef::Knife::AzureServerCreate do
         @server_instance.config[:delete_chef_extension_config] = true
         @server_instance.config[:bootstrap_version] = '12.4.2'
         @server_instance.config[:uninstall_chef_client] = false
-        public_config = "{\"client_rb\":\"chef_server_url \\t \\\"https://localhost:443\\\"\\nvalidation_client_name\\t\\\"chef-validator\\\"\",\"runlist\":\"\\\"getting-started\\\"\",\"autoUpdateClient\":\"true\",\"deleteChefConfig\":\"true\",\"uninstallChefClient\":\"false\",\"custom_json_attr\":{},\"bootstrap_options\":{\"chef_server_url\":\"https://localhost:443\",\"validation_client_name\":\"chef-validator\",\"bootstrap_version\":\"12.4.2\"}}"
+        @server_instance.config[:extended_logs] = true
+        public_config = "{\"client_rb\":\"chef_server_url \\t \\\"https://localhost:443\\\"\\nvalidation_client_name\\t\\\"chef-validator\\\"\",\"runlist\":\"\\\"getting-started\\\"\",\"autoUpdateClient\":\"true\",\"deleteChefConfig\":\"true\",\"uninstallChefClient\":\"false\",\"extendedLogs\":\"true\",\"custom_json_attr\":{},\"bootstrap_options\":{\"chef_server_url\":\"https://localhost:443\",\"validation_client_name\":\"chef-validator\",\"bootstrap_version\":\"12.4.2\"}}"
 
         expect(@server_instance).to receive(:get_chef_extension_name).and_return("LinuxChefClient")
         expect(@server_instance).to receive(:get_chef_extension_publisher).and_return("Chef.Bootstrap.WindowsAzure")
@@ -996,5 +997,270 @@ describe Chef::Knife::AzureServerCreate do
         expect { @server_instance.run }.to raise_error(SystemExit)
       end
     end
+  end
+
+  describe "extended_logs feature for cloud-api bootstrap protocol" do
+    describe "run" do
+      before do
+        Chef::Config[:knife][:ssh_password] = 'ssh_password'
+        allow(Chef::Log).to receive(:info)
+        allow(@server_instance).to receive(:validate_asm_keys!)
+        allow(@server_instance).to receive(:validate_params!)
+        allow(@server_instance).to receive(:get_dns_name)
+        allow(@server_instance.service).to receive(:create_server)
+        allow(@server_instance).to receive(:create_server_def)
+        allow(@server_instance).to receive(:wait_until_virtual_machine_ready)
+        allow(@server_instance.service).to receive(:get_role_server)
+        allow(@server_instance).to receive(:msg_server_summary)
+        allow(@server_instance).to receive(:bootstrap_exec)
+      end
+
+      context "bootstrap_protocol is not cloud-api and extended_logs is false" do
+        before do
+          Chef::Config[:knife][:bootstrap_protocol] = 'winrm'
+          @server_instance.config[:extended_logs] = false
+        end
+
+        it "does not invoke fetch_chef_client_logs method" do
+          expect(@server_instance).to_not receive(:fetch_chef_client_logs)
+          @server_instance.run
+        end
+      end
+
+      context "bootstrap_protocol is cloud-api" do
+        before do
+          Chef::Config[:knife][:bootstrap_protocol] = 'cloud-api'
+        end
+
+        context "extended_logs is false" do
+          before do
+            @server_instance.config[:extended_logs] = false
+          end
+
+          it "does not invoke fetch_chef_client_logs method" do
+            expect(@server_instance).to_not receive(:fetch_chef_client_logs)
+            @server_instance.run
+          end
+        end
+
+        context "extended_logs is true" do
+          before do
+            @server_instance.config[:extended_logs] = true
+          end
+
+          it "invoke fetch_chef_client_logs method" do
+            expect(@server_instance).to receive(:fetch_chef_client_logs)
+            @server_instance.run
+          end
+        end
+      end
+    end
+
+    describe "fetch_chef_client_logs" do
+      context "role not found" do
+        before do
+          allow(@server_instance).to receive(
+            :fetch_role).and_return(nil)
+        end
+
+        it "displays role not found error" do
+          expect(@server_instance.ui).to receive(:error).with(
+            "chef-client run logs could not be fetched since role vm002 could not be found.")
+          @server_instance.fetch_chef_client_logs(nil, nil)
+        end
+      end
+
+      context "extension not found" do
+        before do
+          allow(@server_instance).to receive(
+            :fetch_role).and_return('vm002')
+          allow(@server_instance).to receive(
+            :fetch_extension).and_return(nil)
+        end
+
+        it "displays extension not found error" do
+          expect(@server_instance.ui).to receive(:error).with(
+            "Unable to find Chef extension under role vm002.")
+          @server_instance.fetch_chef_client_logs(nil, nil)
+        end
+      end
+
+      context "substatus not found in server role response" do
+        before do
+          allow(@server_instance).to receive(
+            :fetch_role).and_return('vm002')
+          allow(@server_instance).to receive(
+            :fetch_extension).and_return('extension')
+          allow(@server_instance).to receive(
+            :fetch_substatus).and_return(nil)
+          @start_time = Time.now
+        end
+
+        context "wait time has not exceeded wait timeout limit" do
+          it "displays wait messages and re-invokes fetch_chef_client_logs method recursively" do
+            @server_instance.instance_eval do
+              class << self
+                alias_method :fetch_chef_client_logs_mocked, :fetch_chef_client_logs
+              end
+            end
+            expect(@server_instance).to receive(:puts).exactly(2).times
+            expect(@server_instance).to receive(:sleep).with(30)
+            expect(@server_instance).to receive(
+              :fetch_chef_client_logs).with(@start_time, 30)
+            @server_instance.fetch_chef_client_logs_mocked(@start_time, 30)
+          end
+        end
+
+        context "wait time has exceeded wait timeout limit" do
+          it "displays wait timeout exceeded message" do
+            expect(@server_instance.ui).to receive(:error).with(
+              "\nchef-client run logs could not be fetched since fetch process exceeded wait timeout of -1 minutes.\n")
+            @server_instance.fetch_chef_client_logs(@start_time, -1)
+          end
+        end
+      end
+
+      context "substatus found in server role response" do
+        before do
+          Chef::Config[:knife][:azure_vm_name] = 'vm04'
+          allow(@server_instance.service).to receive(
+            :deployment_name).and_return('deploymentExtension')
+          deployment = Nokogiri::XML readFile('extension_deployment_xml.xml')
+          allow(@server_instance.service).to receive(
+            :deployment).and_return(deployment)
+        end
+
+        it "displays chef-client run logs and exit status to the user" do
+          expect(@server_instance).to receive(
+            :puts).exactly(4).times
+          expect(@server_instance).to receive(:print)
+          @server_instance.fetch_chef_client_logs(@start_time, 30)
+        end
+      end
+    end
+
+    describe "fetch_role" do
+      context "role not found" do
+        before do
+          Chef::Config[:knife][:azure_vm_name] = 'vm09'
+        end
+
+        it "returns nil" do
+          response = fetch_role_from_xml
+          expect(response).to be nil
+        end
+      end
+
+      context "role found" do
+        before do
+          Chef::Config[:knife][:azure_vm_name] = 'vm01'
+        end
+
+        it "returns the role" do
+          response = fetch_role_from_xml
+          expect(response).to_not be nil
+          expect(response.at_css('RoleName').text).to eq 'vm01'
+        end
+      end
+    end
+
+    describe "fetch_extension" do
+      context "extension not found" do
+        before do
+          Chef::Config[:knife][:azure_vm_name] = 'vm01'
+          @role = fetch_role_from_xml
+        end
+
+        it "returns nil" do
+          response = @server_instance.fetch_extension(@role)
+          expect(response).to be nil
+        end
+      end
+
+      context "extension found" do
+        context "for Windows platform" do
+          before do
+            Chef::Config[:knife][:azure_vm_name] = 'vm02'
+            @role = fetch_role_from_xml
+          end
+
+          it "returns the extension" do
+            response = @server_instance.fetch_extension(@role)
+            expect(response).to_not be nil
+            expect(response.at_css('HandlerName').text).to eq \
+              'Chef.Bootstrap.WindowsAzure.ChefClient'
+          end
+        end
+
+        context "for Linux platform" do
+          before do
+            Chef::Config[:knife][:azure_vm_name] = 'vm03'
+            @role = fetch_role_from_xml
+          end
+
+          it "returns the extension" do
+            response = @server_instance.fetch_extension(@role)
+            expect(response).to_not be nil
+            expect(response.at_css('HandlerName').text).to eq \
+              'Chef.Bootstrap.WindowsAzure.LinuxChefClient'
+          end
+        end
+      end
+    end
+
+    describe "fetch_substatus" do
+      context "substatus list not found" do
+        before do
+          Chef::Config[:knife][:azure_vm_name] = 'vm02'
+          role = fetch_role_from_xml
+          @extension = @server_instance.fetch_extension(role)
+        end
+
+        it "returns nil" do
+          response = @server_instance.fetch_substatus(@extension)
+          expect(response).to be nil
+        end
+      end
+
+      context "substatus list found" do
+        context "but it does not contain chef-client run logs substatus" do
+          before do
+            Chef::Config[:knife][:azure_vm_name] = 'vm03'
+            role = fetch_role_from_xml
+            @extension = @server_instance.fetch_extension(role)
+          end
+
+          it "returns nil" do
+            response = @server_instance.fetch_substatus(@extension)
+            expect(response).to be nil
+          end
+        end
+
+        context "and it do contain chef-client run logs substatus" do
+          before do
+            Chef::Config[:knife][:azure_vm_name] = 'vm04'
+            role = fetch_role_from_xml
+            @extension = @server_instance.fetch_extension(role)
+          end
+
+          it "returns the substatus" do
+            response = @server_instance.fetch_substatus(@extension)
+            expect(response).to_not be nil
+            expect(response.at_css('Name').text).to eq 'Chef Client run logs'
+            expect(response.at_css('Status').text).to eq 'Success'
+            expect(response.at_css('Message').text).to eq 'MyChefClientRunLogs'
+          end
+        end
+      end
+    end
+  end
+
+  def fetch_role_from_xml
+    allow(@server_instance.service).to receive(
+      :deployment_name).and_return('deploymentExtension')
+    deployment = Nokogiri::XML readFile('extension_deployment_xml.xml')
+    allow(@server_instance.service).to receive(
+      :deployment).and_return(deployment)
+    @server_instance.fetch_role
   end
 end

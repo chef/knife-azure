@@ -257,6 +257,7 @@ class Chef
           pub_config[:deleteChefConfig] = locate_config_value(:delete_chef_extension_config) ? "true" : "false"
           pub_config[:uninstallChefClient] = locate_config_value(:uninstall_chef_client) ? "true" : "false"
           pub_config[:custom_json_attr] = locate_config_value(:json_attributes) || {}
+          pub_config[:extendedLogs] = locate_config_value(:extended_logs) ? "true" : "false"
 
           # bootstrap attributes
           pub_config[:bootstrap_options] = {}
