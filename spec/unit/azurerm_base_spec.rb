@@ -28,7 +28,6 @@ describe Chef::Knife::AzurermBase do
           @arm_server_instance = create_arm_instance(Chef::Knife::AzurermServerList)
           @service = @arm_server_instance.service
           @compute_client = double("ComputeManagementClient")
-          @token_details = {:tokentype => "Bearer", :user => "xxx@outlook.com", :token => "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1iIxLjAifQ.hZjHXXjbSdMmMs9oSZxGKa62EnNG6jkTY4RSmq8dQMvmwHgDCF4KoT_sOIsrAJTVwXuCdxYa5Jr83sfydFwiO2QWWOaSgyRXGPouex4NXFI_LFdnRzhLBoN0ONwUWHrV12N4LBgHyNLiyfeZQJFCbD0LTcPdjh7qQZ5aVgcoz_CB33PGD_z2L_6ynWrlAoihLEmYD6vbebMDSSFazvzoVg", :expiry_time => "2016-05-31T09:42:15.617Z", :clientid => "dsff-8df-sd45e-34345f7b46", :refreshtoken => "FPbm0gXiszvV_cMwGkgACwMBZ26fWA6fH3ToRLTHYU3wvvTWiU74ukRhMHhv20OJOtZBOtbckh3kTMT7QvzUYfd4uHFzwAYCtsh2SOY-dCAA"}
 	end
 
 	describe "azurerm base tests - " do
@@ -98,144 +97,50 @@ describe Chef::Knife::AzurermBase do
 		end
 	end
 
-	describe "azure base tests - for azure profile" do
-	  before(:each) do
-	    Chef::Config[:knife][:azure_mgmt_cert] = nil
-	  end
+        describe "Token Authentication related test cases" do
+                
+                 context "Token Validation test cases" do
+                        it "Token Validity expired" do
+                          token_details = {:tokentype => "Bearer", :user => "xxx@outlook.com", :token => "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1iIxLjAifQ.hZjHXXjbSdMmMs9oSZxGKa62EnNG6jkTY4RSmq8dQMvmwHgDCF4KoT_sOIsrAJTVwXuCdxYa5Jr83sfydFwiO2QWWOaSgyRXGPouex4NXFI_LFdnRzhLBoN0ONwUWHrV12N4LBgHyNLiyfeZQJFCbD0LTcPdjh7qQZ5aVgcoz_CB33PGD_z2L_6ynWrlAoihLEmYD6vbebMDSSFazvzoVg", :expiry_time => "2016-05-31T09:42:15.617Z", :clientid => "dsff-8df-sd45e-34345f7b46", :refreshtoken => "FPbm0gXiszvV_cMwGkgACwMBZ26fWA6fH3ToRLTHYU3wvvTWiU74ukRhMHhv20OJOtZBOtbckh3kTMT7QvzUYfd4uHFzwAYCtsh2SOY-dCAA"}
+                         expect { @arm_server_instance.check_token_validity(token_details) }.to raise_error(RuntimeError)
+                        end
+                       
+                        it 'Token is valid' do
+                          token_details = {:tokentype => "Bearer", :user => "xxx@outlook.com", :token => "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1iIxLjAifQ.hZjHXXjbSdMmMs9oSZxGKa62EnNG6jkTY4RSmq8dQMvmwHgDCF4KoT_sOIsrAJTVwXuCdxYa5Jr83sfydFwiO2QWWOaSgyRXGPouex4NXFI_LFdnRzhLBoN0ONwUWHrV12N4LBgHyNLiyfeZQJFCbD0LTcPdjh7qQZ5aVgcoz_CB33PGD_z2L_6ynWrlAoihLEmYD6vbebMDSSFazvzoVg", :expiry_time => "2116-05-31T09:42:15.617Z", :clientid => "dsff-8df-sd45e-34345f7b46", :refreshtoken => "FPbm0gXiszvV_cMwGkgACwMBZ26fWA6fH3ToRLTHYU3wvvTWiU74ukRhMHhv20OJOtZBOtbckh3kTMT7QvzUYfd4uHFzwAYCtsh2SOY-dCAA"}
+                          expect { @arm_server_instance.check_token_validity(token_details) }
+                        end
+                 end
 
-	  context "when publishSettings file specified in knife.rb has A account and azureProfile file has B account" do
-	  	before do
-	  	  Chef::Config[:knife][:azure_publish_settings_file] = get_publish_settings_file_path("A_account.publishsettings")
-	  	  allow(@dummy).to receive(:get_azure_profile_file_path).and_return(File.dirname(__FILE__) + "/assets/azure-profile-files/B_account_azure_profile.json")
-	  	end
+                 context "Authentication" do  
 
-	  	it "selects A account of publishSettings file" do
-	  	  @dummy.validate_arm_keys!
-	  	  expect(Chef::Config[:knife][:azure_api_host_name]).to eq('A.endpoint.net')
-	  	  expect(Chef::Config[:knife][:azure_subscription_id]).to eq('A_subscription_id')
-	  	end
-	  end
+                        before do
+                            Chef::Config[:knife][:azure_tenant_id] = "abeb039a-rfrgrggb48f-0c99bdc99d15"
+                            Chef::Config[:knife][:azure_client_id] = "54dsdwe-3e2f36-e9f11d7f88a1"
+                            Chef::Config[:knife][:azure_client_secret] = "xyz@123"
+                        end
 
-	  context "when publishSettings file specified in knife.rb has B account and azureProfile file has A account" do
-	  	before do
-	  	  Chef::Config[:knife][:azure_publish_settings_file] = get_publish_settings_file_path("B_account.publishsettings")
-	  	  allow(@dummy).to receive(:get_azure_profile_file_path).and_return(File.dirname(__FILE__) + "/assets/azure-profile-files/A_account_azure_profile.json")
-	  	  Chef::Config[:knife][:azure_api_host_name] = 'preview.core.windows-int.net'
-				Chef::Config[:knife][:azure_subscription_id] = 'azure_subscription_id'
-				Chef::Config[:knife][:azure_mgmt_cert] = @cert_file
-	  	end
+                        it 'use AD App creds to authenticate' do
+                          @authentication_details = @arm_server_instance.check_authentication_method
+                          expect(@authentication_details[:azure_tenant_id]).to be ==  "abeb039a-rfrgrggb48f-0c99bdc99d15"
+                          expect(@authentication_details[:azure_client_id]).to be ==  "54dsdwe-3e2f36-e9f11d7f88a1"
+                          expect(@authentication_details[:azure_client_secret]).to be ==  "xyz@123"
+                        end
 
-	  	it "selects B account of publishSettings file" do
-	  		@dummy.validate_arm_keys!
-	  	  expect(Chef::Config[:knife][:azure_api_host_name]).to eq('B.endpoint.net')
-	  	  expect(Chef::Config[:knife][:azure_subscription_id]).to eq('B_subscription_id')
-	  	end
-	  end
+                        it 'use Token Authentication for Windows/Linux Platform' do
+                          token_details = {:tokentype => "Bearer", :user => "xxx@outlook.com", :token => "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1iIxLjAifQ.hZjHXXjbSdMmMs9oSZxGKa62EnNG6jkTY4RSmq8dQMvmwHgDCF4KoT_sOIsrAJTVwXuCdxYa5Jr83sfydFwiO2QWWOaSgyRXGPouex4NXFI_LFdnRzhLBoN0ONwUWHrV12N4LBgHyNLiyfeZQJFCbD0LTcPdjh7qQZ5aVgcoz_CB33PGD_z2L_6ynWrlAoihLEmYD6vbebMDSSFazvzoVg", :expiry_time => "2116-05-31T09:42:15.617Z", :clientid => "dsff-8df-sd45e-34345f7b46", :refreshtoken => "FPbm0gXiszvV_cMwGkgACwMBZ26fWA6fH3ToRLTHYU3wvvTWiU74ukRhMHhv20OJOtZBOtbckh3kTMT7QvzUYfd4uHFzwAYCtsh2SOY-dCAA"}
+                          Chef::Config[:knife].delete(:azure_tenant_id)
+                          allow(@arm_server_instance).to receive(:token_details_for_linux).and_return(token_details) 
+                          allow(@arm_server_instance).to receive(:token_details_for_windows).and_return(token_details)
+                          @authentication_details = @arm_server_instance.check_authentication_method
+                          expect(@authentication_details[:clientid]).to be ==  "dsff-8df-sd45e-34345f7b46"
+                        end
 
-	  context "when publishSettings file is not specified in knife.rb and azureProfile file has A account" do
-	  	before do
-	  	  Chef::Config[:knife][:azure_publish_settings_file] = nil
-	  	  Chef::Config[:knife][:azure_api_host_name] = nil
-				Chef::Config[:knife][:azure_subscription_id] = nil
-				Chef::Config[:knife][:azure_mgmt_cert] = nil
-	  	  allow(@dummy).to receive(:get_azure_profile_file_path).and_return(File.dirname(__FILE__) + "/assets/azure-profile-files/A_account_azure_profile.json")
-	  	end
-
-	  	it "selects A account of azureProfile file" do
-	  	  @dummy.validate_arm_keys!
-	  	  expect(Chef::Config[:knife][:azure_api_host_name]).to eq('A.endpoint.net')
-	  	  expect(Chef::Config[:knife][:azure_subscription_id]).to eq('A_subscription_id')
-	  	end
-	  end
-
-	  context "when publishSettings file is not specified in knife.rb and azureProfile file has B account" do
-	  	before do
-	  	  Chef::Config[:knife][:azure_publish_settings_file] = nil
-
-	  	  Chef::Config[:knife][:azure_api_host_name] = nil
-				Chef::Config[:knife][:azure_subscription_id] = nil
-				Chef::Config[:knife][:azure_mgmt_cert] = nil
-	  	  allow(@dummy).to receive(:get_azure_profile_file_path).and_return(File.dirname(__FILE__) + "/assets/azure-profile-files/B_account_azure_profile.json")
-	  	end
-
-	  	it "selects B account of azureProfile file" do
-	  	  @dummy.validate_arm_keys!
-	  	  expect(Chef::Config[:knife][:azure_api_host_name]).to eq('B.endpoint.net')
-	  	  expect(Chef::Config[:knife][:azure_subscription_id]).to eq('B_subscription_id')
-	  	end
-	  end
-
-	  context "when neither publishSettings file is specified in knife.rb nor azureProfile file exist" do
-	  	before do
-	  	  Chef::Config[:knife][:azure_publish_settings_file] = nil
-	  	  allow(@dummy).to receive(:get_azure_profile_file_path).and_return(File.dirname(__FILE__) + "/assets/azure-profile-files/C_account_azure_profile.json")
-	  	end
-
-	  	it "gives error and exits" do
-	  	  expect { @dummy.validate_arm_keys! }.to raise_error SystemExit
-	  	end
-	  end
-
-	  context "when publishSettings file is not specified in knife.rb and azureProfile file has both A and B account with B as the default account" do
-	  	before do
-	  	  Chef::Config[:knife][:azure_publish_settings_file] = nil
-
-	  	  Chef::Config[:knife][:azure_api_host_name] = nil
-				Chef::Config[:knife][:azure_subscription_id] = nil
-				Chef::Config[:knife][:azure_mgmt_cert] = nil
-	  	  allow(@dummy).to receive(:get_azure_profile_file_path).and_return(File.dirname(__FILE__) + "/assets/azure-profile-files/A_Bd_account_azure_profile.json")
-	  	end
-
-	  	it "selects B account of azureProfile file" do
-	  	  @dummy.validate_arm_keys!
-	  	  expect(Chef::Config[:knife][:azure_api_host_name]).to eq('B.endpoint.net')
-	  	  expect(Chef::Config[:knife][:azure_subscription_id]).to eq('B_subscription_id')
-	  	end
-	  end
-
-	  context "when publishSettings file is not specified in knife.rb and azureProfile file has both A and B account with A as the default account" do
-	  	before do
-	  	  Chef::Config[:knife][:azure_publish_settings_file] = nil
-	  	  Chef::Config[:knife][:azure_api_host_name] = nil
-				Chef::Config[:knife][:azure_subscription_id] = nil
-				Chef::Config[:knife][:azure_mgmt_cert] = nil
-	  	  allow(@dummy).to receive(:get_azure_profile_file_path).and_return(File.dirname(__FILE__) + "/assets/azure-profile-files/Ad_B_account_azure_profile.json")
-	  	end
-
-	  	it "selects A account of azureProfile file" do
-	  	  @dummy.validate_arm_keys!
-	  	  expect(Chef::Config[:knife][:azure_api_host_name]).to eq('A.endpoint.net')
-	  	  expect(Chef::Config[:knife][:azure_subscription_id]).to eq('A_subscription_id')
-	  	end
-	  end
-
-	  context "when publishSettings file specified in knife.rb has A account and azureProfile file has both A and B account with B as the default account" do
-	  	before do
-	  	  Chef::Config[:knife][:azure_publish_settings_file] = get_publish_settings_file_path("A_account.publishsettings")
-	  	  allow(@dummy).to receive(:get_azure_profile_file_path).and_return(File.dirname(__FILE__) + "/assets/azure-profile-files/A_Bd_account_azure_profile.json")
-	  	end
-
-	  	it "selects A account of publishSettings file" do
-	  	  @dummy.validate_arm_keys!
-	  	  expect(Chef::Config[:knife][:azure_api_host_name]).to eq('A.endpoint.net')
-	  	  expect(Chef::Config[:knife][:azure_subscription_id]).to eq('A_subscription_id')
-	  	end
-	  end
-
-	  context "when publishSettings file specified in knife.rb has B account and azureProfile file has both A and B account with A as the default account" do
-	  	before do
-	  	  Chef::Config[:knife][:azure_publish_settings_file] = get_publish_settings_file_path("B_account.publishsettings")
-	  	  allow(@dummy).to receive(:get_azure_profile_file_path).and_return(File.dirname(__FILE__) + "/assets/azure-profile-files/Ad_B_account_azure_profile.json")
-	  	end
-
-	  	it "selects B account of publishSettings file" do
-	  	  @dummy.validate_arm_keys!
-	  	  expect(Chef::Config[:knife][:azure_api_host_name]).to eq('B.endpoint.net')
-	  	  expect(Chef::Config[:knife][:azure_subscription_id]).to eq('B_subscription_id')
-	  	end
-	  end
-
-	end
-
+                        it 'Get token details from Accesstoken file for Linux' do
+                          file_data = File.read(File.dirname(__FILE__) + "/assets/accessTokens.json")
+                          allow(File).to receive(:read).and_return(file_data)
+                          @authentication_details = @arm_server_instance.token_details_for_linux
+                          expect(@authentication_details[:clientid]).to be ==  "dsff-8df-sd45e-34345f7b46"
+                        end
+                 end
+        end
 end
-
