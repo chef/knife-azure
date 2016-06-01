@@ -358,7 +358,6 @@ module Azure
 
       def create_virtual_machine_using_template(params)
         template = create_deployment_template(params)
-
         parameters = create_deployment_parameters(params, @platform)
 
         deploy_prop = DeploymentProperties.new
