@@ -110,7 +110,7 @@ module Azure::ARM
 
       def target_name
         # cmdkey command is used for accessing windows credential manager
-        xplat_creds_cmd = Mixlib::ShellOut.new("cmdkey /list | grep AzureXplatCli")
+        xplat_creds_cmd = Mixlib::ShellOut.new("cmdkey /list | findstr AzureXplatCli")
         result = xplat_creds_cmd.run_command
 
         target_name = ""

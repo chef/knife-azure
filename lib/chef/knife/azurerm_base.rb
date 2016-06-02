@@ -116,7 +116,7 @@ class Chef
         err_string = "Please run XPLAT's 'azure login' command OR specify azure_tenant_id, azure_subscription_id, azure_client_id, azure_client_secret in your knife.rb"
         if Chef::Platform.windows?
           # cmdkey command is used for accessing windows credential manager
-          xplat_creds_cmd = Mixlib::ShellOut.new("cmdkey /list | grep AzureXplatCli")
+          xplat_creds_cmd = Mixlib::ShellOut.new("cmdkey /list | findstr AzureXplatCli")
           result = xplat_creds_cmd.run_command
           if result.stdout.nil? || result.stdout.empty?
             raise err_string
