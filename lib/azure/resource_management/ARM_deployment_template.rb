@@ -232,6 +232,24 @@ module Azure::ARM
             "metadata" => {
               "description" => "Optional. Whether or not to verify the SSL cert for all HTTPS requests."
             }
+          },
+          "node_verify_api_cert" => {
+            "type" => "string",
+            "metadata" => {
+              "description" => "Optional. Verify the SSL cert for HTTPS requests to the Chef server API."
+            }
+          },
+          "encrypted_data_bag_secret" => {
+            "type" => "string",
+            "metadata" => {
+              "description" => "Optional. The secret key to use to encrypt data bag item values."
+            }
+          },
+          "bootstrap_proxy" => {
+            "type" => "string",
+            "metadata" => {
+              "description" => "Optional. The proxy server for the node being bootstrapped."
+            }
           }
         },
         "variables"=> {
@@ -406,7 +424,10 @@ module Azure::ARM
                   "chef_server_url" => "[parameters('chef_server_url')]",
                   "validation_client_name" => "[parameters('validation_client_name')]",
                   "bootstrap_version" => "[parameters('bootstrap_version')]",
-                  "node_ssl_verify_mode" => "[parameters('node_ssl_verify_mode')]"
+                  "node_ssl_verify_mode" => "[parameters('node_ssl_verify_mode')]",
+                  "node_verify_api_cert" => "[parameters('node_verify_api_cert')]",
+                  "encrypted_data_bag_secret" => "[parameters('encrypted_data_bag_secret')]",
+                  "bootstrap_proxy" => "[parameters('bootstrap_proxy')]"
                 },
                 "runlist" => "[parameters('runlist')]",
                 "autoUpdateClient" => "[parameters('autoUpdateClient')]",
@@ -471,6 +492,15 @@ module Azure::ARM
         },
         "node_ssl_verify_mode" => {
           "value" => "#{params[:chef_extension_public_param][:bootstrap_options][:node_ssl_verify_mode]}"
+        },
+        "node_verify_api_cert" => {
+          "value" => "#{params[:chef_extension_public_param][:bootstrap_options][:node_verify_api_cert]}"
+        },
+        "encrypted_data_bag_secret" => {
+          "value" => "#{params[:chef_extension_public_param][:bootstrap_options][:encrypted_data_bag_secret]}"
+        },
+        "bootstrap_proxy" => {
+          "value" => "#{params[:chef_extension_public_param][:bootstrap_options][:bootstrap_proxy]}"
         },
         "runlist" => {
           "value" => "#{params[:chef_extension_public_param][:runlist]}"
