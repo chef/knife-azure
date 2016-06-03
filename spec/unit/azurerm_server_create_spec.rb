@@ -23,7 +23,7 @@ describe Chef::Knife::AzurermServerCreate do
       :winrm_user => 'winrm_user',
       :ssh_user => Chef::Config[:knife][:ssh_user],
       :ssh_password => 'ssh_password',
-      :azure_vm_size => 'azure_vm_size',
+      :azure_vm_size => 'small',
       :azure_storage_account => 'azurestorageaccount',
       :azure_storage_account_type => 'azure_storage_account_type',
       :azure_os_disk_name => 'azureosdiskname',
@@ -39,8 +39,8 @@ describe Chef::Knife::AzurermServerCreate do
       :chef_extension_private_param => { :validation_key => '37284723sdjfhsdkfsfd' },
       :latest_chef_extension_version => '1210.12',
       :chef_extension_public_param => {
-        :bootstrap_options => {},
-        :hints => ['vm_name', 'public_fqdn', 'platform']
+        :hints => ['vm_name', 'public_fqdn', 'platform'],
+        :bootstrap_options => { :bootstrap_version => '12.8.1'}
       }
     }
 
@@ -1321,20 +1321,24 @@ describe Chef::Knife::AzurermServerCreate do
 
   describe "create_deployment_template" do
     before do
-      bootstrap_options = {:chef_server_url => "url",
-        :validation_client_name => "client_name"}
+      bootstrap_options = { :chef_server_url => "url",
+        :validation_client_name => "client_name",
+        :encrypted_data_bag_secret => "rihrfwe739085928592nehrweirwefjsndwe",
+        :bootstrap_proxy => "http://test.com",
+        :node_ssl_verify_mode => 'true',
+        :node_verify_api_cert  => 'hfyreiur374294nehfdishf' }
       @params[:chef_extension_public_param] = { :hints =>
         ['vm_name', 'public_fqdn', 'platform'],
         :bootstrap_options => bootstrap_options
       }
-
       {
         :azure_image_reference_publisher => 'OpenLogic',
         :azure_image_reference_offer => 'CentOS',
         :azure_image_reference_sku => '6.5',
         :azure_image_reference_version => 'latest',
         :ssh_user => 'ssh_user',
-        :server_count => 3
+        :server_count => 3,
+        :vm_size => "Standard_A1"
       }.each do |key, value|
           @params[key] = value
         end
@@ -1357,7 +1361,7 @@ describe Chef::Knife::AzurermServerCreate do
       expect(template["variables"]["publicIPAddressName"]).to be == "test-vm"
       expect(template["variables"]["vmStorageAccountContainerName"]).to be == "test-vm"
       expect(template["variables"]["vmName"]).to be == "test-vm"
-      expect(template["variables"]["vmSize"]).to be == "Standard_D1"
+      expect(template["variables"]["vmSize"]).to be == "Standard_A1"
       expect(template["variables"]["virtualNetworkName"]).to be == "azure_virtual_network_name"
       expect(template["variables"]["vmExtensionName"]).to be == "chef_extension"
 
@@ -1365,7 +1369,6 @@ describe Chef::Knife::AzurermServerCreate do
       template["resources"].each do |resource|
         extension = resource if resource["type"] == "Microsoft.Compute/virtualMachines/extensions"
       end
-
       expect(extension["name"]).to be == "[concat(variables('vmName'),copyIndex(),'/', variables('vmExtensionName'))]"
       expect(extension["properties"]["publisher"]).to be == "chef_extension_publisher"
       expect(extension["properties"]["type"]).to be == "chef_extension"
@@ -1378,6 +1381,11 @@ describe Chef::Knife::AzurermServerCreate do
       expect(extension["properties"]["settings"]["deleteChefConfig"]).to be == "[parameters('deleteChefConfig')]"
       expect(extension["properties"]["settings"]["uninstallChefClient"]).to be == "[parameters('uninstallChefClient')]"
       expect(extension["properties"]["settings"]["hints"]).to be == @hints_json
+      expect(extension["properties"]["settings"]["bootstrap_options"]["bootstrap_version"]).to be == "[parameters('bootstrap_version')]"
+      expect(extension["properties"]["settings"]["bootstrap_options"]["encrypted_data_bag_secret"]).to be == "[parameters('encrypted_data_bag_secret')]"
+      expect(extension["properties"]["settings"]["bootstrap_options"]["bootstrap_proxy"]).to be == "[parameters('bootstrap_proxy')]"
+      expect(extension["properties"]["settings"]["bootstrap_options"]["node_ssl_verify_mode"]).to be == "[parameters('node_ssl_verify_mode')]"
+      expect(extension["properties"]["settings"]["bootstrap_options"]["node_verify_api_cert"]).to be == "[parameters('node_verify_api_cert')]"
     end
 
     after do
@@ -1388,8 +1396,13 @@ describe Chef::Knife::AzurermServerCreate do
   describe "create_deployment_parameters" do
     before do
       bootstrap_options = {:chef_server_url => "url",
-        :validation_client_name => "client_name"}
-      @params[:chef_extension_public_param] = {:bootstrap_options => bootstrap_options}
+        :validation_client_name => "client_name",
+        :encrypted_data_bag_secret => "rihrfwe739085928592nehrweirwefjsndwe",
+        :bootstrap_proxy => "http://test.com",
+        :node_ssl_verify_mode => 'true',
+        :node_verify_api_cert  => 'hfyreiur374294nehfdishf',
+        :chef_node_name => 'test-vm'}
+      @params[:chef_extension_public_param] = { :bootstrap_options => bootstrap_options }
       @params[:chef_extension_private_param] = {:validation_key => "validation_key"}
       {
         :azure_image_reference_publisher => 'OpenLogic',
@@ -1397,7 +1410,10 @@ describe Chef::Knife::AzurermServerCreate do
         :azure_image_reference_sku => '6.5',
         :azure_image_reference_version => 'latest',
         :ssh_user => 'ssh_user',
-        :server_count => 3
+        :admin_password => "admin_password",
+        :server_count => 3,
+        :client_rb => "contents_of_client_rb",
+        :custom_json_attr => '"{name: test}"'
       }.each do |key, value|
           @params[key] = value
         end
@@ -1405,7 +1421,6 @@ describe Chef::Knife::AzurermServerCreate do
 
     it "sets the parameters which are passed in the template" do
       parameters = @service.create_deployment_parameters(@params, "Windows")
-
       expect(parameters["adminUserName"]["value"]).to be == "winrm_user"
       expect(parameters["adminPassword"]["value"]).to be == "admin_password"
       expect(parameters["dnsLabelPrefix"]["value"]).to be == "test-vm"
@@ -1418,42 +1433,15 @@ describe Chef::Knife::AzurermServerCreate do
       expect(parameters["autoUpdateClient"]["value"]).to be == ""
       expect(parameters["deleteChefConfig"]["value"]).to be == ""
       expect(parameters["uninstallChefClient"]["value"]).to be == ""
+      expect(parameters["encrypted_data_bag_secret"]["value"]).to be == "rihrfwe739085928592nehrweirwefjsndwe"
+      expect(parameters["bootstrap_proxy"]["value"]).to be == "http://test.com"
+      expect(parameters["node_ssl_verify_mode"]["value"]).to be == "true"
+      expect(parameters["node_verify_api_cert"]["value"]).to be == 'hfyreiur374294nehfdishf'
+      expect(parameters["chef_node_name"]["value"]).to be == 'test-vm'
     end
 
     after do
       @params.delete(:server_count)
-    end
-  end
-
-  describe "set chef extension version parameter" do
-    before do
-      @params[:server_count] = 3
-      allow(@service).to receive(:resource_management_client).and_return(@resource_client)
-    end
-
-    context "when user has supplied chef extension version value" do
-      it "successfully creates virtual machine extension with the user supplied version value" do
-        # expect(@service).to receive(:compute_management_client).and_return(stub_compute_management_client('yes'))
-        expect(@service).to_not receive(:get_latest_chef_extension_version)
-        expect(@params[:chef_extension_version]) == '11.10.1'
-        @service.create_virtual_machine_using_template(@params)
-      end
-    end
-
-    context "when user has not supplied chef extension version value" do
-      before do
-        @params.delete(:chef_extension_version)
-      end
-
-      it "successfully creates virtual machine extension with the latest version" do
-        expect(@service).to receive(:get_latest_chef_extension_version)
-        expect(@service).to receive(:compute_management_client).and_return(stub_compute_management_client('no'))
-        expect(@params[:chef_extension_version]) == '1210.12'
-        expect(@resource_client).to receive_message_chain(
-          :deployments, :create_or_update).and_return(
-            @resource_promise)
-        @service.create_virtual_machine_using_template(@params)
-      end
     end
   end
 
