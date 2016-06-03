@@ -19,6 +19,23 @@
 module Azure::ARM
   module ARMDeploymentTemplate
 
+    def ohai_hints(hint_names, resource_ids)
+      hints_json = {}
+
+      hint_names.each do |hint_name|
+        case hint_name
+        when 'vm_name'
+          hints_json['vm_name'] = "[reference(#{resource_ids['vmId']}).osProfile.computerName]" if !hints_json.has_key? 'vm_name'
+        when 'public_fqdn'
+          hints_json['public_fqdn'] = "[reference(#{resource_ids['pubId']}).dnsSettings.fqdn]" if !hints_json.has_key? 'public_fqdn'
+        when 'platform'
+          hints_json['platform'] = "[concat(reference(#{resource_ids['vmId']}).storageProfile.imageReference.offer, concat(' ', reference(#{resource_ids['vmId']}).storageProfile.imageReference.sku))]" if !hints_json.has_key? 'platform'
+        end
+      end
+
+      hints_json
+    end
+
     def create_deployment_template(params)
       if params[:chef_extension_public_param][:bootstrap_options][:chef_node_name]
         chef_node_name = "[concat(parameters('chef_node_name'),copyIndex())]"
@@ -36,6 +53,7 @@ module Azure::ARM
 
         # virtualMachines Resource Variables
         vmName = "[concat(variables('vmName'),copyIndex())]"
+        vmId = "[resourceId('Microsoft.Compute/virtualMachines', concat(variables('vmName'),copyIndex()))]"
         depVm2="[concat('Microsoft.Network/networkInterfaces/', variables('nicName'), copyIndex())]"
         computerName = "[concat(variables('vmName'),copyIndex())]"
         uri = "[concat('http://',variables('storageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',concat(variables('vmName'),copyIndex()),'.vhd')]"
@@ -56,6 +74,7 @@ module Azure::ARM
 
         # virtualMachines Resource Variables
         vmName = "[variables('vmName')]"
+        vmId = "[resourceId('Microsoft.Compute/virtualMachines', variables('vmName'))]"
         depVm2="[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
         computerName = "[variables('vmName')]"
         uri = "[concat('http://',variables('storageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',variables('vmName'),'.vhd')]"
@@ -65,6 +84,20 @@ module Azure::ARM
         extName = "[concat(variables('vmName'),'/', variables('vmExtensionName'))]"
         depExt = "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
       end
+
+      resource_ids = {}
+      hint_names = params[:chef_extension_public_param][:hints]
+
+      hint_names.each do |hint_name|
+        case hint_name
+        when 'public_fqdn'
+          resource_ids['pubId'] = pubId.gsub('[','').gsub(']','') if !resource_ids.has_key? 'pubId'
+        when 'vm_name', 'platform'
+          resource_ids['vmId'] = vmId.gsub('[','').gsub(']','') if !resource_ids.has_key? 'vmId'
+        end
+      end
+
+      hints_json = ohai_hints(hint_names, resource_ids)
 
       template = {
         "$schema"=> "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
@@ -341,7 +374,8 @@ module Azure::ARM
                 "autoUpdateClient" => "[parameters('autoUpdateClient')]",
                 "deleteChefConfig" => "[parameters('deleteChefConfig')]",
                 "uninstallChefClient" => "[parameters('uninstallChefClient')]",
-                "validation_key_format" => "[parameters('validation_key_format')]"
+                "validation_key_format" => "[parameters('validation_key_format')]",
+                "hints" => hints_json
               },
               "protectedSettings" => {
                 "validation_key" => "[parameters('validation_key')]",

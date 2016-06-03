@@ -176,6 +176,14 @@ class Chef
                                     Maximum count is 5. Default value is 1.",
         :default => 1
 
+      option :ohai_hints,
+        :long => "--ohai-hints HINT_OPTIONS",
+        :description => "Hint option names to be set in Ohai configuration of the target node.
+                                     Supported values are: vm_name, public_fqdn and platform.
+                                     User can pass any comma separated combination of these values like 'vm_name,public_fqdn'.
+                                     Default value is 'default' which corresponds to the supported values list mentioned here.",
+        :default => 'default'
+
       def run
         $stdout.sync = true
 
@@ -261,6 +269,32 @@ class Chef
         server_def
       end
 
+      def supported_ohai_hints
+        [
+          'vm_name',
+          'public_fqdn',
+          'platform'
+        ]
+      end
+
+      def format_ohai_hints(ohai_hints)
+        ohai_hints = ohai_hints.split(',').each { |hint| hint.strip! }
+        ohai_hints.join(',')
+      end
+
+      def is_supported_ohai_hint?(hint)
+        supported_ohai_hints.any? { |supported_ohai_hint| hint.eql? supported_ohai_hint }
+      end
+
+      def validate_ohai_hints
+        hint_values = locate_config_value(:ohai_hints).split(',')
+        hint_values.each do |hint|
+          if ! is_supported_ohai_hint?(hint)
+            raise ArgumentError, "Ohai Hint name #{hint} passed is not supported. Please run the command help to see the list of supported values."
+          end
+        end
+      end
+
       def validate_params!
         if locate_config_value(:azure_vnet_name) && !locate_config_value(:azure_vnet_subnet_name)
           raise ArgumentError,  "When a --azure-vnet-name is specified, the --azure-vnet-subnet-name must also be specified."
@@ -287,6 +321,9 @@ class Chef
         if locate_config_value(:server_count).to_i > 5
           raise ArgumentError, "Maximum allowed value of --server-count is 5."
         end
+
+        config[:ohai_hints] = format_ohai_hints(locate_config_value(:ohai_hints))
+        validate_ohai_hints if ! locate_config_value(:ohai_hints).casecmp('default').zero?
       end
 
       private
