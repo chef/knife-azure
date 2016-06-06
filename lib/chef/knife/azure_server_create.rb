@@ -464,8 +464,7 @@ class Chef
               ## unavailability of the substatus field indicates that chef-client run is not completed yet on the server ##
               fetch_process_wait_time = ((Time.now - fetch_process_start_time) / 60).round
               if fetch_process_wait_time <= fetch_process_wait_timeout  ## wait for maximum 30 minutes until chef-client run logs becomes available ##
-                puts "\n\nWaiting minute: #{ui.color(fetch_process_wait_time.to_s, :cyan, :bold)}, Timeout minutes: #{ui.color(fetch_process_wait_timeout.to_s, :cyan, :bold)}"
-                puts "Sleep interval (in seconds): #{ui.color(30.to_s, :cyan, :bold)}\n\n"
+                print "#{ui.color('.', :bold)}"
                 sleep 30
                 fetch_chef_client_logs(fetch_process_start_time, fetch_process_wait_timeout)
               else
@@ -506,9 +505,8 @@ class Chef
         service.create_server(create_server_def)
         wait_until_virtual_machine_ready()
         if locate_config_value(:bootstrap_protocol) == 'cloud-api' && locate_config_value(:extended_logs)
-          puts "\n\n######## chef-client run logs fetch process started ########\n\n"
+          print "\n\nWaiting for the first chef-client run"
           fetch_chef_client_logs(Time.now, 30)
-          puts "######## chef-client run logs fetch process completed ########\n\n\n"
         end
         server = service.get_role_server(locate_config_value(:azure_dns_name), locate_config_value(:azure_vm_name))
         msg_server_summary(server)

@@ -1103,7 +1103,7 @@ describe Chef::Knife::AzureServerCreate do
                 alias_method :fetch_chef_client_logs_mocked, :fetch_chef_client_logs
               end
             end
-            expect(@server_instance).to receive(:puts).exactly(2).times
+            expect(@server_instance).to receive(:print).exactly(1).times
             expect(@server_instance).to receive(:sleep).with(30)
             expect(@server_instance).to receive(
               :fetch_chef_client_logs).with(@start_time, 30)
