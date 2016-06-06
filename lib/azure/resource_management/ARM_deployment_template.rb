@@ -385,6 +385,16 @@ module Azure::ARM
           }
         ]
       }
+
+      if !params[:chef_extension_public_param][:environment_variables].nil?
+        template['resources'].each do |resource|
+          if resource['type'] == 'Microsoft.Compute/virtualMachines/extensions'
+            resource['properties']['settings']['environment_variables'] = params[:chef_extension_public_param][:environment_variables]
+          end
+        end
+      end
+
+      template
     end
 
     def create_deployment_parameters(params, platform)

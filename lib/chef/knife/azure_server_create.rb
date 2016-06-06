@@ -574,6 +574,11 @@ class Chef
           ui.error("--extended-logs option works with --bootstrap-protocol cloud-api")
           exit 1
         end
+
+        if locate_config_value(:environment_variables) && locate_config_value(:bootstrap_protocol) != 'cloud-api'
+          ui.error("--environment-variables option works with --bootstrap-protocol cloud-api")
+          exit 1
+        end
       end
 
       def create_server_def

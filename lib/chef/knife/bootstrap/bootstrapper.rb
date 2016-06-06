@@ -264,6 +264,18 @@ class Chef
           hints
         end
 
+        def environment_variables
+          key_value_pairs = locate_config_value(:environment_variables)
+
+          variables = {}
+          key_value_pairs.split(',').each do |pair|
+            key, value = pair.split(':')
+            variables[key] = value
+          end
+
+          variables
+        end
+
         def get_chef_extension_public_params
           pub_config = Hash.new
           if(locate_config_value(:azure_extension_client_config))
@@ -279,6 +291,7 @@ class Chef
           pub_config[:custom_json_attr] = locate_config_value(:json_attributes) || {}
           pub_config[:extendedLogs] = locate_config_value(:extended_logs) ? "true" : "false"
           pub_config[:hints] = ohai_hints if @service.instance_of? Azure::ResourceManagement::ARMInterface
+          pub_config[:environment_variables] = environment_variables if locate_config_value(:environment_variables)
 
           # bootstrap attributes
           pub_config[:bootstrap_options] = {}
