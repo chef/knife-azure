@@ -250,6 +250,18 @@ module Azure::ARM
             "metadata" => {
               "description" => "Optional. The proxy server for the node being bootstrapped."
             }
+          },
+          "sshKeyData" => {
+            "type" => "string",
+            "metadata" => {
+              "description" => "SSH rsa public key file as a string."
+            }
+          },
+          "disablePasswordAuthentication" => {
+            "type" => "string",
+            "metadata" => {
+              "description" => "Set to true if using ssh key for authentication."
+            }
           }
         },
         "variables"=> {
@@ -272,6 +284,7 @@ module Azure::ARM
           "subnetRef"=> "[concat(variables('vnetID'),'/subnets/',variables('subnetName'))]",
           "apiVersion"=> "2015-06-15",
           "vmExtensionName"=> "#{params[:chef_extension]}",
+          "sshKeyPath" => "[concat('/home/',parameters('adminUserName'),'/.ssh/authorized_keys')]"
         },
         "resources"=> [
           {
@@ -370,7 +383,16 @@ module Azure::ARM
               "osProfile"=> {
                 "computerName"=> computerName,
                 "adminUserName"=> "[parameters('adminUserName')]",
-                "adminPassword"=> "[parameters('adminPassword')]"
+                "adminPassword"=> "[parameters('adminPassword')]",
+                "linuxConfiguration" => ( {
+                  "disablePasswordAuthentication" => "[parameters('disablePasswordAuthentication')]",
+                  "ssh" => {
+                    "publicKeys" => [ {
+                    "path" => "[variables('sshKeyPath')]",
+                    "keyData" => "[parameters('sshKeyData')]"
+                    } ]
+                  }
+                } if params[:disablePasswordAuthentication] == "true")
               },
               "storageProfile"=> {
                 "imageReference"=> {
@@ -525,6 +547,12 @@ module Azure::ARM
         },
         "custom_json_attr" => {
           "value" => "#{params[:chef_extension_public_param][:custom_json_attr]}"
+        },
+        "sshKeyData" => {
+          "value" => "#{params[:ssh_key]}"
+        },
+        "disablePasswordAuthentication" => {
+          "value" => "#{params[:disablePasswordAuthentication]}"
         }
       }
     end
