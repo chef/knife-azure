@@ -233,7 +233,7 @@ module Azure
           unless result.nil?
             server = result.body
           else
-            ui.error("There is no server with name #{name} or resource_group #{resource_group}. Please provide correct details.")
+            puts "There is no server with name #{name} or resource_group #{resource_group}. Please provide correct details."
           end
         rescue => error
           ui.error("#{error.body["error"]["message"]}")
