@@ -107,6 +107,10 @@ class Chef
             option :secret_file,
               :long => "--secret-file SECRET_FILE",
               :description => "A file containing the secret key to use to encrypt data bag item values.  Can also be defaulted in your config with the key 'secret_file'"
+
+            option :environment_variables,
+              :long => "--environment-variables VARIABLES_LIST",
+              :description => "Optional. Comma separated list of key-value pairs to be available as environment_variables to the Chef Extension scripts on the target node. e.g. 'var1:value1,var2:value2,var3:value3'"
   	  	  end
   	  	end
   	  end

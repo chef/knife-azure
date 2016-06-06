@@ -96,6 +96,10 @@ class Chef
               :default => false,
               :description => "Optional. Provide this option when --bootstrap-protocol is set to 'cloud-api'. It shows chef converge logs in detail."
 
+            option :environment_variables,
+              :long => "--environment-variables VARIABLES_LIST",
+              :description => "Optional. Comma separated list of key-value pairs to be available as environment_variables to the Chef Extension scripts on the target node. e.g. 'var1:value1,var2:value2,var3:value3'"
+
   	  	  end
   	  	end
   	  end
