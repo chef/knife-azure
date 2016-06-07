@@ -93,7 +93,7 @@ describe Chef::Knife::AzurermBase do
     end
   end
 
-  describe "Token related test cases" do      
+  describe "Token related test cases" do
     context 'Xplat Azure login validation' do
       it 'Accesstoken file doesnt exist for Linux' do
         allow(Chef::Platform).to receive(:windows?).and_return(false)
@@ -134,20 +134,20 @@ describe Chef::Knife::AzurermBase do
       end
 
     end
-      
+
     context "Token Validation test cases" do
       it "Token Validity expired" do
         token_details = {:tokentype => "Bearer", :user => "xxx@outlook.com", :token => "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1iIxLjAifQ.hZjHXXjbSdMmMs9oSZxGKa62EnNG6jkTY4RSmq8dQMvmwHgDCF4KoT_sOIsrAJTVwXuCdxYa5Jr83sfydFwiO2QWWOaSgyRXGPouex4NXFI_LFdnRzhLBoN0ONwUWHrV12N4LBgHyNLiyfeZQJFCbD0LTcPdjh7qQZ5aVgcoz_CB33PGD_z2L_6ynWrlAoihLEmYD6vbebMDSSFazvzoVg", :expiry_time => "2016-05-31T09:42:15.617Z", :clientid => "dsff-8df-sd45e-34345f7b46", :refreshtoken => "FPbm0gXiszvV_cMwGkgACwMBZ26fWA6fH3ToRLTHYU3wvvTWiU74ukRhMHhv20OJOtZBOtbckh3kTMT7QvzUYfd4uHFzwAYCtsh2SOY-dCAA"}
         expect { @arm_server_instance.check_token_validity(token_details) }.to raise_error(RuntimeError)
       end
-                       
+
       it 'Token is valid' do
         token_details = {:tokentype => "Bearer", :user => "xxx@outlook.com", :token => "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1iIxLjAifQ.hZjHXXjbSdMmMs9oSZxGKa62EnNG6jkTY4RSmq8dQMvmwHgDCF4KoT_sOIsrAJTVwXuCdxYa5Jr83sfydFwiO2QWWOaSgyRXGPouex4NXFI_LFdnRzhLBoN0ONwUWHrV12N4LBgHyNLiyfeZQJFCbD0LTcPdjh7qQZ5aVgcoz_CB33PGD_z2L_6ynWrlAoihLEmYD6vbebMDSSFazvzoVg", :expiry_time => "2116-05-31T09:42:15.617Z", :clientid => "dsff-8df-sd45e-34345f7b46", :refreshtoken => "FPbm0gXiszvV_cMwGkgACwMBZ26fWA6fH3ToRLTHYU3wvvTWiU74ukRhMHhv20OJOtZBOtbckh3kTMT7QvzUYfd4uHFzwAYCtsh2SOY-dCAA"}
         expect { @arm_server_instance.check_token_validity(token_details) }.not_to raise_error(RuntimeError)
       end
     end
 
-    context "Authentication" do  
+    context "Authentication" do
       before do
         Chef::Config[:knife][:azure_tenant_id] = "abeb039a-rfrgrggb48f-0c99bdc99d15"
         Chef::Config[:knife][:azure_client_id] = "54dsdwe-3e2f36-e9f11d7f88a1"
@@ -155,7 +155,7 @@ describe Chef::Knife::AzurermBase do
       end
 
       it 'use AD App creds to authenticate' do
-        @authentication_details = @arm_server_instance.check_authentication_method
+        @authentication_details = @arm_server_instance.authentication_details
         expect(@authentication_details[:azure_tenant_id]).to be ==  "abeb039a-rfrgrggb48f-0c99bdc99d15"
         expect(@authentication_details[:azure_client_id]).to be ==  "54dsdwe-3e2f36-e9f11d7f88a1"
         expect(@authentication_details[:azure_client_secret]).to be ==  "xyz@123"
@@ -166,23 +166,23 @@ describe Chef::Knife::AzurermBase do
         Chef::Config[:knife].delete(:azure_tenant_id)
         allow(Chef::Platform).to receive(:windows?).and_return(false)
         allow(@arm_server_instance).to receive(:token_details_for_linux).and_return(token_details)
-        @authentication_details = @arm_server_instance.check_authentication_method
+        @authentication_details = @arm_server_instance.authentication_details
         expect(@authentication_details[:clientid]).to be ==  "dsff-8df-sd45e-34345f7b46"
       end
-     
+
       it 'use Token Authentication for Windows Platform' do
         token_details = {:tokentype => "Bearer", :user => "xxx@outlook.com", :token => "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1iIxLjAifQ.hZjHXXjbSdMmMs9oSZxGKa62EnNG6jkTY4RSmq8dQMvmwHgDCF4KoT_sOIsrAJTVwXuCdxYa5Jr83sfydFwiO2QWWOaSgyRXGPouex4NXFI_LFdnRzhLBoN0ONwUWHrV12N4LBgHyNLiyfeZQJFCbD0LTcPdjh7qQZ5aVgcoz_CB33PGD_z2L_6ynWrlAoihLEmYD6vbebMDSSFazvzoVg", :expiry_time => "2116-05-31T09:42:15.617Z", :clientid => "dsff-8df-sd45e-34345f7b46", :refreshtoken => "FPbm0gXiszvV_cMwGkgACwMBZ26fWA6fH3ToRLTHYU3wvvTWiU74ukRhMHhv20OJOtZBOtbckh3kTMT7QvzUYfd4uHFzwAYCtsh2SOY-dCAA"}
         Chef::Config[:knife].delete(:azure_tenant_id)
         allow(Chef::Platform).to receive(:windows?).and_return(true)
         allow(@arm_server_instance).to receive(:token_details_for_windows).and_return(token_details)
-        @authentication_details = @arm_server_instance.check_authentication_method
+        @authentication_details = @arm_server_instance.authentication_details
         expect(@authentication_details[:clientid]).to be ==  "dsff-8df-sd45e-34345f7b46"
       end
 
       it 'Get token details from Accesstoken file for Linux' do
         if Chef::Platform.windows?
           token_details = {:tokentype => "Bearer", :user => "xxx@outlook.com", :token => "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1iIxLjAifQ.hZjHXXjbSdMmMs9oSZxGKa62EnNG6jkTY4RSmq8dQMvmwHgDCF4KoT_sOIsrAJTVwXuCdxYa5Jr83sfydFwiO2QWWOaSgyRXGPouex4NXFI_LFdnRzhLBoN0ONwUWHrV12N4LBgHyNLiyfeZQJFCbD0LTcPdjh7qQZ5aVgcoz_CB33PGD_z2L_6ynWrlAoihLEmYD6vbebMDSSFazvzoVg", :expiry_time => "2116-05-31T09:42:15.617Z", :clientid => "dsff-8df-sd45e-34345f7b46", :refreshtoken => "FPbm0gXiszvV_cMwGkgACwMBZ26fWA6fH3ToRLTHYU3wvvTWiU74ukRhMHhv20OJOtZBOtbckh3kTMT7QvzUYfd4uHFzwAYCtsh2SOY-dCAA"}
-          allow(@arm_server_instance).to receive(:token_details_for_linux).and_return(token_details) 
+          allow(@arm_server_instance).to receive(:token_details_for_linux).and_return(token_details)
         else
           allow(Chef::Platform).to receive(:windows?).and_return(false)
           file_data = File.read(File.dirname(__FILE__) + "/assets/accessTokens.json")
@@ -192,7 +192,7 @@ describe Chef::Knife::AzurermBase do
         end
       end
 
-      it 'Get Target name for Windows' do 
+      it 'Get Target name for Windows' do
         allow(Chef::Platform).to receive(:windows?).and_return(true)
         target = "AzureXplatCli:target=_authority:https\://login.microsoftonline.com/abeb039a-rfrgrggb48f-0c99bdc99d15::_clientId:dsff-8df-sd45e-34345f7b46::expiresIn:3599::expiresOn:2116-05-31T09\:42\:15.617Z::identityProvider:live.com::isMRRT:true::resource:https\://management.core.windows.net/::tokenType:Bearer::userId:xxx@outlook.com--0-2"
         allow(@arm_server_instance).to receive(:target_name).and_return(target)

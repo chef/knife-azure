@@ -25,12 +25,12 @@ require 'time'
 class Chef
   class Knife
     module AzurermBase
-      
+
       if Chef::Platform.windows?
         require 'azure/resource_management/windows_credentials'
         include Azure::ARM::WindowsCredentials
       end
- 
+
       def self.included(includer)
         includer.class_eval do
 
@@ -48,7 +48,7 @@ class Chef
       end
 
       def service
-        details = check_authentication_method()
+        details = authentication_details()
         details.update(:azure_subscription_id => locate_config_value(:azure_subscription_id))
         @service ||= begin
                       service = Azure::ResourceManagement::ARMInterface.new(details)
@@ -85,7 +85,7 @@ class Chef
         end
       end
 
-      def check_authentication_method
+      def authentication_details
         if(!locate_config_value(:azure_tenant_id).nil? && !locate_config_value(:azure_client_id).nil? && !locate_config_value(:azure_client_secret).nil?)
           return {:azure_tenant_id => locate_config_value(:azure_tenant_id), :azure_client_id => locate_config_value(:azure_client_id), :azure_client_secret => locate_config_value(:azure_client_secret)}
         elsif Chef::Platform.windows?
@@ -105,12 +105,12 @@ class Chef
         return token_details
       end
 
-      def check_token_validity(token_details)    
+      def check_token_validity(token_details)
         time_difference = Time.parse(token_details[:expiry_time]) - Time.now.utc
         if time_difference <= 0
           raise "Token has expired, please run any azure command like azure vm list to get new token from refresh token else run azure login command"
         end
-      end    
+      end
 
       def validate_azure_login
         err_string = "Please run XPLAT's 'azure login' command OR specify azure_tenant_id, azure_subscription_id, azure_client_id, azure_client_secret in your knife.rb"

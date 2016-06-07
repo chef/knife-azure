@@ -11,5 +11,4 @@ group :development do
   gem 'activesupport'
   gem 'byebug', '~>6.0.2'
   gem 'rb-readline'
-  gem 'ffi'
 end
