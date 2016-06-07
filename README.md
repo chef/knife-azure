@@ -72,6 +72,9 @@ see [Developer’s guide to auth with Azure Resource Manager API](http://aka.ms/
 
 After creating the service principal, you should have these 3 values, a client id (GUID), client secret(string) and tenant id (GUID).
 
+Be sure when you are creating the above user you change the example from `-o Reader` to `-o Contributor` otherwise you will not be able
+to spin up or delete machines.
+
 Put the following in your `knife.rb`
 
 ```ruby
