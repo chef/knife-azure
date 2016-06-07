@@ -19,10 +19,17 @@
 
 require 'chef/knife'
 require 'azure/resource_management/ARM_interface'
+require 'mixlib/shellout'
+require 'time'
 
 class Chef
   class Knife
     module AzurermBase
+
+      if Chef::Platform.windows?
+        require 'azure/resource_management/windows_credentials'
+        include Azure::ARM::WindowsCredentials
+      end
 
       def self.included(includer)
         includer.class_eval do
@@ -41,13 +48,10 @@ class Chef
       end
 
       def service
+        details = authentication_details()
+        details.update(:azure_subscription_id => locate_config_value(:azure_subscription_id))
         @service ||= begin
-                      service = Azure::ResourceManagement::ARMInterface.new(
-                        :azure_subscription_id => locate_config_value(:azure_subscription_id),
-                        :azure_tenant_id => locate_config_value(:azure_tenant_id),
-                        :azure_client_id => locate_config_value(:azure_client_id),
-                        :azure_client_secret => locate_config_value(:azure_client_secret)
-                      )
+                      service = Azure::ResourceManagement::ARMInterface.new(details)
                     end
         @service.ui = ui
         @service
@@ -62,17 +66,66 @@ class Chef
       def validate_arm_keys!(*keys)
         Chef::Log.warn('Azurerm subcommands are experimental and of alpha quality. Not suitable for production use. Please use ASM subcommands for production.')
         parse_publish_settings_file(locate_config_value(:azure_publish_settings_file)) if(locate_config_value(:azure_publish_settings_file) != nil)
-        mandatory_keys = [:azure_tenant_id, :azure_subscription_id, :azure_client_id, :azure_client_secret]
-        mandatory_keys.concat(keys)
+        keys.push(:azure_subscription_id)
+
+        if(locate_config_value(:azure_tenant_id).nil? || locate_config_value(:azure_client_id).nil? || locate_config_value(:azure_client_secret).nil?)
+          validate_azure_login
+        else
+           keys.concat([:azure_tenant_id, :azure_client_id, :azure_client_secret])
+        end
 
         errors = []
-        mandatory_keys.each do |k|
+        keys.each do |k|
           if locate_config_value(k).nil?
             errors << "You did not provide a valid '#{pretty_key(k)}' value. Please set knife[:#{k}] in your knife.rb."
           end
         end
         if errors.each{|e| ui.error(e)}.any?
           exit 1
+        end
+      end
+
+      def authentication_details
+        if(!locate_config_value(:azure_tenant_id).nil? && !locate_config_value(:azure_client_id).nil? && !locate_config_value(:azure_client_secret).nil?)
+          return {:azure_tenant_id => locate_config_value(:azure_tenant_id), :azure_client_id => locate_config_value(:azure_client_id), :azure_client_secret => locate_config_value(:azure_client_secret)}
+        elsif Chef::Platform.windows?
+          token_details = token_details_for_windows()
+        else
+          token_details = token_details_for_linux()
+        end
+        check_token_validity(token_details)
+        return token_details
+      end
+
+      def token_details_for_linux
+        home_dir = File.expand_path('~')
+        file = File.read(home_dir + '/.azure/accessTokens.json')
+        file = eval(file)
+        token_details = {:tokentype => file[-1][:tokenType], :user => file[-1][:userId], :token => file[-1][:accessToken], :clientid => file[-1][:_clientId], :expiry_time => file[-1][:expiresOn], :refreshtoken => file[-1][:refreshToken]}
+        return token_details
+      end
+
+      def check_token_validity(token_details)
+        time_difference = Time.parse(token_details[:expiry_time]) - Time.now.utc
+        if time_difference <= 0
+          raise "Token has expired, please run any azure command like azure vm list to get new token from refresh token else run azure login command"
+        end
+      end
+
+      def validate_azure_login
+        err_string = "Please run XPLAT's 'azure login' command OR specify azure_tenant_id, azure_subscription_id, azure_client_id, azure_client_secret in your knife.rb"
+        if Chef::Platform.windows?
+          # cmdkey command is used for accessing windows credential manager
+          xplat_creds_cmd = Mixlib::ShellOut.new("cmdkey /list | findstr AzureXplatCli")
+          result = xplat_creds_cmd.run_command
+          if result.stdout.nil? || result.stdout.empty?
+            raise err_string
+          end
+        else
+          home_dir = File.expand_path('~')
+          if !File.exists?(home_dir + "/.azure/accessTokens.json") || File.size?(home_dir + '/.azure/accessTokens.json') <= 2
+            raise err_string
+          end
         end
       end
 
