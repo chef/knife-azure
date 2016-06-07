@@ -72,6 +72,15 @@ see [Developer’s guide to auth with Azure Resource Manager API](http://aka.ms/
 
 After creating the service principal, you should have these 3 values, a client id (GUID), client secret(string) and tenant id (GUID).
 
+Put the following in your `knife.rb`
+
+```ruby
+knife[:azure_tenant_id] # found via: tenantId=$(azure account show -s <subscriptionId> --json | jq -r '.[0].tenantId')
+knife[:azure_subscription_id] # found via: <subscriptionId>
+knife[:azure_client_id] # appId=$(azure ad app show --search <principleappcreated> --json | jq -r '.[0].appId')
+knife[:azure_client_secret] # password you set at initally
+```
+
 
 ## Basic Examples for ASM
 The following examples assume that you've configured the publishsettings file
@@ -679,4 +688,3 @@ You might be asked to enter a password which is usually blank.
 You might be also asked to enter a passphrase. Please enter the phrase of your choice.
 
 It is possible to generate your own certificates and upload them. More Detailed Documentation about the Management Certificates is available : https://www.windowsazure.com/en-us/manage/linux/common-tasks/manage-certificates/
-
