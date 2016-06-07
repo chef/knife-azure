@@ -91,7 +91,7 @@ class Chef
         :short => "-m LOCATION",
         :long => "--azure-service-location LOCATION",
         :description => "Required if not using an Affinity Group. Specifies the geographic location - the name of the data center location that is valid for your subscription.
-                                      Eg: West US, East US, East Asia, Southeast Asia, North Europe, West Europe",
+                                      Eg: westus, eastus, eastasia, southeastasia, northeurope, westeurope",
         :proc        => Proc.new { |lo| Chef::Config[:knife][:azure_service_location] = lo }
 
       option :azure_os_disk_name,
