@@ -214,6 +214,7 @@ describe Chef::Knife::AzurermServerCreate do
           Chef::Config[:knife][:azure_vnet_subnet_name] = 'azure_vnet_subnet_name'
           Chef::Config[:knife][:azure_vm_size] = 'Medium'
           Chef::Config[:knife][:server_count] = 3
+          Chef::Config[:knife][:identity_file] = File.dirname(__FILE__) + "/assets/key_rsa.pub"
         end
 
         it "azure_storage_account provided by user so vm_name does not get assigned to it" do
@@ -244,6 +245,13 @@ describe Chef::Knife::AzurermServerCreate do
         it "should set the value of server_count as provided by the user" do
           @server_params = @arm_server_instance.create_server_def
           expect(@server_params[:server_count]).to be == 3
+        end
+
+        it "should set the value of ssh_key params if --identity-file option is provided by the user" do
+          @server_params = @arm_server_instance.create_server_def
+          allow(File).to receive(:read).and_call_original
+          expect(@server_params[:ssh_key]).to be == "foo"
+          expect(@server_params[:disablePasswordAuthentication]).to be == "true"
         end
 
         after do
@@ -1438,6 +1446,25 @@ describe Chef::Knife::AzurermServerCreate do
       expect(parameters["node_ssl_verify_mode"]["value"]).to be == "true"
       expect(parameters["node_verify_api_cert"]["value"]).to be == 'hfyreiur374294nehfdishf'
       expect(parameters["chef_node_name"]["value"]).to be == 'test-vm'
+    end
+
+    context "--identity_file option is provided " do
+      before do
+        @params[:ssh_key] = "foo"
+        @params[:disablePasswordAuthentication] = "true"
+      end
+
+      it "sets ssh-key data and sets disablePasswordAuthentication to true" do
+        parameters = @service.create_deployment_parameters(@params, "Linux")
+        expect(parameters["sshKeyData"]["value"]).to be == "foo"
+        expect(parameters["disablePasswordAuthentication"]["value"]).to be == "true"
+      end
+
+      it "not sets the ssh_key and disablePasswordAuthentication param if windows" do
+        parameters = @service.create_deployment_parameters(@params, "Windows")
+        expect(parameters["sshKeyData"]["value"]).to be == "foo"
+        expect(parameters["disablePasswordAuthentication"]["value"]).to be == "true"
+      end
     end
 
     after do
