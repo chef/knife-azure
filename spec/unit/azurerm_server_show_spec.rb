@@ -17,7 +17,7 @@ describe Chef::Knife::AzurermServerShow do
 
   it "should give error if there is no server with the given name" do
     expect(@compute_client).to receive_message_chain(:virtual_machines, :get, :value!)
-    expect(@arm_server_instance.service).to receive(:puts).with("There is no server with name vmname or resource_group RESOURCE_GROUP. Please provide correct details.")
+    expect(@arm_server_instance.service.ui).to receive(:error).with("There is no server with name vmname or resource_group RESOURCE_GROUP. Please provide correct details.")
     @arm_server_instance.run
   end
   
