@@ -78,7 +78,7 @@ module Azure::ARM
       def token_details_for_windows
         target = target_name
 
-        if target
+        if target && !target.empty?
           target_pointer = wstring(target)
           info_ptr = FFI::MemoryPointer.new(:pointer)
           cred = CREDENTIAL_OBJECT.new info_ptr
@@ -113,24 +113,51 @@ module Azure::ARM
         xplat_creds_cmd = Mixlib::ShellOut.new("cmdkey /list | findstr AzureXplatCli")
         result = xplat_creds_cmd.run_command
 
-        target_name = ""
+        target_names = []
         if result.stdout.empty?
           raise "Azure Credentials not found. Please run xplat's 'azure login' command"
         else
           result.stdout.split("\n").each do |target|
-            # Three credentials get created in windows credential manager for xplat-cli
+            # Three credentials get created in windows credential manager for a single Azure account in xplat-cli
             # One of them is for common tanent id, which can't be used
             # Two of them end with --0-2 and --1-2. The one ending with --1-2 doesn't have
             # accessToken and refreshToken in the credentialBlob.
-            # Selecting the one ending with --0-2
+            # Selecting the ones ending with --0-2
             if !target.include?("common::") && target.include?("--0-2")
-              target_name = target.gsub("Target:","").strip
-              break
+              target_names << target.gsub("Target:","").strip
             end
           end
         end
 
-        target_name
+        # If "azure login" is done for multiple users, there will be multiple credentials
+        # Picking up the latest logged in user's credentials
+        latest_target = latest_credential_target target_names
+        latest_target
+      end
+
+      def latest_credential_target targets
+        case targets.size
+        when 0
+          raise "No Target was found for windows credentials"
+        when 1
+          return targets.first
+        else
+          latest_target = ""
+          max_expiry_time = Time.new(0)
+
+          # Using expiry_time to determine the latest credential
+          targets.each do |target|
+            target_obj = target.split("::")
+            expiry_time_obj = target_obj.select { |obj| obj.include? "expiresOn" }
+            expiry_time = expiry_time_obj[0].split("expiresOn:")[1].gsub("\\","") if expiry_time_obj
+            if Time.parse(expiry_time) > max_expiry_time
+              latest_target = target
+              max_expiry_time = Time.parse(expiry_time)
+            end
+          end
+
+          return latest_target
+        end
       end
     end
 end
