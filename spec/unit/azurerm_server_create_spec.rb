@@ -60,20 +60,17 @@ describe Chef::Knife::AzurermServerCreate do
 
       it "azure_tenant_id" do
         Chef::Config[:knife].delete(:azure_tenant_id)
-        expect(@arm_server_instance.ui).to receive(:error)
-        expect {@arm_server_instance.run}.to raise_error(SystemExit)
+        expect {@arm_server_instance.run}.to raise_error("Please run XPLAT's 'azure login' command OR specify azure_tenant_id, azure_subscription_id, azure_client_id, azure_client_secret in your knife.rb")
       end
 
       it "azure_client_id" do
         Chef::Config[:knife].delete(:azure_client_id)
-        expect(@arm_server_instance.ui).to receive(:error)
-        expect {@arm_server_instance.run}.to raise_error(SystemExit)
+        expect {@arm_server_instance.run}.to raise_error("Please run XPLAT's 'azure login' command OR specify azure_tenant_id, azure_subscription_id, azure_client_id, azure_client_secret in your knife.rb")
       end
 
       it "azure_client_secret" do
         Chef::Config[:knife].delete(:azure_client_secret)
-        expect(@arm_server_instance.ui).to receive(:error)
-        expect {@arm_server_instance.run}.to raise_error(SystemExit)
+        expect {@arm_server_instance.run}.to raise_error("Please run XPLAT's 'azure login' command OR specify azure_tenant_id, azure_subscription_id, azure_client_id, azure_client_secret in your knife.rb")
       end
 
       it "azure_resource_group_name" do
