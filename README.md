@@ -38,8 +38,9 @@ They are not designed to work together. Commands starting with `knife azure` use
 PLEASE NOTE that `Azuererm` subcommands are experimental and of alpha quality. Not suitable for production use. Please use ASM subcommands for production.
 
 ## Configuration
-1. [ASM Mode] (docs/configuration.md)
-2. [ARM Mode] (docs/configuration.md)
+
+1. [ASM Mode] (docs/configuration.md#asm-mode)
+2. [ARM Mode] (docs/configuration.md#arm-mode)
 
 ## Details Usage for ASM and ARM mode
 
