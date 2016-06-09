@@ -144,10 +144,6 @@ class Chef
         :long => "--identity-file FILENAME",
         :description => "SSH identity file for authentication, optional. It is the RSA private key path. Specify either ssh-password or identity-file"
 
-      option :identity_file_passphrase,
-        :long => "--identity-file-passphrase PASSWORD",
-        :description => "SSH key passphrase. Optional, specify if passphrase for identity-file exists"
-
       option :thumbprint,
         :long => "--thumbprint THUMBPRINT",
         :description => "The thumprint of the ssl certificate"
@@ -256,7 +252,6 @@ class Chef
           if locate_config_value(:identity_file)
             server_def[:disablePasswordAuthentication] = "true"
             server_def[:ssh_key] = File.read(locate_config_value(:identity_file))
-            server_def[:identity_file_passphrase] = locate_config_value(:identity_file_passphrase)
           end
         end
 
