@@ -242,6 +242,7 @@ class Chef
         server_def[:chef_extension_public_param] = get_chef_extension_public_params
         server_def[:chef_extension_private_param] = get_chef_extension_private_params
         server_def[:auto_upgrade_minor_version] = false
+        server_def[:extended_logs] = locate_config_value(:extended_logs)
 
         if is_image_windows?
           server_def[:admin_password] = locate_config_value(:winrm_password)
