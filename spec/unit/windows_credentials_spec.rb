@@ -67,11 +67,11 @@ describe Chef::Knife::AzurermBase do
     end
 
     it "should fetch the credential ending with --0-2" do
-      targets = "    Target: AzureXplatCli:target=_authority:https\\://login.microsoftonline.com/abeb039a-5e53-40ee-b48f-0c99bdc99d15::_clientId:04b07795-8ddb-461a-bbee-02f9e1bf7b46::expiresIn:3599::expiresOn:2016-06-08T14\\:01\\:50.145Z::identityProvider:live.com::isMRRT:true::resource:https\\://management.core.windows.net/::tokenType:Bearer::userId:chirag.jog@outlook.com--1-2\n  Target: AzureXplatCli:target=_authority:https\\://login.microsoftonline.com/common::_clientId:04b07795-8ddb-461a-bbee-02f9e1bf7b46::expiresIn:3600::expiresOn:2016-06-08T14\\:01\\:49.403Z::identityProvider:live.com::isMRRT:true::resource:https\\://management.core.windows.net/::tokenType:Bearer::userId:chirag.jog@outlook.com--1-2\n    Target: AzureXplatCli:target=_authority:https\\://login.microsoftonline.com/common::_clientId:04b07795-8ddb-461a-bbee-02f9e1bf7b46::expiresIn:3600::expiresOn:2016-06-08T14\\:01\\:49.403Z::identityProvider:live.com::isMRRT:true::resource:https\\://management.core.windows.net/::tokenType:Bearer::userId:chirag.jog@outlook.com--0-2\n Target: AzureXplatCli:target=_authority:https\\://login.microsoftonline.com/a
-beb039a-5e53-40ee-b48f-0c99bdc99d15::_clientId:04b07795-8ddb-461a-bbee-02f9e1bf7b46::expiresIn:3599::expiresOn:2016-06-08T14\\:01\\:50.145Z::identityProvider:live.com::isMRRT:true::resource:https\\://management.core.windows.net/::tokenType:Bearer::userId:chirag.jog@outlook.com--0-2\n"
+      targets = "    Target: AzureXplatCli:target=_authority:https\\://login.microsoftonline.com/6ea8098b-72a2-44a9-bdf4-9a01a5ba2727::_clientId:04b07795-8ddb-461a-bbee-02f9e1bf7b46::expiresIn:3599::expiresOn:2016-06-09T13\\:53\\:07.510Z::identityProvider:live.com::isMRRT:true::resource:https\\://management.core.windows.net/::tokenType:Bearer::userId:msdn2@opscode.com--0-2\n   Target:AzureXplatCli:target=_authority:https\\://login.microsoftonline.com/abeb039a-5e53-40ee-b48f-0c99bdc99d15::_clientId:04b07795-8ddb-461a-bbee-02f9e1bf7b46::expiresIn:3600::expiresOn:2016-06-09T13\\:51\\:56.271Z::identityProvider:live.com::isMRRT:true::resource:https\\://management.core.windows.net/::tokenType:Bearer::userId:chirag.jog@outlook.com--0-2\n"
       cmdkey_output = double(:stdout => targets)
+      allow_any_instance_of(Mixlib::ShellOut).to receive(:run_command).and_return(cmdkey_output)
       #target ending with --0-2
-      latest_target = "AzureXplatCli:target=_authority:https\\://login.microsoftonline.com/abeb039a-5e53-40ee-b48f-0c99bdc99d15::_clientId:04b07795-8ddb-461a-bbee-02f9e1bf7b46::expiresIn:3600::expiresOn:2016-06-09T11\\:32\\:51.979Z::identityProvider:live.com::isMRRT:true::resource:https\\://management.core.windows.net/::tokenType:Bearer::userId:chirag.jog@outlook.com--0-2"
+      latest_target = "AzureXplatCli:target=_authority:https\\://login.microsoftonline.com/6ea8098b-72a2-44a9-bdf4-9a01a5ba2727::_clientId:04b07795-8ddb-461a-bbee-02f9e1bf7b46::expiresIn:3599::expiresOn:2016-06-09T13\\:53\\:07.510Z::identityProvider:live.com::isMRRT:true::resource:https\\://management.core.windows.net/::tokenType:Bearer::userId:msdn2@opscode.com--0-2"
       target_name = @windows_credentials.target_name
       expect(target_name).to be == latest_target
     end
@@ -93,6 +93,14 @@ beb039a-5e53-40ee-b48f-0c99bdc99d15::_clientId:04b07795-8ddb-461a-bbee-02f9e1bf7
       targets = ["   Target:target   "]
       latest_target = @windows_credentials.latest_credential_target(targets)
       expect(latest_target).to be == "target"
+    end
+
+    it "should return the latest target when multiple targets are passed" do
+      targets = ["    Target: AzureXplatCli:target=_authority:https\\://login.microsoftonline.com/6ea8098b-72a2-44a9-bdf4-9a01a5ba2727::_clientId:04b07795-8ddb-461a-bbee-02f9e1bf7b46::expiresIn:3599::expiresOn:2016-06-09T13\\:53\\:07.510Z::identityProvider:live.com::isMRRT:true::resource:https\\://management.core.windows.net/::tokenType:Bearer::userId:msdn2@opscode.com--0-2",
+        "    Target: AzureXplatCli:target=_authority:https\\://login.microsoftonline.com/abeb039a-5e53-40ee-b48f-0c99bdc99d15::_clientId:04b07795-8ddb-461a-bbee-02f9e1bf7b46::expiresIn:3600::expiresOn:2016-06-09T13\\:51\\:56.271Z::identityProvider:live.com::isMRRT:true::resource:https\\://management.core.windows.net/::tokenType:Bearer::userId:chirag.jog@outlook.com--0-2"]
+      target_name = "AzureXplatCli:target=_authority:https\\://login.microsoftonline.com/6ea8098b-72a2-44a9-bdf4-9a01a5ba2727::_clientId:04b07795-8ddb-461a-bbee-02f9e1bf7b46::expiresIn:3599::expiresOn:2016-06-09T13\\:53\\:07.510Z::identityProvider:live.com::isMRRT:true::resource:https\\://management.core.windows.net/::tokenType:Bearer::userId:msdn2@opscode.com--0-2"
+      latest_target = @windows_credentials.latest_credential_target(targets)
+      expect(latest_target).to be == target_name
     end
   end
 end

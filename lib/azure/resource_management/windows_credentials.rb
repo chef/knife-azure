@@ -97,12 +97,12 @@ module Azure::ARM
             refresh_token = cred_blob.select { |obj| obj.include? "r:" }
 
             credential = {}
-            credential[:tokentype] = tokentype[0].split(":")[1] if tokentype
-            credential[:user] = user[0].split(":")[1] if user
-            credential[:token] = access_token[0].split(":")[1] if access_token
-            credential[:refresh_token] = refresh_token[0].split(":")[1] if refresh_token
-            credential[:clientid] = clientid[0].split(":")[1] if clientid
-            credential[:expiry_time] = expiry_time[0].split("expiresOn:")[1].gsub("\\","") if expiry_time
+            credential[:tokentype] = tokentype[0].split(":")[1]
+            credential[:user] = user[0].split(":")[1]
+            credential[:token] = access_token[0].split(":")[1]
+            credential[:refresh_token] = refresh_token[0].split(":")[1]
+            credential[:clientid] = clientid[0].split(":")[1]
+            credential[:expiry_time] = expiry_time[0].split("expiresOn:")[1].gsub("\\","")
           else
             raise "TargetName Not Found"
           end
@@ -123,7 +123,6 @@ module Azure::ARM
         # Selecting the ones ending with --0-2
         xplat_creds_cmd = Mixlib::ShellOut.new("cmdkey /list | findstr AzureXplatCli | findstr 0-2 | findstr -v common")
         result = xplat_creds_cmd.run_command
-
         target_names = []
         if result.stdout.empty?
           raise "Azure Credentials not found. Please run xplat's 'azure login' command"
@@ -151,7 +150,7 @@ module Azure::ARM
           targets.each do |target|
             target_obj = target.split("::")
             expiry_time_obj = target_obj.select { |obj| obj.include? "expiresOn" }
-            expiry_time = expiry_time_obj[0].split("expiresOn:")[1].gsub("\\","") if expiry_time_obj
+            expiry_time = expiry_time_obj[0].split("expiresOn:")[1].gsub("\\","")
             if Time.parse(expiry_time) > max_expiry_time
               latest_target = target
               max_expiry_time = Time.parse(expiry_time)
