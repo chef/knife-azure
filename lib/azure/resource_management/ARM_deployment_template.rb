@@ -470,6 +470,16 @@ module Azure::ARM
           }
         ]
       }
+
+      if params[:chef_extension_public_param][:extendedLogs] == "true"
+        template['resources'].each do |resource|
+          if resource['type'] == 'Microsoft.Compute/virtualMachines/extensions'
+            resource['properties']['settings']['extendedLogs'] = params[:chef_extension_public_param][:extendedLogs]
+          end
+        end
+      end
+
+      template
     end
 
     def create_deployment_parameters(params, platform)

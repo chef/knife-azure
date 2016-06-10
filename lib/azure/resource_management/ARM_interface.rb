@@ -260,41 +260,48 @@ module Azure
         end
       end
 
-      def fetch_substatus(deployment, resource_group_name, chef_extension_name)
+      def parse_substatus_code(code, index)
+        code.split('/')[index]
+      end
+
+      def fetch_substatus(resource_group_name, virtual_machine_name, chef_extension_name)
         substatuses = compute_management_client.virtual_machine_extensions.get(
           resource_group_name,
-          deployment.resource_name,
+          virtual_machine_name,
           chef_extension_name,
           'instanceView'
         ).value!.body.properties.instance_view.substatuses
 
-        substatuses
+        return nil if substatuses.nil?
+
+        substatuses.each do |substatus|
+          if parse_substatus_code(substatus.code, 1) == 'Chef Client run logs'
+            return substatus
+          end
+        end
+
+        return nil
       end
 
-      def fetch_chef_client_logs(deployment, resource_group_name, chef_extension_name, fetch_process_start_time, fetch_process_wait_timeout = 30)
-        substatuses = fetch_substatus(deployment, resource_group_name, chef_extension_name)
+      def fetch_chef_client_logs(resource_group_name, virtual_machine_name, chef_extension_name, fetch_process_start_time, fetch_process_wait_timeout = 30)
+        ## fetch substatus field which contains the chef-client run logs ##
+        substatus = fetch_substatus(resource_group_name, virtual_machine_name, chef_extension_name)
 
-        unless substatuses.nil?
-          ## azure-sdk-for-ruby does not have name field for status and/or substatus field,
-          ## hence cannot put check to fetch the particular substatus field (for scenarios
-          ## where in future we may add some more substatus fields in extension). At present
-          ## we just have 1 substatus field in *.status file (which stores chef-client run
-          ## logs) so as per the current situation will fetch substatus present at the 0th
-          ## location
-          substatus = substatuses.first
-          status = substatus.display_status
+        unless substatus.nil?
+          ## chef-client run logs becomes available ##
+          status = parse_substatus_code(substatus.code, 2)
           message = substatus.message
 
           puts "\n\n******** Please find the chef-client run details below ********\n\n"
           print "----> chef-client run status: "
           case status
-            when "Success"
+            when 'succeeded'
               ## chef-client run succeeded ##
               color = :green
-            when "Error"
+            when 'failed'
               ## chef-client run failed ##
               color = :red
-            when "Transitioning"
+            when 'transitioning'
               ## chef-client run did not complete within maximum timeout of 30 minutes ##
               ## fetch whatever logs available under the chef-client.log file ##
               color = :yellow
@@ -308,7 +315,7 @@ module Azure
           if fetch_process_wait_time <= fetch_process_wait_timeout
             print "#{ui.color('.', :bold)}"
             sleep 30
-            fetch_chef_client_logs(deployment, resource_group_name, chef_extension_name, fetch_process_start_time)
+            fetch_chef_client_logs(resource_group_name, virtual_machine_name, chef_extension_name, fetch_process_start_time, fetch_process_wait_timeout)
           else
             ## wait time exceeded 30 minutes timeout ##
             ui.error "\nchef-client run logs could not be fetched since fetch process exceeded wait timeout of #{fetch_process_wait_timeout} minutes.\n"
@@ -344,9 +351,16 @@ module Azure
             ui.log("Deployment name is: #{deployment.name}")
             ui.log("Deployment ID is: #{deployment.id}")
             deployment.properties.dependencies.each do |deploy|
-              print "\n\nWaiting for the first chef-client run on virtual machine #{deploy.resource_name}"
-              fetch_chef_client_logs(deploy, params[:azure_resource_group_name], params[:chef_extension], Time.now, 30) if params[:extended_logs]
               if deploy.resource_type == "Microsoft.Compute/virtualMachines"
+                if params[:chef_extension_public_param][:extendedLogs] == "true"
+                  print "\n\nWaiting for the first chef-client run on virtual machine #{deploy.resource_name}"
+                  fetch_chef_client_logs(params[:azure_resource_group_name],
+                    deploy.resource_name,
+                    params[:chef_extension],
+                    Time.now
+                  )
+                end
+
                 ui.log("VM Details ...")
                 ui.log("-------------------------------")
                 ui.log("Virtual Machine name is: #{deploy.resource_name}")
