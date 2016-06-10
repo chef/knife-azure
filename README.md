@@ -47,9 +47,9 @@ PLEASE NOTE that `Azuererm` subcommands are experimental and of alpha quality. N
 1. [ASM Mode] (docs/ASM.md)
 2. [ARM Mode] (docs/ARM.md)
 
-## Bootstraping existing VM to install chef-extension using knife bootstrap
+## Bootstrap existing VM to install the chef-client using chef-extension :
 
-  We have added a utility in ASM and ARM to bootstrap existing VM which install chef extension. You can use all extension specific options while bootstraping existing VM.
+  We have added a utility in ASM and ARM to bootstrap existing VM. This will install the chef-client using chef extension on your VM.
 
-1. [ASM Mode] (docs/bootstrap.md#asm-mode)
-2. [ARM Mode] (docs/bootstrap.md#arm-mode)
+1. [Bootstrap Doc for ASM Mode] (docs/bootstrap.md#asm-mode)
+2. [Bootstrap Doc for ARM Mode] (docs/bootstrap.md#arm-mode)
