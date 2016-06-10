@@ -1,61 +1,401 @@
-# knife-azure Change Log
+# Change Log
 
-## 1.6.0.rc.0 (2015/11/23)
+## [v1.6.0](https://github.com/chef/knife-azure/tree/v1.6.0) (2016-06-08)
 
-   * [knife-azure #249](https://github.com/chef/knife-azure/issues/249) params[:port] doesn't default correctly to 22 when bootstrapping over ssh, causing an xml error
-   * [knife-azure #261](https://github.com/chef/knife-azure/pull/261) Added SSL certificate bootstrap support for cloud-api
-   * [knife-azure #254](https://github.com/chef/knife-azure/issues/254) Unable to join servers to Active Directory due to username parsing ambiguity on command-line
-   * [knife-azure #253](https://github.com/chef/knife-azure/pull/253) Configure node\_ssl\_verify\_mode during cloud-api extension bootstrap
-   * [knife-azure #246](https://github.com/chef/knife-azure/pull/246) Support for chef-client version specification during cloud-api bootstrap
-   * [knife-azure #255](https://github.com/chef/knife-azure/pull/255) Support for specifying a custom client.rb during cloud-api bootstrap
-   * [knife-azure #247](https://github.com/chef/knife-azure/pull/247) README: recommend installing chef-dk rather than chef-client to use knife-azure
-   * [knife-azure #244](https://github.com/chef/knife-azure/pull/244) Correctly configure subnet for vnet in server create
-   * [knife-azure #245](https://github.com/chef/knife-azure/pull/245) README: Document CentOS support for cloud-api extension bootstrap
+[Full Changelog](https://github.com/chef/knife-azure/compare/1.6.0.rc.0...v1.6.0)
 
-## Last release: 1.5.2 (2015/10/01)
+**Closed issues:**
 
-* [knife-azure #218](https://github.com/chef/knife-azure/pull/218) Fixed azure\_availability\_set related issue
-* [knife-azure #238](https://github.com/chef/knife-azure/pull/238) Fixed ssh tcp endpoint issue for cloud-api
+- Bootstrap process fails with following error after provisioning [\#350](https://github.com/chef/knife-azure/issues/350)
+- Knife Azure Creating a new server [\#343](https://github.com/chef/knife-azure/issues/343)
+- Creation of AD application and service principal is not automated for ARM commands [\#341](https://github.com/chef/knife-azure/issues/341)
+- Error provisioning VM in existing Cloud service [\#309](https://github.com/chef/knife-azure/issues/309)
+- private key file? [\#304](https://github.com/chef/knife-azure/issues/304)
+- knife azure should support ssl cert bootstrap with cloud-api bootstrap [\#260](https://github.com/chef/knife-azure/issues/260)
+- Provisioning issues with 1.5.2 [\#257](https://github.com/chef/knife-azure/issues/257)
+- knife azure does not honor --node-ssl-verify-mode flag [\#250](https://github.com/chef/knife-azure/issues/250)
+- Does 'knife azure server create' support asynchronous request？ [\#140](https://github.com/chef/knife-azure/issues/140)
 
-## Release: 1.5.0 (2015/05/20)
-* [knife-azure #228](https://github.com/chef/knife-azure/pull/228) Support for validatorless bootstrap, other Chef 12 bootstrap options
-* [knife-azure #199](https://github.com/chef/knife-azure/issues/199) Azure China Support
-* [knife-azure #213](https://github.com/chef/knife-azure/pull/213) Typo in fetch_thumbprint method
-* [knife-azure #215](https://github.com/chef/knife-azure/pull/215) Added --delete-chef-config option in knife azure server create
-* [knife-azure #204](https://github.com/chef/knife-azure/pull/204) Properly configure WinRM for bootstrapping; Fixes [#203](https://github.com/chef/knife-azure/pull/203)
-* [knife-azure #197](https://github.com/chef/knife-azure/pull/197) Add custom json attributes to chef extension
-* [knife-azure #211](https://github.com/chef/knife-azure/pull/211) Allow user to specify chef extension version by using knife_rb
-* [knife-azure #198](https://github.com/chef/knife-azure/pull/198) Adding winrm\_ssl\_verify_mode to bootstrap config
-* [knife-azure #196](https://github.com/chef/knife-azure/pull/196) Update Rubies; remove Chef-unsupported versions from matrix
-* [knife-azure #195](https://github.com/chef/knife-azure/pull/195) Showing thumbprint with Server show command
-* [knife-azure #188](https://github.com/chef/knife-azure/pull/188) Winrm port should not be configured if --bootstrap-protocol=cloud-api
+**Merged pull requests:**
 
-## Release: 1.4.0 (2015/02/09)
-* [knife-azure #189](https://github.com/chef/knife-azure/issues/189) Server Create failing for some custom sysprepped images
-* [knife-azure #184](https://github.com/chef/knife-azure/pull/184) Disable certificate generation code for ssl transport until supported by knife-windows
-* [knife-azure #102](https://github.com/chef/knife-azure/pull/102) User specified ssh/winrm port 22/5985 instead of random port with --azure-connect-to-existing-dns option for server creation
-* [knife-azure #179](https://github.com/chef/knife-azure/pull/179) Enable creation of new vnets
-* [knife-azure #169](https://github.com/chef/knife-azure/pull/169) Enable automatic update of the Chef extension the Azure VM Chef Extension --auto-update-client
-* [knife-azure #167](https://github.com/chef/knife-azure/pull/167) Include custom VM images in knife azure image list
-* [knife-azure #171](https://github.com/chef/knife-azure/pull/171) EXPERIMENTAL: Support for unreleased knife-windows 1.0.0 configuration option winrm\_authentication\_protocol
-* [knife-azure #163](https://github.com/chef/knife-azure/pull/163) Remove the az prefix from DNS name when VM name is specified and DNS name is not specified
-* [knife-azure #160](https://github.com/chef/knife-azure/pull/160) Support for adding winrm SSL certificate, for winrm ssl communication
-* [knife-azure #157](https://github.com/chef/knife-azure/pull/157) Add integration tests
-* [knife-azure #162](https://github.com/chef/knife-azure/pull/162) Documentation fix to remove extraneous dash and use real example of VM image
-* [knife-azure #153](https://github.com/chef/knife-azure/pull/153) Resource extension support through knife-azure plugin --cloud-api bootstrap without network transport
-* [knife-azure 146](https://github.com/chef/knife-azure/pull/146) Virtual machine state 'provisioning' not reached after 5 minutes
+- Added the actual names of the sites otherwise: [\#367](https://github.com/chef/knife-azure/pull/367) ([jjasghar](https://github.com/jjasghar))
+- Fixed chef extension version issue if not passed through options it should pick up latest [\#360](https://github.com/chef/knife-azure/pull/360) ([Vasu1105](https://github.com/Vasu1105))
+- Add support for authentication using token for ARM [\#359](https://github.com/chef/knife-azure/pull/359) ([dheerajd-msys](https://github.com/dheerajd-msys))
+- Added support for ohai\_hints for cloud-api protocol in ARM. [\#354](https://github.com/chef/knife-azure/pull/354) ([Aliasgar16](https://github.com/Aliasgar16))
+- added support for single vm provisioning through template [\#353](https://github.com/chef/knife-azure/pull/353) ([Vasu1105](https://github.com/Vasu1105))
+- Showing multiple vm details [\#352](https://github.com/chef/knife-azure/pull/352) ([Vasu1105](https://github.com/Vasu1105))
+- Added code to fetch chef-client run logs after extension is deployed on the server. [\#351](https://github.com/chef/knife-azure/pull/351) ([Aliasgar16](https://github.com/Aliasgar16))
+- Fixed issue when bootstrap protocol is not specified during vm creation [\#349](https://github.com/chef/knife-azure/pull/349) ([dheerajd-msys](https://github.com/dheerajd-msys))
+- Added readline gem dependency in Gemfile as knife-azure commands started failing because of this gem after updating chefdk from 0.12.0 to 0.13.21 version. [\#348](https://github.com/chef/knife-azure/pull/348) ([Aliasgar16](https://github.com/Aliasgar16))
+- Provided vm creation details to user in non-verbose mode [\#347](https://github.com/chef/knife-azure/pull/347) ([dheerajd-msys](https://github.com/dheerajd-msys))
+- Pinned the version on `listen` gem to 3.0.6 [\#346](https://github.com/chef/knife-azure/pull/346) ([NimishaS](https://github.com/NimishaS))
+- Added support for redhat and debian OS vm provisioning [\#345](https://github.com/chef/knife-azure/pull/345) ([dheerajd-msys](https://github.com/dheerajd-msys))
+- Template deployment for multiple VMs [\#344](https://github.com/chef/knife-azure/pull/344) ([NimishaS](https://github.com/NimishaS))
+- Add extension to existing VM in ARM [\#340](https://github.com/chef/knife-azure/pull/340) ([NimishaS](https://github.com/NimishaS))
+- Public ip value empty for list and show operations [\#338](https://github.com/chef/knife-azure/pull/338) ([dheerajd-msys](https://github.com/dheerajd-msys))
+- Added code for validation of vm name [\#337](https://github.com/chef/knife-azure/pull/337) ([dheerajd-msys](https://github.com/dheerajd-msys))
+- Common bootstrap with cloud-api fix for ASM [\#336](https://github.com/chef/knife-azure/pull/336) ([NimishaS](https://github.com/NimishaS))
+- Revert "Used common bootstrap for ASM" [\#335](https://github.com/chef/knife-azure/pull/335) ([NimishaS](https://github.com/NimishaS))
+- Updated README for --azure-vnet-name and --azure-vnet-subnet-name options [\#334](https://github.com/chef/knife-azure/pull/334) ([Vasu1105](https://github.com/Vasu1105))
+- Chef extension support for existing Azure ASM deployment. [\#333](https://github.com/chef/knife-azure/pull/333) ([Aliasgar16](https://github.com/Aliasgar16))
+- Locked down versions of azure\_sdk\_for\_ruby gems. [\#332](https://github.com/chef/knife-azure/pull/332) ([Aliasgar16](https://github.com/Aliasgar16))
+- Used common bootstrap for ASM [\#331](https://github.com/chef/knife-azure/pull/331) ([dheerajd-msys](https://github.com/dheerajd-msys))
+- ARM add --secret and --secret-file options to server create [\#330](https://github.com/chef/knife-azure/pull/330) ([Vasu1105](https://github.com/Vasu1105))
+- Modified ARM server\_create code along with corresponding RSpecs to override image sku. [\#329](https://github.com/chef/knife-azure/pull/329) ([Aliasgar16](https://github.com/Aliasgar16))
+- Add vnet name and subnet name options to use existing vnet for vm creation [\#328](https://github.com/chef/knife-azure/pull/328) ([Vasu1105](https://github.com/Vasu1105))
+- Fixed secret and secret file not getting copied issue for non-windows host [\#327](https://github.com/chef/knife-azure/pull/327) ([dheerajd-msys](https://github.com/dheerajd-msys))
+- Exception handling for ARM commands [\#326](https://github.com/chef/knife-azure/pull/326) ([NimishaS](https://github.com/NimishaS))
+- Refactoring azurerm server create code [\#325](https://github.com/chef/knife-azure/pull/325) ([Vasu1105](https://github.com/Vasu1105))
+- Added code to display resource\_group\_name and also added option to accept resource\_group\_name from user. [\#324](https://github.com/chef/knife-azure/pull/324) ([Aliasgar16](https://github.com/Aliasgar16))
+- Added --azure-image-os-type option with specs [\#323](https://github.com/chef/knife-azure/pull/323) ([NimishaS](https://github.com/NimishaS))
+- Modified ARM server\_create command as per the changes introduced in new version 0.2.1 of azure-sdk-for-ruby gems. [\#322](https://github.com/chef/knife-azure/pull/322) ([Aliasgar16](https://github.com/Aliasgar16))
+- \[knife azurerm\] options issue [\#321](https://github.com/chef/knife-azure/pull/321) ([NimishaS](https://github.com/NimishaS))
+- Modified Error Handling to show proper server show error output to the user [\#320](https://github.com/chef/knife-azure/pull/320) ([dheerajd-msys](https://github.com/dheerajd-msys))
+- Fixed error handling for server create [\#319](https://github.com/chef/knife-azure/pull/319) ([Vasu1105](https://github.com/Vasu1105))
+- Added public ipaddress and fqdn to azurerm server show command output [\#318](https://github.com/chef/knife-azure/pull/318) ([dheerajd-msys](https://github.com/dheerajd-msys))
+- Adding --delete-resource-group option [\#314](https://github.com/chef/knife-azure/pull/314) ([Vasu1105](https://github.com/Vasu1105))
+- Added code to support bootstrap protocol cloud-api and removed unwanted ARM related code from ASM server\_create command. [\#312](https://github.com/chef/knife-azure/pull/312) ([Aliasgar16](https://github.com/Aliasgar16))
+- Fixed typo [\#311](https://github.com/chef/knife-azure/pull/311) ([Vasu1105](https://github.com/Vasu1105))
+- Adding winrm port for azurerm server create [\#310](https://github.com/chef/knife-azure/pull/310) ([NimishaS](https://github.com/NimishaS))
+- Updated specs for azurerm server delete command [\#308](https://github.com/chef/knife-azure/pull/308) ([NimishaS](https://github.com/NimishaS))
+- Added specs with mock server object for azurerm server list [\#306](https://github.com/chef/knife-azure/pull/306) ([NimishaS](https://github.com/NimishaS))
+- Updated Readme for ARM supported commands [\#305](https://github.com/chef/knife-azure/pull/305) ([NimishaS](https://github.com/NimishaS))
+- Modified method names according to ruby convention [\#303](https://github.com/chef/knife-azure/pull/303) ([NimishaS](https://github.com/NimishaS))
+- ARM server delete [\#302](https://github.com/chef/knife-azure/pull/302) ([Vasu1105](https://github.com/Vasu1105))
+- ARM server show command [\#301](https://github.com/chef/knife-azure/pull/301) ([meeranavale](https://github.com/meeranavale))
+- ARM basic server create command. [\#300](https://github.com/chef/knife-azure/pull/300) ([Aliasgar16](https://github.com/Aliasgar16))
+- Implemented 'knife azurerm server list' command and it's specs [\#299](https://github.com/chef/knife-azure/pull/299) ([NimishaS](https://github.com/NimishaS))
+- Fixed azureProfile.json validation issues [\#292](https://github.com/chef/knife-azure/pull/292) ([Vasu1105](https://github.com/Vasu1105))
+- Refactored code for validation method for asm and arm [\#291](https://github.com/chef/knife-azure/pull/291) ([Vasu1105](https://github.com/Vasu1105))
+- Spec for server list command [\#290](https://github.com/chef/knife-azure/pull/290) ([NimishaS](https://github.com/NimishaS))
+- Re-factoring code for common methods [\#289](https://github.com/chef/knife-azure/pull/289) ([Vasu1105](https://github.com/Vasu1105))
+- Rectified azure module name conflict issue and other validate! method related issue which got introduced with ARM structure. [\#288](https://github.com/chef/knife-azure/pull/288) ([Aliasgar16](https://github.com/Aliasgar16))
+- Basic code structure for ARM implementation [\#287](https://github.com/chef/knife-azure/pull/287) ([NimishaS](https://github.com/NimishaS))
+- Refactored sever create [\#284](https://github.com/chef/knife-azure/pull/284) ([Vasu1105](https://github.com/Vasu1105))
+- Refactored ag list and create code for ASM. [\#283](https://github.com/chef/knife-azure/pull/283) ([Aliasgar16](https://github.com/Aliasgar16))
+- Refactored code for vnet\_list and vnet\_create. [\#282](https://github.com/chef/knife-azure/pull/282) ([Aliasgar16](https://github.com/Aliasgar16))
+- Refactored for list and create internal load balancer [\#281](https://github.com/chef/knife-azure/pull/281) ([Vasu1105](https://github.com/Vasu1105))
+- Refactored ASM code for server show command [\#279](https://github.com/chef/knife-azure/pull/279) ([NimishaS](https://github.com/NimishaS))
+- Refactored code for ASM delete server [\#278](https://github.com/chef/knife-azure/pull/278) ([Vasu1105](https://github.com/Vasu1105))
+- Refactoring existing ASM code for implementation of ARM [\#276](https://github.com/chef/knife-azure/pull/276) ([Vasu1105](https://github.com/Vasu1105))
+- Cherry-picked changes for badges and Travis [\#275](https://github.com/chef/knife-azure/pull/275) ([NimishaS](https://github.com/NimishaS))
+- Added uninstall\_chef\_client flag for bootstrap protocol cloud-api. [\#272](https://github.com/chef/knife-azure/pull/272) ([Aliasgar16](https://github.com/Aliasgar16))
+- Updated Readme with the bootstrap options [\#270](https://github.com/chef/knife-azure/pull/270) ([NimishaS](https://github.com/NimishaS))
+- Changes for handling scheme in the azure\_api\_host\_name [\#268](https://github.com/chef/knife-azure/pull/268) ([Vasu1105](https://github.com/Vasu1105))
+- Added code for Windows platform to read azure creds from azureProfile if publish\_settings file not available. [\#265](https://github.com/chef/knife-azure/pull/265) ([Aliasgar16](https://github.com/Aliasgar16))
+- Added RSpecs for ssl cert support for bootstrap protocol cloud-api. [\#263](https://github.com/chef/knife-azure/pull/263) ([Aliasgar16](https://github.com/Aliasgar16))
 
-## Release: 1.3.0 (2014/07/31)
-* Update specs to rspec 3
-* [KNIFE-472] - clean up knife-azure gemspec dependencies
-* Fixed wrong command in README
-* server create should not delete storage account in cleanup - unless created storage account
-* knife-azure server create is missing -j switch for json at first chef-client run.
+## [1.6.0.rc.0](https://github.com/chef/knife-azure/tree/1.6.0.rc.0) (2015-11-23)
+[Full Changelog](https://github.com/chef/knife-azure/compare/1.5.2...1.6.0.rc.0)
 
-## Previous  Release: 1.2.2 (2014/02/07)
+**Closed issues:**
 
-**See source control commit history for earlier changes.**
+- Unable to join servers to Active Directory [\#254](https://github.com/chef/knife-azure/issues/254)
+- params\[:port\] doesn't default correctly to 22 when bootstrapping over ssh, causing an xml error [\#249](https://github.com/chef/knife-azure/issues/249)
+- UX on knife azure server delete prompt is misleading [\#242](https://github.com/chef/knife-azure/issues/242)
+
+**Merged pull requests:**
+
+- Release 1.6.0.rc.0 version and doc updates [\#264](https://github.com/chef/knife-azure/pull/264) ([adamedx](https://github.com/adamedx))
+- SSH port issue [\#262](https://github.com/chef/knife-azure/pull/262) ([Vasu1105](https://github.com/Vasu1105))
+- Added SSL certificate bootstrap support for cloud-api. [\#261](https://github.com/chef/knife-azure/pull/261) ([Aliasgar16](https://github.com/Aliasgar16))
+- Parsing domain username [\#256](https://github.com/chef/knife-azure/pull/256) ([NimishaS](https://github.com/NimishaS))
+- Added --azure-extension-client-config option to pass client.rb file [\#255](https://github.com/chef/knife-azure/pull/255) ([NimishaS](https://github.com/NimishaS))
+- Passing node\_ssl\_verify\_mode [\#253](https://github.com/chef/knife-azure/pull/253) ([NimishaS](https://github.com/NimishaS))
+- updating readme to chefdk [\#247](https://github.com/chef/knife-azure/pull/247) ([vinyar](https://github.com/vinyar))
+- Added bootstrap\_version option in Chef Extension public\_config parameters and added corresponding Rspecs. [\#246](https://github.com/chef/knife-azure/pull/246) ([Aliasgar16](https://github.com/Aliasgar16))
+- Updated README for cloud-api centos support [\#245](https://github.com/chef/knife-azure/pull/245) ([Vasu1105](https://github.com/Vasu1105))
+- Modified VNet code to add subnet into the VNet and did corresponding changes in RSpecs. [\#244](https://github.com/chef/knife-azure/pull/244) ([Aliasgar16](https://github.com/Aliasgar16))
+
+## [1.5.2](https://github.com/chef/knife-azure/tree/1.5.2) (2015-10-02)
+[Full Changelog](https://github.com/chef/knife-azure/compare/1.5.1.rc.3...1.5.2)
+
+**Merged pull requests:**
+
+- Release 1.5.2 version and docs update [\#243](https://github.com/chef/knife-azure/pull/243) ([adamedx](https://github.com/adamedx))
+- Fixed ssh tcp endpoint issue for cloud-api [\#238](https://github.com/chef/knife-azure/pull/238) ([Vasu1105](https://github.com/Vasu1105))
+
+## [1.5.1.rc.3](https://github.com/chef/knife-azure/tree/1.5.1.rc.3) (2015-09-19)
+[Full Changelog](https://github.com/chef/knife-azure/compare/1.5.1.rc.2...1.5.1.rc.3)
+
+**Merged pull requests:**
+
+- Release 1.5.1.rc.3, knife-windows 1.0.0.rc.2 dep update [\#241](https://github.com/chef/knife-azure/pull/241) ([adamedx](https://github.com/adamedx))
+
+## [1.5.1.rc.2](https://github.com/chef/knife-azure/tree/1.5.1.rc.2) (2015-09-17)
+[Full Changelog](https://github.com/chef/knife-azure/compare/1.5.1.rc.1...1.5.1.rc.2)
+
+**Closed issues:**
+
+- Add --\[no-\]node-verify-api-cert [\#219](https://github.com/chef/knife-azure/issues/219)
+- server create -\> --environment and --json-attributes not working? [\#207](https://github.com/chef/knife-azure/issues/207)
+- Unable to provision a VM into a load balanced set [\#205](https://github.com/chef/knife-azure/issues/205)
+- Azure China support [\#199](https://github.com/chef/knife-azure/issues/199)
+- Knife-Azure's Ruby Gem install means Windows 8 'chef server' is allowed?  [\#177](https://github.com/chef/knife-azure/issues/177)
+- what version of chef is supported? [\#165](https://github.com/chef/knife-azure/issues/165)
+- Does not play nicely with chefdk [\#148](https://github.com/chef/knife-azure/issues/148)
+- dpkg status database is locked by another process, chef client install fails [\#147](https://github.com/chef/knife-azure/issues/147)
+- 401 when provisioning windows VMs [\#49](https://github.com/chef/knife-azure/issues/49)
+
+**Merged pull requests:**
+
+- Release 1.5.1.rc.2 updates [\#240](https://github.com/chef/knife-azure/pull/240) ([adamedx](https://github.com/adamedx))
+- Added new knife-windows flags to knife-azure [\#237](https://github.com/chef/knife-azure/pull/237) ([siddheshwar-more](https://github.com/siddheshwar-more))
+- Added meaningful names  for TCP endpoint [\#234](https://github.com/chef/knife-azure/pull/234) ([Vasu1105](https://github.com/Vasu1105))
+- Implemented changes to set winrm\_ssl\_verify\_mode to none for server create [\#233](https://github.com/chef/knife-azure/pull/233) ([siddheshwar-more](https://github.com/siddheshwar-more))
+- Issue 205: External/Public Load Balancer support \#210 [\#231](https://github.com/chef/knife-azure/pull/231) ([siddheshwar-more](https://github.com/siddheshwar-more))
+- Added support for validator-less bootstrap [\#230](https://github.com/chef/knife-azure/pull/230) ([Vasu1105](https://github.com/Vasu1105))
+- VM not getting created for linux unless --bootstrap-protocol=ssh [\#229](https://github.com/chef/knife-azure/pull/229) ([NimishaS](https://github.com/NimishaS))
+- Changes to add bootstrap options introduced in chef 12 [\#228](https://github.com/chef/knife-azure/pull/228) ([siddheshwar-more](https://github.com/siddheshwar-more))
+- Implemented  node verify cert for cloud-api [\#227](https://github.com/chef/knife-azure/pull/227) ([siddheshwar-more](https://github.com/siddheshwar-more))
+- Add Azure China support  [\#226](https://github.com/chef/knife-azure/pull/226) ([siddheshwar-more](https://github.com/siddheshwar-more))
+- OC-11120 - Domain join support for knife azure [\#225](https://github.com/chef/knife-azure/pull/225) ([siddheshwar-more](https://github.com/siddheshwar-more))
+
+## [1.5.1.rc.1](https://github.com/chef/knife-azure/tree/1.5.1.rc.1) (2015-06-02)
+[Full Changelog](https://github.com/chef/knife-azure/compare/1.5.1.rc.0...1.5.1.rc.1)
+
+**Closed issues:**
+
+- server create fails chef-client bootstrap using stock 2008r2 image and cloud-api protocol [\#206](https://github.com/chef/knife-azure/issues/206)
+
+**Merged pull requests:**
+
+- updated version.rb [\#224](https://github.com/chef/knife-azure/pull/224) ([NimishaS](https://github.com/NimishaS))
+- Added em-winrm dependency back [\#222](https://github.com/chef/knife-azure/pull/222) ([NimishaS](https://github.com/NimishaS))
+
+## [1.5.1.rc.0](https://github.com/chef/knife-azure/tree/1.5.1.rc.0) (2015-05-29)
+[Full Changelog](https://github.com/chef/knife-azure/compare/1.5.1...1.5.1.rc.0)
+
+**Closed issues:**
+
+- Provisioning Azure VM with SSH identity file - why failing on password? [\#145](https://github.com/chef/knife-azure/issues/145)
+
+**Merged pull requests:**
+
+- Version, RELNOTE updates for 1.5.0.rc.0 release [\#221](https://github.com/chef/knife-azure/pull/221) ([adamedx](https://github.com/adamedx))
+
+## [1.5.1](https://github.com/chef/knife-azure/tree/1.5.1) (2015-05-25)
+[Full Changelog](https://github.com/chef/knife-azure/compare/1.5.0...1.5.1)
+
+**Merged pull requests:**
+
+- Updated changelog and release\_notes for 1.5.1 release [\#220](https://github.com/chef/knife-azure/pull/220) ([NimishaS](https://github.com/NimishaS))
+- Fixed azure\_availability\_set related issue [\#218](https://github.com/chef/knife-azure/pull/218) ([siddheshwar-more](https://github.com/siddheshwar-more))
+
+## [1.5.0](https://github.com/chef/knife-azure/tree/1.5.0) (2015-05-20)
+[Full Changelog](https://github.com/chef/knife-azure/compare/1.4.0...1.5.0)
+
+**Closed issues:**
+
+- knife-azure should allow script extension to be used when doing winrm bootstrap to set winrm timeouts [\#203](https://github.com/chef/knife-azure/issues/203)
+- Duplicate short-name option in server create command [\#201](https://github.com/chef/knife-azure/issues/201)
+- Server Create failing for some custom sysprepped images [\#189](https://github.com/chef/knife-azure/issues/189)
+- Error creating a VNET [\#178](https://github.com/chef/knife-azure/issues/178)
+- knife azure server create failing [\#166](https://github.com/chef/knife-azure/issues/166)
+- can't execute run list after create azure virtual machines [\#161](https://github.com/chef/knife-azure/issues/161)
+- Typo in RAEDME.md [\#141](https://github.com/chef/knife-azure/issues/141)
+
+**Merged pull requests:**
+
+- Updates for release 1.5.0 [\#217](https://github.com/chef/knife-azure/pull/217) ([NimishaS](https://github.com/NimishaS))
+- Added --delete-chef-config option in knife azure server create [\#215](https://github.com/chef/knife-azure/pull/215) ([Vasu1105](https://github.com/Vasu1105))
+- typo in fetch\_thumbprint method [\#213](https://github.com/chef/knife-azure/pull/213) ([smurawski](https://github.com/smurawski))
+- Allow user to specify chef extension version by using knife\_rb  [\#211](https://github.com/chef/knife-azure/pull/211) ([siddheshwar-more](https://github.com/siddheshwar-more))
+- Issue 205: External/Public Load Balancer support [\#210](https://github.com/chef/knife-azure/pull/210) ([aiman-alsari](https://github.com/aiman-alsari))
+- Properly configure WinRM for bootstrapping; Fixes \#203 [\#204](https://github.com/chef/knife-azure/pull/204) ([schisamo](https://github.com/schisamo))
+- knife-windows 1.0.0+ compat fixes [\#202](https://github.com/chef/knife-azure/pull/202) ([schisamo](https://github.com/schisamo))
+- Adding winrm\_ssl\_verify\_mode to bootstrap config [\#198](https://github.com/chef/knife-azure/pull/198) ([kaustubh-d](https://github.com/kaustubh-d))
+- Add custom json attributes to chef extension [\#197](https://github.com/chef/knife-azure/pull/197) ([NimishaS](https://github.com/NimishaS))
+- Update Rubies; remove Chef-unsupported versions from matrix [\#196](https://github.com/chef/knife-azure/pull/196) ([juliandunn](https://github.com/juliandunn))
+- Showing thumbprint with Server show command [\#195](https://github.com/chef/knife-azure/pull/195) ([NimishaS](https://github.com/NimishaS))
+- Winrm port should not be configured if --bootstrap-protocol=cloud-api [\#188](https://github.com/chef/knife-azure/pull/188) ([NimishaS](https://github.com/NimishaS))
+
+## [1.4.0](https://github.com/chef/knife-azure/tree/1.4.0) (2015-02-09)
+[Full Changelog](https://github.com/chef/knife-azure/compare/1.4.0.rc.2...1.4.0)
+
+**Merged pull requests:**
+
+- Updates for release 1.4.0 [\#192](https://github.com/chef/knife-azure/pull/192) ([adamedx](https://github.com/adamedx))
+
+## [1.4.0.rc.2](https://github.com/chef/knife-azure/tree/1.4.0.rc.2) (2015-02-07)
+[Full Changelog](https://github.com/chef/knife-azure/compare/1.4.0.rc.1...1.4.0.rc.2)
+
+**Merged pull requests:**
+
+- Gem version update for 1.4.0.rc.2 release [\#191](https://github.com/chef/knife-azure/pull/191) ([adamedx](https://github.com/adamedx))
+- Make ready timeout non-fatal, add winrm auth timeout option [\#190](https://github.com/chef/knife-azure/pull/190) ([adamedx](https://github.com/adamedx))
+- Disabled certificate genaration code for ssl transport [\#184](https://github.com/chef/knife-azure/pull/184) ([NimishaS](https://github.com/NimishaS))
+
+## [1.4.0.rc.1](https://github.com/chef/knife-azure/tree/1.4.0.rc.1) (2015-02-06)
+[Full Changelog](https://github.com/chef/knife-azure/compare/1.4.0.rc.0...1.4.0.rc.1)
+
+**Closed issues:**
+
+- knife azure image list and server create do not allow use of custom image templates I have created [\#158](https://github.com/chef/knife-azure/issues/158)
+
+**Merged pull requests:**
+
+- Additional documentation for troubleshooting cloud-api bootstrap [\#187](https://github.com/chef/knife-azure/pull/187) ([adamedx](https://github.com/adamedx))
+- Release 1.4.0.rc.1 documentation, dependency, and test fixes [\#186](https://github.com/chef/knife-azure/pull/186) ([adamedx](https://github.com/adamedx))
+- \[KNIFE-481\] Virtual machine state 'provisioning' not reached after 5 minutes [\#185](https://github.com/chef/knife-azure/pull/185) ([siddheshwar-more](https://github.com/siddheshwar-more))
+- Changed .der to .b64 [\#183](https://github.com/chef/knife-azure/pull/183) ([NimishaS](https://github.com/NimishaS))
+- \[Nim/pick create ssl cert\] - knife-azure ssl bootstrap should create an ssl certificate [\#180](https://github.com/chef/knife-azure/pull/180) ([NimishaS](https://github.com/NimishaS))
+- \[\#178\] Error creating a VNET [\#179](https://github.com/chef/knife-azure/pull/179) ([siddheshwar-more](https://github.com/siddheshwar-more))
+- Get latest version in the form of Major.\* [\#174](https://github.com/chef/knife-azure/pull/174) ([NimishaS](https://github.com/NimishaS))
+- Add --winrm-authentication-protocol option [\#171](https://github.com/chef/knife-azure/pull/171) ([siddheshwar-more](https://github.com/siddheshwar-more))
+- Added a new boolean flag --auto-update-client [\#169](https://github.com/chef/knife-azure/pull/169) ([prabhu-das](https://github.com/prabhu-das))
+- OC-9994 Knife Azure server create used with --azure-connect-to-existing-dns option assumes ssh/winrm tcp endpoints port 22/5985 already used by existing vm. [\#102](https://github.com/chef/knife-azure/pull/102) ([siddheshwar-more](https://github.com/siddheshwar-more))
+
+## [1.4.0.rc.0](https://github.com/chef/knife-azure/tree/1.4.0.rc.0) (2014-12-02)
+[Full Changelog](https://github.com/chef/knife-azure/compare/1.3.0...1.4.0.rc.0)
+
+**Merged pull requests:**
+
+- Gem and version update for 1.4.0.rc.0 [\#173](https://github.com/chef/knife-azure/pull/173) ([adamedx](https://github.com/adamedx))
+- Remove em-winrm dependency in knife-azure [\#170](https://github.com/chef/knife-azure/pull/170) ([prabhu-das](https://github.com/prabhu-das))
+- show VM Images along with OS images in knife azure image list [\#167](https://github.com/chef/knife-azure/pull/167) ([NimishaS](https://github.com/NimishaS))
+- Fixed documentation of TCP and UDP options. [\#164](https://github.com/chef/knife-azure/pull/164) ([juliandunn](https://github.com/juliandunn))
+- Remove the az prefix from DNS name when VM name is specified and DNS nam... [\#163](https://github.com/chef/knife-azure/pull/163) ([adamedx](https://github.com/adamedx))
+- Documentation: Remove one dash, update image [\#162](https://github.com/chef/knife-azure/pull/162) ([nikhilv](https://github.com/nikhilv))
+- Support for adding winrm SSL certificate, for winrm ssl communication [\#160](https://github.com/chef/knife-azure/pull/160) ([muktaa](https://github.com/muktaa))
+- Fix bugs related to cloud-api bootstrap protocol. [\#159](https://github.com/chef/knife-azure/pull/159) ([siddheshwar-more](https://github.com/siddheshwar-more))
+- Integration tests for azure [\#157](https://github.com/chef/knife-azure/pull/157) ([siddheshwar-more](https://github.com/siddheshwar-more))
+- Fix tests on Travis [\#156](https://github.com/chef/knife-azure/pull/156) ([juliandunn](https://github.com/juliandunn))
+- Resource extension support through knife-azure plugin [\#153](https://github.com/chef/knife-azure/pull/153) ([muktaa](https://github.com/muktaa))
+
+## [1.3.0](https://github.com/chef/knife-azure/tree/1.3.0) (2014-07-31)
+[Full Changelog](https://github.com/chef/knife-azure/compare/1.2.2...1.3.0)
+
+**Closed issues:**
+
+- how to create multiple azure VMs at the same time [\#129](https://github.com/chef/knife-azure/issues/129)
+
+**Merged pull requests:**
+
+- Update for 1.3.0 release [\#154](https://github.com/chef/knife-azure/pull/154) ([adamedx](https://github.com/adamedx))
+- Fixed rspec tests [\#151](https://github.com/chef/knife-azure/pull/151) ([prabhu-das](https://github.com/prabhu-das))
+- knife-azure server create is missing -j switch for json at first chef-client run. [\#150](https://github.com/chef/knife-azure/pull/150) ([kaustubh-d](https://github.com/kaustubh-d))
+- fixing rspec-3 deprecation [\#149](https://github.com/chef/knife-azure/pull/149) ([prabhu-das](https://github.com/prabhu-das))
+- KNIFE-472: clean up gemspec's dependencies [\#144](https://github.com/chef/knife-azure/pull/144) ([adamedx](https://github.com/adamedx))
+- \[KNIFE-472\] Clean up unnecessary dependencies. [\#143](https://github.com/chef/knife-azure/pull/143) ([juliandunn](https://github.com/juliandunn))
+- OC-11209: server create should not delete storage account in cleanup - unless created storage account [\#134](https://github.com/chef/knife-azure/pull/134) ([ameyavarade](https://github.com/ameyavarade))
+
+## [1.2.2](https://github.com/chef/knife-azure/tree/1.2.2) (2014-02-07)
+[Full Changelog](https://github.com/chef/knife-azure/compare/1.2.0...1.2.2)
+
+**Merged pull requests:**
+
+- Release knife-azure 1.2.2 and fix gem description Opscode references [\#136](https://github.com/chef/knife-azure/pull/136) ([adamedx](https://github.com/adamedx))
+- Fix ag list and ag create commands. [\#135](https://github.com/chef/knife-azure/pull/135) ([jeffmendoza](https://github.com/jeffmendoza))
+
+## [1.2.0](https://github.com/chef/knife-azure/tree/1.2.0) (2014-02-04)
+[Full Changelog](https://github.com/chef/knife-azure/compare/1.1.4...1.2.0)
+
+**Closed issues:**
+
+- Adding ports/endpoints not working [\#118](https://github.com/chef/knife-azure/issues/118)
+
+**Merged pull requests:**
+
+- New server describe command should be renamed show [\#133](https://github.com/chef/knife-azure/pull/133) ([adamedx](https://github.com/adamedx))
+- KNIFE-441: Knife azure fails intermittently [\#132](https://github.com/chef/knife-azure/pull/132) ([adamedx](https://github.com/adamedx))
+- OC-11208: Azure fails intermittently [\#131](https://github.com/chef/knife-azure/pull/131) ([muktaa](https://github.com/muktaa))
+- KNIFE-427: Add support to create virtual networks and affinity groups [\#127](https://github.com/chef/knife-azure/pull/127) ([jeffmendoza](https://github.com/jeffmendoza))
+- OC-10240: Update knife-windows dependency to 0.5.14 [\#124](https://github.com/chef/knife-azure/pull/124) ([adamedx](https://github.com/adamedx))
+- OC-8563: Add WinRM support \(API Level\) while creating VMs [\#122](https://github.com/chef/knife-azure/pull/122) ([adamedx](https://github.com/adamedx))
+- OC-10567: knife azure server delete should be asynchronous by default [\#121](https://github.com/chef/knife-azure/pull/121) ([adamedx](https://github.com/adamedx))
+- OC-10371: Knife-azure should show summary of created instance [\#120](https://github.com/chef/knife-azure/pull/120) ([adamedx](https://github.com/adamedx))
+
+## [1.1.4](https://github.com/chef/knife-azure/tree/1.1.4) (2013-11-07)
+[Full Changelog](https://github.com/chef/knife-azure/compare/1.1.4.rc.0...1.1.4)
+
+## [1.1.4.rc.0](https://github.com/chef/knife-azure/tree/1.1.4.rc.0) (2013-11-06)
+[Full Changelog](https://github.com/chef/knife-azure/compare/1.1.2...1.1.4.rc.0)
+
+**Merged pull requests:**
+
+- Add more context to server create exception output [\#115](https://github.com/chef/knife-azure/pull/115) ([adamedx](https://github.com/adamedx))
+- Increase uniqueness of auto-generated names, add simple create summary [\#113](https://github.com/chef/knife-azure/pull/113) ([adamedx](https://github.com/adamedx))
+- KNIFE-358: knife-azure tries to bootstrap too quickly [\#112](https://github.com/chef/knife-azure/pull/112) ([adamedx](https://github.com/adamedx))
+- Revert "Merge pull request \#98 from BrianEWhipple/knife-358-bootstrap-wh... [\#111](https://github.com/chef/knife-azure/pull/111) ([adamedx](https://github.com/adamedx))
+- Reset config after each test, regression probably caused by new Chef rel... [\#109](https://github.com/chef/knife-azure/pull/109) ([adamedx](https://github.com/adamedx))
+- Loosen restrictive version constraint on nokogiri that caused gem conflic... [\#108](https://github.com/chef/knife-azure/pull/108) ([adamedx](https://github.com/adamedx))
+- OC-10125: knife-azure should auto-generate azure dns name [\#107](https://github.com/chef/knife-azure/pull/107) ([adamedx](https://github.com/adamedx))
+- KNIFE-380: Encrypted data bag file configuration not detected when bootstrapping Windows server [\#106](https://github.com/chef/knife-azure/pull/106) ([adamedx](https://github.com/adamedx))
+- KNIFE-291: Adding support for affinity groups and virtual networking [\#101](https://github.com/chef/knife-azure/pull/101) ([adamedx](https://github.com/adamedx))
+- KNIFE-361: Delete underlying VHD blob image from Azure Storage by default when deleting Virtual Machine [\#100](https://github.com/chef/knife-azure/pull/100) ([adamedx](https://github.com/adamedx))
+- KNIFE-358: Check vm available prior to bootstrapping [\#98](https://github.com/chef/knife-azure/pull/98) ([BrianEWhipple](https://github.com/BrianEWhipple))
+- OC-9951: knife azure server create fails if you specify 5985 for --tcp-endpoints [\#97](https://github.com/chef/knife-azure/pull/97) ([adamedx](https://github.com/adamedx))
+- KNIFE-360: Add support for adding Virtual Machine to Availability Set during provisioning [\#92](https://github.com/chef/knife-azure/pull/92) ([adamedx](https://github.com/adamedx))
+- OC-9952 Fix deprecation errors in knife azure [\#91](https://github.com/chef/knife-azure/pull/91) ([siddheshwar-more](https://github.com/siddheshwar-more))
+- OC-9783: Knife-azure server create leaks cloud services on failure to create vm [\#90](https://github.com/chef/knife-azure/pull/90) ([adamedx](https://github.com/adamedx))
+- OC-9784: knife azure image list should include image location in output [\#89](https://github.com/chef/knife-azure/pull/89) ([adamedx](https://github.com/adamedx))
+- OC-9785: knife azure should assume windows-chef-client-msi for --distro parameter [\#87](https://github.com/chef/knife-azure/pull/87) ([adamedx](https://github.com/adamedx))
+
+## [1.1.2](https://github.com/chef/knife-azure/tree/1.1.2) (2013-09-03)
+[Full Changelog](https://github.com/chef/knife-azure/compare/1.1.0...1.1.2)
+
+**Merged pull requests:**
+
+- Remove hard-coded date from gemspec [\#80](https://github.com/chef/knife-azure/pull/80) ([adamedx](https://github.com/adamedx))
+
+## [1.1.0](https://github.com/chef/knife-azure/tree/1.1.0) (2013-08-30)
+[Full Changelog](https://github.com/chef/knife-azure/compare/1.0.0...1.1.0)
+
+**Closed issues:**
+
+- Support LoadBalancedEndpoint, Subnet, AvailabilitySet and WinRm for server create [\#45](https://github.com/chef/knife-azure/issues/45)
+- NoMethodError: undefined method `run\_list' for nil:NilClass [\#20](https://github.com/chef/knife-azure/issues/20)
+- bundle install is stuck for ever [\#19](https://github.com/chef/knife-azure/issues/19)
+- server create command is giving error for winrm enabled images [\#10](https://github.com/chef/knife-azure/issues/10)
+- Knife azure plugin is ignoring or overwriting run\_list for knife azure server create [\#9](https://github.com/chef/knife-azure/issues/9)
+- Knife ssh is not working after creating VM using knife azure [\#8](https://github.com/chef/knife-azure/issues/8)
+- error creating server  [\#7](https://github.com/chef/knife-azure/issues/7)
+- Unable to generate a pem that works.  [\#6](https://github.com/chef/knife-azure/issues/6)
+- Cannot install knife-azure gem [\#1](https://github.com/chef/knife-azure/issues/1)
+
+**Merged pull requests:**
+
+- KNIFE-361: Add support to delete underlying VHD when deleting OS disk [\#94](https://github.com/chef/knife-azure/pull/94) ([BrianEWhipple](https://github.com/BrianEWhipple))
+- Rake task fix [\#79](https://github.com/chef/knife-azure/pull/79) ([adamedx](https://github.com/adamedx))
+- Documentation updates [\#78](https://github.com/chef/knife-azure/pull/78) ([adamedx](https://github.com/adamedx))
+- OC-8723: Knife-azure disk names can result in collision [\#73](https://github.com/chef/knife-azure/pull/73) ([adamedx](https://github.com/adamedx))
+- OC-8763: Knife azure server delete uses invalid nomenclature in display output [\#72](https://github.com/chef/knife-azure/pull/72) ([adamedx](https://github.com/adamedx))
+- OC-8834: Knife Azure unit tests write test file to root of repository [\#69](https://github.com/chef/knife-azure/pull/69) ([adamedx](https://github.com/adamedx))
+- refactoring test data files [\#64](https://github.com/chef/knife-azure/pull/64) ([ameyavarade](https://github.com/ameyavarade))
+- OC-8421 Additional suppression of benign warnings [\#63](https://github.com/chef/knife-azure/pull/63) ([adamedx](https://github.com/adamedx))
+- OC-8310: Remove breaking test changes [\#62](https://github.com/chef/knife-azure/pull/62) ([adamedx](https://github.com/adamedx))
+- OC-8243 optimize azure server create/server delete code [\#61](https://github.com/chef/knife-azure/pull/61) ([kaustubh-d](https://github.com/kaustubh-d))
+- Oc 8420 knife azure integration tests [\#60](https://github.com/chef/knife-azure/pull/60) ([siddheshwar-more](https://github.com/siddheshwar-more))
+- OC-8242: Fixed issues related to port and added test cases [\#56](https://github.com/chef/knife-azure/pull/56) ([adamedx](https://github.com/adamedx))
+- OC-5329: Azure public ip address unavailable for knife ssh [\#55](https://github.com/chef/knife-azure/pull/55) ([adamedx](https://github.com/adamedx))
+- OC-8170: Support new publishsettings format [\#53](https://github.com/chef/knife-azure/pull/53) ([adamedx](https://github.com/adamedx))
+- OC:8099 server delete issues -- orphaned disks after delete [\#52](https://github.com/chef/knife-azure/pull/52) ([adamedx](https://github.com/adamedx))
+- OC-8236: Server create bug in azure when same vm name is used across hosted services [\#51](https://github.com/chef/knife-azure/pull/51) ([adamedx](https://github.com/adamedx))
+- OC 8242 - azure fixes of some bugs / issues [\#48](https://github.com/chef/knife-azure/pull/48) ([muktaa](https://github.com/muktaa))
+- OC-5329 - ohai azure plugin to populate azure cloud attributes [\#43](https://github.com/chef/knife-azure/pull/43) ([kaustubh-d](https://github.com/kaustubh-d))
+- OC-8191 - Fixed issue while uploading the certificate [\#41](https://github.com/chef/knife-azure/pull/41) ([muktaa](https://github.com/muktaa))
+- OC-7835: Readme and cli switch update [\#40](https://github.com/chef/knife-azure/pull/40) ([adamedx](https://github.com/adamedx))
+- Oc 7836 server create [\#37](https://github.com/chef/knife-azure/pull/37) ([muktaa](https://github.com/muktaa))
+- Oc 7866 - Windows node bootstrapping fails for Azure on a Windows platform [\#36](https://github.com/chef/knife-azure/pull/36) ([kaustubh-d](https://github.com/kaustubh-d))
+- Oc 7837 - Add ability to delete individual roles from a deployment in Azure [\#35](https://github.com/chef/knife-azure/pull/35) ([kaustubh-d](https://github.com/kaustubh-d))
+- OC-7831 - \[Added filter to toggle between required fields and all fields while image listing \] [\#33](https://github.com/chef/knife-azure/pull/33) ([prabhu-das](https://github.com/prabhu-das))
+- OC-7832 - \[ Set the azure server list fields along with code optimization \] [\#32](https://github.com/chef/knife-azure/pull/32) ([prabhu-das](https://github.com/prabhu-das))
+- OC-7767 knife azure server list does not show IP address for windows VMs [\#31](https://github.com/chef/knife-azure/pull/31) ([siddheshwar-more](https://github.com/siddheshwar-more))
+- OC-7830 Fixed: azure\_host\_name option in Azure as azure-host-name [\#30](https://github.com/chef/knife-azure/pull/30) ([siddheshwar-more](https://github.com/siddheshwar-more))
+- Extract Azure host name, subscription Id and Certificate [\#29](https://github.com/chef/knife-azure/pull/29) ([ameyavarade](https://github.com/ameyavarade))
+- OC-7777: --purge-os-disk parameter is always true and cannot be set to false  [\#28](https://github.com/chef/knife-azure/pull/28) ([adamedx](https://github.com/adamedx))
+- OC-7484, OC-7425: Merge Sprint 80 fixes [\#27](https://github.com/chef/knife-azure/pull/27) ([adamedx](https://github.com/adamedx))
+- OC 7777 - \[ changed the option to have preserve-os-disk on knife azure server delete \] [\#26](https://github.com/chef/knife-azure/pull/26) ([prabhu-das](https://github.com/prabhu-das))
+- Oc 7465 - support ssh keys in Linux [\#25](https://github.com/chef/knife-azure/pull/25) ([muktaa](https://github.com/muktaa))
+- Oc 7425 use sudo password - \( Knife-Azure bootstrap should enable --use-sudo-password \) [\#24](https://github.com/chef/knife-azure/pull/24) ([prabhu-das](https://github.com/prabhu-das))
+- Oc 7484 - clean up hosted server after server delete [\#22](https://github.com/chef/knife-azure/pull/22) ([muktaa](https://github.com/muktaa))
+- Oc 7437 [\#21](https://github.com/chef/knife-azure/pull/21) ([muktaa](https://github.com/muktaa))
+- \[KNIFE-252\] Improve documentation for how to convert the management cert [\#18](https://github.com/chef/knife-azure/pull/18) ([juliandunn](https://github.com/juliandunn))
+- Oc 3827 [\#11](https://github.com/chef/knife-azure/pull/11) ([chirag-jog](https://github.com/chirag-jog))
+- Update master [\#2](https://github.com/chef/knife-azure/pull/2) ([jamescott](https://github.com/jamescott))
+
+## [1.0.0](https://github.com/chef/knife-azure/tree/1.0.0) (2012-06-06)
 
 
-
-
+\* *This Change Log was automatically generated by [github_changelog_generator](https://github.com/skywinder/Github-Changelog-Generator)*

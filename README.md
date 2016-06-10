@@ -3,12 +3,14 @@
 [![Gem Version](https://badge.fury.io/rb/knife-azure.svg)](https://rubygems.org/gems/knife-azure)
 [![Build Status](https://travis-ci.org/chef/knife-azure.svg?branch=master)](https://travis-ci.org/chef/knife-azure)
 
-
 ## Description
-A [knife] (http://docs.chef.io/knife.html) plugin to create,
-delete, and enumerate
-[Microsoft Azure] (https://azure.microsoft.com)
-resources to be managed by Chef.
+A [knife] (http://docs.chef.io/knife.html) plugin to create, delete, and enumerate
+[Microsoft Azure] (https://azure.microsoft.com) resources to be managed by Chef.
+
+NOTE: You may also want to consider using the [azure-xplat-cli](https://github.com/Azure/azure-xplat-cli),
+this application is written by the Azure team and has many other integrations with
+Azure. If click [here](https://github.com/chef-partners/azure-chef-extension/blob/master/examples/azure-xplat-cli-examples.md)
+you'll see deeper examples of using the Chef extension and Azure.
 
 ## Installation
 Be sure you are running the latest version of Chef DK, which can be installed
@@ -26,7 +28,7 @@ Depending on your system's configuration, you may need to run this command
 with root/administrator privileges.
 
 ## Modes
-`knife-azure 1.6.0.rc.0` onwards, we are adding support for Azure Resource Manager. You can easily switch between the
+`knife-azure 1.6.0` onwards, we are adding support for Azure Resource Manager. You can easily switch between the
 
 * Service management: commands using the Azure service management API
 * Resource manager: commands using the Azure Resource Manager API
@@ -83,7 +85,6 @@ knife[:azure_subscription_id] # found via: <subscriptionId>
 knife[:azure_client_id] # appId=$(azure ad app show --search <principleappcreated> --json | jq -r '.[0].appId')
 knife[:azure_client_secret] # password you set at initally
 ```
-
 
 ## Basic Examples for ASM
 The following examples assume that you've configured the publishsettings file

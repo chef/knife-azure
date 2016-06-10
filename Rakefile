@@ -2,6 +2,8 @@
 
 require 'rubygems'
 require 'bundler'
+require 'bundler/gem_tasks'
+
 begin
   Bundler.setup(:default, :development)
 rescue Bundler::BundlerError => e
@@ -43,7 +45,7 @@ task :default => :spec
 
 task :install => :package do
   sh %{gem install pkg/#{GEM_NAME}-#{Knife::Azure::VERSION} --no-rdoc --no-ri}
-end 
+end
 
 task :uninstall do
   sh %{gem uninstall #{GEM_NAME} -x -v #{Knife::Azure::VERSION} }
