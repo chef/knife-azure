@@ -141,62 +141,128 @@ module Azure::ARM
               "description" => "Azure image reference version."
             }
           },
-          "validation_key"=> {
-              "type"=> "string",
-              "metadata"=> {
-                "description"=> "JSON Escaped Validation Key"
-              }
-            },
-            "chef_server_url"=> {
-              "type"=> "string",
-              "metadata"=> {
-                "description"=> "Organization URL for the Chef Server. Example https://ChefServerDnsName.cloudapp.net/organizations/Orgname"
-              }
-            },
-            "validation_client_name"=> {
-              "type"=> "string",
-              "metadata"=> {
-                "description"=> "Validator key name for the organization. Example : MyOrg-validator"
-              }
-            },
-            "runlist"=> {
-              "type"=> "string",
-              "metadata"=> {
-                "description"=> "Optional Run List to Execute"
-              }
-            },
-            "autoUpdateClient" => {
-              "type" => "string",
-              "metadata" => {
-                "description" => "Optional Flag for auto update"
-              }
-            },
-            "deleteChefConfig" => {
-              "type" => "string",
-              "metadata" => {
-                "description" => "Optional Flag for deleteChefConfig"
-              }
-            },
-            "uninstallChefClient" => {
-              "type" => "string",
-              "metadata" => {
-                "description" => "Optional Flag for uninstallChefClient"
-              }
-            },
-             "chef_node_name" => {
-              "type" => "string",
-              "metadata" => {
-                "description" => "The name for the node (VM) in the Chef Organization"
-              }
-            },
-            "validation_key_format" => {
-              "type"=> "string",
-              "allowedValues"=> ["plaintext", "base64encoded"],
-              "defaultValue"=> "plaintext",
-              "metadata" => {
-                "description"=> "Format in which Validation Key is given. e.g. plaintext, base64encoded"
-              }
+          "validation_key" => {
+            "type"=> "string",
+            "metadata"=> {
+              "description"=> "JSON Escaped Validation Key"
             }
+          },
+          "client_pem" => {
+            "type"=> "string",
+            "metadata"=> {
+              "description"=> "Required for validtorless bootstrap."
+            }
+          },
+          "chef_server_crt" => {
+             "type"=> "string",
+            "metadata"=> {
+              "description"=> "Optional. SSL cerificate provided by user."
+            }
+          },
+          "chef_server_url"=> {
+            "type"=> "string",
+            "metadata"=> {
+              "description"=> "Organization URL for the Chef Server. Example https://ChefServerDnsName.cloudapp.net/organizations/Orgname"
+            }
+          },
+          "validation_client_name"=> {
+            "type"=> "string",
+            "metadata"=> {
+              "description"=> "Validator key name for the organization. Example : MyOrg-validator"
+            }
+          },
+          "runlist"=> {
+            "type"=> "string",
+            "metadata"=> {
+              "description"=> "Optional Run List to Execute"
+            }
+          },
+          "autoUpdateClient" => {
+            "type" => "string",
+            "metadata" => {
+              "description" => "Optional Flag for auto update"
+            }
+          },
+          "deleteChefConfig" => {
+            "type" => "string",
+            "metadata" => {
+              "description" => "Optional Flag for deleteChefConfig"
+            }
+          },
+          "uninstallChefClient" => {
+            "type" => "string",
+            "metadata" => {
+              "description" => "Optional Flag for uninstallChefClient"
+            }
+          },
+           "chef_node_name" => {
+            "type" => "string",
+            "metadata" => {
+              "description" => "The name for the node (VM) in the Chef Organization"
+            }
+          },
+          "validation_key_format" => {
+            "type"=> "string",
+            "allowedValues"=> ["plaintext", "base64encoded"],
+            "defaultValue"=> "plaintext",
+            "metadata" => {
+              "description"=> "Format in which Validation Key is given. e.g. plaintext, base64encoded"
+            }
+          },
+          "client_rb" => {
+            "type" => "string",
+            "metadata" => {
+              "description" => "Optional. Path to a client.rb file for use by the bootstrapped node."
+            }
+          },
+          "bootstrap_version" => {
+            "type" => "string",
+            "metadata" => {
+              "description" => "Optional. The version of Chef to install."
+            }
+          },
+          "custom_json_attr" => {
+            "type" => "string",
+            "metadata" => {
+              "description" => "Optional. A JSON string to be added to the first run of chef-client."
+            }
+          },
+          "node_ssl_verify_mode" => {
+            "type" => "string",
+            "metadata" => {
+              "description" => "Optional. Whether or not to verify the SSL cert for all HTTPS requests."
+            }
+          },
+          "node_verify_api_cert" => {
+            "type" => "string",
+            "metadata" => {
+              "description" => "Optional. Verify the SSL cert for HTTPS requests to the Chef server API."
+            }
+          },
+          "encrypted_data_bag_secret" => {
+            "type" => "string",
+            "metadata" => {
+              "description" => "Optional. The secret key to use to encrypt data bag item values."
+            }
+          },
+          "bootstrap_proxy" => {
+            "type" => "string",
+            "metadata" => {
+              "description" => "Optional. The proxy server for the node being bootstrapped."
+            }
+          },
+          "sshKeyData" => {
+            "type" => "string",
+            "metadata" => {
+              "description" => "SSH rsa public key file as a string."
+            }
+          },
+          "disablePasswordAuthentication" => {
+            "type" => "string",
+            "metadata" => {
+              "description" => "Set to true if using ssh key for authentication."
+            }
+          }
         },
         "variables"=> {
           "storageAccountName"=> "[concat(uniquestring(resourceGroup().id), '#{params[:azure_storage_account]}')]",
@@ -212,12 +278,13 @@ module Azure::ARM
           "publicIPAddressType"=> "Dynamic",
           "vmStorageAccountContainerName"=> "#{params[:azure_vm_name]}",
           "vmName"=> "#{params[:azure_vm_name]}",
-          "vmSize"=> "Standard_D1",
+          "vmSize"=> "#{params[:vm_size]}",
           "virtualNetworkName"=> "#{params[:azure_vnet_name]}",
           "vnetID"=> "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
           "subnetRef"=> "[concat(variables('vnetID'),'/subnets/',variables('subnetName'))]",
           "apiVersion"=> "2015-06-15",
           "vmExtensionName"=> "#{params[:chef_extension]}",
+          "sshKeyPath" => "[concat('/home/',parameters('adminUserName'),'/.ssh/authorized_keys')]"
         },
         "resources"=> [
           {
@@ -316,7 +383,16 @@ module Azure::ARM
               "osProfile"=> {
                 "computerName"=> computerName,
                 "adminUserName"=> "[parameters('adminUserName')]",
-                "adminPassword"=> "[parameters('adminPassword')]"
+                "adminPassword"=> "[parameters('adminPassword')]",
+                "linuxConfiguration" => ( {
+                  "disablePasswordAuthentication" => "[parameters('disablePasswordAuthentication')]",
+                  "ssh" => {
+                    "publicKeys" => [ {
+                    "path" => "[variables('sshKeyPath')]",
+                    "keyData" => "[parameters('sshKeyData')]"
+                    } ]
+                  }
+                } if params[:disablePasswordAuthentication] == "true")
               },
               "storageProfile"=> {
                 "imageReference"=> {
@@ -368,18 +444,27 @@ module Azure::ARM
                 "bootstrap_options" => {
                   "chef_node_name" => chef_node_name,
                   "chef_server_url" => "[parameters('chef_server_url')]",
-                  "validation_client_name" => "[parameters('validation_client_name')]"
+                  "validation_client_name" => "[parameters('validation_client_name')]",
+                  "bootstrap_version" => "[parameters('bootstrap_version')]",
+                  "node_ssl_verify_mode" => "[parameters('node_ssl_verify_mode')]",
+                  "node_verify_api_cert" => "[parameters('node_verify_api_cert')]",
+                  "encrypted_data_bag_secret" => "[parameters('encrypted_data_bag_secret')]",
+                  "bootstrap_proxy" => "[parameters('bootstrap_proxy')]"
                 },
                 "runlist" => "[parameters('runlist')]",
                 "autoUpdateClient" => "[parameters('autoUpdateClient')]",
                 "deleteChefConfig" => "[parameters('deleteChefConfig')]",
                 "uninstallChefClient" => "[parameters('uninstallChefClient')]",
                 "validation_key_format" => "[parameters('validation_key_format')]",
-                "hints" => hints_json
+                "hints" => hints_json,
+                "client_rb" => "[parameters('client_rb')]",
+                "custom_json_attr" => "[parameters('custom_json_attr')]"
               },
               "protectedSettings" => {
                 "validation_key" => "[parameters('validation_key')]",
                 "autoUpgradeMinorVersion" => "#{params[:auto_upgrade_minor_version]}",
+                "client_pem" => "[parameters('client_pem')]",
+                "chef_server_crt" => "[parameters('chef_server_crt')]"
               }
             }
           }
@@ -415,11 +500,29 @@ module Azure::ARM
         "validation_key"=> {
           "value"=> "#{params[:chef_extension_private_param][:validation_key]}"
         },
+        "client_pem" => {
+          "value" => "#{params[:chef_extension_private_param][:client_pem]}"
+        },
+        "chef_server_crt" => {
+          "value" => "#{params[:chef_extension_private_param][:chef_server_crt]}"
+        },
         "chef_server_url"=> {
-          "value"=> "#{params[:chef_extension_public_param][:bootstrap_options][:chef_server_url]}"
+          "value" => "#{params[:chef_extension_public_param][:bootstrap_options][:chef_server_url]}"
         },
         "validation_client_name"=> {
           "value"=> "#{params[:chef_extension_public_param][:bootstrap_options][:validation_client_name]}"
+        },
+        "node_ssl_verify_mode" => {
+          "value" => "#{params[:chef_extension_public_param][:bootstrap_options][:node_ssl_verify_mode]}"
+        },
+        "node_verify_api_cert" => {
+          "value" => "#{params[:chef_extension_public_param][:bootstrap_options][:node_verify_api_cert]}"
+        },
+        "encrypted_data_bag_secret" => {
+          "value" => "#{params[:chef_extension_public_param][:bootstrap_options][:encrypted_data_bag_secret]}"
+        },
+        "bootstrap_proxy" => {
+          "value" => "#{params[:chef_extension_public_param][:bootstrap_options][:bootstrap_proxy]}"
         },
         "runlist" => {
           "value" => "#{params[:chef_extension_public_param][:runlist]}"
@@ -435,6 +538,21 @@ module Azure::ARM
         },
         "chef_node_name" => {
           "value"=> "#{params[:chef_extension_public_param][:bootstrap_options][:chef_node_name]}"
+        },
+        "client_rb" => {
+          "value" => "#{params[:chef_extension_public_param][:client_rb]}"
+        },
+        "bootstrap_version" => {
+          "value" => "#{params[:chef_extension_public_param][:bootstrap_options][:bootstrap_version]}"
+        },
+        "custom_json_attr" => {
+          "value" => "#{params[:chef_extension_public_param][:custom_json_attr]}"
+        },
+        "sshKeyData" => {
+          "value" => "#{params[:ssh_key]}"
+        },
+        "disablePasswordAuthentication" => {
+          "value" => "#{params[:disablePasswordAuthentication]}"
         }
       }
     end

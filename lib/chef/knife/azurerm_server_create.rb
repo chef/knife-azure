@@ -99,16 +99,6 @@ class Chef
         :long => "--azure-os-disk-name DISKNAME",
         :description => "Optional. Specifies the friendly name of the disk containing the guest OS image in the image repository."
 
-      option :azure_os_disk_caching,
-        :long => "--azure-os-disk-caching CACHING_TYPE",
-        :description => "Optional. Specifies the caching requirements. options: 'None' or 'ReadOnly' or 'ReadWrite'.",
-        :default => 'None'
-
-      option :azure_os_disk_create_option,
-        :long => "--azure-os-disk-create-option CREATE_OPTION",
-        :description => "Optional. Specifies how the virtual machine should be created. options: 'fromImage' or 'attach' or 'empty'.",
-        :default => 'fromImage'
-
       option :azure_image_reference_publisher,
         :long => "--azure-image-reference-publisher PUBLISHER_NAME",
         :description => "Optional. Specifies the publisher of the image used to create the virtual machine.
@@ -153,10 +143,6 @@ class Chef
       option :identity_file,
         :long => "--identity-file FILENAME",
         :description => "SSH identity file for authentication, optional. It is the RSA private key path. Specify either ssh-password or identity-file"
-
-      option :identity_file_passphrase,
-        :long => "--identity-file-passphrase PASSWORD",
-        :description => "SSH key passphrase. Optional, specify if passphrase for identity-file exists"
 
       option :thumbprint,
         :long => "--thumbprint THUMBPRINT",
@@ -262,8 +248,11 @@ class Chef
         else
           server_def[:ssh_user] = locate_config_value(:ssh_user)
           server_def[:ssh_password] = locate_config_value(:ssh_password)
-          server_def[:identity_file] = locate_config_value(:identity_file)
-          server_def[:identity_file_passphrase] = locate_config_value(:identity_file_passphrase)
+          server_def[:disablePasswordAuthentication] = "false"
+          if locate_config_value(:identity_file)
+            server_def[:disablePasswordAuthentication] = "true"
+            server_def[:ssh_key] = File.read(locate_config_value(:identity_file))
+          end
         end
 
         server_def
