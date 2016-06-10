@@ -6,7 +6,7 @@ Bootstrap existing Azure ASM VM using following command:
 
 ```$ knife bootstrap azure myVMName```
 
-You can use othere options like --auto-update-client, --azure-dns-name, --bootstrap-version, --delete-chef-extension-config with this command. There are many more options which can be used with this command. Use --help to identify more options.
+You can use other options like --auto-update-client, --azure-dns-name, --bootstrap-version, --delete-chef-extension-config with this command. There are many more options which can be used with this command. Use --help to identify more options.
 
 NOTE: This command only works for single VM bootstrap.
 

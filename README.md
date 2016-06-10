@@ -42,7 +42,7 @@ PLEASE NOTE that `Azuererm` subcommands are experimental and of alpha quality. N
 1. [ASM Mode] (docs/configuration.md#asm-mode)
 2. [ARM Mode] (docs/configuration.md#arm-mode)
 
-## Details Usage for ASM and ARM mode
+## Detailed Usage for ASM and ARM mode
 
 1. [ASM Mode] (docs/ASM.md)
 2. [ARM Mode] (docs/ARM.md)
