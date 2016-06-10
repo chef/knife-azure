@@ -29,7 +29,7 @@ describe Chef::Knife::AzurermBase, :windows_only do
 
     it "should raise error if target is not in proper format" do
       # removing expiresOn field from target
-      target = "AzureXplatCli:target=_authority:https\\://login.microsoftonline.com/common::_clientId:04b07795-8ddb-461a-bbee-02f9e1bf7b46::expiresIn:3599::identityProvider:live.com::isMRRT:true::resource:https\\://management.core.windows.net/::tokenType:Bearer::userId:chirag.jog@outlook.com--0-2"
+      target = "AzureXplatCli:target=_authority:https\\://login.microsoftonline.com/common::_clientId:abc123::expiresIn:3599::identityProvider:live.com::isMRRT:true::resource:https\\://management.core.windows.net/::tokenType:Bearer::userId:abc@outlook.com--0-2"
       translated_cred = {:TargetName => double(:read_wstring => target),
         :CredentialBlob => double(:get_bytes => "a:access_token::r:refresh_token")}
       allow(@windows_credentials).to receive(:target_name).and_return(target)
@@ -41,7 +41,7 @@ describe Chef::Knife::AzurermBase, :windows_only do
     end
 
     it "should parse the target and return a hash if target exists" do
-      target = "AzureXplatCli:target=_authority:https\\://login.microsoftonline.com/common::_clientId:04b07795-8ddb-461a-bbee-02f9e1bf7b46::expiresIn:3599::expiresOn:2016-06-07T13\\:16\\:34.877Z::identityProvider:live.com::isMRRT:true::resource:https\\://management.core.windows.net/::tokenType:Bearer::userId:chirag.jog@outlook.com--0-2"
+      target = "AzureXplatCli:target=_authority:https\\://login.microsoftonline.com/common::_clientId:abc123::expiresIn:3599::expiresOn:2016-06-07T13\\:16\\:34.877Z::identityProvider:live.com::isMRRT:true::resource:https\\://management.core.windows.net/::tokenType:Bearer::userId:abc@outlook.com--0-2"
       translated_cred = {:TargetName => double(:read_wstring => target),
         :CredentialBlob => double(:get_bytes => "a:access_token::r:refresh_token")}
       allow(@windows_credentials).to receive(:target_name).and_return(target)
@@ -51,10 +51,10 @@ describe Chef::Knife::AzurermBase, :windows_only do
       allow_any_instance_of(NilClass).to receive(:read_pointer)
       credential = @windows_credentials.token_details_for_windows
       expect(credential[:tokentype]).to be == "Bearer"
-      expect(credential[:user]).to be == "chirag.jog@outlook.com--0-2"
+      expect(credential[:user]).to be == "abc@outlook.com--0-2"
       expect(credential[:token]).to be == "access_token"
       expect(credential[:refresh_token]).to be == "refresh_token"
-      expect(credential[:clientid]).to be == "04b07795-8ddb-461a-bbee-02f9e1bf7b46"
+      expect(credential[:clientid]).to be == "abc123"
       expect(credential[:expiry_time]).to be == "2016-06-07T13:16:34.877Z"
     end
   end
@@ -67,11 +67,11 @@ describe Chef::Knife::AzurermBase, :windows_only do
     end
 
     it "should fetch the credential ending with --0-2" do
-      targets = "    Target: AzureXplatCli:target=_authority:https\\://login.microsoftonline.com/6ea8098b-72a2-44a9-bdf4-9a01a5ba2727::_clientId:04b07795-8ddb-461a-bbee-02f9e1bf7b46::expiresIn:3599::expiresOn:2016-06-09T13\\:53\\:07.510Z::identityProvider:live.com::isMRRT:true::resource:https\\://management.core.windows.net/::tokenType:Bearer::userId:msdn2@opscode.com--0-2\n   Target:AzureXplatCli:target=_authority:https\\://login.microsoftonline.com/abeb039a-5e53-40ee-b48f-0c99bdc99d15::_clientId:04b07795-8ddb-461a-bbee-02f9e1bf7b46::expiresIn:3600::expiresOn:2016-06-09T13\\:51\\:56.271Z::identityProvider:live.com::isMRRT:true::resource:https\\://management.core.windows.net/::tokenType:Bearer::userId:chirag.jog@outlook.com--0-2\n"
+      targets = "    Target: AzureXplatCli:target=_authority:https\\://login.microsoftonline.com/subscription_id::_clientId:abc123::expiresIn:3599::expiresOn:2016-06-09T13\\:53\\:07.510Z::identityProvider:live.com::isMRRT:true::resource:https\\://management.core.windows.net/::tokenType:Bearer::userId:abc@opscode.com--0-2\n   Target:AzureXplatCli:target=_authority:https\\://login.microsoftonline.com/subscription_id::_clientId:def::expiresIn:3600::expiresOn:2016-06-09T13\\:51\\:56.271Z::identityProvider:live.com::isMRRT:true::resource:https\\://management.core.windows.net/::tokenType:Bearer::userId:def@outlook.com--0-2\n"
       cmdkey_output = double(:stdout => targets)
       allow_any_instance_of(Mixlib::ShellOut).to receive(:run_command).and_return(cmdkey_output)
       #target ending with --0-2
-      latest_target = "AzureXplatCli:target=_authority:https\\://login.microsoftonline.com/6ea8098b-72a2-44a9-bdf4-9a01a5ba2727::_clientId:04b07795-8ddb-461a-bbee-02f9e1bf7b46::expiresIn:3599::expiresOn:2016-06-09T13\\:53\\:07.510Z::identityProvider:live.com::isMRRT:true::resource:https\\://management.core.windows.net/::tokenType:Bearer::userId:msdn2@opscode.com--0-2"
+      latest_target = "AzureXplatCli:target=_authority:https\\://login.microsoftonline.com/subscription_id::_clientId:abc123::expiresIn:3599::expiresOn:2016-06-09T13\\:53\\:07.510Z::identityProvider:live.com::isMRRT:true::resource:https\\://management.core.windows.net/::tokenType:Bearer::userId:abc@opscode.com--0-2"
       target_name = @windows_credentials.target_name
       expect(target_name).to be == latest_target
     end
@@ -96,9 +96,9 @@ describe Chef::Knife::AzurermBase, :windows_only do
     end
 
     it "should return the latest target when multiple targets are passed" do
-      targets = ["    Target: AzureXplatCli:target=_authority:https\\://login.microsoftonline.com/6ea8098b-72a2-44a9-bdf4-9a01a5ba2727::_clientId:04b07795-8ddb-461a-bbee-02f9e1bf7b46::expiresIn:3599::expiresOn:2016-06-09T13\\:53\\:07.510Z::identityProvider:live.com::isMRRT:true::resource:https\\://management.core.windows.net/::tokenType:Bearer::userId:msdn2@opscode.com--0-2",
-        "    Target: AzureXplatCli:target=_authority:https\\://login.microsoftonline.com/abeb039a-5e53-40ee-b48f-0c99bdc99d15::_clientId:04b07795-8ddb-461a-bbee-02f9e1bf7b46::expiresIn:3600::expiresOn:2016-06-09T13\\:51\\:56.271Z::identityProvider:live.com::isMRRT:true::resource:https\\://management.core.windows.net/::tokenType:Bearer::userId:chirag.jog@outlook.com--0-2"]
-      target_name = "AzureXplatCli:target=_authority:https\\://login.microsoftonline.com/6ea8098b-72a2-44a9-bdf4-9a01a5ba2727::_clientId:04b07795-8ddb-461a-bbee-02f9e1bf7b46::expiresIn:3599::expiresOn:2016-06-09T13\\:53\\:07.510Z::identityProvider:live.com::isMRRT:true::resource:https\\://management.core.windows.net/::tokenType:Bearer::userId:msdn2@opscode.com--0-2"
+      targets = ["    Target: AzureXplatCli:target=_authority:https\\://login.microsoftonline.com/subscription_id::_clientId:abc123::expiresIn:3599::expiresOn:2016-06-09T13\\:53\\:07.510Z::identityProvider:live.com::isMRRT:true::resource:https\\://management.core.windows.net/::tokenType:Bearer::userId:abc@opscode.com--0-2",
+        "    Target: AzureXplatCli:target=_authority:https\\://login.microsoftonline.com/subscription_id::_clientId:def::expiresIn:3600::expiresOn:2016-06-09T13\\:51\\:56.271Z::identityProvider:live.com::isMRRT:true::resource:https\\://management.core.windows.net/::tokenType:Bearer::userId:def@outlook.com--0-2"]
+      target_name = "AzureXplatCli:target=_authority:https\\://login.microsoftonline.com/subscription_id::_clientId:abc123::expiresIn:3599::expiresOn:2016-06-09T13\\:53\\:07.510Z::identityProvider:live.com::isMRRT:true::resource:https\\://management.core.windows.net/::tokenType:Bearer::userId:abc@opscode.com--0-2"
       latest_target = @windows_credentials.latest_credential_target(targets)
       expect(latest_target).to be == target_name
     end

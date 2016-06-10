@@ -130,7 +130,7 @@ module Azure::ARM
           target_names = result.stdout.split("\n")
         end
 
-        # If "azure login" is done for multiple users, there will be multiple credentials
+        # If "azure login" is run for multiple users, there will be multiple credentials
         # Picking up the latest logged in user's credentials
         latest_target = latest_credential_target target_names
         latest_target
