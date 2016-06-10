@@ -63,7 +63,7 @@ describe Chef::Knife::AzurermBase, :windows_only do
     it "should raise error if Azure credentials are not found" do
       cmdkey_output = double(:stdout => "")
       allow_any_instance_of(Mixlib::ShellOut).to receive(:run_command).and_return(cmdkey_output)
-      expect{@windows_credentials.target_name}.to raise_error(RuntimeError)
+      expect{@windows_credentials.target_name}.to raise_error("Azure Credentials not found. Please run xplat's 'azure login' command")
     end
 
     it "should fetch the credential ending with --0-2" do
@@ -80,7 +80,7 @@ describe Chef::Knife::AzurermBase, :windows_only do
   context "latest_credential_target" do
     it "should raise error if no target is passed" do
       targets = []
-      expect {@windows_credentials.latest_credential_target(targets)}.to raise_error(RuntimeError)
+      expect {@windows_credentials.latest_credential_target(targets)}.to raise_error("No Target was found for windows credentials")
     end
 
     it "should return the target if a single target is passes" do
