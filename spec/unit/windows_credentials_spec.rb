@@ -5,14 +5,14 @@
 require File.expand_path(File.dirname(__FILE__) + '/../spec_helper')
 require File.expand_path(File.dirname(__FILE__) + '/../unit/query_azure_mock')
 
-describe Chef::Knife::AzurermBase do
+describe Chef::Knife::AzurermBase, :windows_only do
   include AzureSpecHelper
   include QueryAzureMock
 
   class Chef
     class Knife
       class WindowsCredentialsClass < Knife
-        include Azure::ARM::WindowsCredentials
+        include Azure::ARM::WindowsCredentials if Chef::Platform.windows?
       end
     end
   end

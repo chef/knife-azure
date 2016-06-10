@@ -20,7 +20,10 @@ require 'chef/knife/azurerm_server_create'
 require 'chef/knife/bootstrap_azure'
 
 require 'chef/knife/bootstrap_azurerm'
-require 'azure/resource_management/windows_credentials'
+
+if Chef::Platform.windows?
+  require 'azure/resource_management/windows_credentials'
+end
 
 require 'fileutils'
 require "securerandom"
