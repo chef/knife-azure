@@ -1,6 +1,6 @@
 # Change Log
 
-## [v1.6.0](https://github.com/chef/knife-azure/tree/v1.6.0) (2016-06-08)
+## [v1.6.0](https://github.com/chef/knife-azure/tree/v1.6.0) (2016-06-10)
 
 [Full Changelog](https://github.com/chef/knife-azure/compare/1.6.0.rc.0...v1.6.0)
 
