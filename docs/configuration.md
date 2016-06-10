@@ -63,6 +63,11 @@ It is possible to generate your own certificates and upload them. More Detailed 
 
 
 ## ARM mode
+
+For using ARM commands either run ```azure login``` command on azure-xplat-cli. For this we have a dependency on [azure-xplat-cli] (https://github.com/Azure/azure-xplat-cli)
+
+######OR
+
 ARM mode requires setting up service principal for authentication and permissioning. For setting up a service principal from the command line please refer
 [Authenticating a service principal with Azure Resource Manager](http://aka.ms/cli-service-principal) or
 [Unattended Authentication](http://aka.ms/auth-unattended). For detailed explanation of authentication in Azure,
