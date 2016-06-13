@@ -108,7 +108,7 @@ class Chef
       def check_token_validity(token_details)
         time_difference = Time.parse(token_details[:expiry_time]) - Time.now.utc
         if time_difference <= 0
-          raise "Token has expired, please run any azure command like azure vm list to get new token from refresh token else run azure login command"
+          raise "Token has expired. Please run any XPLAT command like 'azure vm list' to get new token OR run 'azure login' command"
         end
       end
 

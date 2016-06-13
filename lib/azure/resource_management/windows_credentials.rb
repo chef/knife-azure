@@ -76,61 +76,89 @@ module Azure::ARM
       include ReadCred
 
       def token_details_for_windows
-        target = target_name
+        begin
+          target = target_name
 
-        if target
-          target_pointer = wstring(target)
-          info_ptr = FFI::MemoryPointer.new(:pointer)
-          cred = CREDENTIAL_OBJECT.new info_ptr
-          cred_result = CredReadW(target_pointer, CRED_TYPE_GENERIC, 0, cred)
-          translated_cred = CREDENTIAL_OBJECT.new(info_ptr.read_pointer)
+          if target && !target.empty?
+            target_pointer = wstring(target)
+            info_ptr = FFI::MemoryPointer.new(:pointer)
+            cred = CREDENTIAL_OBJECT.new info_ptr
+            cred_result = CredReadW(target_pointer, CRED_TYPE_GENERIC, 0, cred)
+            translated_cred = CREDENTIAL_OBJECT.new(info_ptr.read_pointer)
 
-          target_obj = translated_cred[:TargetName].read_wstring.split("::") if translated_cred[:TargetName].read_wstring
-          cred_blob = translated_cred[:CredentialBlob].get_bytes(0, translated_cred[:CredentialBlobSize]).split("::")
+            target_obj = translated_cred[:TargetName].read_wstring.split("::") if translated_cred[:TargetName].read_wstring
+            cred_blob = translated_cred[:CredentialBlob].get_bytes(0, translated_cred[:CredentialBlobSize]).split("::")
 
-          tokentype = target_obj.select { |obj| obj.include? "tokenType" }
-          user = target_obj.select { |obj| obj.include? "userId" }
-          clientid = target_obj.select { |obj| obj.include? "clientId" }
-          expiry_time = target_obj.select { |obj| obj.include? "expiresOn" }
-          access_token = cred_blob.select { |obj| obj.include? "a:" }
-          refresh_token = cred_blob.select { |obj| obj.include? "r:" }
+            tokentype = target_obj.select { |obj| obj.include? "tokenType" }
+            user = target_obj.select { |obj| obj.include? "userId" }
+            clientid = target_obj.select { |obj| obj.include? "clientId" }
+            expiry_time = target_obj.select { |obj| obj.include? "expiresOn" }
+            access_token = cred_blob.select { |obj| obj.include? "a:" }
+            refresh_token = cred_blob.select { |obj| obj.include? "r:" }
 
-          credential = {}
-          credential[:tokentype] = tokentype[0].split(":")[1] if tokentype
-          credential[:user] = user[0].split(":")[1] if user
-          credential[:token] = access_token[0].split(":")[1] if access_token
-          credential[:refresh_token] = refresh_token[0].split(":")[1] if refresh_token
-          credential[:clientid] = clientid[0].split(":")[1] if clientid
-          credential[:expiry_time] = expiry_time[0].split("expiresOn:")[1].gsub("\\","") if expiry_time
-        else
-          raise "TargetName Not Found"
+            credential = {}
+            credential[:tokentype] = tokentype[0].split(":")[1]
+            credential[:user] = user[0].split(":")[1]
+            credential[:token] = access_token[0].split(":")[1]
+            credential[:refresh_token] = refresh_token[0].split(":")[1]
+            credential[:clientid] = clientid[0].split(":")[1]
+            credential[:expiry_time] = expiry_time[0].split("expiresOn:")[1].gsub("\\","")
+          else
+            raise "TargetName Not Found"
+          end
+          credential
+        rescue => error
+          ui.error("#{error.message}")
+          Chef::Log.debug("#{error.backtrace.join("\n")}")
+          exit
         end
-        credential
       end
 
       def target_name
         # cmdkey command is used for accessing windows credential manager
-        xplat_creds_cmd = Mixlib::ShellOut.new("cmdkey /list | findstr AzureXplatCli")
+        # Three credentials get created in windows credential manager for a single Azure account in xplat-cli
+        # One of them is for common tanent id, which can't be used
+        # Two of them end with --0-2 and --1-2. The one ending with --1-2 doesn't have
+        # accessToken and refreshToken in the credentialBlob.
+        # Selecting the ones ending with --0-2
+        xplat_creds_cmd = Mixlib::ShellOut.new('cmdkey /list | findstr AzureXplatCli | findstr \--0-2 | findstr -v common')
         result = xplat_creds_cmd.run_command
-
-        target_name = ""
+        target_names = []
         if result.stdout.empty?
           raise "Azure Credentials not found. Please run xplat's 'azure login' command"
         else
-          result.stdout.split("\n").each do |target|
-            # Three credentials get created in windows credential manager for xplat-cli
-            # One of them is for common tanent id, which can't be used
-            # Two of them end with --0-2 and --1-2. The one ending with --1-2 doesn't have
-            # accessToken and refreshToken in the credentialBlob.
-            # Selecting the one ending with --0-2
-            if !target.include?("common::") && target.include?("--0-2")
-              target_name = target.gsub("Target:","").strip
-              break
-            end
-          end
+          target_names = result.stdout.split("\n")
         end
 
-        target_name
+        # If "azure login" is run for multiple users, there will be multiple credentials
+        # Picking up the latest logged in user's credentials
+        latest_target = latest_credential_target target_names
+        latest_target
+      end
+
+      def latest_credential_target targets
+        case targets.size
+        when 0
+          raise "No Target was found for windows credentials"
+        when 1
+          return targets.first.gsub("Target:","").strip
+        else
+          latest_target = ""
+          max_expiry_time = Time.new(0)
+
+          # Using expiry_time to determine the latest credential
+          targets.each do |target|
+            target_obj = target.split("::")
+            expiry_time_obj = target_obj.select { |obj| obj.include? "expiresOn" }
+            expiry_time = expiry_time_obj[0].split("expiresOn:")[1].gsub("\\","")
+            if Time.parse(expiry_time) > max_expiry_time
+              latest_target = target
+              max_expiry_time = Time.parse(expiry_time)
+            end
+          end
+
+          return latest_target.gsub("Target:","").strip
+        end
       end
     end
 end
