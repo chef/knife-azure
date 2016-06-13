@@ -121,7 +121,7 @@ module Azure::ARM
         # Two of them end with --0-2 and --1-2. The one ending with --1-2 doesn't have
         # accessToken and refreshToken in the credentialBlob.
         # Selecting the ones ending with --0-2
-        xplat_creds_cmd = Mixlib::ShellOut.new("cmdkey /list | findstr AzureXplatCli | findstr 0-2 | findstr -v common")
+        xplat_creds_cmd = Mixlib::ShellOut.new('cmdkey /list | findstr AzureXplatCli | findstr \--0-2 | findstr -v common')
         result = xplat_creds_cmd.run_command
         target_names = []
         if result.stdout.empty?
