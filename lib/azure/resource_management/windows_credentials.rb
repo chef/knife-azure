@@ -21,11 +21,13 @@
 require 'chef'
 require 'mixlib/shellout'
 require 'ffi'
+require "chef/win32/api"
 
 module Azure::ARM
 
     module ReadCred
 
+      extend Chef::ReservedNames::Win32::API
       extend FFI::Library
 
       ffi_lib 'Advapi32'
@@ -37,36 +39,36 @@ module Azure::ARM
 
       # Ref: https://msdn.microsoft.com/en-us/library/windows/desktop/ms724284(v=vs.85).aspx
       class FILETIME < FFI::Struct
-        layout :dwLowDateTime, :uint32,
-               :dwHighDateTime, :uint32
+        layout :dwLowDateTime, :DWORD,
+               :dwHighDateTime, :DWORD
       end
 
       # Ref: https://msdn.microsoft.com/en-us/library/windows/desktop/aa374790(v=vs.85).aspx
       class CREDENTIAL_ATTRIBUTE < FFI::Struct
-        layout :Keyword, :pointer,
-               :Flags, :uint32,
-               :ValueSize, :uint32,
-               :Value, :pointer
+        layout :Keyword, :LPTSTR,
+               :Flags, :DWORD,
+               :ValueSize, :DWORD,
+               :Value, :LPBYTE
       end
 
       # Ref: https://msdn.microsoft.com/en-us/library/windows/desktop/aa374788(v=vs.85).aspx
       class CREDENTIAL_OBJECT < FFI::Struct
-          layout :Flags, :uint32,
-                 :Type, :uint32,
-                 :TargetName, :pointer,
-                 :Comment, :pointer,
+          layout :Flags, :DWORD,
+                 :Type, :DWORD,
+                 :TargetName, :LPTSTR,
+                 :Comment, :LPTSTR,
                  :LastWritten, FILETIME,
-                 :CredentialBlobSize, :uint32,
-                 :CredentialBlob, :pointer,
-                 :Persist, :uint32,
-                 :AttributeCount, :uint32,
+                 :CredentialBlobSize, :DWORD,
+                 :CredentialBlob, :LPBYTE,
+                 :Persist, :DWORD,
+                 :AttributeCount, :DWORD,
                  :Attributes, CREDENTIAL_ATTRIBUTE,
-                 :TargetAlias, :pointer,
-                 :UserName, :pointer
+                 :TargetAlias, :LPTSTR,
+                 :UserName, :LPTSTR
         end
 
       # Ref: https://msdn.microsoft.com/en-us/library/windows/desktop/aa374804(v=vs.85).aspx
-      attach_function :CredReadW, [:pointer, :uint32, :uint32, :pointer], :bool
+      safe_attach_function :CredReadW, [:LPCTSTR, :DWORD, :DWORD, :pointer], :BOOL
     end
 
 
@@ -103,6 +105,9 @@ module Azure::ARM
             credential[:refresh_token] = refresh_token[0].split(":")[1]
             credential[:clientid] = clientid[0].split(":")[1]
             credential[:expiry_time] = expiry_time[0].split("expiresOn:")[1].gsub("\\","")
+
+            # Free memory pointed by info_ptr
+            info_ptr.free
           else
             raise "TargetName Not Found"
           end
