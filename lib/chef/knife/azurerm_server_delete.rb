@@ -105,10 +105,14 @@ class Chef
           end
         rescue => error
           if error.class == MsRestAzure::AzureOperationError && error.body
-            if error.body['error']['code'] == 'ResourceNotFound'
-              ui.error("#{error.body['error']['message']}")
+            err_json = JSON.parse(error.response.body)
+            err_details = err_json["error"]["details"] if err_json["error"]
+            if err_details
+              err_details.each do |err|
+                ui.error(JSON.parse(err["message"])["error"]["message"])
+              end
             else
-              ui.error(error.body)
+              ui.error(err_json["error"]["message"])
             end
           else
             ui.error("#{error.message}")

@@ -121,10 +121,14 @@ module Azure
           display_list(ui, cols, rows)
         rescue => error
           if error.class == MsRestAzure::AzureOperationError && error.body
-            if error.body['error']['code']
-              ui.error("#{error.body['error']['message']}")
+            err_json = JSON.parse(error.response.body)
+            err_details = err_json["error"]["details"] if err_json["error"]
+            if err_details
+              err_details.each do |err|
+                ui.error(JSON.parse(err["message"])["error"]["message"])
+              end
             else
-              ui.error(error.body)
+              ui.error(err_json["error"]["message"])
             end
           else
             ui.error("#{error.message}")
@@ -221,7 +225,20 @@ module Azure
             puts ui.list(details, :columns_across, 2)
           end
         rescue => error
-          puts "#{error.body["error"]["message"]}"
+          if error.class == MsRestAzure::AzureOperationError && error.body
+            err_json = JSON.parse(error.response.body)
+            err_details = err_json["error"]["details"] if err_json["error"]
+            if err_details
+              err_details.each do |err|
+                ui.error(JSON.parse(err["message"])["error"]["message"])
+              end
+            else
+              ui.error(err_json["error"]["message"])
+            end
+          else
+            ui.error("#{error.message}")
+            Chef::Log.debug("#{error.backtrace.join("\n")}")
+          end
         end
       end
 
