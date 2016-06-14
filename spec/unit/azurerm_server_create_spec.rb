@@ -396,7 +396,7 @@ describe Chef::Knife::AzurermServerCreate do
               stub_resource_group_create_response)
         end
 
-        it "create virtual machine when it does not exist already" do
+        it "create virtual machine when it does not exist already and does not show chef-client run logs when extended_logs is false" do
           expect(@compute_client).to receive_message_chain(
             :virtual_machines, :get).and_return(
               @compute_promise)
@@ -404,6 +404,25 @@ describe Chef::Knife::AzurermServerCreate do
             :value, :nil?).and_return(
               true)
           expect(@service).to receive(:create_virtual_machine_using_template).exactly(1).and_return(stub_deployments_create_response)
+          expect(@service).to_not receive(:print)
+          expect(@service).to_not receive(:fetch_chef_client_logs)
+          expect(@service.ui).to receive(:log).exactly(9).times
+          expect(@service).to receive(:show_server).with("MyVM", "test-rgrp")
+          @arm_server_instance.run
+        end
+
+        it "create virtual machine when it does not exist already and also shows chef-client run logs when extended_logs is true" do
+          @arm_server_instance.config[:extended_logs] = true
+          expect(@compute_client).to receive_message_chain(
+            :virtual_machines, :get).and_return(
+              @compute_promise)
+          expect(@compute_promise).to receive_message_chain(
+            :value, :nil?).and_return(
+              true)
+          expect(@service).to receive(:create_virtual_machine_using_template).exactly(1).and_return(stub_deployments_create_response)
+          expect(@service).to receive(:print).exactly(1).times
+          expect(@service).to receive(:fetch_chef_client_logs).exactly(1).times
+          expect(@service.ui).to receive(:log).exactly(9).times
           expect(@service).to receive(:show_server).with("MyVM", "test-rgrp")
           @arm_server_instance.run
         end
@@ -477,7 +496,7 @@ describe Chef::Knife::AzurermServerCreate do
           allow(@service).to receive(:virtual_machine_exist?).and_return(false)
         end
 
-        it "uses template for VM creation" do
+        it "uses template for VM creation and does not show chef-client run logs to user when extended_logs is false" do
           deployment = double("deployment", :name => "name", :id => "id", :properties => double)
           @deploy1 = double("deploy1", :resource_type => "Microsoft.Compute/virtualMachines", :resource_name => "MyVM0", :id => "/subscriptions/e00d2b3f-3b94-4dfc-ae8e-ca34c8ba1a99/resourceGroups/vjgroup/providers/Microsoft.Compute/virtualMachines/MyVM0
 ")
@@ -488,6 +507,31 @@ describe Chef::Knife::AzurermServerCreate do
           allow(deployment.properties).to receive(:dependencies).and_return([@deploy1, @deploy2, @deploy3])
           allow(@service.ui).to receive(:log).at_least(:once)
           expect(@service).to receive(:create_virtual_machine_using_template).and_return(deployment)
+          expect(@service).to_not receive(:print)
+          expect(@service).to_not receive(:fetch_chef_client_logs)
+          expect(@service.ui).to receive(:log).exactly(17).times
+          expect(@service).to receive(:show_server).thrice
+          expect(@service).not_to receive(:create_virtual_machine)
+          expect(@service).not_to receive(:create_vm_extension)
+          expect(@service).not_to receive(:vm_details)
+          @arm_server_instance.run
+        end
+
+        it "uses template for VM creation and also shows chef-client run logs to user when extended_logs is true" do
+          @arm_server_instance.config[:extended_logs] = true
+          deployment = double("deployment", :name => "name", :id => "id", :properties => double)
+          @deploy1 = double("deploy1", :resource_type => "Microsoft.Compute/virtualMachines", :resource_name => "MyVM0", :id => "/subscriptions/e00d2b3f-3b94-4dfc-ae8e-ca34c8ba1a99/resourceGroups/vjgroup/providers/Microsoft.Compute/virtualMachines/MyVM0
+")
+          @deploy2 = double("deploy2", :resource_type => "Microsoft.Compute/virtualMachines", :resource_name => "MyVM1", :id => "/subscriptions/e00d2b3f-3b94-4dfc-ae8e-ca34c8ba1a99/resourceGroups/vjgroup/providers/Microsoft.Compute/virtualMachines/MyVM1
+")
+          @deploy3 = double("deploy3", :resource_type => "Microsoft.Compute/virtualMachines", :resource_name => "MyVM2", :id => "/subscriptions/e00d2b3f-3b94-4dfc-ae8e-ca34c8ba1a99/resourceGroups/vjgroup/providers/Microsoft.Compute/virtualMachines/MyVM2
+")
+          allow(deployment.properties).to receive(:dependencies).and_return([@deploy1, @deploy2, @deploy3])
+          allow(@service.ui).to receive(:log).at_least(:once)
+          expect(@service).to receive(:create_virtual_machine_using_template).and_return(deployment)
+          expect(@service).to receive(:print).exactly(3).times
+          expect(@service).to receive(:fetch_chef_client_logs).exactly(3).times
+          expect(@service.ui).to receive(:log).exactly(17).times
           expect(@service).to receive(:show_server).thrice
           expect(@service).not_to receive(:create_virtual_machine)
           expect(@service).not_to receive(:create_vm_extension)
@@ -1370,7 +1414,8 @@ describe Chef::Knife::AzurermServerCreate do
         :node_verify_api_cert  => 'hfyreiur374294nehfdishf' }
       @params[:chef_extension_public_param] = { :hints =>
         ['vm_name', 'public_fqdn', 'platform'],
-        :bootstrap_options => bootstrap_options
+        :bootstrap_options => bootstrap_options,
+        :extendedLogs => 'true'
       }
       {
         :azure_image_reference_publisher => 'OpenLogic',
@@ -1427,6 +1472,19 @@ describe Chef::Knife::AzurermServerCreate do
       expect(extension["properties"]["settings"]["bootstrap_options"]["bootstrap_proxy"]).to be == "[parameters('bootstrap_proxy')]"
       expect(extension["properties"]["settings"]["bootstrap_options"]["node_ssl_verify_mode"]).to be == "[parameters('node_ssl_verify_mode')]"
       expect(extension["properties"]["settings"]["bootstrap_options"]["node_verify_api_cert"]).to be == "[parameters('node_verify_api_cert')]"
+      expect(extension["properties"]["settings"]["extendedLogs"]).to be == 'true'
+    end
+
+    it "does not set extendedLogs parameter under extension config in the template" do
+      @params[:chef_extension_public_param][:extendedLogs] = 'false'
+      template = @service.create_deployment_template(@params)
+
+      extension = ""
+      template["resources"].each do |resource|
+        extension = resource if resource["type"] == "Microsoft.Compute/virtualMachines/extensions"
+      end
+
+      expect(extension["properties"]["settings"].has_key? 'extendedLogs').to be == false
     end
 
     after do
@@ -1629,6 +1687,142 @@ describe Chef::Knife::AzurermServerCreate do
       expect(response['vm_name']).to be == "[reference(resourceId('Microsoft.Compute/virtualMachines', variables('vmName'))).osProfile.computerName]"
       expect(response['public_fqdn']).to be == "[reference(resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))).dnsSettings.fqdn]"
       expect(response['platform']).to be == "[concat(reference(resourceId('Microsoft.Compute/virtualMachines', variables('vmName'))).storageProfile.imageReference.offer, concat(' ', reference(resourceId('Microsoft.Compute/virtualMachines', variables('vmName'))).storageProfile.imageReference.sku))]"
+    end
+  end
+
+  describe 'parse_substatus_code' do
+    it 'returns substatus\' name field' do
+      response = @service.parse_substatus_code('ComponentStatus/Chef Client run logs/succeeded', 1)
+      expect(response).to be == 'Chef Client run logs'
+    end
+
+    it 'returns substatus\' status field' do
+      response = @service.parse_substatus_code('ComponentStatus/Chef Client run logs/failed/0', 2)
+      expect(response).to be == 'failed'
+    end
+  end
+
+  describe 'fetch_substatus' do
+    context 'no substatuses returned' do
+      before do
+        allow(@service).to receive(:compute_management_client).and_return(
+          stub_compute_management_client('substatuses_not_found'))
+      end
+
+      it 'returns nil' do
+        response = @service.fetch_substatus(@params[:azure_resource_group_name],
+          @params[:azure_vm_name],
+          @params[:chef_extension]
+        )
+
+        expect(response).to be == nil
+      end
+    end
+
+    context 'substatuses returned' do
+      context 'but it does not contain chef-client run logs substatus' do
+        before do
+          allow(@service).to receive(:compute_management_client).and_return(
+            stub_compute_management_client('substatuses_found_with_no_chef_client_run_logs'))
+        end
+
+        it 'returns nil' do
+          response = @service.fetch_substatus(@params[:azure_resource_group_name],
+            @params[:azure_vm_name],
+            @params[:chef_extension]
+          )
+
+          expect(response).to be == nil
+        end
+      end
+
+      context 'and it do not contain chef-client run logs substatus' do
+        before do
+          allow(@service).to receive(:compute_management_client).and_return(
+            stub_compute_management_client('substatuses_found_with_chef_client_run_logs'))
+        end
+
+        it 'returns substatus hash for chef-client run logs' do
+          response = @service.fetch_substatus(@params[:azure_resource_group_name],
+            @params[:azure_vm_name],
+            @params[:chef_extension]
+          )
+
+          expect(response).to_not be == nil
+          expect(response.code).to be == 'ComponentStatus/Chef Client run logs/succeeded'
+          expect(response.message).to be == 'chef_client_run_logs'
+        end
+      end
+
+    end
+  end
+
+  describe 'fetch_chef_client_logs' do
+    context 'chef-client run logs substatus not available yet' do
+      before do
+        allow(@service).to receive(:fetch_substatus).and_return(nil)
+        @start_time = Time.now
+      end
+
+      context 'wait time has not exceeded wait timeout limit' do
+        it 'sleeps for some time and re-invokes the fetch_chef_client_logs method recursively' do
+          @service.instance_eval do
+            class << self
+              alias_method :fetch_chef_client_logs_mocked, :fetch_chef_client_logs
+            end
+          end
+
+          expect(@service).to receive(:print).exactly(1).times
+          expect(@service).to receive(:sleep).with(30)
+          expect(@service).to receive(:fetch_chef_client_logs).with(@params[:azure_resource_group_name],
+            @params[:azure_vm_name],
+            @params[:chef_extension],
+            @start_time,
+            30)
+
+          @service.fetch_chef_client_logs_mocked(@params[:azure_resource_group_name],
+            @params[:azure_vm_name],
+            @params[:chef_extension],
+            @start_time
+          )
+        end
+      end
+
+      context 'wait time has exceeded wait timeout limit' do
+        it 'displays wait timeout exceeded message' do
+          expect(@service.ui).to receive(:error).with(
+            "\nchef-client run logs could not be fetched since fetch process exceeded wait timeout of -1 minutes.\n")
+          @service.fetch_chef_client_logs(@params[:azure_resource_group_name],
+            @params[:azure_vm_name],
+            @params[:chef_extension],
+            @start_time,
+            -1
+          )
+        end
+      end
+    end
+
+    context 'chef-client run logs substatus available now' do
+      before do
+        substatus = OpenStruct.new(
+          :code => 'ComponentStatus/Chef Client run logs/succeeded',
+          :level => 'Info',
+          :display_status => 'Provisioning succeeded',
+          :message => 'chef_client_run_logs',
+          :time => 'chef_client_run_logs_write_time'
+        )
+        allow(@service).to receive(:fetch_substatus).and_return(substatus)
+        @start_time = Time.now
+      end
+
+      it 'displays chef-client run logs and exit status to the user' do
+        expect(@service).to receive(:puts).exactly(4).times
+        expect(@service).to receive(:print).exactly(1).times
+        @service.fetch_chef_client_logs(@params[:azure_resource_group_name],
+          @params[:azure_vm_name],
+          @params[:chef_extension],
+          @start_time)
+      end
     end
   end
 
