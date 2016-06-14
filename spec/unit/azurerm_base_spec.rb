@@ -80,16 +80,6 @@ describe Chef::Knife::AzurermBase do
         expect(Chef::Config[:knife][:azure_subscription_id]).to be == 'id1'
         validate_cert()
       end
-
-      it "- should raise error if invalid publish settings provided" do
-        Chef::Config[:knife][:azure_publish_settings_file] = get_publish_settings_file_path("azureInvalid.publishsettings")
-        expect {@dummy.validate_arm_keys!}.to raise_error(SystemExit)
-      end
-
-      it "- should raise error if publish settings file does not exists" do
-        Chef::Config[:knife][:azure_publish_settings_file] = get_publish_settings_file_path("azureNotAvailable.publishsettings")
-        expect {@dummy.validate_arm_keys!}.to raise_error(SystemExit)
-      end
     end
   end
 
@@ -104,6 +94,7 @@ describe Chef::Knife::AzurermBase do
       it 'Accesstoken file exist for Linux' do
         allow(Chef::Platform).to receive(:windows?).and_return(false)
         allow(File).to receive(:exists?).and_return(true)
+        allow(File).to receive(:size?).and_return(4)
         expect { @arm_server_instance.validate_azure_login }.not_to raise_error(RuntimeError)
       end
 
@@ -180,16 +171,11 @@ describe Chef::Knife::AzurermBase do
       end
 
       it 'Get token details from Accesstoken file for Linux' do
-        if Chef::Platform.windows?
-          token_details = {:tokentype => "Bearer", :user => "xxx@outlook.com", :token => "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1iIxLjAifQ.hZjHXXjbSdMmMs9oSZxGKa62EnNG6jkTY4RSmq8dQMvmwHgDCF4KoT_sOIsrAJTVwXuCdxYa5Jr83sfydFwiO2QWWOaSgyRXGPouex4NXFI_LFdnRzhLBoN0ONwUWHrV12N4LBgHyNLiyfeZQJFCbD0LTcPdjh7qQZ5aVgcoz_CB33PGD_z2L_6ynWrlAoihLEmYD6vbebMDSSFazvzoVg", :expiry_time => "2116-05-31T09:42:15.617Z", :clientid => "dsff-8df-sd45e-34345f7b46", :refreshtoken => "FPbm0gXiszvV_cMwGkgACwMBZ26fWA6fH3ToRLTHYU3wvvTWiU74ukRhMHhv20OJOtZBOtbckh3kTMT7QvzUYfd4uHFzwAYCtsh2SOY-dCAA"}
-          allow(@arm_server_instance).to receive(:token_details_for_linux).and_return(token_details)
-        else
-          allow(Chef::Platform).to receive(:windows?).and_return(false)
-          file_data = File.read(File.dirname(__FILE__) + "/assets/accessTokens.json")
-          allow(File).to receive(:read).and_return(file_data)
-          @authentication_details = @arm_server_instance.token_details_for_linux
-          expect(@authentication_details[:clientid]).to be ==  "dsff-8df-sd45e-34345f7b46"
-        end
+        allow(Chef::Platform).to receive(:windows?).and_return(false)
+        file_data = File.read(File.dirname(__FILE__) + "/assets/accessTokens.json")
+        allow(File).to receive(:read).and_return(file_data)
+        @authentication_details = @arm_server_instance.token_details_for_linux
+        expect(@authentication_details[:clientid]).to be ==  "dsff-8df-sd45e-34345f7b46"
       end
 
       it 'Get Target name for Windows' do

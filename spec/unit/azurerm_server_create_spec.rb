@@ -59,18 +59,30 @@ describe Chef::Knife::AzurermServerCreate do
       end
 
       it "azure_tenant_id" do
+        Chef::Config[:knife][:azure_image_os_type] = "ubuntu"
         Chef::Config[:knife].delete(:azure_tenant_id)
+        file_data = File.read(File.dirname(__FILE__) + "/assets/accessTokens.json")
+        allow(File).to receive(:read).and_return(file_data)
         expect {@arm_server_instance.run}.to raise_error("Please run XPLAT's 'azure login' command OR specify azure_tenant_id, azure_subscription_id, azure_client_id, azure_client_secret in your knife.rb")
+        Chef::Config[:knife].delete(:azure_image_os_type)
       end
 
       it "azure_client_id" do
+        Chef::Config[:knife][:azure_image_os_type] = "ubuntu"
         Chef::Config[:knife].delete(:azure_client_id)
+        file_data = File.read(File.dirname(__FILE__) + "/assets/accessTokens.json")
+        allow(File).to receive(:read).and_return(file_data)
         expect {@arm_server_instance.run}.to raise_error("Please run XPLAT's 'azure login' command OR specify azure_tenant_id, azure_subscription_id, azure_client_id, azure_client_secret in your knife.rb")
+        Chef::Config[:knife].delete(:azure_image_os_type)
       end
 
       it "azure_client_secret" do
         Chef::Config[:knife].delete(:azure_client_secret)
+        Chef::Config[:knife][:azure_image_os_type] = "ubuntu"
+        file_data = File.read(File.dirname(__FILE__) + "/assets/accessTokens.json")
+        allow(File).to receive(:read).and_return(file_data)
         expect {@arm_server_instance.run}.to raise_error("Please run XPLAT's 'azure login' command OR specify azure_tenant_id, azure_subscription_id, azure_client_id, azure_client_secret in your knife.rb")
+        Chef::Config[:knife].delete(:azure_image_os_type)
       end
 
       it "azure_resource_group_name" do
