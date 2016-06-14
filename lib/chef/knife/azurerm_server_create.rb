@@ -142,7 +142,7 @@ class Chef
 
       option :identity_file,
         :long => "--identity-file FILENAME",
-        :description => "SSH identity file for authentication, optional. It is the RSA private key path. Specify either ssh-password or identity-file"
+        :description => "SSH identity file for authentication, optional. It is the ssh-rsa public key path. Specify either ssh-password or identity-file"
 
       option :thumbprint,
         :long => "--thumbprint THUMBPRINT",
