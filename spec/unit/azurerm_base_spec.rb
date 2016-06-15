@@ -80,16 +80,6 @@ describe Chef::Knife::AzurermBase do
         expect(Chef::Config[:knife][:azure_subscription_id]).to be == 'id1'
         validate_cert()
       end
-
-      it "- should raise error if invalid publish settings provided" do
-        Chef::Config[:knife][:azure_publish_settings_file] = get_publish_settings_file_path("azureInvalid.publishsettings")
-        expect {@dummy.validate_arm_keys!}.to raise_error(SystemExit)
-      end
-
-      it "- should raise error if publish settings file does not exists" do
-        Chef::Config[:knife][:azure_publish_settings_file] = get_publish_settings_file_path("azureNotAvailable.publishsettings")
-        expect {@dummy.validate_arm_keys!}.to raise_error(SystemExit)
-      end
     end
   end
 
@@ -98,39 +88,40 @@ describe Chef::Knife::AzurermBase do
       it 'Accesstoken file doesnt exist for Linux' do
         allow(Chef::Platform).to receive(:windows?).and_return(false)
         allow(File).to receive(:exists?).and_return(false)
-        expect { @arm_server_instance.validate_azure_login }.to raise_error(RuntimeError)
+        expect { @arm_server_instance.validate_azure_login }.to raise_error("Please run XPLAT's 'azure login' command OR specify azure_tenant_id, azure_subscription_id, azure_client_id, azure_client_secret in your knife.rb")
       end
 
       it 'Accesstoken file exist for Linux' do
         allow(Chef::Platform).to receive(:windows?).and_return(false)
         allow(File).to receive(:exists?).and_return(true)
-        expect { @arm_server_instance.validate_azure_login }.not_to raise_error(RuntimeError)
+        allow(File).to receive(:size?).and_return(4)
+        expect { @arm_server_instance.validate_azure_login }.not_to raise_error("Please run XPLAT's 'azure login' command OR specify azure_tenant_id, azure_subscription_id, azure_client_id, azure_client_secret in your knife.rb")
       end
 
       it 'Accesstoken file contain [] value upon running azure logout command for Linux' do
         allow(Chef::Platform).to receive(:windows?).and_return(false)
         allow(File).to receive(:size?).and_return(2)
-        expect { @arm_server_instance.validate_azure_login }.to raise_error(RuntimeError)
+        expect { @arm_server_instance.validate_azure_login }.to raise_error("Please run XPLAT's 'azure login' command OR specify azure_tenant_id, azure_subscription_id, azure_client_id, azure_client_secret in your knife.rb")
       end
 
-      it 'Token Object not presnt in windows credential manager' do
+      it 'Token Object not present in windows credential manager' do
         @xplat_creds_cmd = double(:run_command => double)
         @result = double(:stdout => "")
         allow(Chef::Platform).to receive(:windows?).and_return(true)
         allow(Mixlib::ShellOut).to receive(:new).and_return(@xplat_creds_cmd)
         allow(@xplat_creds_cmd).to receive(:run_command).and_return(@result)
         allow(@result).to receive(:stdout).and_return("")
-        expect { @arm_server_instance.validate_azure_login }.to raise_error(RuntimeError)
+        expect { @arm_server_instance.validate_azure_login }.to raise_error("Please run XPLAT's 'azure login' command OR specify azure_tenant_id, azure_subscription_id, azure_client_id, azure_client_secret in your knife.rb")
       end
 
-      it 'Token Object presnt in windows credential manager' do
+      it 'Token Object present in windows credential manager' do
         @xplat_creds_cmd = double(:run_command => double)
         @result = double(:stdout => double)
         allow(Chef::Platform).to receive(:windows?).and_return(true)
         allow(Mixlib::ShellOut).to receive(:new).and_return(@xplat_creds_cmd)
         allow(@xplat_creds_cmd).to receive(:run_command).and_return(@result)
         allow(@result).to receive(:stdout).and_return(double)
-        expect { @arm_server_instance.validate_azure_login }.not_to raise_error(RuntimeError)
+        expect { @arm_server_instance.validate_azure_login }.not_to raise_error("Please run XPLAT's 'azure login' command OR specify azure_tenant_id, azure_subscription_id, azure_client_id, azure_client_secret in your knife.rb")
       end
 
     end
@@ -138,12 +129,12 @@ describe Chef::Knife::AzurermBase do
     context "Token Validation test cases" do
       it "Token Validity expired" do
         token_details = {:tokentype => "Bearer", :user => "xxx@outlook.com", :token => "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1iIxLjAifQ.hZjHXXjbSdMmMs9oSZxGKa62EnNG6jkTY4RSmq8dQMvmwHgDCF4KoT_sOIsrAJTVwXuCdxYa5Jr83sfydFwiO2QWWOaSgyRXGPouex4NXFI_LFdnRzhLBoN0ONwUWHrV12N4LBgHyNLiyfeZQJFCbD0LTcPdjh7qQZ5aVgcoz_CB33PGD_z2L_6ynWrlAoihLEmYD6vbebMDSSFazvzoVg", :expiry_time => "2016-05-31T09:42:15.617Z", :clientid => "dsff-8df-sd45e-34345f7b46", :refreshtoken => "FPbm0gXiszvV_cMwGkgACwMBZ26fWA6fH3ToRLTHYU3wvvTWiU74ukRhMHhv20OJOtZBOtbckh3kTMT7QvzUYfd4uHFzwAYCtsh2SOY-dCAA"}
-        expect { @arm_server_instance.check_token_validity(token_details) }.to raise_error(RuntimeError)
+        expect { @arm_server_instance.check_token_validity(token_details) }.to raise_error("Token has expired. Please run any XPLAT command like 'azure vm list' to get new token OR run 'azure login' command")
       end
 
       it 'Token is valid' do
         token_details = {:tokentype => "Bearer", :user => "xxx@outlook.com", :token => "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1iIxLjAifQ.hZjHXXjbSdMmMs9oSZxGKa62EnNG6jkTY4RSmq8dQMvmwHgDCF4KoT_sOIsrAJTVwXuCdxYa5Jr83sfydFwiO2QWWOaSgyRXGPouex4NXFI_LFdnRzhLBoN0ONwUWHrV12N4LBgHyNLiyfeZQJFCbD0LTcPdjh7qQZ5aVgcoz_CB33PGD_z2L_6ynWrlAoihLEmYD6vbebMDSSFazvzoVg", :expiry_time => "2116-05-31T09:42:15.617Z", :clientid => "dsff-8df-sd45e-34345f7b46", :refreshtoken => "FPbm0gXiszvV_cMwGkgACwMBZ26fWA6fH3ToRLTHYU3wvvTWiU74ukRhMHhv20OJOtZBOtbckh3kTMT7QvzUYfd4uHFzwAYCtsh2SOY-dCAA"}
-        expect { @arm_server_instance.check_token_validity(token_details) }.not_to raise_error(RuntimeError)
+        expect { @arm_server_instance.check_token_validity(token_details) }.not_to raise_error("Token has expired. Please run any XPLAT command like 'azure vm list' to get new token OR run 'azure login' command")
       end
     end
 
@@ -180,16 +171,11 @@ describe Chef::Knife::AzurermBase do
       end
 
       it 'Get token details from Accesstoken file for Linux' do
-        if Chef::Platform.windows?
-          token_details = {:tokentype => "Bearer", :user => "xxx@outlook.com", :token => "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1iIxLjAifQ.hZjHXXjbSdMmMs9oSZxGKa62EnNG6jkTY4RSmq8dQMvmwHgDCF4KoT_sOIsrAJTVwXuCdxYa5Jr83sfydFwiO2QWWOaSgyRXGPouex4NXFI_LFdnRzhLBoN0ONwUWHrV12N4LBgHyNLiyfeZQJFCbD0LTcPdjh7qQZ5aVgcoz_CB33PGD_z2L_6ynWrlAoihLEmYD6vbebMDSSFazvzoVg", :expiry_time => "2116-05-31T09:42:15.617Z", :clientid => "dsff-8df-sd45e-34345f7b46", :refreshtoken => "FPbm0gXiszvV_cMwGkgACwMBZ26fWA6fH3ToRLTHYU3wvvTWiU74ukRhMHhv20OJOtZBOtbckh3kTMT7QvzUYfd4uHFzwAYCtsh2SOY-dCAA"}
-          allow(@arm_server_instance).to receive(:token_details_for_linux).and_return(token_details)
-        else
-          allow(Chef::Platform).to receive(:windows?).and_return(false)
-          file_data = File.read(File.dirname(__FILE__) + "/assets/accessTokens.json")
-          allow(File).to receive(:read).and_return(file_data)
-          @authentication_details = @arm_server_instance.token_details_for_linux
-          expect(@authentication_details[:clientid]).to be ==  "dsff-8df-sd45e-34345f7b46"
-        end
+        allow(Chef::Platform).to receive(:windows?).and_return(false)
+        file_data = File.read(File.dirname(__FILE__) + "/assets/accessTokens.json")
+        allow(File).to receive(:read).and_return(file_data)
+        @authentication_details = @arm_server_instance.token_details_for_linux
+        expect(@authentication_details[:clientid]).to be ==  "dsff-8df-sd45e-34345f7b46"
       end
 
       it 'Get Target name for Windows' do

@@ -58,21 +58,6 @@ describe Chef::Knife::AzurermServerCreate do
         expect {@arm_server_instance.run}.to raise_error(SystemExit)
       end
 
-      it "azure_tenant_id" do
-        Chef::Config[:knife].delete(:azure_tenant_id)
-        expect {@arm_server_instance.run}.to raise_error("Please run XPLAT's 'azure login' command OR specify azure_tenant_id, azure_subscription_id, azure_client_id, azure_client_secret in your knife.rb")
-      end
-
-      it "azure_client_id" do
-        Chef::Config[:knife].delete(:azure_client_id)
-        expect {@arm_server_instance.run}.to raise_error("Please run XPLAT's 'azure login' command OR specify azure_tenant_id, azure_subscription_id, azure_client_id, azure_client_secret in your knife.rb")
-      end
-
-      it "azure_client_secret" do
-        Chef::Config[:knife].delete(:azure_client_secret)
-        expect {@arm_server_instance.run}.to raise_error("Please run XPLAT's 'azure login' command OR specify azure_tenant_id, azure_subscription_id, azure_client_id, azure_client_secret in your knife.rb")
-      end
-
       it "azure_resource_group_name" do
         Chef::Config[:knife].delete(:azure_resource_group_name)
         expect(@arm_server_instance.ui).to receive(:error)
@@ -165,6 +150,54 @@ describe Chef::Knife::AzurermServerCreate do
           @vm_name_with_no_special_chars = 'testvm'
           Chef::Config[:knife][:ssh_password] = 'ssh_password'
           @azure_vm_size_default_value = 'Small'
+          @xplat_creds_cmd = double(:run_command => double)
+          @result = double(:stdout => "")
+          allow(Mixlib::ShellOut).to receive(:new).and_return(@xplat_creds_cmd)
+          allow(@xplat_creds_cmd).to receive(:run_command).and_return(@result)
+          allow(@result).to receive(:stdout).and_return("")
+
+        end
+
+        it "azure_tenant_id not provided for Linux platform" do
+          allow(Chef::Platform).to receive(:windows?).and_return(false)
+          Chef::Config[:knife].delete(:azure_tenant_id)
+          allow(File).to receive(:exists?).and_return(false)
+          expect {@arm_server_instance.run}.to raise_error("Please run XPLAT's 'azure login' command OR specify azure_tenant_id, azure_subscription_id, azure_client_id, azure_client_secret in your knife.rb")
+        end
+
+        it "azure_client_id not provided for Linux platform" do
+          allow(Chef::Platform).to receive(:windows?).and_return(false)
+          Chef::Config[:knife].delete(:azure_client_id)
+          allow(File).to receive(:exists?).and_return(false)
+          expect {@arm_server_instance.run}.to raise_error("Please run XPLAT's 'azure login' command OR specify azure_tenant_id, azure_subscription_id, azure_client_id, azure_client_secret in your knife.rb")
+        end
+
+        it "azure_client_secret not provided for Linux platform" do
+          allow(Chef::Platform).to receive(:windows?).and_return(false)
+          Chef::Config[:knife].delete(:azure_client_secret)
+          allow(File).to receive(:exists?).and_return(false)
+          expect {@arm_server_instance.run}.to raise_error("Please run XPLAT's 'azure login' command OR specify azure_tenant_id, azure_subscription_id, azure_client_id, azure_client_secret in your knife.rb")
+        end
+
+        it "azure_tenant_id not provided for Windows platform" do
+          allow(Chef::Platform).to receive(:windows?).and_return(true)
+          Chef::Config[:knife].delete(:azure_tenant_id)
+          allow(File).to receive(:exists?).and_return(false)
+          expect {@arm_server_instance.run}.to raise_error("Please run XPLAT's 'azure login' command OR specify azure_tenant_id, azure_subscription_id, azure_client_id, azure_client_secret in your knife.rb")
+        end
+
+        it "azure_client_id not provided for Windows platform" do
+          allow(Chef::Platform).to receive(:windows?).and_return(true)
+          Chef::Config[:knife].delete(:azure_client_id)
+          allow(File).to receive(:exists?).and_return(false)
+          expect {@arm_server_instance.run}.to raise_error("Please run XPLAT's 'azure login' command OR specify azure_tenant_id, azure_subscription_id, azure_client_id, azure_client_secret in your knife.rb")
+        end
+
+        it "azure_client_secret not provided for windows platform" do
+          allow(Chef::Platform).to receive(:windows?).and_return(true)
+          Chef::Config[:knife].delete(:azure_client_secret)
+          allow(File).to receive(:exists?).and_return(false)
+          expect {@arm_server_instance.run}.to raise_error("Please run XPLAT's 'azure login' command OR specify azure_tenant_id, azure_subscription_id, azure_client_id, azure_client_secret in your knife.rb")
         end
 
         it "azure_storage_account not provided by user so vm_name gets assigned to it" do
