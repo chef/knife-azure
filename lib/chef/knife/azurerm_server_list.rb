@@ -11,7 +11,11 @@ class Chef
       def run
         $stdout.sync = true
         validate_arm_keys!
-        service.list_servers(locate_config_value(:azure_resource_group_name))
+        begin
+          service.list_servers(locate_config_value(:azure_resource_group_name))
+        rescue => error
+          service.common_arm_rescue_block(error)
+        end
       end
     end
   end

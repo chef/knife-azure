@@ -104,20 +104,7 @@ class Chef
             ui.warn("Corresponding node and client for the #{vm_name} server were not deleted and remain registered with the Chef Server")
           end
         rescue => error
-          if error.class == MsRestAzure::AzureOperationError && error.body
-            err_json = JSON.parse(error.response.body)
-            err_details = err_json["error"]["details"] if err_json["error"]
-            if err_details
-              err_details.each do |err|
-                ui.error(JSON.parse(err["message"])["error"]["message"])
-              end
-            else
-              ui.error(err_json["error"]["message"])
-            end
-          else
-            ui.error("#{error.message}")
-            Chef::Log.debug("#{error.backtrace.join("\n")}")
-          end
+          service.common_arm_rescue_block(error)
         end
       end
     end
