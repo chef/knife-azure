@@ -127,14 +127,29 @@ describe Chef::Knife::AzurermBase do
     end
 
     context "Token Validation test cases" do
-      it "Token Validity expired" do
+      before do
+         @xplat_creds_cmd = double(:run_command => double)
+         @result = double(:stdout => double)
+         allow(Mixlib::ShellOut).to receive_message_chain(:new,:run_command).and_return(@xplat_creds_cmd)
+      end
+
+      it "Token Validity expired for Linux" do
         token_details = {:tokentype => "Bearer", :user => "xxx@outlook.com", :token => "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1iIxLjAifQ.hZjHXXjbSdMmMs9oSZxGKa62EnNG6jkTY4RSmq8dQMvmwHgDCF4KoT_sOIsrAJTVwXuCdxYa5Jr83sfydFwiO2QWWOaSgyRXGPouex4NXFI_LFdnRzhLBoN0ONwUWHrV12N4LBgHyNLiyfeZQJFCbD0LTcPdjh7qQZ5aVgcoz_CB33PGD_z2L_6ynWrlAoihLEmYD6vbebMDSSFazvzoVg", :expiry_time => "2016-05-31T09:42:15.617Z", :clientid => "dsff-8df-sd45e-34345f7b46", :refreshtoken => "FPbm0gXiszvV_cMwGkgACwMBZ26fWA6fH3ToRLTHYU3wvvTWiU74ukRhMHhv20OJOtZBOtbckh3kTMT7QvzUYfd4uHFzwAYCtsh2SOY-dCAA"}
-        expect { @arm_server_instance.check_token_validity(token_details) }.to raise_error("Token has expired. Please run any XPLAT command like 'azure vm list' to get new token OR run 'azure login' command")
+        allow(Chef::Platform).to receive(:windows?).and_return(false)
+        allow(@arm_server_instance).to receive(:token_details_for_linux).and_return(token_details)
+        expect { @arm_server_instance.check_token_validity(token_details) }.to raise_error("Token has expired. Please run 'azure login' command")
+      end
+
+      it "Token Validity expired for Windows" do
+        token_details = {:tokentype => "Bearer", :user => "xxx@outlook.com", :token => "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1iIxLjAifQ.hZjHXXjbSdMmMs9oSZxGKa62EnNG6jkTY4RSmq8dQMvmwHgDCF4KoT_sOIsrAJTVwXuCdxYa5Jr83sfydFwiO2QWWOaSgyRXGPouex4NXFI_LFdnRzhLBoN0ONwUWHrV12N4LBgHyNLiyfeZQJFCbD0LTcPdjh7qQZ5aVgcoz_CB33PGD_z2L_6ynWrlAoihLEmYD6vbebMDSSFazvzoVg", :expiry_time => "2016-05-31T09:42:15.617Z", :clientid => "dsff-8df-sd45e-34345f7b46", :refreshtoken => "FPbm0gXiszvV_cMwGkgACwMBZ26fWA6fH3ToRLTHYU3wvvTWiU74ukRhMHhv20OJOtZBOtbckh3kTMT7QvzUYfd4uHFzwAYCtsh2SOY-dCAA"}
+        allow(Chef::Platform).to receive(:windows?).and_return(true)
+        allow(@arm_server_instance).to receive(:token_details_for_windows).and_return(token_details)
+        expect { @arm_server_instance.check_token_validity(token_details) }.to raise_error("Token has expired. Please run 'azure login' command")
       end
 
       it 'Token is valid' do
         token_details = {:tokentype => "Bearer", :user => "xxx@outlook.com", :token => "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1iIxLjAifQ.hZjHXXjbSdMmMs9oSZxGKa62EnNG6jkTY4RSmq8dQMvmwHgDCF4KoT_sOIsrAJTVwXuCdxYa5Jr83sfydFwiO2QWWOaSgyRXGPouex4NXFI_LFdnRzhLBoN0ONwUWHrV12N4LBgHyNLiyfeZQJFCbD0LTcPdjh7qQZ5aVgcoz_CB33PGD_z2L_6ynWrlAoihLEmYD6vbebMDSSFazvzoVg", :expiry_time => "2116-05-31T09:42:15.617Z", :clientid => "dsff-8df-sd45e-34345f7b46", :refreshtoken => "FPbm0gXiszvV_cMwGkgACwMBZ26fWA6fH3ToRLTHYU3wvvTWiU74ukRhMHhv20OJOtZBOtbckh3kTMT7QvzUYfd4uHFzwAYCtsh2SOY-dCAA"}
-        expect { @arm_server_instance.check_token_validity(token_details) }.not_to raise_error("Token has expired. Please run any XPLAT command like 'azure vm list' to get new token OR run 'azure login' command")
+        expect { @arm_server_instance.check_token_validity(token_details) }.not_to raise_error("Token has expired. Please run 'azure login' command")
       end
     end
 

@@ -94,7 +94,7 @@ class Chef
         else
           token_details = token_details_for_linux()
         end
-        check_token_validity(token_details)
+        token_details = check_token_validity(token_details)
         return token_details
       end
 
@@ -109,8 +109,21 @@ class Chef
       def check_token_validity(token_details)
         time_difference = Time.parse(token_details[:expiry_time]) - Time.now.utc
         if time_difference <= 0
-          raise "Token has expired. Please run any XPLAT command like 'azure vm list' to get new token OR run 'azure login' command"
+          begin
+            xplat_command = Mixlib::ShellOut.new("azure vm image list-skus westus RedHat RHEL", :timeout => 5).run_command
+          rescue => error
+          end
+          if Chef::Platform.windows?
+            token_details = token_details_for_windows()
+          else
+            token_details = token_details_for_linux()
+          end
+          time_difference = Time.parse(token_details[:expiry_time]) - Time.now.utc
+          if time_difference <= 0
+            raise "Token has expired. Please run 'azure login' command"
+          end
         end
+        return token_details
       end
 
       def validate_azure_login
