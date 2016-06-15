@@ -149,82 +149,86 @@ module Azure
       end
 
       def show_server(name, resource_group)
-        server = find_server(resource_group, name)
-        if server
-          network_interface_name = server.properties.network_profile.network_interfaces[0].id.split('/')[-1]
-          network_interface_data = network_resource_client.network_interfaces.get(resource_group, network_interface_name).value!.body
-          public_ip_id_data = network_interface_data.properties.ip_configurations[0].properties.public_ipaddress
-          unless public_ip_id_data.nil?
-            public_ip_name = public_ip_id_data.id.split('/')[-1]
-            public_ip_data = network_resource_client.public_ipaddresses.get(resource_group, public_ip_name).value!.body
-          else
-            public_ip_data = nil
+        begin
+          server = find_server(resource_group, name)
+          if server
+            network_interface_name = server.properties.network_profile.network_interfaces[0].id.split('/')[-1]
+            network_interface_data = network_resource_client.network_interfaces.get(resource_group, network_interface_name)
+            public_ip_id_data = network_interface_data.properties.ip_configurations[0].properties.public_ipaddress
+            unless public_ip_id_data.nil?
+              public_ip_name = public_ip_id_data.id.split('/')[-1]
+              public_ip_data = network_resource_client.public_ipaddresses.get(resource_group, public_ip_name)
+            else
+              public_ip_data = nil
+            end
+
+            details = Array.new
+            details << ui.color('Server Name', :bold, :cyan)
+            details << server.name
+
+            details << ui.color('Size', :bold, :cyan)
+            details << server.properties.hardware_profile.vm_size
+
+            details << ui.color('Provisioning State', :bold, :cyan)
+            details << server.properties.provisioning_state
+
+            details << ui.color('Location', :bold, :cyan)
+            details << server.location
+
+            details << ui.color('Publisher', :bold, :cyan)
+            details << server.properties.storage_profile.image_reference.publisher
+
+            details << ui.color('Offer', :bold, :cyan)
+            details << server.properties.storage_profile.image_reference.offer
+
+            details << ui.color('Sku', :bold, :cyan)
+            details << server.properties.storage_profile.image_reference.sku
+
+            details << ui.color('Version', :bold, :cyan)
+            details << server.properties.storage_profile.image_reference.version
+
+            details << ui.color('OS Type', :bold, :cyan)
+            details << server.properties.storage_profile.os_disk.os_type
+
+            details << ui.color('Public IP address', :bold, :cyan)
+            unless public_ip_data.nil?
+              details << public_ip_data.properties.ip_address
+            else
+              details << ' -- '
+            end
+
+            details << ui.color('FQDN', :bold, :cyan)
+            unless public_ip_data.nil? or public_ip_data.properties.dns_settings.nil?
+              details << public_ip_data.properties.dns_settings.fqdn
+            else
+              details << ' -- '
+            end
+
+            puts ui.list(details, :columns_across, 2)
           end
-
-          details = Array.new
-          details << ui.color('Server Name', :bold, :cyan)
-          details << server.name
-
-          details << ui.color('Size', :bold, :cyan)
-          details << server.properties.hardware_profile.vm_size
-
-          details << ui.color('Provisioning State', :bold, :cyan)
-          details << server.properties.provisioning_state
-
-          details << ui.color('Location', :bold, :cyan)
-          details << server.location
-
-          details << ui.color('Publisher', :bold, :cyan)
-          details << server.properties.storage_profile.image_reference.publisher
-
-          details << ui.color('Offer', :bold, :cyan)
-          details << server.properties.storage_profile.image_reference.offer
-
-          details << ui.color('Sku', :bold, :cyan)
-          details << server.properties.storage_profile.image_reference.sku
-
-          details << ui.color('Version', :bold, :cyan)
-          details << server.properties.storage_profile.image_reference.version
-
-          details << ui.color('OS Type', :bold, :cyan)
-          details << server.properties.storage_profile.os_disk.os_type
-
-          details << ui.color('Public IP address', :bold, :cyan)
-          unless public_ip_data.nil?
-            details << public_ip_data.properties.ip_address
-          else
-            details << ' -- '
-          end
-
-          details << ui.color('FQDN', :bold, :cyan)
-          unless public_ip_data.nil? or public_ip_data.properties.dns_settings.nil?
-            details << public_ip_data.properties.dns_settings.fqdn
-          else
-            details << ' -- '
-          end
-
-          puts ui.list(details, :columns_across, 2)
         end
       end
 
       def find_server(resource_group, name)
-        promise = compute_management_client.virtual_machines.get(resource_group, name)
-        result = promise.value!
-
-        unless result.nil?
-          server = result.body
-        else
-          ui.error("There is no server with name #{name} or resource_group #{resource_group}. Please provide correct details.")
+        begin
+          server = compute_management_client.virtual_machines.get(resource_group, name)
+          server
+        rescue => error
+          ui.error("#{error.body["error"]["message"]}")
         end
-        server
       end
 
       def virtual_machine_exist?(resource_group_name, vm_name)
-        !compute_management_client.virtual_machines.get(resource_group_name, vm_name).value.nil?
+        begin
+          compute_management_client.virtual_machines.get(resource_group_name, vm_name)
+          return true
+        rescue
+          return false
+        end
       end
 
       def resource_group_exist?(resource_group_name)
-        resource_management_client.resource_groups.check_existence(resource_group_name).value!.body
+        resource_management_client.resource_groups.check_existence(resource_group_name)
       end
 
       def platform(image_reference)
@@ -370,7 +374,7 @@ module Azure
         resource_group.location = params[:azure_service_location]
 
         begin
-          resource_group = resource_management_client.resource_groups.create_or_update(resource_group.name, resource_group).value!.body
+          resource_group = resource_management_client.resource_groups.create_or_update(resource_group.name, resource_group)
         rescue Exception => e
           Chef::Log.error("Failed to create the Resource Group -- exception being rescued: #{e.to_s}")
           common_arm_rescue_block(e)
@@ -513,7 +517,7 @@ module Azure
         ext_version = compute_management_client.virtual_machine_extension_images.list_versions(
           params[:azure_service_location],
           params[:chef_extension_publisher],
-          params[:chef_extension]).value!.body.last.name
+          params[:chef_extension]).last.name
         ext_version_split_values = ext_version.split(".")
         ext_version = ext_version_split_values[0] + "." + ext_version_split_values[1]
         ext_version
