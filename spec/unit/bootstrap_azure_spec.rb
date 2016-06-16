@@ -375,5 +375,40 @@ describe Chef::Knife::BootstrapAzure do
       expect { @role.update(@bootstrap_azure_instance.name_args[0], {}, '') }.to raise_error('Unable to update role:InvalidXmlRequest : The request body\'s XML was invalid or not correctly specified.')
     end
   end
+
+  describe 'get_chef_extension_version' do
+    before do
+      allow(@service).to receive(:instance_of?).with(
+        Azure::ResourceManagement::ARMInterface).and_return(false)
+      allow(@service).to receive(:instance_of?).with(
+        Azure::ServiceManagement::ASMInterface).and_return(true)
+    end
+
+    context 'when extension version is set in knife.rb' do
+      before do
+        Chef::Config[:knife][:azure_chef_extension_version] = '1012.10'
+      end
+
+      it 'will pick up the extension version from knife.rb' do
+        response = @bootstrap_azure_instance.get_chef_extension_version('MyChefClient')
+        expect(response).to be == '1012.10'
+      end
+    end
+
+    context 'when extension version is not set in knife.rb' do
+      before do
+        Chef::Config[:knife].delete(:azure_chef_extension_version)
+        extensions_list_xml = Nokogiri::XML(readFile('bootstrap_azure_role_xmls/extensions_list.xml'))
+        allow(@service).to receive(
+          :get_extension).and_return(extensions_list_xml)
+      end
+
+      it 'will pick up the latest version of the extension' do
+        expect(@service).to_not receive(:get_latest_chef_extension_version)
+        response = @bootstrap_azure_instance.get_chef_extension_version('MyChefClient')
+        expect(response).to be == '1210.*'
+      end
+    end
+  end
 end
 
