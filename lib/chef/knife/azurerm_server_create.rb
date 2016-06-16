@@ -189,6 +189,7 @@ class Chef
           vm_details = service.create_server(create_server_def)
         rescue => error
           service.common_arm_rescue_block(error)
+          exit
         end
       end
 
