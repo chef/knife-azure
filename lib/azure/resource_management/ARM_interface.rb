@@ -399,8 +399,7 @@ module Azure
           resource_group = resource_management_client.resource_groups.create_or_update(resource_group.name, resource_group).value!.body
         rescue Exception => e
           Chef::Log.error("Failed to create the Resource Group -- exception being rescued: #{e.to_s}")
-          backtrace_message = "#{e.class}: #{e}\n#{e.backtrace.join("\n")}"
-          Chef::Log.debug("#{backtrace_message}")
+          common_arm_rescue_block(e)
         end
 
         resource_group
