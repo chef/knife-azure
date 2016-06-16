@@ -1,0 +1,62 @@
+<ResourceExtensions xmlns="http://schemas.microsoft.com/windowsazure" xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+  <ResourceExtension>
+    <Publisher>Chef.Bootstrap.WindowsAzure</Publisher>
+    <Name>LinuxChefClient</Name>
+    <Version>11.18.6.2</Version>
+    <Label>Chef Extension for ubuntu</Label>
+    <Description>Chef Extension that sets up chef-client on VM</Description>
+    <ReplicationCompleted>true</ReplicationCompleted>
+    <Eula>http://www.getchef.com/about/</Eula>
+    <PrivacyUri>http://www.getchef.com/about/</PrivacyUri>
+    <HomepageUri>http://www.getchef.com/</HomepageUri>
+    <IsJsonExtension>true</IsJsonExtension>
+  </ResourceExtension>
+  <ResourceExtension>
+    <Publisher>Chef.Bootstrap.WindowsAzure</Publisher>
+    <Name>LinuxChefClient</Name>
+    <Version>1207.12.3.0</Version>
+    <Label>Chef Extension for ubuntu</Label>
+    <Description>Chef Extension that sets up chef-client on VM</Description>
+    <ReplicationCompleted>true</ReplicationCompleted>
+    <Eula>http://www.getchef.com/about/</Eula>
+    <PrivacyUri>http://www.getchef.com/about/</PrivacyUri>
+    <HomepageUri>http://www.getchef.com/</HomepageUri>
+    <IsJsonExtension>true</IsJsonExtension>
+  </ResourceExtension>
+  <ResourceExtension>
+    <Publisher>Chef.Bootstrap.WindowsAzure</Publisher>
+    <Name>LinuxChefClient</Name>
+    <Version>1210.12.101.1001</Version>
+    <Label>Chef Extension for ubuntu</Label>
+    <Description>Chef Extension that sets up chef-client on VM</Description>
+    <ReplicationCompleted>true</ReplicationCompleted>
+    <Eula>http://www.chef.io/about/</Eula>
+    <PrivacyUri>http://www.chef.io/about/</PrivacyUri>
+    <HomepageUri>http://www.chef.io/</HomepageUri>
+    <IsJsonExtension>true</IsJsonExtension>
+  </ResourceExtension>
+  <ResourceExtension>
+    <Publisher>Chef.Bootstrap.WindowsAzure</Publisher>
+    <Name>LinuxChefClient</Name>
+    <Version>1210.12.102.1000</Version>
+    <Label>Chef Extension for ubuntu</Label>
+    <Description>Chef Extension that sets up chef-client on VM</Description>
+    <ReplicationCompleted>true</ReplicationCompleted>
+    <Eula>http://www.chef.io/about/</Eula>
+    <PrivacyUri>http://www.chef.io/about/</PrivacyUri>
+    <HomepageUri>http://www.chef.io/</HomepageUri>
+    <IsJsonExtension>true</IsJsonExtension>
+  </ResourceExtension>
+  <ResourceExtension>
+    <Publisher>Chef.Bootstrap.WindowsAzure</Publisher>
+    <Name>LinuxChefClient</Name>
+    <Version>1210.12.103.1000</Version>
+    <Label>Chef Extension for ubuntu</Label>
+    <Description>Chef Extension that sets up chef-client on VM</Description>
+    <ReplicationCompleted>true</ReplicationCompleted>
+    <Eula>http://www.chef.io/about/</Eula>
+    <PrivacyUri>http://www.chef.io/about/</PrivacyUri>
+    <HomepageUri>http://www.chef.io/</HomepageUri>
+    <IsJsonExtension>true</IsJsonExtension>
+  </ResourceExtension>
+</ResourceExtensions>

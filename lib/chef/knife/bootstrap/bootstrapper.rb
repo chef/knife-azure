@@ -239,8 +239,16 @@ class Chef
             Chef::Config[:knife][:azure_chef_extension_version]
           else
             chef_extension_name = chef_extension_name.nil? ? get_chef_extension_name : chef_extension_name
-            extensions = service.get_extension(chef_extension_name, get_chef_extension_publisher)
-            extensions.css("Version").max.text.split(".").first + ".*"
+            if @service.instance_of? Azure::ResourceManagement::ARMInterface
+              service.get_latest_chef_extension_version({
+                :azure_service_location => locate_config_value(:azure_service_location),
+                :chef_extension_publisher => get_chef_extension_publisher,
+                :chef_extension => chef_extension_name
+              })
+            elsif @service.instance_of? Azure::ServiceManagement::ASMInterface
+              extensions = service.get_extension(chef_extension_name, get_chef_extension_publisher)
+              extensions.css("Version").max.text.split(".").first + ".*"
+            end
           end
         end
 
@@ -278,7 +286,7 @@ class Chef
           pub_config[:uninstallChefClient] = locate_config_value(:uninstall_chef_client) ? "true" : "false"
           pub_config[:custom_json_attr] = locate_config_value(:json_attributes) || {}
           pub_config[:extendedLogs] = locate_config_value(:extended_logs) ? "true" : "false"
-          pub_config[:hints] = ohai_hints if @service.instance_of? Azure::ResourceManagement::ARMInterface
+          pub_config[:hints] = ohai_hints if @service.instance_of?(Azure::ResourceManagement::ARMInterface) && !locate_config_value(:ohai_hints).nil?
 
           # bootstrap attributes
           pub_config[:bootstrap_options] = {}

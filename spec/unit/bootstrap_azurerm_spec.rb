@@ -186,4 +186,60 @@ describe Chef::Knife::BootstrapAzurerm do
       expect(extension_installed).to be(false)
     end
   end
+
+  describe 'get_chef_extension_version' do
+    before do
+      allow(@service).to receive(:instance_of?).with(
+        Azure::ResourceManagement::ARMInterface).and_return(true)
+    end
+
+    context 'when extension version is set in knife.rb' do
+      before do
+        Chef::Config[:knife][:azure_chef_extension_version] = '1312.11'
+      end
+
+      it 'will pick up the extension version from knife.rb' do
+        response = @bootstrap_azurerm_instance.get_chef_extension_version('MyChefClient')
+        expect(response).to be == '1312.11'
+      end
+    end
+
+    context 'when extension version is not set in knife.rb' do
+      before do
+        Chef::Config[:knife].delete(:azure_chef_extension_version)
+        allow(@service).to receive(
+          :get_latest_chef_extension_version).and_return('1213.14')
+      end
+
+      it 'will pick up the latest version of the extension' do
+        expect(@service).to_not receive(:get_extension)
+        response = @bootstrap_azurerm_instance.get_chef_extension_version('MyChefClient')
+        expect(response).to be == '1213.14'
+      end
+    end
+  end
+
+  describe 'get_chef_extension_public_params' do
+    context 'service is an instance_of ARM' do
+      before do
+        allow(@service).to receive(:instance_of?).and_return(true)
+      end
+
+      it 'does not set hints in extension\'s public config parameters' do
+        response = @bootstrap_azurerm_instance.get_chef_extension_public_params
+        expect(response.has_key? :hints).to be == false
+      end
+    end
+
+    context 'service is not an instance_of ARM' do
+      before do
+        allow(@service).to receive(:instance_of?).and_return(false)
+      end
+
+      it 'does not set hints in extension\'s public config parameters' do
+        response = @bootstrap_azurerm_instance.get_chef_extension_public_params
+        expect(response.has_key? :hints).to be == false
+      end
+    end
+  end
 end
