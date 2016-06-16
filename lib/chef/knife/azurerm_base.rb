@@ -110,8 +110,8 @@ class Chef
         time_difference = Time.parse(token_details[:expiry_time]) - Time.now.utc
         if time_difference <= 0
           begin
-            xplat_command = Mixlib::ShellOut.new("azure vm image list-skus westus RedHat RHEL", :timeout => 5).run_command
-          rescue => error
+            xplat_command = Mixlib::ShellOut.new("azure vm image list-skus westus RedHat RHEL").run_command
+          rescue Exception
           end
           if Chef::Platform.windows?
             token_details = token_details_for_windows()
