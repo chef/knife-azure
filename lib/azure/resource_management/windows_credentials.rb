@@ -125,8 +125,10 @@ module Azure::ARM
         # One of them is for common tanent id, which can't be used
         # Two of them end with --0-2 and --1-2. The one ending with --1-2 doesn't have
         # accessToken and refreshToken in the credentialBlob.
-        # Selecting the ones ending with --0-2
-        xplat_creds_cmd = Mixlib::ShellOut.new('cmdkey /list | findstr AzureXplatCli | findstr \--0-2 | findstr -v common')
+        # Since xplat is uses logic to split entries where it splits the credentials based
+        # on number of bytes of the tokens the access token is always been found in the one which start with --0- so
+        # selecting it on the basis of --0-
+        xplat_creds_cmd = Mixlib::ShellOut.new('cmdkey /list | findstr AzureXplatCli | findstr \--0- | findstr -v common')
         result = xplat_creds_cmd.run_command
         target_names = []
         if result.stdout.empty?
