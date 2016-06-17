@@ -140,8 +140,8 @@ class Chef
         :long => "--azure-vnet-subnet-name VNET_SUBNET_NAME",
         :description => "Optional. Specifies the virtual network subnet name."
 
-      option :identity_file,
-        :long => "--identity-file FILENAME",
+      option :ssh_public_key,
+        :long => "--ssh-public-key FILENAME",
         :description => "SSH identity file for authentication, optional. It is the ssh-rsa public key path. Specify either ssh-password or identity-file"
 
       option :thumbprint,
@@ -249,9 +249,9 @@ class Chef
           server_def[:ssh_user] = locate_config_value(:ssh_user)
           server_def[:ssh_password] = locate_config_value(:ssh_password)
           server_def[:disablePasswordAuthentication] = "false"
-          if locate_config_value(:identity_file)
+          if locate_config_value(:ssh_public_key)
             server_def[:disablePasswordAuthentication] = "true"
-            server_def[:ssh_key] = File.read(locate_config_value(:identity_file))
+            server_def[:ssh_key] = File.read(locate_config_value(:ssh_public_key))
           end
         end
 
