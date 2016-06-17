@@ -66,7 +66,7 @@ describe Chef::Knife::AzurermBase, :windows_only do
       expect{@windows_credentials.target_name}.to raise_error("Azure Credentials not found. Please run xplat's 'azure login' command")
     end
 
-    it "should fetch the credential ending with --0-2" do
+    it "should fetch the credential ending with --0-" do
       targets = "    Target: AzureXplatCli:target=_authority:https\\://login.microsoftonline.com/subscription_id::_clientId:abc123::expiresIn:3599::expiresOn:2016-06-09T13\\:53\\:07.510Z::identityProvider:live.com::isMRRT:true::resource:https\\://management.core.windows.net/::tokenType:Bearer::userId:abc@opscode.com--0-2\n   Target:AzureXplatCli:target=_authority:https\\://login.microsoftonline.com/subscription_id::_clientId:def::expiresIn:3600::expiresOn:2016-06-09T13\\:51\\:56.271Z::identityProvider:live.com::isMRRT:true::resource:https\\://management.core.windows.net/::tokenType:Bearer::userId:def@outlook.com--0-2\n"
       cmdkey_output = double(:stdout => targets)
       allow_any_instance_of(Mixlib::ShellOut).to receive(:run_command).and_return(cmdkey_output)
