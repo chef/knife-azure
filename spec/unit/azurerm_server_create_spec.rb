@@ -1,4 +1,4 @@
-#
+  #
 # Author:: Aliasgar Batterywala (<aliasgar.batterywala@clogeny.com>)
 # Copyright:: Copyright (c) 2016 Opscode, Inc.
 #
@@ -247,7 +247,7 @@ describe Chef::Knife::AzurermServerCreate do
           Chef::Config[:knife][:azure_vnet_subnet_name] = 'azure_vnet_subnet_name'
           Chef::Config[:knife][:azure_vm_size] = 'Medium'
           Chef::Config[:knife][:server_count] = 3
-          Chef::Config[:knife][:identity_file] = File.dirname(__FILE__) + "/assets/key_rsa.pub"
+          Chef::Config[:knife][:ssh_public_key] = File.dirname(__FILE__) + "/assets/key_rsa.pub"
         end
 
         it "azure_storage_account provided by user so vm_name does not get assigned to it" do
@@ -1481,7 +1481,7 @@ describe Chef::Knife::AzurermServerCreate do
       expect(parameters["chef_node_name"]["value"]).to be == 'test-vm'
     end
 
-    context "--identity_file option is provided " do
+    context "--ssh-public-key option is provided " do
       before do
         @params[:ssh_key] = "foo"
         @params[:disablePasswordAuthentication] = "true"
