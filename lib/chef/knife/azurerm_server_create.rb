@@ -142,7 +142,7 @@ class Chef
 
       option :ssh_public_key,
         :long => "--ssh-public-key FILENAME",
-        :description => "SSH identity file for authentication, optional. It is the ssh-rsa public key path. Specify either ssh-password or ssh-public-key"
+        :description => "It is the ssh-rsa public key path. Specify either ssh-password or ssh-public-key"
 
       option :thumbprint,
         :long => "--thumbprint THUMBPRINT",
