@@ -93,7 +93,63 @@ module QueryAzureMock
       :last,
       :name
     ).and_return('1210.12.10.100')
+
+    allow(compute_management_client.virtual_machine_extensions).to receive_message_chain(
+      :get,
+      :value!,
+      :body,
+      :properties,
+      :instance_view,
+      :substatuses).and_return(stub_substatuses(user_supplied_value))
+
     compute_management_client
+  end
+
+  def stub_substatuses(user_supplied_value)
+    if user_supplied_value == 'substatuses_found_with_no_chef_client_run_logs'
+      [
+       OpenStruct.new(
+        :code => 'code1',
+        :level => 'Info',
+        :display_status => 'my_code1',
+        :message => 'my_message1',
+        :time => 'my_time1'
+       ),
+       OpenStruct.new(
+        :code => 'code2',
+        :level => 'Warning',
+        :display_status => 'my_code2',
+        :message => 'my_message2',
+        :time => 'my_time2'
+       )
+      ]
+    elsif user_supplied_value == 'substatuses_found_with_chef_client_run_logs'
+      [
+       OpenStruct.new(
+        :code => 'code1',
+        :level => 'Info',
+        :display_status => 'my_code1',
+        :message => 'my_message1',
+        :time => 'my_time1'
+       ),
+       OpenStruct.new(
+        :code => 'ComponentStatus/Chef Client run logs/succeeded',
+        :level => 'Info',
+        :display_status => 'Provisioning succeeded',
+        :message => 'chef_client_run_logs',
+        :time => 'chef_client_run_logs_write_time'
+       ),
+       OpenStruct.new(
+        :code => 'code2',
+        :level => 'Warning',
+        :display_status => 'my_code2',
+        :message => 'my_message2',
+        :time => 'my_time2'
+       )
+      ]
+    elsif user_supplied_value == 'substatuses_not_found'
+      nil
+    end
   end
 
   def stub_storage_management_client

@@ -260,6 +260,69 @@ module Azure
         end
       end
 
+      def parse_substatus_code(code, index)
+        code.split('/')[index]
+      end
+
+      def fetch_substatus(resource_group_name, virtual_machine_name, chef_extension_name)
+        substatuses = compute_management_client.virtual_machine_extensions.get(
+          resource_group_name,
+          virtual_machine_name,
+          chef_extension_name,
+          'instanceView'
+        ).value!.body.properties.instance_view.substatuses
+
+        return nil if substatuses.nil?
+
+        substatuses.each do |substatus|
+          if parse_substatus_code(substatus.code, 1) == 'Chef Client run logs'
+            return substatus
+          end
+        end
+
+        return nil
+      end
+
+      def fetch_chef_client_logs(resource_group_name, virtual_machine_name, chef_extension_name, fetch_process_start_time, fetch_process_wait_timeout = 30)
+        ## fetch substatus field which contains the chef-client run logs ##
+        substatus = fetch_substatus(resource_group_name, virtual_machine_name, chef_extension_name)
+
+        unless substatus.nil?
+          ## chef-client run logs becomes available ##
+          status = parse_substatus_code(substatus.code, 2)
+          message = substatus.message
+
+          puts "\n\n******** Please find the chef-client run details below ********\n\n"
+          print "----> chef-client run status: "
+          case status
+            when 'succeeded'
+              ## chef-client run succeeded ##
+              color = :green
+            when 'failed'
+              ## chef-client run failed ##
+              color = :red
+            when 'transitioning'
+              ## chef-client run did not complete within maximum timeout of 30 minutes ##
+              ## fetch whatever logs available under the chef-client.log file ##
+              color = :yellow
+            end
+            puts "#{ui.color(status, color, :bold)}"
+            puts "----> chef-client run logs: "
+            puts "\n#{message}\n"  ## message field of substatus contains the chef-client run logs ##
+        else
+          ## unavailability of the substatus field indicates that chef-client run is not completed yet on the server ##
+          fetch_process_wait_time = ((Time.now - fetch_process_start_time) / 60).round
+          if fetch_process_wait_time <= fetch_process_wait_timeout
+            print "#{ui.color('.', :bold)}"
+            sleep 30
+            fetch_chef_client_logs(resource_group_name, virtual_machine_name, chef_extension_name, fetch_process_start_time, fetch_process_wait_timeout)
+          else
+            ## wait time exceeded 30 minutes timeout ##
+            ui.error "\nchef-client run logs could not be fetched since fetch process exceeded wait timeout of #{fetch_process_wait_timeout} minutes.\n"
+          end
+        end
+      end
+
       def create_server(params = {})
         platform(params[:azure_image_reference_offer])
         # resource group creation
@@ -289,6 +352,15 @@ module Azure
             ui.log("Deployment ID is: #{deployment.id}")
             deployment.properties.dependencies.each do |deploy|
               if deploy.resource_type == "Microsoft.Compute/virtualMachines"
+                if params[:chef_extension_public_param][:extendedLogs] == "true"
+                  print "\n\nWaiting for the first chef-client run on virtual machine #{deploy.resource_name}"
+                  fetch_chef_client_logs(params[:azure_resource_group_name],
+                    deploy.resource_name,
+                    params[:chef_extension],
+                    Time.now
+                  )
+                end
+
                 ui.log("VM Details ...")
                 ui.log("-------------------------------")
                 ui.log("Virtual Machine name is: #{deploy.resource_name}")

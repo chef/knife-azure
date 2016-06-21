@@ -107,10 +107,17 @@ class Chef
             option :secret_file,
               :long => "--secret-file SECRET_FILE",
               :description => "A file containing the secret key to use to encrypt data bag item values.  Can also be defaulted in your config with the key 'secret_file'"
-  	  	  end
-  	  	end
-  	  end
+
+            option :extended_logs,
+              :long => "--extended-logs",
+              :boolean => true,
+              :default => false,
+              :description => "Optional. It shows chef convergence logs in detail."
+
+          end
   	end
+      end
+    end
   end
 end
 
