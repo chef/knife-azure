@@ -188,16 +188,7 @@ class Chef
 
           vm_details = service.create_server(create_server_def)
         rescue => error
-          if error.class == MsRestAzure::AzureOperationError && error.body
-            if error.response.body['error']['code'] == 'DeploymentFailed'
-              ui.error("#{error.body['error']['message']}")
-            else
-              ui.error(error.response.body)
-            end
-          else
-            ui.error("#{error.message}")
-          end
-          Chef::Log.debug("#{error.backtrace.join("\n")}")
+          service.common_arm_rescue_block(error)
           exit
         end
       end

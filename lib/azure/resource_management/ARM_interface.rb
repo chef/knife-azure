@@ -88,50 +88,36 @@ module Azure
       end
 
       def list_servers(resource_group_name = nil)
-        begin
-          if resource_group_name.nil?
-            promise = compute_management_client.virtual_machines.list_all
-          else
-            promise = compute_management_client.virtual_machines.list(resource_group_name)
-          end
-
-          result = promise.value!
-          servers = result.body.value
-
-          cols = ['VM Name', 'Resource Group Name', 'Location', 'Provisioning State', 'OS Type']
-          rows =  []
-
-          servers.each do |server|
-            rows << server.name.to_s
-            rows << server.id.split('/')[4].downcase
-            rows << server.location.to_s
-            rows << begin
-                             state = server.properties.provisioning_state.to_s.downcase
-                             case state
-                             when 'failed'
-                               ui.color(state, :red)
-                             when 'succeeded'
-                               ui.color(state, :green)
-                             else
-                               ui.color(state, :yellow)
-                             end
-                           end
-            rows << server.properties.storage_profile.os_disk.os_type.to_s
-          end
-          display_list(ui, cols, rows)
-        rescue => error
-          if error.class == MsRestAzure::AzureOperationError && error.body
-            if error.body['error']['code']
-              ui.error("#{error.body['error']['message']}")
-            else
-              ui.error(error.body)
-            end
-          else
-            ui.error("#{error.message}")
-            Chef::Log.debug("#{error.backtrace.join("\n")}")
-          end
-          exit
+        if resource_group_name.nil?
+          promise = compute_management_client.virtual_machines.list_all
+        else
+          promise = compute_management_client.virtual_machines.list(resource_group_name)
         end
+
+        result = promise.value!
+        servers = result.body.value
+
+        cols = ['VM Name', 'Resource Group Name', 'Location', 'Provisioning State', 'OS Type']
+        rows =  []
+
+        servers.each do |server|
+          rows << server.name.to_s
+          rows << server.id.split('/')[4].downcase
+          rows << server.location.to_s
+          rows << begin
+                           state = server.properties.provisioning_state.to_s.downcase
+                           case state
+                           when 'failed'
+                             ui.color(state, :red)
+                           when 'succeeded'
+                             ui.color(state, :green)
+                           else
+                             ui.color(state, :yellow)
+                           end
+                         end
+          rows << server.properties.storage_profile.os_disk.os_type.to_s
+        end
+        display_list(ui, cols, rows)
       end
 
       def delete_server(resource_group_name, vm_name)
@@ -163,80 +149,72 @@ module Azure
       end
 
       def show_server(name, resource_group)
-        begin
-          server = find_server(resource_group, name)
-          if server
-            network_interface_name = server.properties.network_profile.network_interfaces[0].id.split('/')[-1]
-            network_interface_data = network_resource_client.network_interfaces.get(resource_group, network_interface_name).value!.body
-            public_ip_id_data = network_interface_data.properties.ip_configurations[0].properties.public_ipaddress
-            unless public_ip_id_data.nil?
-              public_ip_name = public_ip_id_data.id.split('/')[-1]
-              public_ip_data = network_resource_client.public_ipaddresses.get(resource_group, public_ip_name).value!.body
-            else
-              public_ip_data = nil
-            end
-
-            details = Array.new
-            details << ui.color('Server Name', :bold, :cyan)
-            details << server.name
-
-            details << ui.color('Size', :bold, :cyan)
-            details << server.properties.hardware_profile.vm_size
-
-            details << ui.color('Provisioning State', :bold, :cyan)
-            details << server.properties.provisioning_state
-
-            details << ui.color('Location', :bold, :cyan)
-            details << server.location
-
-            details << ui.color('Publisher', :bold, :cyan)
-            details << server.properties.storage_profile.image_reference.publisher
-
-            details << ui.color('Offer', :bold, :cyan)
-            details << server.properties.storage_profile.image_reference.offer
-
-            details << ui.color('Sku', :bold, :cyan)
-            details << server.properties.storage_profile.image_reference.sku
-
-            details << ui.color('Version', :bold, :cyan)
-            details << server.properties.storage_profile.image_reference.version
-
-            details << ui.color('OS Type', :bold, :cyan)
-            details << server.properties.storage_profile.os_disk.os_type
-
-            details << ui.color('Public IP address', :bold, :cyan)
-            unless public_ip_data.nil?
-              details << public_ip_data.properties.ip_address
-            else
-              details << ' -- '
-            end
-
-            details << ui.color('FQDN', :bold, :cyan)
-            unless public_ip_data.nil? or public_ip_data.properties.dns_settings.nil?
-              details << public_ip_data.properties.dns_settings.fqdn
-            else
-              details << ' -- '
-            end
-
-            puts ui.list(details, :columns_across, 2)
+        server = find_server(resource_group, name)
+        if server
+          network_interface_name = server.properties.network_profile.network_interfaces[0].id.split('/')[-1]
+          network_interface_data = network_resource_client.network_interfaces.get(resource_group, network_interface_name).value!.body
+          public_ip_id_data = network_interface_data.properties.ip_configurations[0].properties.public_ipaddress
+          unless public_ip_id_data.nil?
+            public_ip_name = public_ip_id_data.id.split('/')[-1]
+            public_ip_data = network_resource_client.public_ipaddresses.get(resource_group, public_ip_name).value!.body
+          else
+            public_ip_data = nil
           end
-        rescue => error
-          puts "#{error.body["error"]["message"]}"
+
+          details = Array.new
+          details << ui.color('Server Name', :bold, :cyan)
+          details << server.name
+
+          details << ui.color('Size', :bold, :cyan)
+          details << server.properties.hardware_profile.vm_size
+
+          details << ui.color('Provisioning State', :bold, :cyan)
+          details << server.properties.provisioning_state
+
+          details << ui.color('Location', :bold, :cyan)
+          details << server.location
+
+          details << ui.color('Publisher', :bold, :cyan)
+          details << server.properties.storage_profile.image_reference.publisher
+
+          details << ui.color('Offer', :bold, :cyan)
+          details << server.properties.storage_profile.image_reference.offer
+
+          details << ui.color('Sku', :bold, :cyan)
+          details << server.properties.storage_profile.image_reference.sku
+
+          details << ui.color('Version', :bold, :cyan)
+          details << server.properties.storage_profile.image_reference.version
+
+          details << ui.color('OS Type', :bold, :cyan)
+          details << server.properties.storage_profile.os_disk.os_type
+
+          details << ui.color('Public IP address', :bold, :cyan)
+          unless public_ip_data.nil?
+            details << public_ip_data.properties.ip_address
+          else
+            details << ' -- '
+          end
+
+          details << ui.color('FQDN', :bold, :cyan)
+          unless public_ip_data.nil? or public_ip_data.properties.dns_settings.nil?
+            details << public_ip_data.properties.dns_settings.fqdn
+          else
+            details << ' -- '
+          end
+
+          puts ui.list(details, :columns_across, 2)
         end
       end
 
       def find_server(resource_group, name)
-        begin
-          promise = compute_management_client.virtual_machines.get(resource_group, name)
-          result = promise.value!
+        promise = compute_management_client.virtual_machines.get(resource_group, name)
+        result = promise.value!
 
-          unless result.nil?
-            server = result.body
-          else
-            ui.error("There is no server with name #{name} or resource_group #{resource_group}. Please provide correct details.")
-          end
-        rescue => error
-          ui.error("#{error.body["error"]["message"]}")
+        unless result.nil?
+          server = result.body
+        else
+          ui.error("There is no server with name #{name} or resource_group #{resource_group}. Please provide correct details.")
         end
         server
       end
@@ -421,8 +399,7 @@ module Azure
           resource_group = resource_management_client.resource_groups.create_or_update(resource_group.name, resource_group).value!.body
         rescue Exception => e
           Chef::Log.error("Failed to create the Resource Group -- exception being rescued: #{e.to_s}")
-          backtrace_message = "#{e.class}: #{e}\n#{e.backtrace.join("\n")}"
-          Chef::Log.debug("#{backtrace_message}")
+          common_arm_rescue_block(e)
         end
 
         resource_group
@@ -816,22 +793,9 @@ module Azure
             vm_ext.name,
             vm_ext
           ).value!.body
-        rescue Exception => e
+        rescue Exception => error
           Chef::Log.error("Failed to create the Virtual Machine Extension -- exception being rescued.")
-
-          if e.class == MsRestAzure::AzureOperationError && e.body
-            if e.body['error']['code'] == 'DeploymentFailed'
-              ui.error("#{error.body['error']['message']}")
-            else
-              ui.error(e.body)
-            end
-          else
-            ui.error("#{error.message}")
-            Chef::Log.debug("#{error.backtrace.join("\n")}")
-          end
-
-          backtrace_message = "#{e.class}: #{e}\n#{e.backtrace.join("\n")}"
-          Chef::Log.debug("#{backtrace_message}")
+          common_arm_rescue_block(error)
         end
 
         vm_extension
@@ -861,6 +825,26 @@ module Azure
           promise = resource_management_client.resource_groups.delete(resource_group_name)
         end until promise.value!.body.nil?
         puts "\n"
+      end
+
+      def common_arm_rescue_block(error)
+        if error.class == MsRestAzure::AzureOperationError && error.body
+          err_json = JSON.parse(error.response.body)
+          err_details = err_json["error"]["details"] if err_json["error"]
+          if err_details
+            err_details.each do |err|
+              ui.error(JSON.parse(err["message"])["error"]["message"])
+            end
+          else
+            ui.error(err_json["error"]["message"])
+          end
+          Chef::Log.debug(error.response.body)
+        else
+          ui.error("#{JSON.parse(error.message)['message']}")
+          ui.error("Something went wrong. Please use -VV option for more details.")
+          Chef::Log.debug("#{error.message}")
+          Chef::Log.debug("#{error.backtrace.join("\n")}")
+        end
       end
     end
   end

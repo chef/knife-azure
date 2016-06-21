@@ -104,16 +104,7 @@ class Chef
             ui.warn("Corresponding node and client for the #{vm_name} server were not deleted and remain registered with the Chef Server")
           end
         rescue => error
-          if error.class == MsRestAzure::AzureOperationError && error.body
-            if error.body['error']['code'] == 'ResourceNotFound'
-              ui.error("#{error.body['error']['message']}")
-            else
-              ui.error(error.body)
-            end
-          else
-            ui.error("#{error.message}")
-            Chef::Log.debug("#{error.backtrace.join("\n")}")
-          end
+          service.common_arm_rescue_block(error)
         end
       end
     end

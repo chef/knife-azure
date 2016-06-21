@@ -55,57 +55,41 @@ class Chef
              raise ArgumentError, 'Please specify only one SERVER name which needs to be bootstrapped via the Chef Extension.' if @name_args.length > 1
            end
          rescue => error
-          if error.class == MsRestAzure::AzureOperationError && error.body
-            if error.body['error']['code'] == 'DeploymentFailed'
-              ui.error("#{error.body['error']['message']}")
-            else
-              ui.error(error.body)
-            end
-          else
-            ui.error("#{error.message}")
-            Chef::Log.debug("#{error.backtrace.join("\n")}")
-          end
-          exit
+            service.common_arm_rescue_block(error)
          end
       end
 
       def set_ext_params
-        begin
-          server = service.find_server(locate_config_value(:azure_resource_group_name), name_args[0])
+        server = service.find_server(locate_config_value(:azure_resource_group_name), name_args[0])
 
-          if server
-            if service.extension_already_installed?(server)
-              raise "Virtual machine #{server.name} already has Chef extension installed on it."
-            else
-              ext_params = Hash.new
-              case server.properties.storage_profile.os_disk.os_type.downcase
-              when 'windows'
-                ext_params[:chef_extension] = 'ChefClient'
-              when 'linux'
-                if ['ubuntu', 'debian', 'rhel', 'centos'].any? { |platform| server.properties.storage_profile.image_reference.offer.downcase.include? platform }
-                  ext_params[:chef_extension] = 'LinuxChefClient'
-                else
-                  raise "Offer #{server.properties.storage_profile.image_reference.offer} is not supported in the extension."
-                end
-              else
-                raise "OS type #{server.properties.storage_profile.os_disk.os_type} is not supported."
-              end
-
-              ext_params[:azure_resource_group_name] = locate_config_value(:azure_resource_group_name)
-              ext_params[:azure_vm_name] = @name_args[0]
-              ext_params[:azure_service_location] = locate_config_value(:azure_service_location)
-              ext_params[:chef_extension_publisher] = get_chef_extension_publisher
-              ext_params[:chef_extension_version] = get_chef_extension_version(ext_params[:chef_extension])
-              ext_params[:chef_extension_public_param] = get_chef_extension_public_params
-              ext_params[:chef_extension_private_param] = get_chef_extension_private_params
-            end
+        if server
+          if service.extension_already_installed?(server)
+            raise "Virtual machine #{server.name} already has Chef extension installed on it."
           else
-            raise "The given server '#{@name_args[0]}' does not exist under resource group '#{locate_config_value(:azure_resource_group_name)}'"
+            ext_params = Hash.new
+            case server.properties.storage_profile.os_disk.os_type.downcase
+            when 'windows'
+              ext_params[:chef_extension] = 'ChefClient'
+            when 'linux'
+              if ['ubuntu', 'debian', 'rhel', 'centos'].any? { |platform| server.properties.storage_profile.image_reference.offer.downcase.include? platform }
+                ext_params[:chef_extension] = 'LinuxChefClient'
+              else
+                raise "Offer #{server.properties.storage_profile.image_reference.offer} is not supported in the extension."
+              end
+            else
+              raise "OS type #{server.properties.storage_profile.os_disk.os_type} is not supported."
+            end
+
+            ext_params[:azure_resource_group_name] = locate_config_value(:azure_resource_group_name)
+            ext_params[:azure_vm_name] = @name_args[0]
+            ext_params[:azure_service_location] = locate_config_value(:azure_service_location)
+            ext_params[:chef_extension_publisher] = get_chef_extension_publisher
+            ext_params[:chef_extension_version] = get_chef_extension_version(ext_params[:chef_extension])
+            ext_params[:chef_extension_public_param] = get_chef_extension_public_params
+            ext_params[:chef_extension_private_param] = get_chef_extension_private_params
           end
-        rescue => error
-          ui.error("#{error.message}")
-          Chef::Log.debug("#{error.backtrace.join("\n")}")
-          exit
+        else
+          raise "The given server '#{@name_args[0]}' does not exist under resource group '#{locate_config_value(:azure_resource_group_name)}'"
         end
 
         ext_params
