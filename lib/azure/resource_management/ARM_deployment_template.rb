@@ -440,6 +440,7 @@ module Azure::ARM
               "publisher" => "#{params[:chef_extension_publisher]}",
               "type" => "#{params[:chef_extension]}",
               "typeHandlerVersion" => "#{params[:chef_extension_version]}",
+              "autoUpgradeMinorVersion" => "#{params[:auto_upgrade_minor_version]}",
               "settings" => {
                 "bootstrap_options" => {
                   "chef_node_name" => chef_node_name,
@@ -462,7 +463,6 @@ module Azure::ARM
               },
               "protectedSettings" => {
                 "validation_key" => "[parameters('validation_key')]",
-                "autoUpgradeMinorVersion" => "#{params[:auto_upgrade_minor_version]}",
                 "client_pem" => "[parameters('client_pem')]",
                 "chef_server_crt" => "[parameters('chef_server_crt')]"
               }
