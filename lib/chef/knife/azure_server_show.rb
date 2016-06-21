@@ -19,7 +19,6 @@
 #
 
 require File.expand_path('../azure_base', __FILE__)
-
 class Chef
   class Knife
     class AzureServerShow < Knife

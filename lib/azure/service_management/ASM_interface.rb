@@ -19,7 +19,6 @@
 require 'azure/azure_interface'
 require 'azure/service_management/rest'
 require 'azure/service_management/connection'
-
 module Azure
   class ServiceManagement
     class ASMInterface < AzureInterface
@@ -39,7 +38,7 @@ module Azure
 
       def list_servers
         servers = connection.roles.all
-        cols = ['DNS Name', 'VM Name', 'Status', 'IP Address', 'SSH Port', 'WinRM Port' ]
+        cols = ['DNS Name', 'VM Name', 'Status', 'IP Address', 'SSH Port', 'WinRM Port', 'RDP Port']
         rows = []
         servers.each do |server|
           rows << server.hostedservicename.to_s+".cloudapp.net"  # Info about the DNS name at http://msdn.microsoft.com/en-us/library/ee460806.aspx
@@ -58,8 +57,24 @@ module Azure
           rows << server.publicipaddress.to_s
           rows << server.sshport.to_s
           rows << server.winrmport.to_s
+          ports = server.tcpports
+          rows << rdp_port(ports)
         end
         display_list(ui, cols, rows)
+      end
+
+      def rdp_port(arr_ports)
+        if !arr_ports
+          return ''
+        end
+        if arr_ports.length > 0
+          arr_ports.each do |port|
+            if port['Name'] == "Remote Desktop"
+                return port['PublicPort']
+            end
+          end
+        end
+        return ''
       end
 
       def find_server(params = {})
@@ -100,7 +115,6 @@ module Azure
       def show_server(name)
         begin
           role = connection.roles.find name
-
           puts ''
           if (role)
             details = Array.new
