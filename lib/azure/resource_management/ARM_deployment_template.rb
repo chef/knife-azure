@@ -252,16 +252,14 @@ module Azure::ARM
           "imageOffer"=> "#{params[:azure_image_reference_offer]}",
           "OSDiskName"=> "#{params[:azure_os_disk_name]}",
           "nicName"=> "#{params[:azure_vm_name]}",
-          "addressPrefix"=> "10.0.0.0/16",
-          "subnetName"=> "#{params[:azure_vnet_subnet_name]}",
-          "subnetPrefix"=> "10.0.0.0/24",
+          "addressPrefix"=> "#{params[:vnet_config][:addressPrefix]}",
           "storageAccountType"=> "#{params[:azure_storage_account_type]}",
           "publicIPAddressName"=> "#{params[:azure_vm_name]}",
           "publicIPAddressType"=> "Dynamic",
           "vmStorageAccountContainerName"=> "#{params[:azure_vm_name]}",
           "vmName"=> "#{params[:azure_vm_name]}",
           "vmSize"=> "#{params[:vm_size]}",
-          "virtualNetworkName"=> "#{params[:azure_vnet_name]}",
+          "virtualNetworkName"=> "#{params[:vnet_config][:virtualNetworkName]}",
           "vnetID"=> "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
           "subnetRef"=> "[concat(variables('vnetID'),'/subnets/',variables('subnetName'))]",
           "apiVersion"=> "2015-06-15",
@@ -305,14 +303,7 @@ module Azure::ARM
                   "[variables('addressPrefix')]"
                 ]
               },
-              "subnets"=> [
-                {
-                  "name"=> "[variables('subnetName')]",
-                  "properties"=> {
-                    "addressPrefix"=> "[variables('subnetPrefix')]"
-                  }
-                }
-              ]
+              "subnets"=> params[:vnet_config][:subnets]
             }
           },
           {

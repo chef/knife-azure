@@ -301,6 +301,34 @@ module Azure
         end
       end
 
+      def subnets_list(resource_group_name, vnet_name)
+        network_resource_client.subnets.list(resource_group_name, vnet_name).value!.body.value
+      end
+
+      def create_vnet_config(resource_group_name, vnet_name, vnet_subnet_name)
+        vnet_config = {}
+        vnet = vnet_exist?(resource_group_name, vnet_name)
+        if vnet
+          subnets = subnets_list(resource_group_name, vnet_name)
+          subnets.each do |subnet|
+            if subnet.name == vnet_subnet_name
+              vnet_config[:subnetPrefix] = subnet.properties.address_prefix
+              ## TODO: creation of subnets array ##
+            end
+          end if subnets
+        else
+          vnet_config[:virtualNetworkName] = vnet_name
+          vnet_config[:addressPrefix] = "10.0.0.0/16"
+          vnet_config[:subnets] = Array.new
+          subnet = { :subnetName => vnet_subnet_name,
+                     :subnetPrefix => "10.0.0.0/24"
+                   }
+          vnet_config[:subnets].push(subnet)
+        end
+
+        vnet_config
+      end
+
       def create_server(params = {})
         platform(params[:azure_image_reference_offer])
         # resource group creation
@@ -321,6 +349,11 @@ module Azure
         else
           params[:chef_extension_version] = params[:chef_extension_version].nil? ? get_latest_chef_extension_version(params) : params[:chef_extension_version]
           params[:vm_size] = get_vm_size(params[:azure_vm_size])
+          params[:vnet_config] = create_vnet_config(
+            params[:azure_resource_group_name],
+            params[:azure_vnet_name],
+            params[:azure_vnet_subnet_name]
+          )
           ui.log("Creating Virtual Machine....")
           deployment = create_virtual_machine_using_template(params)
           ui.log("Virtual Machine creation successfull.") unless deployment.nil?
