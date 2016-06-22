@@ -108,11 +108,7 @@ class Chef
 
       def is_token_valid?(token_details)
         time_difference = Time.parse(token_details[:expiry_time]) - Time.now.utc
-        if time_difference <= 0
-          return false
-        else
-          return true
-        end
+        time_difference <= 0 ? false : true
       end
 
       def refresh_token
@@ -132,11 +128,9 @@ class Chef
       end
 
       def check_token_validity(token_details)
-        token_valid = is_token_valid?(token_details)
-        if !token_valid
+        if !is_token_valid?(token_details)
           token_details = refresh_token() 
-          token_valid = is_token_valid?(token_details)
-          if !token_valid
+          if !is_token_valid?(token_details)
             raise "Token has expired. Please run 'azure login' command" 
           end
         end 
