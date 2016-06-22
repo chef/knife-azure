@@ -541,8 +541,13 @@ module Azure
           end
           Chef::Log.debug(error.response.body)
         else
+          begin
+            JSON.parse(error.message)
+            Chef::Log.debug("#{error.message}")
+          rescue JSON::ParserError => e
+            ui.error("#{error.message}")
+          end
           ui.error("Something went wrong. Please use -VV option for more details.")
-          Chef::Log.debug("#{error.message}")
           Chef::Log.debug("#{error.backtrace.join("\n")}")
         end
       end

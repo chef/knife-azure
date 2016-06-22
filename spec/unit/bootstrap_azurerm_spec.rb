@@ -30,8 +30,8 @@ describe Chef::Knife::BootstrapAzurerm do
       expect(@bootstrap_azurerm_instance).to receive(:validate_arm_keys!)
       expect(@service).to_not receive(:create_vm_extension)
       expect(@bootstrap_azurerm_instance.ui).to receive(
-        :error).with('Something went wrong. Please use -VV option for more details.')
-      expect(Chef::Log).to receive(:debug).twice
+        :error).twice
+      expect(Chef::Log).to receive(:debug)
       @bootstrap_azurerm_instance.run
     end
 
@@ -55,8 +55,8 @@ describe Chef::Knife::BootstrapAzurerm do
       expect(@bootstrap_azurerm_instance.ui).to receive(:log).with('Validating...')
       expect(@service).to_not receive(:create_vm_extension)
       expect(@bootstrap_azurerm_instance.ui).to receive(
-        :error).with('Something went wrong. Please use -VV option for more details.')
-      expect(Chef::Log).to receive(:debug).twice
+        :error).twice
+      expect(Chef::Log).to receive(:debug)
       @bootstrap_azurerm_instance.run
     end
 
@@ -66,8 +66,8 @@ describe Chef::Knife::BootstrapAzurerm do
       expect(@service).to receive(:find_server).and_return(nil)
       expect(@bootstrap_azurerm_instance.ui).to receive(:log).twice
       expect(@bootstrap_azurerm_instance.ui).to receive(
-        :error).with("Something went wrong. Please use -VV option for more details.")
-      expect(Chef::Log).to receive(:debug).twice
+        :error).twice
+      expect(Chef::Log).to receive(:debug)
       @bootstrap_azurerm_instance.run
     end
 
@@ -77,8 +77,8 @@ describe Chef::Knife::BootstrapAzurerm do
       expect(@bootstrap_azurerm_instance.ui).to receive(:log).twice
       allow(@service).to receive(:find_server).and_return(@server)
       allow(@service).to receive(:extension_already_installed?).and_return(true)
-      expect(@bootstrap_azurerm_instance.ui).to receive(:error).with("Something went wrong. Please use -VV option for more details.")
-      expect(Chef::Log).to receive(:debug).twice
+      expect(@bootstrap_azurerm_instance.ui).to receive(:error).twice
+      expect(Chef::Log).to receive(:debug)
       @bootstrap_azurerm_instance.run
     end
   end
@@ -130,8 +130,8 @@ describe Chef::Knife::BootstrapAzurerm do
       allow(@server).to receive_message_chain(:properties, :storage_profile, :os_disk, :os_type).and_return("linux")
       allow(@server).to receive_message_chain(:properties, :storage_profile, :image_reference, :offer).and_return("abc")
       expect(@bootstrap_azurerm_instance.ui).to receive(:log).twice
-      expect(@bootstrap_azurerm_instance.ui).to receive(:error).with("Something went wrong. Please use -VV option for more details.")
-      expect(Chef::Log).to receive(:debug).twice
+      expect(@bootstrap_azurerm_instance.ui).to receive(:error).twice
+      expect(Chef::Log).to receive(:debug)
       @bootstrap_azurerm_instance.run
     end
   end

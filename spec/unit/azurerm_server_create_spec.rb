@@ -139,7 +139,7 @@ describe Chef::Knife::AzurermServerCreate do
 
       it "exits when incorrect Ohai Hints are given by the user" do
         @arm_server_instance.config[:ohai_hints] = 'vm_name,mac_address'
-        expect(@arm_server_instance.ui).to receive(:error)
+        expect(@arm_server_instance.ui).to receive(:error).twice
         expect {@arm_server_instance.run}.to raise_error(SystemExit)
       end
     end
