@@ -19,6 +19,7 @@
 require 'azure/azure_interface'
 require 'azure/service_management/rest'
 require 'azure/service_management/connection'
+
 module Azure
   class ServiceManagement
     class ASMInterface < AzureInterface
@@ -70,7 +71,7 @@ module Azure
         if arr_ports.length > 0
           arr_ports.each do |port|
             if port['Name'] == "Remote Desktop"
-                return port['PublicPort']
+              return port['PublicPort']
             end
           end
         end
@@ -115,6 +116,7 @@ module Azure
       def show_server(name)
         begin
           role = connection.roles.find name
+
           puts ''
           if (role)
             details = Array.new
