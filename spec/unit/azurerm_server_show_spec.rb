@@ -15,13 +15,13 @@ describe Chef::Knife::AzurermServerShow do
     allow(@arm_server_instance.service).to receive(:network_resource_client).and_return(@network_client)
   end
 
-  it "should give error if there is no server with the given name" do
+  it "raises error if there is no server with the given name" do
     expect(@compute_client).to receive_message_chain(:virtual_machines, :get).and_raise("ResourceNotFound")
     expect(@arm_server_instance.service).to receive(:common_arm_rescue_block)
     @arm_server_instance.run
   end
 
-  it "should give display Server Name, Size, Provisioning State, Location, Publisher, Offer, Sku, Version, OS Type, Public IP address & FQDN" do
+  it "displays Server Name, Size, Provisioning State, Location, Publisher, Offer, Sku, Version, OS Type, Public IP address & FQDN" do
     @server = double("Promise", :name => "vmname", :location => "westus", :properties => double)
     @network_interface_data = double("Promise", :properties => double)
     @public_ip_data =  double("Promise", :properties => double)
@@ -66,7 +66,7 @@ describe Chef::Knife::AzurermServerShow do
     @arm_server_instance.run
   end
 
-  it "should display empty Public IP address and FQDN when Public IP address is not allocated to the VM" do
+  it "displays empty Public IP address and FQDN when Public IP address is not allocated to the VM" do
     @server = double("Promise", :name => "vmname", :location => "westus", :properties => double)
     @network_interface_data = double("Promise", :properties => double)
     public_ip_data = nil
@@ -104,7 +104,7 @@ describe Chef::Knife::AzurermServerShow do
     @arm_server_instance.run
   end
 
-  it "should display empty FQDN when DNS name is not defined for the VM" do
+  it "displays empty FQDN when DNS name is not defined for the VM" do
     @server = double("Promise", :name => "vmname", :location => "westus", :properties => double)
     @network_interface_data = double("Promise", :properties => double)
     @public_ip_data =  double("Promise", :properties => double)
