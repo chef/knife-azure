@@ -40,7 +40,7 @@ describe Chef::Knife::AzurermServerList do
     before do
       Chef::Config[:knife].delete(:azure_resource_group_name)
     end
-    
+
     it "should display only labels if there are no servers" do
       expect(@compute_client).to receive_message_chain(
         :virtual_machines, :list_all, :value!, :body, :value).and_return([])
@@ -98,18 +98,6 @@ describe Chef::Knife::AzurermServerList do
         output_row
       )
       @arm_server_instance.run
-    end
-  end
-
-  context 'invalid resource_group_name is given by user' do
-    it 'throws error and exits' do
-      allow(@compute_client).to receive_message_chain(
-        :virtual_machines, :list).and_raise(
-          MsRestAzure::AzureOperationError,
-          "Resource group 'my-rgrp' could not be found."
-        )
-      expect(@service.ui).to receive(:error).twice
-      @service.list_servers('my-rgrp')
     end
   end
 end

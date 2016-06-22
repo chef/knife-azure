@@ -152,16 +152,6 @@ module QueryAzureMock
     end
   end
 
-  def stub_storage_management_client
-    storage_management_client = double("StorageManagementClient",
-      :storage_accounts => double)
-    allow(storage_management_client.storage_accounts).to receive_message_chain(
-      :create => 'create',
-      :value! => nil,
-      :body => nil).and_return(stub_storage_account_create_response)
-    storage_management_client
-  end
-
   def stub_network_resource_client(platform)
     network_resource_client = double("NetworkResourceClient",
       :public_ipaddresses => double,
@@ -299,60 +289,14 @@ module QueryAzureMock
     storage_profile
   end
 
-  def stub_storage_account_create_response
-    storage_account = OpenStruct.new
-    storage_account.location = 'West Europe'
-    storage_account.properties = OpenStruct.new
-    storage_account.properties.account_type = 'azure_storage_account_type'
-    storage_account
-  end
-
-  def stub_vhd_get_response
-    vhd = OpenStruct.new
-    vhd.uri = 'vhd_uri'
-    vhd
-  end
-
   def stub_vnet_get_response
     vnet_response = OpenStruct.new
     vnet_response.name = 'azure_virtual_network_name'
     vnet_response
   end
 
-  def stub_subnet_get_response
-    vnet_response = OpenStruct.new
-    vnet_response.name = 'azure_subnet_name'
-    vnet_response
-  end
-
-  def stub_image_reference_response
-    image_reference = OpenStruct.new
-    image_reference.publisher = 'publisher'
-    image_reference.offer = 'offer'
-    image_reference.sku = 'sku'
-    image_reference.version = 'version'
-    image_reference
-  end
-
-  def stub_os_disk_get_response
-    os_disk = OpenStruct.new
-    os_disk.name = 'osdisk_name'
-    os_disk.vhd = stub_vhd_get_response
-    os_disk.caching = 'osdisk_caching'
-    os_disk.create_option = 'osdisk_create_option'
-    os_disk
-  end
-
   def stub_vm_public_ip_get_response
     '1.2.3.4'
-  end
-
-  def stub_vm_default_port_get_response(platform)
-    if platform == 'Windows'
-      '3389'
-    else
-      '22'
-    end
   end
 
   def stub_virtual_network_create_response
