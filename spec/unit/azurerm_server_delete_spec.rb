@@ -16,38 +16,34 @@ describe Chef::Knife::AzurermServerDelete do
       Chef::Config[:knife][:azure_resource_group_name] = 'test-rg-group'
       @arm_server_instance.name_args = ['VM001']
 
-      @server = double('server', :name => "VM001", :properties => double)
-      allow(@server.properties).to receive_message_chain(:hardware_profile, :vm_size).and_return("10")
-      allow(@server.properties).to receive_message_chain(:storage_profile, :os_disk, :os_type).and_return("Linux")
+      @server_detail = double('server', :name => "VM001", :properties => double)
+      allow(@server_detail.properties).to receive_message_chain(:hardware_profile, :vm_size).and_return("10")
+      allow(@server_detail.properties).to receive_message_chain(:storage_profile, :os_disk, :os_type).and_return("Linux")
     end
 
     it "deletes server" do
-      promise = double('promise')
-      delete_promise = double('delete')
-      allow(delete_promise).to receive_message_chain(:value!, :body)
+      server = double('server')
+      delete_server = double('delete')
+      allow(delete_server).to receive_message_chain(:value!, :body)
 
       expect(@arm_server_instance).to receive(:validate_arm_keys!).with(:azure_resource_group_name)
       allow(@arm_server_instance.service).to receive(:compute_management_client).and_return(@compute_client)
-      allow(@compute_client).to receive_message_chain(:virtual_machines, :get).with('test-rg-group', 'VM001').and_return(promise)
-      allow(promise).to receive_message_chain(:value!, :body).and_return(@server)
+      allow(@compute_client).to receive_message_chain(:virtual_machines, :get).with('test-rg-group', 'VM001').and_return(@server_detail)
 
       expect(@service).to receive(:msg_pair).with(@service.ui, 'VM Name', 'VM001')
       expect(@service).to receive(:msg_pair).with(@service.ui, 'VM Size', '10')
       expect(@service).to receive(:msg_pair).with(@service.ui, 'VM OS', 'Linux')
-      allow(@compute_client).to receive_message_chain(:virtual_machines, :delete).with('test-rg-group', 'VM001').and_return(delete_promise)
+      allow(@compute_client).to receive_message_chain(:virtual_machines, :delete).with('test-rg-group', 'VM001').and_return(delete_server)
       expect(@service.ui).to receive(:info).once
       expect(@service.ui).to receive(:warn).twice
-      expect(@service).to receive(:print)
       @arm_server_instance.run
     end
 
     it "does nothing if the server is not found" do
-      promise = double('promise')
-
+      server = double('server', :name => 'VM002')
       expect(@arm_server_instance).to receive(:validate_arm_keys!).with(:azure_resource_group_name)
       expect(@arm_server_instance.service).to receive(:compute_management_client).and_return(@compute_client)
-      expect(@compute_client).to receive_message_chain(:virtual_machines, :get).with('test-rg-group', 'VM001').and_return(promise)
-      allow(promise).to receive_message_chain(:value!).and_return(nil)
+      expect(@compute_client).to receive_message_chain(:virtual_machines, :get).with('test-rg-group', 'VM001').and_return(server)
       expect(@service.ui).to receive(:warn).once
       @arm_server_instance.run
     end
@@ -81,14 +77,14 @@ describe Chef::Knife::AzurermServerDelete do
     end
 
     it "destroys the corresponding resource group if --delete-resource-group option is given" do
-      promise = double('promise')
-      allow(promise).to receive_message_chain(:value!, :body).and_return(nil)
+      server = double('server')
+      allow(server).to receive_message_chain(:value!, :body).and_return(nil)
       Chef::Config[:knife][:delete_resource_group] = true
       allow(@arm_server_instance.service.ui).to receive(:confirm).and_return (true)
 
       expect(@arm_server_instance).to receive(:validate_arm_keys!).with(:azure_resource_group_name)
       expect(@arm_server_instance.service).to receive(:resource_management_client).and_return(@resource_client)
-      expect(@resource_client).to receive_message_chain(:resource_groups, :delete).with('test-rg-group').and_return(promise)
+      expect(@resource_client).to receive_message_chain(:resource_groups, :delete).with('test-rg-group').and_return(server)
       expect(@service.ui).to receive(:warn).thrice
       expect(@service.ui).to receive(:info).twice
 

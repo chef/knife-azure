@@ -118,12 +118,12 @@ module Azure
       end
 
       def delete_server(resource_group_name, vm_name)
-        promise = compute_management_client.virtual_machines.get(resource_group_name, vm_name)
-        if promise.value! && promise.value!.body.name == vm_name
+        server = compute_management_client.virtual_machines.get(resource_group_name, vm_name)
+        if server && server.name == vm_name
           puts "\n\n"
-          msg_pair(ui, 'VM Name', promise.value!.body.name)
-          msg_pair(ui, 'VM Size', promise.value!.body.properties.hardware_profile.vm_size)
-          msg_pair(ui, 'VM OS', promise.value!.body.properties.storage_profile.os_disk.os_type)
+          msg_pair(ui, 'VM Name', server.name)
+          msg_pair(ui, 'VM Size', server.properties.hardware_profile.vm_size)
+          msg_pair(ui, 'VM OS', server.properties.storage_profile.os_disk.os_type)
           puts "\n"
 
           begin
@@ -136,9 +136,8 @@ module Azure
           ui.info 'Deleting ..'
 
           begin
-            print '.'
-            promise = compute_management_client.virtual_machines.delete(resource_group_name, vm_name)
-          end until promise.value!.body.nil?
+            server_detail = compute_management_client.virtual_machines.delete(resource_group_name, vm_name)
+          end until server_detail.value!.body.nil?
 
           puts "\n"
           ui.warn "Deleted server #{vm_name}"
@@ -515,10 +514,10 @@ module Azure
 
       def delete_resource_group(resource_group_name)
         ui.info 'Resource group deletion takes some time. Please wait ...'
+        
         begin
-          print '.'
-          promise = resource_management_client.resource_groups.delete(resource_group_name)
-        end until promise.value!.body.nil?
+          server = resource_management_client.resource_groups.delete(resource_group_name)
+        end until server.value!.body.nil?
         puts "\n"
       end
 
