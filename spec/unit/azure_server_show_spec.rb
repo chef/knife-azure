@@ -60,6 +60,12 @@ describe Chef::Knife::AzureServerShow do
       4
     ).exactly(3).times
     expect(@server_instance.ui).to receive(:list).with(
+      ['Ports open', 'Local port', 'IP', 'Public port',
+       'tcp', '3389', '65.52.249.191', '3389'],
+      :columns_across,
+      4
+    ).exactly(1).times
+    expect(@server_instance.ui).to receive(:list).with(
       ['Role name', 'vm01',
        'Status', 'ReadyRole',
        'Size', 'ExtraSmall',

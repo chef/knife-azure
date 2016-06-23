@@ -53,6 +53,13 @@
           <LocalPort>5985</LocalPort>
           <Protocol>tcp</Protocol>
         </InstanceEndpoint>
+        <InstanceEndpoint>
+          <Name>Remote Desktop</Name>
+          <Vip>65.52.249.191</Vip>
+          <PublicPort>3389</PublicPort>
+          <LocalPort>3389</LocalPort>
+          <Protocol>tcp</Protocol>
+        </InstanceEndpoint>
       </InstanceEndpoints>
       <PowerState>Started</PowerState>
       <HostName>winrm-vm</HostName>
