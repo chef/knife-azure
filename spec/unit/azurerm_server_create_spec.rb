@@ -509,7 +509,6 @@ describe Chef::Knife::AzurermServerCreate do
           expect(@service).to_not receive(:fetch_chef_client_logs)
           expect(@service.ui).to receive(:log).exactly(17).times
           expect(@service).to receive(:show_server).thrice
-          expect(@service).not_to receive(:create_virtual_machine)
           expect(@service).not_to receive(:create_vm_extension)
           expect(@service).not_to receive(:vm_details)
           @arm_server_instance.run
@@ -531,7 +530,6 @@ describe Chef::Knife::AzurermServerCreate do
           expect(@service).to receive(:fetch_chef_client_logs).exactly(3).times
           expect(@service.ui).to receive(:log).exactly(17).times
           expect(@service).to receive(:show_server).thrice
-          expect(@service).not_to receive(:create_virtual_machine)
           expect(@service).not_to receive(:create_vm_extension)
           expect(@service).not_to receive(:vm_details)
           @arm_server_instance.run

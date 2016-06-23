@@ -76,11 +76,6 @@ module QueryAzureMock
       :virtual_machines => double,
       :virtual_machine_extensions => double,
       :virtual_machine_extension_images => double)
-    allow(compute_management_client.virtual_machines).to receive_message_chain(
-      :create_or_update => 'create_or_update',
-      :value! => nil,
-      :body => nil
-    ).and_return(stub_virtual_machine_create_response)
     allow(compute_management_client.virtual_machine_extensions).to receive_message_chain(
       :create_or_update => 'create_or_update',
       :value! => nil,
@@ -185,22 +180,6 @@ module QueryAzureMock
         :properties,
         :destination_port_range).and_return('22')
     end
-    allow(network_resource_client.virtual_networks).to receive_message_chain(
-      :create_or_update => 'create_or_update',
-      :value! => nil,
-      :body => nil).and_return(stub_virtual_network_create_response)
-    allow(network_resource_client.subnets).to receive_message_chain(
-      :create_or_update => 'create_or_update',
-      :value! => nil,
-      :body => nil).and_return(stub_subnet_create_response)
-    allow(network_resource_client.network_interfaces).to receive_message_chain(
-      :create_or_update => 'create_or_update',
-      :value! => nil,
-      :body => nil).and_return(stub_network_interface_create_response)
-    allow(network_resource_client.public_ipaddresses).to receive_message_chain(
-      :create_or_update => 'create_or_update',
-      :value! => nil,
-      :body => nil).and_return(stub_public_ip_config_create_response)
     allow(network_resource_client.network_security_groups).to receive_message_chain(
       :create_or_update => 'create_or_update',
       :value! => nil,
@@ -211,22 +190,6 @@ module QueryAzureMock
       :body => nil).and_return(stub_default_security_rule_add_response(platform))
 
     network_resource_client
-  end
-
-  def stub_virtual_machine_create_response
-    virtual_machine = double("VirtualMachine",
-      :name => 'test-vm',
-      :id => 'myvm',
-      :type => 'Microsoft.Compute/virtualMachines',
-      :properties => double,
-      :location => 'West Europe')
-    allow(virtual_machine.properties).to receive_message_chain(
-      :storage_profile,
-      :os_disk,
-      :os_type).and_return('Test_OS_Type')
-    allow(virtual_machine.properties).to receive(
-      :provisioning_state).and_return('Succeeded')
-    virtual_machine
   end
 
   def stub_deployments_create_response
@@ -289,55 +252,8 @@ module QueryAzureMock
     storage_profile
   end
 
-  def stub_vnet_get_response
-    vnet_response = OpenStruct.new
-    vnet_response.name = 'azure_virtual_network_name'
-    vnet_response
-  end
-
   def stub_vm_public_ip_get_response
     '1.2.3.4'
-  end
-
-  def stub_virtual_network_create_response
-    virtual_network = OpenStruct.new
-    virtual_network.name = 'virtual_network'
-    virtual_network.id = 'virtual_network_id'
-    virtual_network.location = 'virtual_network_location'
-    virtual_network.properties = OpenStruct.new
-    virtual_network.properties.address_space = 'vnet_address_space'
-    virtual_network
-  end
-
-  def stub_subnet_create_response
-    subnet = OpenStruct.new
-    subnet.name = 'azure_subnet_name'
-    subnet.id = 'subnet_id'
-    subnet.location = 'subnet_location'
-    subnet.properties = OpenStruct.new
-    subnet.properties.address_prefix = 'sbn_address_prefix'
-    subnet
-  end
-
-  def stub_network_interface_create_response
-    network_interface = OpenStruct.new
-    network_interface.name = 'network_interface_name'
-    network_interface.id = 'network_interface_id'
-    network_interface.location = 'network_interface_location'
-    network_interface.properties = OpenStruct.new
-    network_interface.properties.ip_configurations = ['nic_ip_configurations']
-    network_interface.properties.network_security_group = 'nic_network_security_group'
-    network_interface
-  end
-
-  def stub_public_ip_config_create_response
-    public_ip_config = OpenStruct.new
-    public_ip_config.name = 'public_ip_config_name'
-    public_ip_config.id = 'public_ip_config_id'
-    public_ip_config.location = 'public_ip_config_location'
-    public_ip_config.properties = OpenStruct.new
-    public_ip_config.properties.public_ipallocation_method = 'Dynamic'
-    public_ip_config
   end
 
   def stub_network_security_group_create_response
