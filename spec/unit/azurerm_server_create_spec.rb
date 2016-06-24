@@ -380,12 +380,7 @@ describe Chef::Knife::AzurermServerCreate do
         end
 
         it "create virtual machine when it does not exist already and does not show chef-client run logs when extended_logs is false" do
-          expect(@compute_client).to receive_message_chain(
-            :virtual_machines, :get).and_return(
-              @compute_promise)
-          expect(@compute_promise).to receive_message_chain(
-            :value, :nil?).and_return(
-              true)
+          expect(@service).to receive(:virtual_machine_exist?).and_return(false)
           expect(@service).to receive(:create_virtual_machine_using_template).exactly(1).and_return(stub_deployments_create_response)
           expect(@service).to_not receive(:print)
           expect(@service).to_not receive(:fetch_chef_client_logs)
@@ -396,12 +391,7 @@ describe Chef::Knife::AzurermServerCreate do
 
         it "create virtual machine when it does not exist already and also shows chef-client run logs when extended_logs is true" do
           @arm_server_instance.config[:extended_logs] = true
-          expect(@compute_client).to receive_message_chain(
-            :virtual_machines, :get).and_return(
-              @compute_promise)
-          expect(@compute_promise).to receive_message_chain(
-            :value, :nil?).and_return(
-              true)
+          expect(@service).to receive(:virtual_machine_exist?).and_return(false)
           expect(@service).to receive(:create_virtual_machine_using_template).exactly(1).and_return(stub_deployments_create_response)
           expect(@service).to receive(:print).exactly(1).times
           expect(@service).to receive(:fetch_chef_client_logs).exactly(1).times
