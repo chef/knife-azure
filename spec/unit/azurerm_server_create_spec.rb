@@ -139,7 +139,7 @@ describe Chef::Knife::AzurermServerCreate do
 
       it "exits when incorrect Ohai Hints are given by the user" do
         @arm_server_instance.config[:ohai_hints] = 'vm_name,mac_address'
-        expect(@arm_server_instance.ui).to receive(:error)
+        expect(@arm_server_instance.ui).to receive(:error).twice
         expect {@arm_server_instance.run}.to raise_error(SystemExit)
       end
     end
@@ -312,8 +312,6 @@ describe Chef::Knife::AzurermServerCreate do
 
       @resource_promise = double("ResourcePromise")
       @compute_promise = double("ComputePromise")
-      @storage_promise = double("StoragePromise")
-      @network_promise = double("NetworkPromise")
 
       allow(@service).to receive(
         :resource_management_client).and_return(
@@ -511,7 +509,6 @@ describe Chef::Knife::AzurermServerCreate do
           expect(@service).to_not receive(:fetch_chef_client_logs)
           expect(@service.ui).to receive(:log).exactly(17).times
           expect(@service).to receive(:show_server).thrice
-          expect(@service).not_to receive(:create_virtual_machine)
           expect(@service).not_to receive(:create_vm_extension)
           expect(@service).not_to receive(:vm_details)
           @arm_server_instance.run
@@ -533,7 +530,6 @@ describe Chef::Knife::AzurermServerCreate do
           expect(@service).to receive(:fetch_chef_client_logs).exactly(3).times
           expect(@service.ui).to receive(:log).exactly(17).times
           expect(@service).to receive(:show_server).thrice
-          expect(@service).not_to receive(:create_virtual_machine)
           expect(@service).not_to receive(:create_vm_extension)
           expect(@service).not_to receive(:vm_details)
           @arm_server_instance.run
@@ -575,65 +571,6 @@ describe Chef::Knife::AzurermServerCreate do
       end
     end
 
-    describe "create_storage_profile" do
-      it "successfully returns storage profile response" do
-        expect(@service).to receive(
-          :create_storage_account).and_return(
-            stub_storage_account_create_response)
-        expect(@service).to receive(
-          :get_vhd).and_return(
-            stub_vhd_get_response)
-        expect(@service).to receive(
-          :get_image_reference).and_return(
-            stub_image_reference_response)
-        expect(@service).to receive(
-          :get_os_disk).and_return(
-            stub_os_disk_get_response)
-        response = @service.create_storage_profile(@params)
-        expect(response.image_reference).to_not be nil
-        expect(response.os_disk).to_not be nil
-        expect(response.data_disks).to be nil
-      end
-    end
-
-    describe "vm_details" do
-      context 'for Linux' do
-        before do
-          @service.instance_variable_set(:@platform, "Linux")
-        end
-
-        it "successfully returns vm details response" do
-          expect(@service).to receive(
-            :vm_public_ip).and_return(
-              stub_vm_public_ip_get_response)
-          expect(@service).to receive(
-            :vm_default_port).and_return(
-              stub_vm_default_port_get_response("Linux"))
-          response = @service.vm_details(stub_virtual_machine_create_response, stub_vm_extension_create_response('NA'), @params)
-          expect(response.publicipaddress).to_not be nil
-          expect(response.sshport).to be == '22'
-        end
-      end
-
-      context 'for Windows' do
-        before do
-          @service.instance_variable_set(:@platform, "Windows")
-        end
-
-        it "successfully returns vm details response" do
-          expect(@service).to receive(
-            :vm_public_ip).and_return(
-              stub_vm_public_ip_get_response)
-          expect(@service).to receive(
-            :vm_default_port).and_return(
-              stub_vm_default_port_get_response("Windows"))
-          response = @service.vm_details(stub_virtual_machine_create_response, stub_vm_extension_create_response('NA'), @params)
-          expect(response.publicipaddress).to_not be nil
-          expect(response.rdpport).to be == '3389'
-        end
-      end
-    end
-
     describe "vm_public_ip" do
       it "successfully returns vm public ip response" do
         expect(@service).to receive(:network_resource_client).and_return(stub_network_resource_client('Windows'))
@@ -665,170 +602,6 @@ describe Chef::Knife::AzurermServerCreate do
           response = @service.vm_default_port(@params)
           expect(response).to be == '3389'
         end
-      end
-    end
-
-    describe "create_storage_account" do
-      it "successfully creates storage account" do
-        expect(@service).to receive(:storage_management_client).and_return(stub_storage_management_client)
-        response = @service.create_storage_account(
-          @params[:azure_storage_account],
-          @params[:azure_service_location],
-          @params[:azure_storage_account_type],
-          @params[:azure_resource_group_name])
-        expect(response.location).to_not be nil
-        expect(response.properties).to_not be nil
-        expect(response.properties.account_type).to be == 'azure_storage_account_type'
-      end
-    end
-
-    describe "get_vhd" do
-      it "successfully returns virtual hard disk response" do
-        response = @service.get_vhd(
-          @params[:azure_storage_account], @params[:azure_os_disk_name])
-        expect(response.uri).to be == 'http://azurestorageaccount.blob.core.windows.net/vhds/azureosdiskname.vhd'
-      end
-    end
-
-    describe "get_image_reference" do
-      it "successfully returns image reference response" do
-        response = @service.get_image_reference(
-          'azure_image_reference_publisher',
-          'azure_image_reference_offer',
-          'azure_image_reference_sku',
-          'azure_image_reference_version')
-        expect(response.publisher).to_not be nil
-        expect(response.offer).to be == 'azure_image_reference_offer'
-        expect(response.sku).to_not be nil
-        expect(response.version).to_not be nil
-      end
-    end
-
-    describe "get_os_disk" do
-      it "successfully returns os disk response" do
-        response = @service.get_os_disk(
-          stub_vhd_get_response,
-          @params[:azure_os_disk_name],
-          @params[:azure_os_disk_caching],
-          @params[:azure_os_disk_create_option])
-        expect(response.name).to be == 'azureosdiskname'
-        expect(response.vhd.uri).to be == 'vhd_uri'
-        expect(response.caching).to_not be nil
-        expect(response.create_option).to_not be nil
-      end
-    end
-
-    describe 'create_network_profile' do
-      context 'vnet and subnet does not exist' do
-        it 'successfully returns network profile response' do
-          # following alllow statements stubs vnet_exist? and subnet_exist? methods
-          allow(@network_client).to receive_message_chain(:virtual_networks, :get).and_return(@network_promise)
-          allow(@network_promise).to receive_message_chain(:value!, :body).and_return(nil)
-
-          allow(@network_client).to receive_message_chain(:subnets, :get).and_return(@network_promise)
-          allow(@network_promise).to receive_message_chain(:value!, :body).and_return(nil)
-
-          @platform = 'Linux'
-          expect(@service).to receive(
-            :create_virtual_network).and_return(
-              stub_virtual_network_create_response)
-          expect(@service).to receive(
-            :create_subnet).and_return(
-              stub_subnet_create_response)
-          expect(@service).to receive(
-            :create_network_interface).and_return(
-              stub_network_interface_create_response)
-          response = @service.create_network_profile(@params)
-          expect(response.network_interfaces).to_not be nil
-          expect(response.network_interfaces).to be_a(Array)
-        end
-      end
-
-      context 'vnet and subnet already exist' do
-        it 'successfully returns network profile response' do
-          # following alllow statements stubs vnet_exist? and subnet_exist? methods
-          allow(@network_client).to receive_message_chain(:virtual_networks, :get).and_return(@network_promise)
-          allow(@network_promise).to receive_message_chain(:value!, :body).and_return(stub_vnet_get_response)
-
-          allow(@network_client).to receive_message_chain(:subnets, :get).and_return(@network_promise)
-          allow(@network_promise).to receive_message_chain(:value!, :body).and_return(stub_subnet_get_response)
-
-          @platform = 'Linux'
-          expect(@service).not_to receive(:create_virtual_network)
-          expect(@service).not_to receive(:create_subnet)
-          expect(@service).to receive(:create_network_interface).and_return(stub_network_interface_create_response)
-          @service.create_network_profile(@params)
-        end
-      end
-    end
-
-    describe "create_virtual_network" do
-      it "successfully creates virtual network" do
-        expect(@service).to receive(:network_resource_client).and_return(stub_network_resource_client('NA'))
-        response = @service.create_virtual_network(
-          @params[:azure_resource_group_name],
-          @params[:azure_vnet_name],
-          @params[:azure_service_location])
-        expect(response.name).to_not be nil
-        expect(response.id).to_not be nil
-        expect(response.location).to_not be nil
-        expect(response.properties).to_not be nil
-        expect(response.properties.address_space).to be == 'vnet_address_space'
-      end
-    end
-
-    describe "create_subnet" do
-      it "successfully creates subnet" do
-        expect(@service).to receive(:network_resource_client).and_return(stub_network_resource_client('NA'))
-        response = @service.create_subnet(
-          @params[:azure_resource_group_name],
-          @params[:azure_vnet_subnet_name],
-          stub_virtual_network_create_response)
-        expect(response.name).to_not be nil
-        expect(response.id).to_not be nil
-        expect(response.location).to_not be nil
-        expect(response.properties).to_not be nil
-        expect(response.properties.address_prefix).to be == 'sbn_address_prefix'
-      end
-    end
-
-    describe "create_network_interface" do
-      it "successfully creates network interface" do
-        expect(@service).to receive(:network_resource_client).and_return(stub_network_resource_client('NA'))
-        expect(@service).to receive(
-          :create_public_ip_config).and_return(
-            stub_public_ip_config_create_response)
-        expect(@service).to receive(
-          :create_network_security_group).and_return(
-            stub_network_security_group_create_response)
-        response = @service.create_network_interface(
-          @params[:azure_resource_group_name],
-          @params[:azure_vm_name],
-          @params[:azure_service_location],
-          stub_subnet_create_response)
-        expect(response.name).to_not be nil
-        expect(response.id).to_not be nil
-        expect(response.location).to_not be nil
-        expect(response.properties).to_not be nil
-        expect(response.properties.ip_configurations).to_not be nil
-        expect(response.properties.ip_configurations).to be_a(Array)
-        expect(response.properties.network_security_group).to_not be nil
-      end
-    end
-
-    describe "create_public_ip_config" do
-      it "successfully creates public ip configuration" do
-        expect(@service).to receive(:network_resource_client).and_return(stub_network_resource_client('NA'))
-        response = @service.create_public_ip_config(
-          @params[:azure_resource_group_name],
-          @params[:azure_vm_name],
-          @params[:azure_service_location])
-        expect(response.name).to_not be nil
-        expect(response.id).to_not be nil
-        expect(response.location).to_not be nil
-        expect(response.properties).to_not be nil
-        expect(response.properties.public_ipallocation_method).to_not be nil
-        expect(response.properties.public_ipallocation_method).to be == 'Dynamic'
       end
     end
 

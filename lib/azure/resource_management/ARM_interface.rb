@@ -350,32 +350,6 @@ module Azure
         end
       end
 
-      def vm_details(virtual_machine, vm_extension, params)
-        vm_details = OpenStruct.new
-        vm_details.publicipaddress = vm_public_ip(params)
-
-        if @platform == 'Windows'
-          vm_details.rdpport = vm_default_port(params)
-        else
-          vm_details.sshport = vm_default_port(params)
-        end
-
-        vm_details.id = virtual_machine.id
-        vm_details.name = virtual_machine.name
-        vm_details.locationname = params[:azure_service_location].gsub(/[ ]/,'').downcase
-        vm_details.ostype = virtual_machine.properties.storage_profile.os_disk.os_type
-        vm_details.provisioningstate = virtual_machine.properties.provisioning_state
-        vm_details.resources = OpenStruct.new
-        vm_details.resources.id = vm_extension.id
-        vm_details.resources.name = vm_extension.name
-        vm_details.resources.publisher = vm_extension.properties.publisher
-        vm_details.resources.type = vm_extension.properties.type
-        vm_details.resources.type_handler_version = vm_extension.properties.type_handler_version
-        vm_details.resources.provisioning_state = vm_extension.properties.provisioning_state
-
-        vm_details
-      end
-
       def vm_public_ip(params = {})
         network_resource_client.public_ipaddresses.get(
           params[:azure_resource_group_name],
@@ -421,123 +395,6 @@ module Azure
         deployment
       end
 
-      def create_virtual_machine(params)
-        os_profile = OSProfile.new
-        os_profile.computer_name = params[:azure_vm_name]
-        os_profile.secrets = []
-
-        if @platform == 'Windows'
-          windows_config = WindowsConfiguration.new
-          windows_config.provision_vmagent = true
-          windows_config.enable_automatic_updates = true
-
-          os_profile.admin_username = params[:winrm_user]
-          os_profile.admin_password = params[:admin_password]
-          os_profile.windows_configuration = windows_config
-        else
-          linux_config = LinuxConfiguration.new
-          linux_config.disable_password_authentication = false
-
-          os_profile.admin_username = params[:ssh_user]
-          os_profile.admin_password = params[:ssh_password]
-          os_profile.linux_configuration = linux_config
-        end
-
-        hardware_profile = HardwareProfile.new
-        hardware_profile.vm_size = get_vm_size(params[:azure_vm_size])
-
-        vm_props = VirtualMachineProperties.new
-        vm_props.os_profile = os_profile
-        vm_props.hardware_profile = hardware_profile
-        vm_props.storage_profile = create_storage_profile(params)
-        vm_props.network_profile = create_network_profile(params)
-
-        vm_params = VirtualMachine.new
-        vm_params.name = params[:azure_vm_name]
-        vm_params.type = 'Microsoft.Compute/virtualMachines'
-        vm_params.properties = vm_props
-        vm_params.location = params[:azure_service_location]
-
-        begin
-          virtual_machine = compute_management_client.virtual_machines.create_or_update(params[:azure_resource_group_name], vm_params.name, vm_params).value!.body
-        rescue Exception => e
-          ui.log("Failed to create the virtual machine, use verbose mode for more details")
-          Chef::Log.error("Failed to create the Virtual Machine -- exception being rescued: #{e.to_s}")
-          backtrace_message = "#{e.class}: #{e}\n#{e.backtrace.join("\n")}"
-          Chef::Log.debug("#{backtrace_message}")
-        end
-
-        virtual_machine
-      end
-
-      def create_storage_profile(params)
-        ui.log("Creating Storage Account.... \n\n ")
-        storage_account = create_storage_account(
-          params[:azure_storage_account],
-          params[:azure_service_location],
-          params[:azure_storage_account_type],
-          params[:azure_resource_group_name]
-        )
-
-        virtual_hard_disk = get_vhd(
-          params[:azure_storage_account],
-          params[:azure_os_disk_name]
-        )
-
-        ui.log("StorageAccount creation successfull.")
-        storage_profile = StorageProfile.new
-        storage_profile.image_reference = get_image_reference(
-          params[:azure_image_reference_publisher],
-          params[:azure_image_reference_offer],
-          params[:azure_image_reference_sku],
-          params[:azure_image_reference_version]
-        )
-        storage_profile.os_disk = get_os_disk(
-          virtual_hard_disk,
-          params[:azure_os_disk_name],
-          params[:azure_os_disk_caching],
-          params[:azure_os_disk_create_option]
-        )
-
-        storage_profile
-      end
-
-      def create_storage_account(storage_account_name, location, storage_account_type, resource_group_name)
-        storage_props = Azure::ARM::Storage::Models::StorageAccountPropertiesCreateParameters.new
-        storage_props.account_type = storage_account_type
-
-        storage_params = Azure::ARM::Storage::Models::StorageAccountCreateParameters.new
-        storage_params.location = location
-        storage_params.properties = storage_props
-
-        storage = storage_management_client.storage_accounts.create(resource_group_name, storage_account_name, storage_params).value!.body
-        storage
-      end
-
-      def get_vhd(storage_account_name, os_disk_name)
-        virtual_hard_disk = VirtualHardDisk.new
-        virtual_hard_disk.uri = "http://#{storage_account_name}.blob.core.windows.net/vhds/#{os_disk_name}.vhd"
-        virtual_hard_disk
-      end
-
-      def get_image_reference(publisher, offer, sku, version)
-        image_reference = ImageReference.new
-        image_reference.publisher = publisher
-        image_reference.offer = offer
-        image_reference.sku = sku
-        image_reference.version = version
-        image_reference
-      end
-
-      def get_os_disk(virtual_hard_disk, os_disk_name, os_disk_caching, os_disk_create_option)
-        os_disk = OSDisk.new
-        os_disk.name = os_disk_name
-        os_disk.vhd = virtual_hard_disk
-        os_disk.caching = os_disk_caching
-        os_disk.create_option = os_disk_create_option
-        os_disk
-      end
-
       def vnet_exist?(resource_group_name, vnet_name)
         begin
           network_resource_client.virtual_networks.get(resource_group_name, vnet_name).value!.body
@@ -552,162 +409,6 @@ module Azure
         rescue
           return false
         end
-      end
-
-      def create_network_profile(params)
-        if vnet_exist?(params[:azure_resource_group_name], params[:azure_vnet_name])
-          vnet = network_resource_client.virtual_networks.get(params[:azure_resource_group_name], params[:azure_vnet_name]).value!.body
-          Chef::Log.info("Found existing vnet #{vnet.name}...")
-        else
-          ui.log("Creating VirtualNetwork....\n\n")
-          vnet = create_virtual_network(
-            params[:azure_resource_group_name],
-            params[:azure_vnet_name],
-            params[:azure_service_location]
-          )
-          Chef::Log.info("VirtualNetwork creation successfull.")
-        end
-
-        Chef::Log.info("Virtual Network name is: #{vnet.name}")
-
-        Chef::Log.info("Virtual Network ID is: #{vnet.id}")
-
-        if subnet_exist?(params[:azure_resource_group_name], vnet.name, params[:azure_vnet_subnet_name])
-          sbn = network_resource_client.subnets.get(params[:azure_resource_group_name], vnet.name, params[:azure_vnet_subnet_name]).value!.body
-
-          Chef::Log.info("Found subnet #{sbn.name} under virtual network #{vnet.name} ...")
-
-       else
-            ui.log("Creating Subnet....\n\n")
-            sbn = create_subnet(
-            params[:azure_resource_group_name],
-            params[:azure_vnet_subnet_name],
-            vnet
-          )
-          Chef::Log.info("Subnet creation successfull.")
-        end
-
-        Chef::Log.info("Subnet name is: #{sbn.name}")
-        Chef::Log.info("Subnet ID is: #{sbn.id}")
-
-        ui.log("Creating NetworkInterface....\n\n")
-        nic = create_network_interface(
-          params[:azure_resource_group_name],
-          params[:azure_vm_name],
-          params[:azure_service_location],
-          sbn
-        )
-        Chef::Log.info("NetworkInterface creation successfull.")
-        Chef::Log.info("Network Interface name is: #{nic.name}")
-        Chef::Log.info("Network Interface ID is: #{nic.id}")
-
-        network_profile = NetworkProfile.new
-        network_profile.network_interfaces = [nic]
-        network_profile
-      end
-
-      def create_virtual_network(resource_group_name, virtual_network_name, service_location)
-        address_space = AddressSpace.new
-        address_space.address_prefixes = ['10.0.0.0/16']
-
-        vnet_props = VirtualNetworkPropertiesFormat.new
-        vnet_props.address_space = address_space
-
-        vnet_params = VirtualNetwork.new
-        vnet_params.name = virtual_network_name
-        vnet_params.location = service_location
-        vnet_params.properties = vnet_props
-
-        begin
-          vnet = network_resource_client.virtual_networks.create_or_update(resource_group_name, vnet_params.name, vnet_params).value!.body
-        rescue Exception => e
-          Chef::Log.error("Failed to create the Virtual Network -- exception being rescued: #{e.to_s}")
-          backtrace_message = "#{e.class}: #{e}\n#{e.backtrace.join("\n")}"
-          Chef::Log.debug("#{backtrace_message}")
-        end
-        vnet
-      end
-
-      def create_subnet(resource_group_name, subnet_name, virtual_network)
-        sbn_prop = SubnetPropertiesFormat.new
-        sbn_prop.address_prefix = '10.0.1.0/24'
-
-        sbn_params = Subnet.new
-        sbn_params.name = subnet_name
-        sbn_params.properties = sbn_prop
-
-        begin
-          sbn = network_resource_client.subnets.create_or_update(resource_group_name, virtual_network.name, sbn_params.name, sbn_params).value!.body
-        rescue Exception => e
-          Chef::Log.error("Failed to create the Subnet -- exception being rescued: #{e.to_s}")
-          backtrace_message = "#{e.class}: #{e}\n#{e.backtrace.join("\n")}"
-          Chef::Log.debug("#{backtrace_message}")
-        end
-        sbn
-      end
-
-      def create_network_interface(resource_group_name, vm_name, service_location, subnet)
-        network_ip_configuration_properties = NetworkInterfaceIPConfigurationPropertiesFormat.new
-        network_ip_configuration_properties.private_ipallocation_method = 'Dynamic'
-
-        network_ip_configuration_properties.public_ipaddress = create_public_ip_config(
-          resource_group_name,
-          vm_name,
-          service_location
-        )
-
-        network_ip_configuration_properties.subnet = subnet
-
-        network_interface_ip_configuration = NetworkInterfaceIPConfiguration.new
-        network_interface_ip_configuration.properties = network_ip_configuration_properties
-        network_interface_ip_configuration.name = vm_name
-
-        network_interface_props_format = NetworkInterfacePropertiesFormat.new
-        network_interface_props_format.ip_configurations = [network_interface_ip_configuration]
-        network_interface_props_format.network_security_group = create_network_security_group(
-          resource_group_name,
-          vm_name,
-          service_location
-        )
-
-        network_interface = NetworkInterface.new
-        network_interface.location = service_location
-        network_interface.name = vm_name
-        network_interface.properties = network_interface_props_format
-
-        begin
-          nic = network_resource_client.network_interfaces.create_or_update(resource_group_name, network_interface.name, network_interface).value!.body
-        rescue Exception => e
-          Chef::Log.error("Failed to create the Network Interface -- exception being rescued: #{e.to_s}")
-          backtrace_message = "#{e.class}: #{e}\n#{e.backtrace.join("\n")}"
-          Chef::Log.debug("#{backtrace_message}")
-        end
-
-        nic
-      end
-
-      def create_public_ip_config(resource_group_name, vm_name, service_location)
-        public_ip_props = PublicIPAddressPropertiesFormat.new
-        public_ip_props.public_ipallocation_method = 'Dynamic'
-
-        public_ip = PublicIPAddress.new
-        public_ip.name = vm_name
-        public_ip.location = service_location
-        public_ip.properties = public_ip_props
-
-        begin
-          public_ip_address = network_resource_client.public_ipaddresses.create_or_update(
-            resource_group_name,
-            public_ip.name,
-            public_ip
-          ).value!.body
-        rescue Exception => e
-          Chef::Log.error("Failed to create the Public IP Address -- exception being rescued: #{e.to_s}")
-          backtrace_message = "#{e.class}: #{e}\n#{e.backtrace.join("\n")}"
-          Chef::Log.debug("#{backtrace_message}")
-        end
-
-        public_ip_address
       end
 
       def create_network_security_group(resource_group_name, vm_name, service_location)
@@ -840,8 +541,13 @@ module Azure
           end
           Chef::Log.debug(error.response.body)
         else
+          begin
+            JSON.parse(error.message)
+            Chef::Log.debug("#{error.message}")
+          rescue JSON::ParserError => e
+            ui.error("#{error.message}")
+          end
           ui.error("Something went wrong. Please use -VV option for more details.")
-          Chef::Log.debug("#{error.message}")
           Chef::Log.debug("#{error.backtrace.join("\n")}")
         end
       end

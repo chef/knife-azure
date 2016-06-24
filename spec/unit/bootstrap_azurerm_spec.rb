@@ -30,9 +30,9 @@ describe Chef::Knife::BootstrapAzurerm do
       expect(@bootstrap_azurerm_instance).to receive(:validate_arm_keys!)
       expect(@service).to_not receive(:create_vm_extension)
       expect(@bootstrap_azurerm_instance.ui).to receive(
-        :error).with('Please specify the SERVER name which needs to be bootstrapped via the Chef Extension.')
+        :error).twice
       expect(Chef::Log).to receive(:debug)
-      expect{ @bootstrap_azurerm_instance.run }.to raise_error(SystemExit)
+      @bootstrap_azurerm_instance.run
     end
 
     it "raises error when azure_resource_group_name is not specified" do
@@ -55,9 +55,9 @@ describe Chef::Knife::BootstrapAzurerm do
       expect(@bootstrap_azurerm_instance.ui).to receive(:log).with('Validating...')
       expect(@service).to_not receive(:create_vm_extension)
       expect(@bootstrap_azurerm_instance.ui).to receive(
-        :error).with('Please specify only one SERVER name which needs to be bootstrapped via the Chef Extension.')
+        :error).twice
       expect(Chef::Log).to receive(:debug)
-      expect {@bootstrap_azurerm_instance.run}.to raise_error(SystemExit)
+      @bootstrap_azurerm_instance.run
     end
 
     it "raises error when server name specified does not exist under the given hosted service" do
@@ -66,9 +66,9 @@ describe Chef::Knife::BootstrapAzurerm do
       expect(@service).to receive(:find_server).and_return(nil)
       expect(@bootstrap_azurerm_instance.ui).to receive(:log).twice
       expect(@bootstrap_azurerm_instance.ui).to receive(
-        :error).with("The given server 'test-vm-01' does not exist under resource group 'test-rgp-01'")
+        :error).twice
       expect(Chef::Log).to receive(:debug)
-      expect {@bootstrap_azurerm_instance.run}.to raise_error(SystemExit)
+      @bootstrap_azurerm_instance.run
     end
 
     it "raises error if the extension is already installed on the server" do
@@ -77,9 +77,9 @@ describe Chef::Knife::BootstrapAzurerm do
       expect(@bootstrap_azurerm_instance.ui).to receive(:log).twice
       allow(@service).to receive(:find_server).and_return(@server)
       allow(@service).to receive(:extension_already_installed?).and_return(true)
-      expect(@bootstrap_azurerm_instance.ui).to receive(:error).with("Virtual machine foo already has Chef extension installed on it.")
+      expect(@bootstrap_azurerm_instance.ui).to receive(:error).twice
       expect(Chef::Log).to receive(:debug)
-      expect {@bootstrap_azurerm_instance.run}.to raise_error(SystemExit)
+      @bootstrap_azurerm_instance.run
     end
   end
 
@@ -130,9 +130,9 @@ describe Chef::Knife::BootstrapAzurerm do
       allow(@server).to receive_message_chain(:properties, :storage_profile, :os_disk, :os_type).and_return("linux")
       allow(@server).to receive_message_chain(:properties, :storage_profile, :image_reference, :offer).and_return("abc")
       expect(@bootstrap_azurerm_instance.ui).to receive(:log).twice
-      expect(@bootstrap_azurerm_instance.ui).to receive(:error).with("Offer abc is not supported in the extension.")
+      expect(@bootstrap_azurerm_instance.ui).to receive(:error).twice
       expect(Chef::Log).to receive(:debug)
-      expect {@bootstrap_azurerm_instance.run}.to raise_error(SystemExit)
+      @bootstrap_azurerm_instance.run
     end
   end
 
@@ -147,7 +147,7 @@ describe Chef::Knife::BootstrapAzurerm do
       allow(@bootstrap_azurerm_instance).to receive(:get_chef_extension_version).and_return("1210.*")
       allow(@bootstrap_azurerm_instance).to receive(:get_chef_extension_public_params).and_return("public_params")
       allow(@bootstrap_azurerm_instance).to receive(:get_chef_extension_private_params).and_return("private_params")
-      expect(@bootstrap_azurerm_instance).to receive(:create_vm_extension)
+      expect(@service).to receive(:create_vm_extension)
       @bootstrap_azurerm_instance.run
     end
   end
@@ -156,10 +156,7 @@ describe Chef::Knife::BootstrapAzurerm do
     it "returns error if the server or resource group doesn't exist" do
       promise = double("promise", :value! => nil)
       allow(@compute_client).to receive_message_chain(:virtual_machines, :get).and_return(promise)
-      expect(@bootstrap_azurerm_instance.ui).to receive(:log).twice
-      expect(@bootstrap_azurerm_instance.ui).to receive(:error).thrice
-      expect(Chef::Log).to receive(:debug)
-      expect {@bootstrap_azurerm_instance.run}.to raise_error(SystemExit)
+      expect(@bootstrap_azurerm_instance.ui).to receive(:error)
       @service.find_server('test-vm-01', 'test-rgp-01')
     end
   end
