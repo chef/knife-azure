@@ -83,8 +83,6 @@ module QueryAzureMock
     ).and_return(stub_vm_extension_create_response(user_supplied_value))
     allow(compute_management_client.virtual_machine_extension_images).to receive_message_chain(
       :list_versions,
-      :value!,
-      :body,
       :last,
       :name
     ).and_return('1210.12.10.100')

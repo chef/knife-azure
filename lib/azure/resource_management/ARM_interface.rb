@@ -208,15 +208,7 @@ module Azure
       end
 
       def find_server(resource_group, name)
-        promise = compute_management_client.virtual_machines.get(resource_group, name)
-        result = promise.value!
-
-        unless result.nil?
-          server = result.body
-        else
-          ui.error("There is no server with name #{name} or resource_group #{resource_group}. Please provide correct details.")
-        end
-        server
+        compute_management_client.virtual_machines.get(resource_group, name)
       end
 
       def virtual_machine_exist?(resource_group_name, vm_name)
@@ -513,7 +505,7 @@ module Azure
         ext_version = compute_management_client.virtual_machine_extension_images.list_versions(
           params[:azure_service_location],
           params[:chef_extension_publisher],
-          params[:chef_extension]).value!.body.last.name
+          params[:chef_extension]).last.name
         ext_version_split_values = ext_version.split(".")
         ext_version = ext_version_split_values[0] + "." + ext_version_split_values[1]
         ext_version

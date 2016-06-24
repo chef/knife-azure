@@ -154,10 +154,9 @@ describe Chef::Knife::BootstrapAzurerm do
 
   context "find_server" do
     it "returns error if the server or resource group doesn't exist" do
-      promise = double("promise", :value! => nil)
-      allow(@compute_client).to receive_message_chain(:virtual_machines, :get).and_return(promise)
-      expect(@bootstrap_azurerm_instance.ui).to receive(:error)
-      @service.find_server('test-vm-01', 'test-rgp-01')
+      allow(@compute_client).to receive_message_chain(:virtual_machines, :get).and_return(nil)
+      response = @service.find_server('test-vm-01', 'test-rgp-01')
+      expect(response).to be(nil)
     end
   end
 
