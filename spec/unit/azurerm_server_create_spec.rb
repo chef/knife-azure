@@ -45,6 +45,8 @@ describe Chef::Knife::AzurermServerCreate do
     }
 
 
+    allow(@service.ui).to receive(:log)
+    allow(Chef::Log).to receive(:info)
     allow(File).to receive(:exist?).and_return(true)
     allow(File).to receive(:read).and_return('foo')
   end
@@ -333,21 +335,12 @@ describe Chef::Knife::AzurermServerCreate do
 
     describe "resource group" do
       before do
-        allow(@compute_client).to receive_message_chain(
-          :virtual_machines, :get).and_return(
-            @compute_promise)
-        allow(@compute_promise).to receive_message_chain(
-          :value, :nil?).and_return(
-            false)
+        allow(@service).to receive(:virtual_machine_exist?).and_return(true)
       end
 
       it "create resource group when it does not exist already" do
         expect(@resource_client).to receive_message_chain(
-          :resource_groups, :check_existence).and_return(
-            @resource_promise)
-        expect(@resource_promise).to receive_message_chain(
-          :value!, :body).and_return(
-            false)
+          :resource_groups, :check_existence).and_return(false)
         expect(@service).to receive(
           :create_resource_group).exactly(1).and_return(
             stub_resource_group_create_response)
@@ -356,11 +349,7 @@ describe Chef::Knife::AzurermServerCreate do
 
       it "skip resource group creation when it does exist already" do
         expect(@resource_client).to receive_message_chain(
-          :resource_groups, :check_existence).and_return(
-            @resource_promise)
-        expect(@resource_promise).to receive_message_chain(
-          :value!, :body).and_return(
-            true)
+          :resource_groups, :check_existence).and_return(true)
         expect(@service).to_not receive(:create_resource_group)
         @arm_server_instance.run
       end
@@ -384,11 +373,7 @@ describe Chef::Knife::AzurermServerCreate do
             :is_image_windows?).at_least(3).and_return(false)
 
           allow(@resource_client).to receive_message_chain(
-            :resource_groups, :check_existence).and_return(
-              @resource_promise)
-          allow(@resource_promise).to receive_message_chain(
-            :value!, :body).and_return(
-              false)
+            :resource_groups, :check_existence).and_return(false)
           allow(@service).to receive(
             :create_resource_group).and_return(
               stub_resource_group_create_response)
@@ -426,12 +411,9 @@ describe Chef::Knife::AzurermServerCreate do
         end
 
         it "skip virtual machine creation when it does exist already" do
-          expect(@compute_client).to receive_message_chain(
-            :virtual_machines, :get).and_return(
-              @compute_promise)
-          expect(@compute_promise).to receive_message_chain(
-            :value, :nil?).and_return(
-              false)
+          expect(@service).to receive(:virtual_machine_exist?).and_return(true)
+          expect(@service).to_not receive(:create_virtual_machine_using_template)
+          expect(@service).to_not receive(:show_server)
           @arm_server_instance.run
         end
       end
@@ -452,23 +434,16 @@ describe Chef::Knife::AzurermServerCreate do
             :is_image_windows?).at_least(3).and_return(true)
 
           allow(@resource_client).to receive_message_chain(
-            :resource_groups, :check_existence).and_return(
-              @resource_promise)
-          allow(@resource_promise).to receive_message_chain(
-            :value!, :body).and_return(
-              false)
+            :resource_groups, :check_existence).and_return(false)
           allow(@service).to receive(
             :create_resource_group).and_return(
               stub_resource_group_create_response)
         end
 
         it "skip virtual machine creation when it does exist already" do
-          expect(@compute_client).to receive_message_chain(
-            :virtual_machines, :get).and_return(
-              @compute_promise)
-          expect(@compute_promise).to receive_message_chain(
-            :value, :nil?).and_return(
-              false)
+          expect(@service).to receive(:virtual_machine_exist?).and_return(true)
+          expect(@service).to_not receive(:create_virtual_machine_using_template)
+          expect(@service).to_not receive(:show_server)
           @arm_server_instance.run
         end
       end
@@ -482,11 +457,7 @@ describe Chef::Knife::AzurermServerCreate do
             :is_image_windows?).at_least(3).and_return(false)
 
           allow(@resource_client).to receive_message_chain(
-            :resource_groups, :check_existence).and_return(
-              @resource_promise)
-          allow(@resource_promise).to receive_message_chain(
-            :value!, :body).and_return(
-              false)
+            :resource_groups, :check_existence).and_return(false)
           allow(@service).to receive(
             :create_resource_group).and_return(
               stub_resource_group_create_response)
@@ -543,7 +514,8 @@ describe Chef::Knife::AzurermServerCreate do
 
     describe "create_resource_group" do
       it "successfully returns resource group create response" do
-        expect(@service).to receive(:resource_management_client).and_return(stub_resource_management_client)
+        expect(@service).to receive(:resource_management_client).and_return(
+          stub_resource_management_client)
         response = @service.create_resource_group(@params)
 
         expect(response.name).to_not be nil
@@ -557,14 +529,16 @@ describe Chef::Knife::AzurermServerCreate do
       it "creates deployment template and deployment parameters" do
         expect(@service).to receive(:create_deployment_template).with(@params)
         expect(@service).to receive(:create_deployment_parameters)
-        expect(@service).to receive(:resource_management_client).and_return(stub_resource_management_client)
+        expect(@service).to receive(:resource_management_client).and_return(
+          stub_resource_management_client)
         @service.create_virtual_machine_using_template(@params)
       end
 
       it "successfully returns virtual machine create response" do
         @platform = "Linux"
         allow(@service).to receive(:set_platform).and_return("Linux")
-        expect(@service).to receive(:resource_management_client).and_return(stub_resource_management_client)
+        expect(@service).to receive(:resource_management_client).and_return(
+          stub_resource_management_client)
         response = @service.create_virtual_machine_using_template(@params)
         expect(response.name).to_not be nil
         expect(response.id).to_not be nil
@@ -730,7 +704,8 @@ describe Chef::Knife::AzurermServerCreate do
 
     describe "get_latest_chef_extension_version" do
       it "successfully returns latest Chef Extension version" do
-        expect(@service).to receive(:compute_management_client).and_return(stub_compute_management_client('NA'))
+        expect(@service).to receive(:compute_management_client).and_return(
+          stub_compute_management_client('NA'))
         response = @service.get_latest_chef_extension_version(@params)
         expect(response).to be == '1210.12'
       end
@@ -1156,9 +1131,8 @@ describe Chef::Knife::AzurermServerCreate do
     it "creates deployment template and deployment parameters" do
       expect(@service).to receive(:create_deployment_template).with(@params)
       expect(@service).to receive(:create_deployment_parameters)
-      expect(@resource_client).to receive_message_chain(
-          :deployments, :create_or_update).and_return(
-            @resource_promise)
+      expect(@service).to receive(:resource_management_client).and_return(
+        stub_resource_management_client)
       @service.create_virtual_machine_using_template(@params)
     end
 
@@ -1166,7 +1140,7 @@ describe Chef::Knife::AzurermServerCreate do
       expect(@service).to receive(:create_deployment_template).with(@params)
       expect(@service).to receive(:create_deployment_parameters)
       allow(@resource_client).to receive_message_chain(
-          :deployments, :create_or_update).and_raise(Exception)
+          :deployments, :create_or_update, :value!, :body).and_raise(Exception)
       expect(Chef::Log).to receive(:error)
       expect(Chef::Log).to receive(:debug)
       @service.create_virtual_machine_using_template(@params)

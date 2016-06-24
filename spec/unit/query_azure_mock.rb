@@ -50,12 +50,8 @@ module QueryAzureMock
   def stub_resource_management_client
     resource_management_client = double("ResourceManagementClient",
       :resource_groups => double, :deployments => double)
-    allow(resource_management_client.resource_groups).to receive_message_chain(
-      :create_or_update => 'create_or_update',
-      :value! => nil,
-      :body => nil
-    ).and_return(stub_resource_group_create_response)
-
+    allow(resource_management_client.resource_groups).to receive(
+      :create_or_update).and_return(stub_resource_group_create_response)
     allow(resource_management_client.deployments).to receive_message_chain(
       :create_or_update => 'create_or_update',
       :value! => nil,
@@ -83,8 +79,6 @@ module QueryAzureMock
     ).and_return(stub_vm_extension_create_response(user_supplied_value))
     allow(compute_management_client.virtual_machine_extension_images).to receive_message_chain(
       :list_versions,
-      :value!,
-      :body,
       :last,
       :name
     ).and_return('1210.12.10.100')
