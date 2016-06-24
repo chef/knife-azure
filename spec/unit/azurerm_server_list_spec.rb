@@ -43,7 +43,7 @@ describe Chef::Knife::AzurermServerList do
 
     it "should display only labels if there are no servers" do
       expect(@compute_client).to receive_message_chain(
-        :virtual_machines, :list_all, :value!, :body, :value).and_return([])
+        :virtual_machines, :list_all, :value).and_return([])
       expect(@arm_server_instance.service).to receive(:display_list).with(
         @arm_server_instance.service.ui,
         ["VM Name", "Resource Group Name", "Location", "Provisioning State", "OS Type"],
@@ -58,7 +58,7 @@ describe Chef::Knife::AzurermServerList do
                     @server3.name,@server3.id.split[4],@server3.location,@server3.properties.provisioning_state,@server3.properties.storage_profile.os_disk.os_type
                    ]
       expect(@compute_client).to receive_message_chain(
-        :virtual_machines, :list_all, :value!, :body, :value).and_return(
+        :virtual_machines, :list_all, :value).and_return(
           [@server1,@server2,@server3])
       expect(@arm_server_instance.service).to receive(:display_list).with(
         @arm_server_instance.service.ui,
@@ -76,7 +76,7 @@ describe Chef::Knife::AzurermServerList do
 
     it "should display only labels if there are no servers under the given resource_group" do
       expect(@compute_client).to receive_message_chain(
-        :virtual_machines, :list, :value!, :body, :value).and_return([])
+        :virtual_machines, :list, :value).and_return([])
       expect(@arm_server_instance.service).to receive(:display_list).with(
         @arm_server_instance.service.ui,
         ["VM Name", "Resource Group Name", "Location", "Provisioning State", "OS Type"],
@@ -90,7 +90,7 @@ describe Chef::Knife::AzurermServerList do
                     @server3.name,@server3.id.split[4],@server3.location,@server3.properties.provisioning_state,@server3.properties.storage_profile.os_disk.os_type
                    ]
       expect(@compute_client).to receive_message_chain(
-        :virtual_machines, :list, :value!, :body, :value).and_return(
+        :virtual_machines, :list, :value).and_return(
           [@server1,@server3])
       expect(@arm_server_instance.service).to receive(:display_list).with(
         @arm_server_instance.service.ui,
