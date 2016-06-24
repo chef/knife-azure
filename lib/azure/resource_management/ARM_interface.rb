@@ -89,13 +89,10 @@ module Azure
 
       def list_servers(resource_group_name = nil)
         if resource_group_name.nil?
-          promise = compute_management_client.virtual_machines.list_all
+          servers = compute_management_client.virtual_machines.list_all.value
         else
-          promise = compute_management_client.virtual_machines.list(resource_group_name)
+          servers = compute_management_client.virtual_machines.list(resource_group_name).value
         end
-
-        result = promise.value!
-        servers = result.body.value
 
         cols = ['VM Name', 'Resource Group Name', 'Location', 'Provisioning State', 'OS Type']
         rows =  []
