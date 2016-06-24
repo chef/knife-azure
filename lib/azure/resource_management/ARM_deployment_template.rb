@@ -252,7 +252,6 @@ module Azure::ARM
           "imageOffer"=> "#{params[:azure_image_reference_offer]}",
           "OSDiskName"=> "#{params[:azure_os_disk_name]}",
           "nicName"=> "#{params[:azure_vm_name]}",
-          "addressPrefix"=> "#{params[:vnet_config][:addressPrefix]}",
           "storageAccountType"=> "#{params[:azure_storage_account_type]}",
           "publicIPAddressName"=> "#{params[:azure_vm_name]}",
           "publicIPAddressType"=> "Dynamic",
@@ -299,9 +298,7 @@ module Azure::ARM
             "location"=> "[resourceGroup().location]",
             "properties"=> {
               "addressSpace"=> {
-                "addressPrefixes"=> [
-                  "[variables('addressPrefix')]"
-                ]
+                "addressPrefixes"=> params[:vnet_config][:addressPrefixes]
               },
               "subnets"=> params[:vnet_config][:subnets]
             }

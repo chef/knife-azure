@@ -20,6 +20,7 @@ require 'azure_mgmt_resources'
 require 'azure_mgmt_compute'
 require 'azure_mgmt_storage'
 require 'azure_mgmt_network'
+require 'ipaddress'
 
 module Azure
   class ResourceManagement
@@ -301,30 +302,120 @@ module Azure
         end
       end
 
-      def subnets_list(resource_group_name, vnet_name)
-        network_resource_client.subnets.list(resource_group_name, vnet_name).value!.body.value
+      def subnets_list_specific_address_space(address_prefix, subnets_list)
+        list = []
+        address_space = IPAddress(address_prefix)
+        subnets_list.each do |sbn|
+          subnet_address_prefix = IPAddress(sbn.properties.address_prefix)
+          list << sbn if address_space.include? subnet_address_prefix
+        end
+
+        list
+      end
+
+      def subnets_list(resource_group_name, vnet_name, address_prefix = nil)
+        list = network_resource_client.subnets.list(resource_group_name, vnet_name).value!.body.value
+        !address_prefix.nil? && !list.empty? ? subnets_list_specific_address_space(address_prefix, list) : list
+      end
+
+      def subnet(subnet_name, subnet_prefix)
+        {
+          :subnetName => subnet_name,
+          :subnetPrefix => subnet_prefix
+        }
+      end
+
+      def vnet_address_spaces(vnet_name)
+        vnet_name.properties.address_space.address_prefixes
+      end
+
+      def subnet_address_prefix(subnet)
+        subnet.properties.address_prefix
+      end
+
+      def sort_address_pool(address_pool)
+        address_pool.sort_by { |ip| ip.split('.').map(&:to_i) }
+      end
+
+      def sort_subnets(subnets)
+        subnets.sort_by { |sbn| subnet_address_prefix(sbn).split('.').map(&:to_i) }
+      end
+
+      def subnet_cidr_prefix(subnet)
+        subnet_address_prefix(subnet).split('/')[1]
+      end
+
+      def next_subnet_address_prefix(vnet_address_prefix, subnets)
+        if subnets
+          ip = IPAddress(vnet_address_prefix)
+          subnets = sort_subnets(subnets)
+          address_pool = Array.new
+          count = 0
+          subnets.each do |subnet|
+            ip.subnet(subnet_cidr_prefix(subnet))
+
+            ## TODO: creation of available and used address_pool
+
+            count = count + 1
+          end
+
+          address_pool.first if !address_pool.empty? && address_pool.first.network?
+        else
+          vnet_address_prefix
+        end
+      end
+
+      def add_subnet(subnet_name, vnet_config, subnets)
+        next_subnet_prefix = nil
+        vnet_address_prefix_count = 0
+        vnet_address_space = vnet_config[:addressPrefixes]
+        if next_subnet_prefix.nil? && vnet_address_space.length > vnet_address_prefix_count
+          next_subnet_prefix = next_subnet_address_prefix(
+            vnet_address_space[vnet_address_prefix_count],
+            subnets_list_specific_address_space(
+              vnet_address_space[vnet_address_prefix_count], subnets
+            )
+          )
+          vnet_address_prefix_count = vnet_address_prefix_count + 1
+        end
+
+        if next_subnet_prefix
+          vnet_config[:subnets].push(
+              subnet(subnet_name, next_subnet_prefix)
+            )
+        else
+          raise "Unable to add subnet #{subnet_name} into the virtual network #{vnet_config[:virtualNetworkName]}, no address space available !!!"
+        end
+
+        vnet_config
       end
 
       def create_vnet_config(resource_group_name, vnet_name, vnet_subnet_name)
         vnet_config = {}
+        subnets = nil
+        flag = true
         vnet = vnet_exist?(resource_group_name, vnet_name)
+        vnet_config[:virtualNetworkName] = vnet_name
         if vnet
+          vnet_config[:addressPrefixes] = vnet_address_spaces(vnet_name)
+          vnet_config[:subnets] = Array.new
           subnets = subnets_list(resource_group_name, vnet_name)
           subnets.each do |subnet|
-            if subnet.name == vnet_subnet_name
-              vnet_config[:subnetPrefix] = subnet.properties.address_prefix
-              ## TODO: creation of subnets array ##
-            end
+            flag = false if subnet.name == vnet_subnet_name
+            vnet_config[:subnets].push(
+              subnet(subnet.name, subnet_address_prefix(subnet))
+            )
           end if subnets
         else
-          vnet_config[:virtualNetworkName] = vnet_name
-          vnet_config[:addressPrefix] = "10.0.0.0/16"
+          vnet_config[:addressPrefixes] = [ "10.0.0.0/16" ]
           vnet_config[:subnets] = Array.new
-          subnet = { :subnetName => vnet_subnet_name,
-                     :subnetPrefix => "10.0.0.0/24"
-                   }
-          vnet_config[:subnets].push(subnet)
+          vnet_config[:subnets].push(
+            subnet(vnet_subnet_name, "10.0.0.0/24")
+          )
+          flag = false
         end
+
+        vnet_config = add_subnet(vnet_subnet_name, vnet_config, subnets) if flag
 
         vnet_config
       end
