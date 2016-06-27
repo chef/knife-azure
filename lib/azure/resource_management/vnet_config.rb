@@ -45,14 +45,16 @@ module Azure::ARM
     ## single subnet body creation to be added in template ##
     def subnet(subnet_name, subnet_prefix)
       {
-        :subnetName => subnet_name,
-        :subnetPrefix => subnet_prefix
+        'name'=> subnet_name,
+        'properties'=> {
+          'addressPrefix'=> subnet_prefix
+        }
       }
     end
 
     ## return all the address prefixes under a virtual network ##
-    def vnet_address_spaces(vnet_name)
-      vnet_name.properties.address_space.address_prefixes
+    def vnet_address_spaces(vnet)
+      vnet.properties.address_space.address_prefixes
     end
 
     ## return address prefix of a subnet ##
@@ -82,7 +84,7 @@ module Azure::ARM
 
     ## return the cidr prefix or netmask of the given subnet ##
     def subnet_cidr_prefix(subnet)
-      subnet_address_prefix(subnet).split('/')[1]
+      subnet_address_prefix(subnet).split('/')[1].to_i
     end
 
     ## method to invoke other sort methods for network pools ##
@@ -107,6 +109,11 @@ module Azure::ARM
       prefix.nil? ? address_prefix : network_address.split('/').fill(prefix, 1, 1)
     end
 
+    def in_use_network?(subnet_network, available_network)
+      (subnet_network.include? available_network) ||
+      (available_network.include? subnet_network)
+    end
+
     ## calculate and return address_prefix for the new subnet to be added in the
     ## existing virtual network ##
     def new_subnet_address_prefix(vnet_address_prefix, subnets)
@@ -116,9 +123,13 @@ module Azure::ARM
         available_networks_pool = Array.new
         used_networks_pool = Array.new
         subnets.each do |subnet|
+          if vnet_network_address.prefix == subnet_cidr_prefix(subnet)
+            next
+          end
+
           available_networks_pool.push(
             vnet_network_address.subnet(subnet_cidr_prefix(subnet))
-          ).flatten!
+          ).flatten!.uniq! { |nwrk| nwrk.network.address && nwrk.prefix }
 
           used_networks_pool.push(
             IPAddress(subnet_address_prefix(subnet))
@@ -128,7 +139,7 @@ module Azure::ARM
             available_networks_pool, used_networks_pool)
           used_networks_pool.each do |subnet_network|
             available_networks_pool.delete_if {
-              |available_network| subnet_network.include? available_network
+              |available_network| in_use_network?(subnet_network, available_network)
             }
           end
 
@@ -137,7 +148,7 @@ module Azure::ARM
         end
 
         if !available_networks_pool.empty? && available_networks_pool.first.network?
-          available_networks_pool.first.network.address.concat("/" + avl.first.prefix.to_s)
+          available_networks_pool.first.network.address.concat("/" + available_networks_pool.first.prefix.to_s)
         else
           nil
         end
@@ -183,7 +194,7 @@ module Azure::ARM
       vnet = vnet_exist?(resource_group_name, vnet_name)
       vnet_config[:virtualNetworkName] = vnet_name
       if vnet  ## handle resources in existing vnet ##
-        vnet_config[:addressPrefixes] = vnet_address_spaces(vnet_name)
+        vnet_config[:addressPrefixes] = vnet_address_spaces(vnet)
         vnet_config[:subnets] = Array.new
         subnets = subnets_list(resource_group_name, vnet_name)
         subnets.each do |subnet|

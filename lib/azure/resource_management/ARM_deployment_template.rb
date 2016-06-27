@@ -252,6 +252,7 @@ module Azure::ARM
           "imageOffer"=> "#{params[:azure_image_reference_offer]}",
           "OSDiskName"=> "#{params[:azure_os_disk_name]}",
           "nicName"=> "#{params[:azure_vm_name]}",
+          "subnetName"=> "#{params[:azure_vnet_subnet_name]}",
           "storageAccountType"=> "#{params[:azure_storage_account_type]}",
           "publicIPAddressName"=> "#{params[:azure_vm_name]}",
           "publicIPAddressType"=> "Dynamic",
