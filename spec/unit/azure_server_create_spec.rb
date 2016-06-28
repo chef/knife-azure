@@ -47,7 +47,7 @@ describe Chef::Knife::AzureServerCreate do
     expect(xml_content(testxml, 'UserPassword')).to be == chef_config[:ssh_password]
     expect(xml_content(testxml, 'SourceImageName')).to be == chef_config[:azure_source_image]
     expect(xml_content(testxml, 'RoleSize')).to be == chef_config[:azure_vm_size]
-    expect(xml_content(testxml, 'HostName')).to be == host_namee_c
+    expect(xml_content(testxml, 'HostName')).to be == host_name
     expect(xml_content(testxml, 'RoleName')).to be == role_name
   end
 
