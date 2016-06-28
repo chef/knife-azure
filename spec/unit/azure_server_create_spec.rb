@@ -47,7 +47,7 @@ describe Chef::Knife::AzureServerCreate do
     expect(xml_content(testxml, 'UserPassword')).to be == chef_config[:ssh_password]
     expect(xml_content(testxml, 'SourceImageName')).to be == chef_config[:azure_source_image]
     expect(xml_content(testxml, 'RoleSize')).to be == chef_config[:azure_vm_size]
-    expect(xml_content(testxml, 'HostName')).to be == host_name
+    expect(xml_content(testxml, 'HostName')).to be == host_namee_c
     expect(xml_content(testxml, 'RoleName')).to be == role_name
   end
 
@@ -821,31 +821,6 @@ describe Chef::Knife::AzureServerCreate do
     end
   end
 
-  describe "for --auto-udpate-client and --delete-chef-extension-config" do
-    before do
-      allow(@server_instance).to receive(:msg_server_summary)
-      Chef::Config[:knife][:run_list] = ['getting-started']
-      Chef::Config[:knife][:validation_client_name] = 'testorg-validator'
-      Chef::Config[:knife][:chef_server_url] = 'https://api.opscode.com/organizations/testorg'
-    end
-
-    after do
-      Chef::Config[:knife].delete(:bootstrap_protocol)
-      Chef::Config[:knife].delete(:run_list)
-      Chef::Config[:knife].delete(:validation_client_name)
-      Chef::Config[:knife].delete(:chef_server_url)
-    end
-
-    context 'option --bootstrap-protocol cloud-api not passed' do
-      it 'throws error and server create command fails.' do
-        @server_instance.config[:auto_update_client] = true
-        @server_instance.config[:delete_chef_extension_config] = true
-        allow(@server_instance.ui).to receive(:error)
-        expect {@server_instance.run}.to raise_error(SystemExit)
-      end
-    end
-  end
-
   describe "for bootstrap protocol cloud-api:" do
     before do
       Chef::Config[:knife][:bootstrap_protocol] = 'cloud-api'
@@ -864,10 +839,7 @@ describe Chef::Knife::AzureServerCreate do
 
     context "get_chef_extension_public_params" do
       it "should set public config properly" do
-        @server_instance.config[:auto_update_client] = true
-        @server_instance.config[:delete_chef_extension_config] = true
         @server_instance.config[:bootstrap_version] = '12.4.2'
-        @server_instance.config[:uninstall_chef_client] = false
         @server_instance.config[:extended_logs] = true
         public_config = "{\"client_rb\":\"chef_server_url \\t \\\"https://localhost:443\\\"\\nvalidation_client_name\\t\\\"chef-validator\\\"\",\"runlist\":\"\\\"getting-started\\\"\",\"extendedLogs\":\"true\",\"custom_json_attr\":{},\"bootstrap_options\":{\"chef_server_url\":\"https://localhost:443\",\"validation_client_name\":\"chef-validator\",\"bootstrap_version\":\"12.4.2\"}}"
 
