@@ -129,11 +129,11 @@ class Chef
 
       def check_token_validity(token_details)
         if !is_token_valid?(token_details)
-          token_details = refresh_token() 
+          token_details = refresh_token()
           if !is_token_valid?(token_details)
-            raise "Token has expired. Please run 'azure login' command" 
+            raise "Token has expired. Please run 'azure login' command"
           end
-        end 
+        end
         return token_details
       end
 
@@ -182,6 +182,7 @@ class Chef
       end
 
       def find_file(name)
+        name = ::File.expand_path(name)
         config_dir = Chef::Knife.chef_config_dir
         if File.exist? name
           file = name
