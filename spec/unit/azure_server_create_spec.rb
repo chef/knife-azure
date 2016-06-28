@@ -869,7 +869,7 @@ describe Chef::Knife::AzureServerCreate do
         @server_instance.config[:bootstrap_version] = '12.4.2'
         @server_instance.config[:uninstall_chef_client] = false
         @server_instance.config[:extended_logs] = true
-        public_config = "{\"client_rb\":\"chef_server_url \\t \\\"https://localhost:443\\\"\\nvalidation_client_name\\t\\\"chef-validator\\\"\",\"runlist\":\"\\\"getting-started\\\"\",\"autoUpdateClient\":\"true\",\"deleteChefConfig\":\"true\",\"uninstallChefClient\":\"false\",\"extendedLogs\":\"true\",\"custom_json_attr\":{},\"bootstrap_options\":{\"chef_server_url\":\"https://localhost:443\",\"validation_client_name\":\"chef-validator\",\"bootstrap_version\":\"12.4.2\"}}"
+        public_config = "{\"client_rb\":\"chef_server_url \\t \\\"https://localhost:443\\\"\\nvalidation_client_name\\t\\\"chef-validator\\\"\",\"runlist\":\"\\\"getting-started\\\"\",\"extendedLogs\":\"true\",\"custom_json_attr\":{},\"bootstrap_options\":{\"chef_server_url\":\"https://localhost:443\",\"validation_client_name\":\"chef-validator\",\"bootstrap_version\":\"12.4.2\"}}"
 
         expect(@server_instance).to receive(:get_chef_extension_name).and_return("LinuxChefClient")
         expect(@server_instance).to receive(:get_chef_extension_publisher).and_return("Chef.Bootstrap.WindowsAzure")
