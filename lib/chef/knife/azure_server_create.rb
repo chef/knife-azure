@@ -561,13 +561,6 @@ class Chef
           exit 1
         end
 
-        if (locate_config_value(:auto_update_client) ||  locate_config_value(:delete_chef_extension_config) || locate_config_value(:uninstall_chef_client))  &&  (locate_config_value(:bootstrap_protocol) != 'cloud-api')
-          ui.error("--auto-update-client option works with --bootstrap-protocol cloud-api") if locate_config_value(:auto_update_client)
-          ui.error("--delete-chef-extension-config option works with --bootstrap-protocol cloud-api") if locate_config_value(:delete_chef_extension_config)
-          ui.error("--uninstall-chef-client option works with --bootstrap-protocol cloud-api") if locate_config_value(:uninstall_chef_client)
-          exit 1
-        end
-
         if locate_config_value(:extended_logs) && locate_config_value(:bootstrap_protocol) != 'cloud-api'
           ui.error("--extended-logs option works with --bootstrap-protocol cloud-api")
           exit 1

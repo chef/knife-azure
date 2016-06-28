@@ -281,9 +281,6 @@ class Chef
           end
 
           pub_config[:runlist] = locate_config_value(:run_list).empty? ? "" : locate_config_value(:run_list).join(",").to_json
-          pub_config[:autoUpdateClient] = locate_config_value(:auto_update_client) ? "true" : "false"
-          pub_config[:deleteChefConfig] = locate_config_value(:delete_chef_extension_config) ? "true" : "false"
-          pub_config[:uninstallChefClient] = locate_config_value(:uninstall_chef_client) ? "true" : "false"
           pub_config[:custom_json_attr] = locate_config_value(:json_attributes) || {}
           pub_config[:extendedLogs] = locate_config_value(:extended_logs) ? "true" : "false"
           pub_config[:hints] = ohai_hints if @service.instance_of?(Azure::ResourceManagement::ARMInterface) && !locate_config_value(:ohai_hints).nil?

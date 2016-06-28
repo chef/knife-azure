@@ -834,59 +834,9 @@ describe Chef::Knife::AzurermServerCreate do
       end
 
       context "get_chef_extension_public_params" do
-        it "should set autoUpdateClient flag to true" do
-          @arm_server_instance.config[:auto_update_client] = true
-          public_config = {client_rb: "chef_server_url \t \"https://localhost:443\"\nvalidation_client_name\t\"chef-validator\"", runlist: "\"getting-started\"", autoUpdateClient: "true", deleteChefConfig: "false", uninstallChefClient: "false", extendedLogs: "false", custom_json_attr: {}, hints: ["vm_name", "public_fqdn", "platform"], bootstrap_options: { chef_server_url: "https://localhost:443", validation_client_name: "chef-validator"}}
-
-          response = @arm_server_instance.get_chef_extension_public_params
-          expect(response).to be == public_config
-        end
-
-        it "should set autoUpdateClient flag to false" do
-          @arm_server_instance.config[:auto_update_client] = false
-
-          public_config = {client_rb: "chef_server_url \t \"https://localhost:443\"\nvalidation_client_name\t\"chef-validator\"", runlist: "\"getting-started\"", autoUpdateClient: "false", deleteChefConfig: "false", uninstallChefClient: "false", extendedLogs: "false", custom_json_attr: {}, hints: ["vm_name", "public_fqdn", "platform"], bootstrap_options: { chef_server_url: "https://localhost:443", validation_client_name: "chef-validator"}}
-
-          response = @arm_server_instance.get_chef_extension_public_params
-          expect(response).to be == public_config
-        end
-
-        it "sets deleteChefConfig flag to true" do
-          @arm_server_instance.config[:delete_chef_extension_config] = true
-          public_config = {client_rb: "chef_server_url \t \"https://localhost:443\"\nvalidation_client_name\t\"chef-validator\"", runlist: "\"getting-started\"", autoUpdateClient: "false", deleteChefConfig: "true", uninstallChefClient: "false", extendedLogs: "false", custom_json_attr: {}, hints: ["vm_name", "public_fqdn", "platform"], bootstrap_options: { chef_server_url: "https://localhost:443", validation_client_name: "chef-validator"}}
-
-          response = @arm_server_instance.get_chef_extension_public_params
-          expect(response).to be == public_config
-
-        end
-
-        it "sets deleteChefConfig flag to false" do
-          @arm_server_instance.config[:delete_chef_extension_config] = false
-          public_config = {client_rb: "chef_server_url \t \"https://localhost:443\"\nvalidation_client_name\t\"chef-validator\"", runlist: "\"getting-started\"", autoUpdateClient: "false", deleteChefConfig: "false", uninstallChefClient: "false", extendedLogs: "false", custom_json_attr: {}, hints: ["vm_name", "public_fqdn", "platform"], bootstrap_options: { chef_server_url: "https://localhost:443", validation_client_name: "chef-validator"}}
-
-          response = @arm_server_instance.get_chef_extension_public_params
-          expect(response).to be == public_config
-        end
-
         it "sets bootstrapVersion variable in public_config" do
           @arm_server_instance.config[:bootstrap_version] = '12.4.2'
-          public_config = {:client_rb=>"chef_server_url \t \"https://localhost:443\"\nvalidation_client_name\t\"chef-validator\"", :runlist=>"\"getting-started\"", :autoUpdateClient=>"false", :deleteChefConfig=>"false", :uninstallChefClient=>"false", extendedLogs: "false", :custom_json_attr=>{}, :hints=>["vm_name", "public_fqdn", "platform"], :bootstrap_options=>{:chef_server_url=>"https://localhost:443", :validation_client_name=>"chef-validator", :bootstrap_version=>"12.4.2"}}
-
-          response = @arm_server_instance.get_chef_extension_public_params
-          expect(response).to be == public_config
-        end
-
-        it "sets uninstallChefClient flag to false" do
-          @arm_server_instance.config[:uninstall_chef_client] = false
-          public_config = {:client_rb=>"chef_server_url \t \"https://localhost:443\"\nvalidation_client_name\t\"chef-validator\"", :runlist=>"\"getting-started\"", :autoUpdateClient=>"false", :deleteChefConfig=>"false", :uninstallChefClient=>"false", extendedLogs: "false", :custom_json_attr=>{}, :hints=>["vm_name", "public_fqdn", "platform"], :bootstrap_options=>{:chef_server_url=>"https://localhost:443", :validation_client_name=>"chef-validator"}}
-
-          response = @arm_server_instance.get_chef_extension_public_params
-          expect(response).to be == public_config
-        end
-
-        it "sets uninstallChefClient flag to true" do
-          @arm_server_instance.config[:uninstall_chef_client] = true
-          public_config = {:client_rb=>"chef_server_url \t \"https://localhost:443\"\nvalidation_client_name\t\"chef-validator\"", :runlist=>"\"getting-started\"", :autoUpdateClient=>"false", :deleteChefConfig=>"false", :uninstallChefClient=>"true", extendedLogs: "false", :custom_json_attr=>{}, :hints=>["vm_name", "public_fqdn", "platform"], :bootstrap_options=>{:chef_server_url=>"https://localhost:443", :validation_client_name=>"chef-validator"}}
+          public_config = {:client_rb=>"chef_server_url \t \"https://localhost:443\"\nvalidation_client_name\t\"chef-validator\"", :runlist=>"\"getting-started\"", extendedLogs: "false", :custom_json_attr=>{}, :hints=>["vm_name", "public_fqdn", "platform"], :bootstrap_options=>{:chef_server_url=>"https://localhost:443", :validation_client_name=>"chef-validator", :bootstrap_version=>"12.4.2"}}
 
           response = @arm_server_instance.get_chef_extension_public_params
           expect(response).to be == public_config
@@ -894,7 +844,7 @@ describe Chef::Knife::AzurermServerCreate do
 
         it "sets encrypted_databag_secret in public config" do
           @arm_server_instance.config[:secret] = "secrettext"
-          public_config = {:client_rb=>"chef_server_url \t \"https://localhost:443\"\nvalidation_client_name\t\"chef-validator\"", :runlist=>"\"getting-started\"", :autoUpdateClient=>"false", :deleteChefConfig=>"false", :uninstallChefClient=>"false", extendedLogs: "false", :custom_json_attr=>{}, :hints=>["vm_name", "public_fqdn", "platform"], :bootstrap_options=>{:encrypted_data_bag_secret=>"secrettext", :chef_server_url=>"https://localhost:443", :validation_client_name=>"chef-validator"}}
+          public_config = {:client_rb=>"chef_server_url \t \"https://localhost:443\"\nvalidation_client_name\t\"chef-validator\"", :runlist=>"\"getting-started\"", extendedLogs: "false", :custom_json_attr=>{}, :hints=>["vm_name", "public_fqdn", "platform"], :bootstrap_options=>{:encrypted_data_bag_secret=>"secrettext", :chef_server_url=>"https://localhost:443", :validation_client_name=>"chef-validator"}}
 
           response = @arm_server_instance.get_chef_extension_public_params
           expect(response).to be == public_config
@@ -902,14 +852,14 @@ describe Chef::Knife::AzurermServerCreate do
 
         it "sets encrypted_databag_secret_file in public config" do
           @arm_server_instance.config[:secret_file] = File.dirname(__FILE__) + "/assets/secret_file"
-          public_config = {:client_rb=>"chef_server_url \t \"https://localhost:443\"\nvalidation_client_name\t\"chef-validator\"", :runlist=>"\"getting-started\"", :autoUpdateClient=>"false", :deleteChefConfig=>"false", :uninstallChefClient=>"false", extendedLogs: "false", :custom_json_attr=>{}, :hints=>["vm_name", "public_fqdn", "platform"], :bootstrap_options=>{:encrypted_data_bag_secret=>"PgIxStCmMDsuIw3ygRhmdMtStpc9EMiWisQXoP", :chef_server_url=>"https://localhost:443", :validation_client_name=>"chef-validator"}}
+          public_config = {:client_rb=>"chef_server_url \t \"https://localhost:443\"\nvalidation_client_name\t\"chef-validator\"", :runlist=>"\"getting-started\"", extendedLogs: "false", :custom_json_attr=>{}, :hints=>["vm_name", "public_fqdn", "platform"], :bootstrap_options=>{:encrypted_data_bag_secret=>"PgIxStCmMDsuIw3ygRhmdMtStpc9EMiWisQXoP", :chef_server_url=>"https://localhost:443", :validation_client_name=>"chef-validator"}}
           response = @arm_server_instance.get_chef_extension_public_params
           expect(response).to be == public_config
         end
 
         it "should set extendedLogs flag to true" do
           @arm_server_instance.config[:extended_logs] = true
-          public_config = {client_rb: "chef_server_url \t \"https://localhost:443\"\nvalidation_client_name\t\"chef-validator\"", runlist: "\"getting-started\"", autoUpdateClient: "false", deleteChefConfig: "false", uninstallChefClient: "false", extendedLogs: "true", custom_json_attr: {}, :hints=>["vm_name", "public_fqdn", "platform"], bootstrap_options: { chef_server_url: "https://localhost:443", validation_client_name: "chef-validator"}}
+          public_config = {client_rb: "chef_server_url \t \"https://localhost:443\"\nvalidation_client_name\t\"chef-validator\"", runlist: "\"getting-started\"", extendedLogs: "true", custom_json_attr: {}, :hints=>["vm_name", "public_fqdn", "platform"], bootstrap_options: { chef_server_url: "https://localhost:443", validation_client_name: "chef-validator"}}
           response = @arm_server_instance.get_chef_extension_public_params
           expect(response).to be == public_config
         end
@@ -1236,9 +1186,6 @@ describe Chef::Knife::AzurermServerCreate do
       expect(extension["properties"]["settings"]["bootstrap_options"]["chef_server_url"]).to be == "[parameters('chef_server_url')]"
       expect(extension["properties"]["settings"]["bootstrap_options"]["validation_client_name"]).to be == "[parameters('validation_client_name')]"
       expect(extension["properties"]["settings"]["runlist"]).to be == "[parameters('runlist')]"
-      expect(extension["properties"]["settings"]["autoUpdateClient"]).to be == "[parameters('autoUpdateClient')]"
-      expect(extension["properties"]["settings"]["deleteChefConfig"]).to be == "[parameters('deleteChefConfig')]"
-      expect(extension["properties"]["settings"]["uninstallChefClient"]).to be == "[parameters('uninstallChefClient')]"
       expect(extension["properties"]["settings"]["hints"]).to be == @hints_json
       expect(extension["properties"]["settings"]["bootstrap_options"]["bootstrap_version"]).to be == "[parameters('bootstrap_version')]"
       expect(extension["properties"]["settings"]["bootstrap_options"]["encrypted_data_bag_secret"]).to be == "[parameters('encrypted_data_bag_secret')]"
@@ -1302,9 +1249,6 @@ describe Chef::Knife::AzurermServerCreate do
       expect(parameters["chef_server_url"]["value"]).to be == "url"
       expect(parameters["validation_client_name"]["value"]).to be == "client_name"
       expect(parameters["runlist"]["value"]).to be == ""
-      expect(parameters["autoUpdateClient"]["value"]).to be == ""
-      expect(parameters["deleteChefConfig"]["value"]).to be == ""
-      expect(parameters["uninstallChefClient"]["value"]).to be == ""
       expect(parameters["encrypted_data_bag_secret"]["value"]).to be == "rihrfwe739085928592nehrweirwefjsndwe"
       expect(parameters["bootstrap_proxy"]["value"]).to be == "http://test.com"
       expect(parameters["node_ssl_verify_mode"]["value"]).to be == "true"

@@ -177,24 +177,6 @@ module Azure::ARM
               "description"=> "Optional Run List to Execute"
             }
           },
-          "autoUpdateClient" => {
-            "type" => "string",
-            "metadata" => {
-              "description" => "Optional Flag for auto update"
-            }
-          },
-          "deleteChefConfig" => {
-            "type" => "string",
-            "metadata" => {
-              "description" => "Optional Flag for deleteChefConfig"
-            }
-          },
-          "uninstallChefClient" => {
-            "type" => "string",
-            "metadata" => {
-              "description" => "Optional Flag for uninstallChefClient"
-            }
-          },
            "chef_node_name" => {
             "type" => "string",
             "metadata" => {
@@ -453,9 +435,6 @@ module Azure::ARM
                   "bootstrap_proxy" => "[parameters('bootstrap_proxy')]"
                 },
                 "runlist" => "[parameters('runlist')]",
-                "autoUpdateClient" => "[parameters('autoUpdateClient')]",
-                "deleteChefConfig" => "[parameters('deleteChefConfig')]",
-                "uninstallChefClient" => "[parameters('uninstallChefClient')]",
                 "validation_key_format" => "[parameters('validation_key_format')]",
                 "hints" => hints_json,
                 "client_rb" => "[parameters('client_rb')]",
@@ -536,15 +515,6 @@ module Azure::ARM
         },
         "runlist" => {
           "value" => "#{params[:chef_extension_public_param][:runlist]}"
-        },
-        "autoUpdateClient" => {
-          "value" => "#{params[:chef_extension_public_param][:autoUpdateClient]}"
-        },
-        "deleteChefConfig" => {
-          "value" => "#{params[:chef_extension_public_param][:deleteChefConfig]}"
-        },
-        "uninstallChefClient" => {
-          "value" => "#{params[:chef_extension_public_param][:uninstallChefClient]}"
         },
         "chef_node_name" => {
           "value"=> "#{params[:chef_extension_public_param][:bootstrap_options][:chef_node_name]}"

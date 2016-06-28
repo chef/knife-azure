@@ -233,11 +233,9 @@ In general, systems bootstrapped via `cloud-api` do not require incoming or outg
                 --winrm-user 'jetstream'
                 --winrm-password 'jetstream@123'
                 --bootstrap-protocol 'cloud-api'
-                --delete-chef-extension-config
 
 We have also added cloud-api support for Centos now, for this you just need to select centos image in above example.
 
-`--delete-chef-extension-config` determines if Chef configuration files should be removed when Azure removes the Chef resource extension from the VM or not. This option is only valid for the 'cloud-api' bootstrap protocol. The default value is false. This is useful when `update` and `uninstall` commands are run for the extension on the VM created.
 
 It's possible to pass bootstrap options to the extension which get specified in `client.rb` file on the VM. Following options can be passed:
 
