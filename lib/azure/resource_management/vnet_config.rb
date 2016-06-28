@@ -87,7 +87,7 @@ module Azure::ARM
       subnet_address_prefix(subnet).split('/')[1].to_i
     end
 
-    ## method to invoke other sort methods for network pools ##
+    ## method to invoke respective sort methods for the network pools ##
     def sort_pools(available_networks_pool, used_networks_pool)
       return sort_available_networks(available_networks_pool), sort_used_networks_by_hosts_size(used_networks_pool)
     end
@@ -106,9 +106,12 @@ module Azure::ARM
         prefix = '24'
       end
 
-      prefix.nil? ? address_prefix : network_address.split('/').fill(prefix, 1, 1)
+      ## if the given network is small then do not divide it else divide using
+      ## the prefix value calculated above ##
+      prefix.nil? ? address_prefix : network_address.network.address.concat('/' + prefix)
     end
 
+    ## check if the available_network is part of the subnet_network or vice-versa ##
     def in_use_network?(subnet_network, available_network)
       (subnet_network.include? available_network) ||
       (available_network.include? subnet_network)
@@ -117,43 +120,54 @@ module Azure::ARM
     ## calculate and return address_prefix for the new subnet to be added in the
     ## existing virtual network ##
     def new_subnet_address_prefix(vnet_address_prefix, subnets)
-      if subnets  ## subnets exist in vnet, calculate new address_prefix for the new subnet based on the space taken by these existing subnets under the given address space of the virtual network ##
+      if subnets.empty?  ## no subnets exist in the given address space of the virtual network, so divide the network into smaller subnets (based on the network size) and allocate space for the new subnet to be added ##
+        divide_network(vnet_address_prefix)
+      else  ## subnets exist in vnet, calculate new address_prefix for the new subnet based on the space taken by these existing subnets under the given address space of the virtual network ##
         vnet_network_address = IPAddress(vnet_address_prefix)
         subnets = sort_subnets_by_cidr_prefix(subnets)
         available_networks_pool = Array.new
         used_networks_pool = Array.new
         subnets.each do |subnet|
+          ## in case the larger network is not divided into smaller subnets but
+          ## divided into only 1 largest subnet of the complete network size ##
           if vnet_network_address.prefix == subnet_cidr_prefix(subnet)
-            next
+            break
           end
 
+          ## add all the possible subnets (calculated using the current subnet's
+          ## cidr prefix value) into the available_networks_pool ##
           available_networks_pool.push(
             vnet_network_address.subnet(subnet_cidr_prefix(subnet))
-          ).flatten!.uniq! { |nwrk| nwrk.network.address && nwrk.prefix }
+          ).flatten!.uniq! { |nwrk| [ nwrk.network.address, nwrk.prefix ].join(':') }
 
+          ## add current subnet into the used_networks_pool ##
           used_networks_pool.push(
             IPAddress(subnet_address_prefix(subnet))
           )
 
+          ## sort both the network pools before trimming the available_networks_pool ##
           available_networks_pool, used_networks_pool = sort_pools(
             available_networks_pool, used_networks_pool)
+
+          ## trim the available_networks_pool based on the networks already
+          ## allocated to the existing subnets ##
           used_networks_pool.each do |subnet_network|
             available_networks_pool.delete_if {
               |available_network| in_use_network?(subnet_network, available_network)
             }
           end
 
+          ## sort both the network pools after trimming the available_networks_pool ##
           available_networks_pool, used_networks_pool = sort_pools(
             available_networks_pool, used_networks_pool)
         end
 
+        ## space available in the vnet_address_prefix network for the new subnet ##
         if !available_networks_pool.empty? && available_networks_pool.first.network?
           available_networks_pool.first.network.address.concat("/" + available_networks_pool.first.prefix.to_s)
-        else
+        else  ## space not available in the vnet_address_prefix network for the new subnet ##
           nil
         end
-      else ## no subnets exist in the given address space of the virtual network, so divide the network into smaller subnets (based on the network size) and allocate space for the new subnet to be added ##
-        divide_network(vnet_address_prefix)
       end
     end
 
@@ -164,7 +178,7 @@ module Azure::ARM
       vnet_address_space = vnet_config[:addressPrefixes]
 
       ## search for space in all the address prefixes of the virtual network ##
-      if new_subnet_prefix.nil? && vnet_address_space.length > vnet_address_prefix_count
+      while new_subnet_prefix.nil? && vnet_address_space.length > vnet_address_prefix_count
         new_subnet_prefix = new_subnet_address_prefix(
           vnet_address_space[vnet_address_prefix_count],
           subnets_list_specific_address_space(
@@ -193,12 +207,13 @@ module Azure::ARM
       flag = true
       vnet = vnet_exist?(resource_group_name, vnet_name)
       vnet_config[:virtualNetworkName] = vnet_name
-      if vnet  ## handle resources in existing vnet ##
+      if vnet  ## handle resources in the existing virtual network ##
         vnet_config[:addressPrefixes] = vnet_address_spaces(vnet)
         vnet_config[:subnets] = Array.new
         subnets = subnets_list(resource_group_name, vnet_name)
         subnets.each do |subnet|
-         flag = false if subnet.name == vnet_subnet_name
+          flag = false if subnet.name == vnet_subnet_name  ## given subnet already exist in the virtual network ##
+          ## preserve the existing subnet resources ##
           vnet_config[:subnets].push(
             subnet(subnet.name, subnet_address_prefix(subnet))
           )
@@ -219,4 +234,3 @@ module Azure::ARM
     end
   end
 end
-
