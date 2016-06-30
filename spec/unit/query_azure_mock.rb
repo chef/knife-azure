@@ -141,7 +141,7 @@ module QueryAzureMock
     end
   end
 
-  def stub_network_resource_client(platform)
+  def stub_network_resource_client(platform = nil, resource_group_name = nil, vnet_name = nil)
     network_resource_client = double("NetworkResourceClient",
       :public_ipaddresses => double,
       :network_security_groups => double,
@@ -182,8 +182,32 @@ module QueryAzureMock
       :create_or_update => 'create_or_update',
       :value! => nil,
       :body => nil).and_return(stub_default_security_rule_add_response(platform))
+    allow(network_resource_client.subnets).to receive_message_chain(
+      :list,
+      :value!,
+      :body,
+      :value).and_return(stub_subnets_list_response(resource_group_name, vnet_name))
 
     network_resource_client
+  end
+
+  def stub_subnets_list_response(resource_group_name, vnet_name)
+    rgrp_index = nil
+    vnet_index = nil
+    @resource_groups.each_with_index do |resource_group, rindex|
+      if resource_group.has_key? resource_group_name
+        rgrp_index = rindex
+        resource_group[resource_group_name]['vnets'].each_with_index do |vnet, vindex|
+          if vnet.has_key? vnet_name
+            vnet_index = vindex
+            break
+          end
+        end
+        break
+      end
+    end
+
+    @resource_groups[rgrp_index][resource_group_name]['vnets'][vnet_index][vnet_name]['properties']['subnets']
   end
 
   def stub_deployments_create_response
