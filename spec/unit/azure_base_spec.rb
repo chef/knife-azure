@@ -224,7 +224,7 @@ describe Chef::Knife::AzureBase do
 	  	end
 	  end
 
-		context "find_file" do
+    context "find_file" do
       it "finds the file with given path" do
         file_path = get_publish_settings_file_path("azureValid.publishsettings")
         Chef::Config[:knife][:azure_publish_settings_file] = file_path
