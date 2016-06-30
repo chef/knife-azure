@@ -179,7 +179,7 @@ describe Chef::Knife::AzurermBase do
       end
 
       it 'Mixlib shellout command for xplat raises exception' do
-        token_details = {:tokentype => "Bearer", :user => "xxx@outlook.com", :token => "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1iIxLjAifQ.hZjHXXjbSdMmMs9oSZxGKa62EnNG6jkTY4RSmq8dQMvmwHgDCF4KoT_sOIsrAJTVwXuCdxYa5Jr83sfydFwiO2QWWOaSgyRXGPouex4NXFI_LFdnRzhLBoN0ONwUWHrV12N4LBgHyNLiyfeZQJFCbD0LTcPdjh7qQZ5aVgcoz_CB33PGD_z2L_6ynWrlAoihLEmYD6vbebMDSSFazvzoVg", :expiry_time => "2016-05-31T09:42:15.617Z", :clientid => "dsff-8df-sd45e-34345f7b46", :refreshtoken => "FPbm0gXiszvV_cMwGkgACwMBZ26fWA6fH3ToRLTHYU3wvvTWiU74ukRhMHhv20OJOtZBOtbckh3kTMT7QvzUYfd4uHFzwAYCtsh2SOY-dCAA"} 
+        token_details = {:tokentype => "Bearer", :user => "xxx@outlook.com", :token => "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1iIxLjAifQ.hZjHXXjbSdMmMs9oSZxGKa62EnNG6jkTY4RSmq8dQMvmwHgDCF4KoT_sOIsrAJTVwXuCdxYa5Jr83sfydFwiO2QWWOaSgyRXGPouex4NXFI_LFdnRzhLBoN0ONwUWHrV12N4LBgHyNLiyfeZQJFCbD0LTcPdjh7qQZ5aVgcoz_CB33PGD_z2L_6ynWrlAoihLEmYD6vbebMDSSFazvzoVg", :expiry_time => "2016-05-31T09:42:15.617Z", :clientid => "dsff-8df-sd45e-34345f7b46", :refreshtoken => "FPbm0gXiszvV_cMwGkgACwMBZ26fWA6fH3ToRLTHYU3wvvTWiU74ukRhMHhv20OJOtZBOtbckh3kTMT7QvzUYfd4uHFzwAYCtsh2SOY-dCAA"}
         allow(Chef::Platform).to receive(:windows?).and_return(false)
         allow(Mixlib::ShellOut).to receive_message_chain(:new,:run_command).and_raise(Exception)
         allow(@arm_server_instance).to receive(:token_details_for_linux).and_return(token_details)
@@ -231,6 +231,14 @@ describe Chef::Knife::AzurermBase do
         allow(Chef::Platform).to receive(:windows?).and_return(true)
         target = "AzureXplatCli:target=_authority:https\://login.microsoftonline.com/abeb039a-rfrgrggb48f-0c99bdc99d15::_clientId:dsff-8df-sd45e-34345f7b46::expiresIn:3599::expiresOn:2116-05-31T09\:42\:15.617Z::identityProvider:live.com::isMRRT:true::resource:https\://management.core.windows.net/::tokenType:Bearer::userId:xxx@outlook.com--0-2"
         allow(@arm_server_instance).to receive(:target_name).and_return(target)
+      end
+    end
+
+    context "find_file" do
+      it "finds the file with given path" do
+        file_path = get_publish_settings_file_path("azureValid.publishsettings")
+        Chef::Config[:knife][:azure_publish_settings_file] = file_path
+        expect(@dummy.find_file(Chef::Config[:knife][:azure_publish_settings_file])).to eq file_path
       end
     end
   end

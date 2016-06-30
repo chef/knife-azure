@@ -231,6 +231,7 @@ class Chef
       end
 
       def find_file(name)
+        name = ::File.expand_path(name)
         config_dir = Chef::Knife.chef_config_dir
         if File.exist? name
           file = name
