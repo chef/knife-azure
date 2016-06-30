@@ -11,17 +11,17 @@ describe Chef::Knife::AzurermServerShow do
     @arm_server_instance.name_args = %w(vmname)
     @compute_client = double("ComputeManagementClient")
     @network_client = double("NetworkManagementClient")
-    allow(@arm_server_instance.service).to receive(:compute_management_client).and_return(@compute_client)    
+    allow(@arm_server_instance.service).to receive(:compute_management_client).and_return(@compute_client)
     allow(@arm_server_instance.service).to receive(:network_resource_client).and_return(@network_client)
   end
 
-  it "should give error if there is no server with the given name" do
-    expect(@compute_client).to receive_message_chain(:virtual_machines, :get, :value!)
-    expect(@arm_server_instance.service.ui).to receive(:error).with("There is no server with name vmname or resource_group RESOURCE_GROUP. Please provide correct details.")
+  it "raises error if there is no server with the given name" do
+    expect(@compute_client).to receive_message_chain(:virtual_machines, :get).and_raise("ResourceNotFound")
+    expect(@arm_server_instance.service).to receive(:common_arm_rescue_block)
     @arm_server_instance.run
   end
-  
-  it "should give display Server Name, Size, Provisioning State, Location, Publisher, Offer, Sku, Version, OS Type, Public IP address & FQDN" do
+
+  it "displays Server Name, Size, Provisioning State, Location, Publisher, Offer, Sku, Version, OS Type, Public IP address & FQDN" do
     @server = double("Promise", :name => "vmname", :location => "westus", :properties => double)
     @network_interface_data = double("Promise", :properties => double)
     @public_ip_data =  double("Promise", :properties => double)
@@ -46,27 +46,27 @@ describe Chef::Knife::AzurermServerShow do
     allow(@network_interface_data.properties.ip_configurations[0]).to receive_message_chain(:properties, :public_ipaddress).and_return(@public_ip_id_data)
     allow(@public_ip_id_data).to receive(:id).and_return(public_ip_id)
     expect(public_ip_id).to receive(:split).with("/").and_return(public_ip_name)
-    expect(@compute_client).to receive_message_chain(:virtual_machines, :get, :value!, :body).and_return(@server)
-    expect(@network_client).to receive_message_chain(:network_interfaces, :get, :value!, :body).and_return(@network_interface_data)
-    expect(@network_client).to receive_message_chain(:public_ipaddresses, :get, :value!, :body).and_return(@public_ip_data)  
+    expect(@compute_client).to receive_message_chain(:virtual_machines, :get).and_return(@server)
+    expect(@network_client).to receive_message_chain(:network_interfaces, :get).and_return(@network_interface_data)
+    expect(@network_client).to receive_message_chain(:public_ipaddresses, :get).and_return(@public_ip_data)
 
-    details = [ "Server Name", @server.name, 
-                "Size", @server.properties.hardware_profile.vm_size, 
-                "Provisioning State", @server.properties.provisioning_state, 
-                "Location", @server.location, 
-                "Publisher",  @server.properties.storage_profile.image_reference.publisher, 
-                "Offer", @server.properties.storage_profile.image_reference.offer, 
-                "Sku", @server.properties.storage_profile.image_reference.sku, 
-                "Version", @server.properties.storage_profile.image_reference.version, 
+    details = [ "Server Name", @server.name,
+                "Size", @server.properties.hardware_profile.vm_size,
+                "Provisioning State", @server.properties.provisioning_state,
+                "Location", @server.location,
+                "Publisher",  @server.properties.storage_profile.image_reference.publisher,
+                "Offer", @server.properties.storage_profile.image_reference.offer,
+                "Sku", @server.properties.storage_profile.image_reference.sku,
+                "Version", @server.properties.storage_profile.image_reference.version,
                 "OS Type", @server.properties.storage_profile.os_disk.os_type,
                 "Public IP address", @public_ip_data.properties.ip_address,
                 "FQDN", @public_ip_data.properties.dns_settings.fqdn]
 
     expect(@arm_server_instance.service.ui).to receive(:list).with(details, :columns_across, 2)
-    @arm_server_instance.run  
-  end 
+    @arm_server_instance.run
+  end
 
-  it "should display empty Public IP address and FQDN when Public IP address is not allocated to the VM" do
+  it "displays empty Public IP address and FQDN when Public IP address is not allocated to the VM" do
     @server = double("Promise", :name => "vmname", :location => "westus", :properties => double)
     @network_interface_data = double("Promise", :properties => double)
     public_ip_data = nil
@@ -85,8 +85,8 @@ describe Chef::Knife::AzurermServerShow do
     expect(network_interface_id).to receive(:split).with("/").and_return(network_interface_name)
     allow(@network_interface_data.properties).to receive(:ip_configurations).and_return(['ip_configurations'])
     allow(@network_interface_data.properties.ip_configurations[0]).to receive_message_chain(:properties, :public_ipaddress).and_return(public_ip_id_data)
-    expect(@compute_client).to receive_message_chain(:virtual_machines, :get, :value!, :body).and_return(@server)
-    expect(@network_client).to receive_message_chain(:network_interfaces, :get, :value!, :body).and_return(@network_interface_data)
+    expect(@compute_client).to receive_message_chain(:virtual_machines, :get).and_return(@server)
+    expect(@network_client).to receive_message_chain(:network_interfaces, :get).and_return(@network_interface_data)
 
     details = [ "Server Name", @server.name,
                 "Size", @server.properties.hardware_profile.vm_size,
@@ -99,12 +99,12 @@ describe Chef::Knife::AzurermServerShow do
                 "OS Type", @server.properties.storage_profile.os_disk.os_type,
                 "Public IP address", " -- ",
                 "FQDN", " -- "]
-    
+
     expect(@arm_server_instance.service.ui).to receive(:list).with(details, :columns_across, 2)
     @arm_server_instance.run
   end
 
-  it "should display empty FQDN when DNS name is not defined for the VM" do
+  it "displays empty FQDN when DNS name is not defined for the VM" do
     @server = double("Promise", :name => "vmname", :location => "westus", :properties => double)
     @network_interface_data = double("Promise", :properties => double)
     @public_ip_data =  double("Promise", :properties => double)
@@ -129,9 +129,9 @@ describe Chef::Knife::AzurermServerShow do
     allow(@network_interface_data.properties.ip_configurations[0]).to receive_message_chain(:properties, :public_ipaddress).and_return(@public_ip_id_data)
     allow(@public_ip_id_data).to receive(:id).and_return(public_ip_id)
     expect(public_ip_id).to receive(:split).with("/").and_return(public_ip_name)
-    expect(@compute_client).to receive_message_chain(:virtual_machines, :get, :value!, :body).and_return(@server)
-    expect(@network_client).to receive_message_chain(:network_interfaces, :get, :value!, :body).and_return(@network_interface_data)
-    expect(@network_client).to receive_message_chain(:public_ipaddresses, :get, :value!, :body).and_return(@public_ip_data)
+    expect(@compute_client).to receive_message_chain(:virtual_machines, :get).and_return(@server)
+    expect(@network_client).to receive_message_chain(:network_interfaces, :get).and_return(@network_interface_data)
+    expect(@network_client).to receive_message_chain(:public_ipaddresses, :get).and_return(@public_ip_data)
 
     details = [ "Server Name", @server.name,
                 "Size", @server.properties.hardware_profile.vm_size,

@@ -89,13 +89,10 @@ module Azure
 
       def list_servers(resource_group_name = nil)
         if resource_group_name.nil?
-          promise = compute_management_client.virtual_machines.list_all
+          servers = compute_management_client.virtual_machines.list_all.value
         else
-          promise = compute_management_client.virtual_machines.list(resource_group_name)
+          servers = compute_management_client.virtual_machines.list(resource_group_name).value
         end
-
-        result = promise.value!
-        servers = result.body.value
 
         cols = ['VM Name', 'Resource Group Name', 'Location', 'Provisioning State', 'OS Type']
         rows =  []
@@ -121,12 +118,12 @@ module Azure
       end
 
       def delete_server(resource_group_name, vm_name)
-        promise = compute_management_client.virtual_machines.get(resource_group_name, vm_name)
-        if promise.value! && promise.value!.body.name == vm_name
+        server = compute_management_client.virtual_machines.get(resource_group_name, vm_name)
+        if server && server.name == vm_name
           puts "\n\n"
-          msg_pair(ui, 'VM Name', promise.value!.body.name)
-          msg_pair(ui, 'VM Size', promise.value!.body.properties.hardware_profile.vm_size)
-          msg_pair(ui, 'VM OS', promise.value!.body.properties.storage_profile.os_disk.os_type)
+          msg_pair(ui, 'VM Name', server.name)
+          msg_pair(ui, 'VM Size', server.properties.hardware_profile.vm_size)
+          msg_pair(ui, 'VM OS', server.properties.storage_profile.os_disk.os_type)
           puts "\n"
 
           begin
@@ -139,9 +136,8 @@ module Azure
           ui.info 'Deleting ..'
 
           begin
-            print '.'
-            promise = compute_management_client.virtual_machines.delete(resource_group_name, vm_name)
-          end until promise.value!.body.nil?
+            server_detail = compute_management_client.virtual_machines.delete(resource_group_name, vm_name)
+          end until server_detail.value!.body.nil?
 
           puts "\n"
           ui.warn "Deleted server #{vm_name}"
@@ -152,11 +148,11 @@ module Azure
         server = find_server(resource_group, name)
         if server
           network_interface_name = server.properties.network_profile.network_interfaces[0].id.split('/')[-1]
-          network_interface_data = network_resource_client.network_interfaces.get(resource_group, network_interface_name).value!.body
+          network_interface_data = network_resource_client.network_interfaces.get(resource_group, network_interface_name)
           public_ip_id_data = network_interface_data.properties.ip_configurations[0].properties.public_ipaddress
           unless public_ip_id_data.nil?
             public_ip_name = public_ip_id_data.id.split('/')[-1]
-            public_ip_data = network_resource_client.public_ipaddresses.get(resource_group, public_ip_name).value!.body
+            public_ip_data = network_resource_client.public_ipaddresses.get(resource_group, public_ip_name)
           else
             public_ip_data = nil
           end
@@ -208,23 +204,27 @@ module Azure
       end
 
       def find_server(resource_group, name)
-        promise = compute_management_client.virtual_machines.get(resource_group, name)
-        result = promise.value!
-
-        unless result.nil?
-          server = result.body
-        else
-          ui.error("There is no server with name #{name} or resource_group #{resource_group}. Please provide correct details.")
-        end
-        server
+        compute_management_client.virtual_machines.get(resource_group, name)
       end
 
       def virtual_machine_exist?(resource_group_name, vm_name)
-        !compute_management_client.virtual_machines.get(resource_group_name, vm_name).value.nil?
+        begin
+          compute_management_client.virtual_machines.get(resource_group_name, vm_name)
+          return true
+        rescue MsRestAzure::AzureOperationError => error
+          if error.body
+            err_json = JSON.parse(error.response.body)
+            if err_json['error']['code'] == "ResourceNotFound"
+              return false
+            else
+              raise error
+            end
+          end
+        end
       end
 
       def resource_group_exist?(resource_group_name)
-        resource_management_client.resource_groups.check_existence(resource_group_name).value!.body
+        resource_management_client.resource_groups.check_existence(resource_group_name)
       end
 
       def platform(image_reference)
@@ -370,7 +370,7 @@ module Azure
         resource_group.location = params[:azure_service_location]
 
         begin
-          resource_group = resource_management_client.resource_groups.create_or_update(resource_group.name, resource_group).value!.body
+          resource_group = resource_management_client.resource_groups.create_or_update(resource_group.name, resource_group)
         rescue Exception => e
           Chef::Log.error("Failed to create the Resource Group -- exception being rescued: #{e.to_s}")
           common_arm_rescue_block(e)
@@ -513,7 +513,7 @@ module Azure
         ext_version = compute_management_client.virtual_machine_extension_images.list_versions(
           params[:azure_service_location],
           params[:chef_extension_publisher],
-          params[:chef_extension]).value!.body.last.name
+          params[:chef_extension]).last.name
         ext_version_split_values = ext_version.split(".")
         ext_version = ext_version_split_values[0] + "." + ext_version_split_values[1]
         ext_version
@@ -521,10 +521,10 @@ module Azure
 
       def delete_resource_group(resource_group_name)
         ui.info 'Resource group deletion takes some time. Please wait ...'
+        
         begin
-          print '.'
-          promise = resource_management_client.resource_groups.delete(resource_group_name)
-        end until promise.value!.body.nil?
+          server = resource_management_client.resource_groups.delete(resource_group_name)
+        end until server.value!.body.nil?
         puts "\n"
       end
 
