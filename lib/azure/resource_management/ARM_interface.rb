@@ -211,8 +211,15 @@ module Azure
         begin
           compute_management_client.virtual_machines.get(resource_group_name, vm_name)
           return true
-        rescue
-          return false
+        rescue MsRestAzure::AzureOperationError => error
+          if error.body
+            err_json = JSON.parse(error.response.body)
+            if err_json['error']['code'] == "ResourceNotFound"
+              return false
+            else
+              raise error
+            end
+          end
         end
       end
 
