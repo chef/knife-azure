@@ -56,7 +56,7 @@ describe Azure::ARM::VnetConfig do
           }),
           OpenStruct.new({'name'=> 'sbn5',
             'properties'=> OpenStruct.new({
-              'address_prefix'=> '10.2.14.0/28'
+              'address_prefix'=> '10.2.16.0/28'
             })
           })]
         })
@@ -127,6 +127,31 @@ describe Azure::ARM::VnetConfig do
           })]
         })
       })}]
+    }},
+    {'rgrp-4' => {
+      'vnets' => [{'vnet-6' => OpenStruct.new({
+        'location' => 'westus',
+        'properties' => OpenStruct.new({
+          'address_space' => OpenStruct.new({
+            'address_prefixes' => [ '130.88.9.0/24', '112.90.2.0/24' ]
+          }),
+          'subnets' => [OpenStruct.new({'name'=> 'sbn14',
+            'properties'=> OpenStruct.new({
+              'address_prefix'=> '112.90.2.128/25'
+            })
+          }),
+          OpenStruct.new({'name'=> 'sbn15',
+            'properties'=> OpenStruct.new({
+              'address_prefix'=> '130.88.9.0/24'
+            })
+          }),
+          OpenStruct.new({'name'=> 'sbn16',
+            'properties'=> OpenStruct.new({
+              'address_prefix'=> '112.90.2.0/25'
+            })
+          })]
+        })
+      })}]
     }}]
 
     @dummy_class = Azure::ARM::DummyClass.new
@@ -136,6 +161,15 @@ describe Azure::ARM::VnetConfig do
     subnets_list = stub_subnets_list_response(resource_group_name, vnet_name)
 
     subnet_index.nil? ? subnets_list : subnets_list[subnet_index]
+  end
+
+  def used_networks(subnets)
+    used_networks_pool = Array.new
+    subnets.each do |subnet|
+      used_networks_pool.push(IPAddress(subnet.properties.address_prefix))
+    end
+
+    used_networks_pool
   end
 
   describe 'subnets_list_specific_address_space' do
@@ -411,6 +445,7 @@ describe Azure::ARM::VnetConfig do
         resource_group_name = 'rgrp-2'
         vnet_name = 'vnet-2'
         @subnets = stub_subnets_list_response(resource_group_name, vnet_name)
+
         resource_group_name = 'rgrp-1'
         vnet_name = 'vnet-1'
         @subnets.push(stub_subnets_list_response(
@@ -422,26 +457,726 @@ describe Azure::ARM::VnetConfig do
         expect(response[0].properties.address_prefix).to be == '10.2.0.0/20'
         expect(response[1].properties.address_prefix).to be == '10.1.48.0/20'
         expect(response[2].properties.address_prefix).to be == '10.1.0.0/24'
-        expect(response[3].properties.address_prefix).to be == '10.2.14.0/28'
-        expect(response[4].properties.address_prefix).to be == '192.168.172.0/25'
+        expect(response[3].properties.address_prefix).to be == '192.168.172.0/25'
+        expect(response[4].properties.address_prefix).to be == '10.2.16.0/28'
       end
     end
 
-    # context 'example-2' do
-    #   before do
-    #     resource_group_name = 'rgrp-3'
-    #     vnet_name = 'vnet-5'
-    #     @subnets = stub_subnets_list_response(resource_group_name, vnet_name)
-    #   end
+    context 'example-2' do
+      before do
+        resource_group_name = 'rgrp-3'
+        vnet_name = 'vnet-5'
+        @subnets = stub_subnets_list_response(resource_group_name, vnet_name)
+      end
 
-    #   it 'returns the sorted list of subnets in ascending order of their cidr prefix' do
-    #     response = @dummy_class.sort_subnets_by_cidr_prefix(@subnets)
-    #     expect(response[1].properties.address_prefix).to be == '12.3.19.0/25'
-    #     expect(response[0].properties.address_prefix).to be == '12.3.19.128/25'
-    #     expect(response[2].properties.address_prefix).to be == '69.182.11.0/24'
-    #     expect(response[3].properties.address_prefix).to be == '69.182.14.0/24'
-    #     expect(response[4].properties.address_prefix).to be == '69.182.9.0/24'
-    #   end
-    # end
+      it 'returns the sorted list of subnets in ascending order of their cidr prefix' do
+        response = @dummy_class.sort_subnets_by_cidr_prefix(@subnets)
+        expect(response[0].properties.address_prefix).to be == '69.182.9.0/24'
+        expect(response[1].properties.address_prefix).to be == '69.182.11.0/24'
+        expect(response[2].properties.address_prefix).to be == '69.182.14.0/24'
+        expect(response[3].properties.address_prefix).to be == '12.3.19.0/25'
+        expect(response[4].properties.address_prefix).to be == '12.3.19.128/25'
+      end
+    end
+  end
+
+  describe 'sort_used_networks_by_hosts_size' do
+    context 'example-1' do
+      before do
+        resource_group_name = 'rgrp-2'
+        vnet_name = 'vnet-2'
+        subnets = stub_subnets_list_response(resource_group_name, vnet_name)
+
+        resource_group_name = 'rgrp-1'
+        vnet_name = 'vnet-1'
+        subnets.push(stub_subnets_list_response(
+          resource_group_name, vnet_name)
+        ).flatten!
+
+        @used_networks_pool = used_networks(subnets)
+      end
+
+      it 'returns the list of used_networks sorted in descending order of their hosts size' do
+        response = @dummy_class.sort_used_networks_by_hosts_size(@used_networks_pool)
+        expect(response[0].network.address.concat("/" + response[0].prefix.to_s)).to be == '10.2.0.0/20'
+        expect(response[1].network.address.concat("/" + response[1].prefix.to_s)).to be == '10.1.48.0/20'
+        expect(response[2].network.address.concat("/" + response[2].prefix.to_s)).to be == '10.1.0.0/24'
+        expect(response[3].network.address.concat("/" + response[3].prefix.to_s)).to be == '192.168.172.0/25'
+        expect(response[4].network.address.concat("/" + response[4].prefix.to_s)).to be == '10.2.16.0/28'
+      end
+    end
+
+    context 'example-2' do
+      before do
+        resource_group_name = 'rgrp-3'
+        vnet_name = 'vnet-4'
+        subnets = stub_subnets_list_response(resource_group_name, vnet_name)
+
+        resource_group_name = 'rgrp-3'
+        vnet_name = 'vnet-5'
+        subnets.push(stub_subnets_list_response(
+          resource_group_name, vnet_name)
+        ).flatten!
+
+        @used_networks_pool = used_networks(subnets)
+      end
+
+      it 'returns the list of used_networks sorted in descending order of their hosts size' do
+        response = @dummy_class.sort_used_networks_by_hosts_size(@used_networks_pool)
+        expect(response[0].network.address.concat("/" + response[0].prefix.to_s)).to be == '69.182.14.0/24'
+        expect(response[1].network.address.concat("/" + response[1].prefix.to_s)).to be == '69.182.9.0/24'
+        expect(response[2].network.address.concat("/" + response[2].prefix.to_s)).to be == '69.182.11.0/24'
+        expect(response[3].network.address.concat("/" + response[3].prefix.to_s)).to be == '12.3.19.128/25'
+        expect(response[4].network.address.concat("/" + response[4].prefix.to_s)).to be == '12.3.19.0/25'
+        expect(response[5].network.address.concat("/" + response[5].prefix.to_s)).to be == '40.23.19.0/29'
+      end
+    end
+  end
+
+  describe 'subnet_cidr_prefix' do
+    context 'example-1' do
+      before do
+        resource_group_name = 'rgrp-3'
+        vnet_name = 'vnet-4'
+        @subnet = subnet(resource_group_name, vnet_name, 0)
+      end
+
+      it 'returns the cidr prefix of the given subnet' do
+        response = @dummy_class.subnet_cidr_prefix(@subnet)
+        expect(response.class).to be == Fixnum
+        expect(response).to be == 29
+      end
+    end
+
+    context 'example-2' do
+      before do
+        resource_group_name = 'rgrp-2'
+        vnet_name = 'vnet-3'
+        @subnet = subnet(resource_group_name, vnet_name, 1)
+      end
+
+      it 'returns the cidr prefix of the given subnet' do
+        response = @dummy_class.subnet_cidr_prefix(@subnet)
+        expect(response.class).to be == Fixnum
+        expect(response).to be == 25
+      end
+    end
+  end
+
+  describe 'sort_pools' do
+    it 'invokes sort methods for available_networks_pool and used_networks_pool' do
+      expect(@dummy_class).to receive(:sort_available_networks).and_return([])
+      expect(@dummy_class).to receive(:sort_used_networks_by_hosts_size).and_return([])
+      response1, response2 = @dummy_class.sort_pools([], [])
+      expect(response1).to be == []
+      expect(response2).to be == []
+    end
+  end
+
+  describe 'divide_network' do
+    context 'very large network is passed' do
+      context 'example-1' do
+        it 'divides the network into medium sized subnets' do
+          response = @dummy_class.divide_network('10.2.0.0/16')
+          expect(response).to be == '10.2.0.0/20'
+        end
+      end
+
+      context 'example-2' do
+        it 'divides the network into medium sized subnets' do
+          response = @dummy_class.divide_network('10.2.0.0/19')
+          expect(response).to be == '10.2.0.0/20'
+        end
+      end
+    end
+
+    context 'medium sized network is passed' do
+      context 'example-1' do
+        it 'divides the network into smaller subnets' do
+          response = @dummy_class.divide_network('10.2.0.0/22')
+          expect(response).to be == '10.2.0.0/24'
+        end
+      end
+
+      context 'example-2' do
+        it 'divides the network into smaller subnets' do
+          response = @dummy_class.divide_network('10.2.0.0/20')
+          expect(response).to be == '10.2.0.0/24'
+        end
+      end
+    end
+
+    context 'very small network is passed' do
+      context 'example-1' do
+        it 'does not divide the network and keeps it the same' do
+          response = @dummy_class.divide_network('10.2.0.0/28')
+          expect(response).to be == '10.2.0.0/28'
+        end
+      end
+
+      context 'example-2' do
+        it 'does not divide the network and keeps it the same' do
+          response = @dummy_class.divide_network('10.2.0.0/25')
+          expect(response).to be == '10.2.0.0/25'
+        end
+      end
+    end
+  end
+
+  describe 'in_use_network?' do
+    context 'subnet_network belongs to available_network' do
+      context 'example-1' do
+        before do
+          @subnet_network = IPAddress('79.224.43.229/24')
+          @available_network = IPAddress('79.224.43.0/24')
+        end
+
+        it 'returns true' do
+          response = @dummy_class.in_use_network?(
+            @subnet_network, @available_network
+          )
+          expect(response).to be == true
+        end
+      end
+
+      context 'example-2' do
+        before do
+          @subnet_network = IPAddress('152.23.13.65/24')
+          @available_network = IPAddress('152.23.0.0/20')
+        end
+
+        it 'returns true' do
+          response = @dummy_class.in_use_network?(
+            @subnet_network, @available_network
+          )
+          expect(response).to be == true
+        end
+      end
+    end
+
+    context 'available_network belongs to subnet_network' do
+      context 'example-1' do
+        before do
+          @subnet_network = IPAddress('79.224.43.0/24')
+          @available_network = IPAddress('79.224.43.229/24')
+        end
+
+        it 'returns true' do
+          response = @dummy_class.in_use_network?(
+            @subnet_network, @available_network
+          )
+          expect(response).to be == true
+        end
+      end
+
+      context 'example-2' do
+        before do
+          @subnet_network = IPAddress('152.23.0.0/20')
+          @available_network = IPAddress('152.23.13.65/24')
+        end
+
+        it 'returns true' do
+          response = @dummy_class.in_use_network?(
+            @subnet_network, @available_network
+          )
+          expect(response).to be == true
+        end
+      end
+    end
+
+    context 'none of the network belongs to the other one' do
+      context 'example-1' do
+        before do
+          @subnet_network = IPAddress('139.12.78.0/25')
+          @available_network = IPAddress('139.12.78.231')
+        end
+
+        it 'returns false' do
+          response = @dummy_class.in_use_network?(
+            @subnet_network,@available_network
+          )
+          expect(response).to be == false
+        end
+      end
+
+      context 'example-2' do
+        before do
+          @subnet_network = IPAddress('208.140.12.0/24')
+          @available_network = IPAddress('208.140.10.0/24')
+        end
+
+        it 'returns false' do
+          response = @dummy_class.in_use_network?(
+            @subnet_network, @available_network
+          )
+          expect(response).to be == false
+        end
+      end
+    end
+  end
+
+  describe 'new_subnet_address_prefix' do
+    context 'no subnets exist under the given vnet address space' do
+      it 'invokes the divide_network method' do
+        expect(@dummy_class).to receive(:divide_network)
+        @dummy_class.new_subnet_address_prefix('', [])
+      end
+
+      it 'invokes divide_network method and return the new subnet prefix value' do
+        response = @dummy_class.new_subnet_address_prefix('11.23.0.0/16', [])
+        expect(response).to be == '11.23.0.0/20'
+      end
+
+      it 'invokes divide_network method and return the same vnet prefix value for the new subnet prefix' do
+        response = @dummy_class.new_subnet_address_prefix('192.168.172.128/25', [])
+        expect(response).to be == '192.168.172.128/25'
+      end
+    end
+
+    context 'subnets exist under the given vnet address space' do
+      context 'space available in the vnet address space for the addition of new subnet' do
+        context 'example-1' do
+          before do
+            resource_group_name = 'rgrp-1'
+            vnet_name = 'vnet-1'
+            @vnet_address_prefix = '10.1.0.0/16'
+            allow(@dummy_class).to receive(:network_resource_client).and_return(
+              stub_network_resource_client(nil, resource_group_name, vnet_name)
+            )
+            @subnets = @dummy_class.subnets_list(
+              resource_group_name, vnet_name, @vnet_address_prefix
+            )
+          end
+
+          it 'returns the address prefix for the new subnet' do
+            response = @dummy_class.new_subnet_address_prefix(
+              @vnet_address_prefix, @subnets
+            )
+            expect(response).to be == '10.1.1.0/24'
+          end
+        end
+
+        context 'example-2' do
+          before do
+            resource_group_name = 'rgrp-2'
+            vnet_name = 'vnet-2'
+            @vnet_address_prefix = '192.168.172.0/24'
+            allow(@dummy_class).to receive(:network_resource_client).and_return(
+              stub_network_resource_client(nil, resource_group_name, vnet_name)
+            )
+            @subnets = @dummy_class.subnets_list(
+              resource_group_name, vnet_name, @vnet_address_prefix
+            )
+          end
+
+          it 'returns the address prefix for the new subnet' do
+            response = @dummy_class.new_subnet_address_prefix(
+              @vnet_address_prefix, @subnets
+            )
+            expect(response).to be == '192.168.172.128/25'
+          end
+        end
+
+        context 'example-3' do
+          before do
+            resource_group_name = 'rgrp-3'
+            vnet_name = 'vnet-5'
+            @vnet_address_prefix = '69.182.8.0/21'
+            allow(@dummy_class).to receive(:network_resource_client).and_return(
+              stub_network_resource_client(nil, resource_group_name, vnet_name)
+            )
+            @subnets = @dummy_class.subnets_list(
+              resource_group_name, vnet_name, @vnet_address_prefix
+            )
+          end
+
+          it 'returns the address prefix for the new subnet' do
+            response = @dummy_class.new_subnet_address_prefix(
+              @vnet_address_prefix, @subnets
+            )
+            expect(response).to be == '69.182.8.0/24'
+          end
+        end
+      end
+
+      context 'space not available in the vnet address space for the addition of new subnet' do
+        context 'example-1' do
+          before do
+            resource_group_name = 'rgrp-3'
+            vnet_name = 'vnet-4'
+            @vnet_address_prefix = '40.23.19.0/29'
+            allow(@dummy_class).to receive(:network_resource_client).and_return(
+              stub_network_resource_client(nil, resource_group_name, vnet_name)
+            )
+            @subnets = @dummy_class.subnets_list(
+              resource_group_name, vnet_name, @vnet_address_prefix
+            )
+          end
+
+          it 'returns nil' do
+            response = @dummy_class.new_subnet_address_prefix(
+              @vnet_address_prefix, @subnets
+            )
+            expect(response).to be == nil
+          end
+        end
+
+        context 'example-2' do
+          before do
+            resource_group_name = 'rgrp-3'
+            vnet_name = 'vnet-5'
+            @vnet_address_prefix = '12.3.19.0/24'
+            allow(@dummy_class).to receive(:network_resource_client).and_return(
+              stub_network_resource_client(nil, resource_group_name, vnet_name)
+            )
+            @subnets = @dummy_class.subnets_list(
+              resource_group_name, vnet_name, @vnet_address_prefix
+            )
+          end
+
+          it 'returns nil' do
+            response = @dummy_class.new_subnet_address_prefix(
+              @vnet_address_prefix, @subnets
+            )
+            expect(response).to be == nil
+          end
+        end
+
+        context 'example-3' do
+          before do
+            @vnet_address_prefix = '62.12.3.128/25'
+            @subnets = [OpenStruct.new({'name'=> 'sbn17',
+              'properties'=> OpenStruct.new({
+                'address_prefix'=> '62.12.3.128/25'
+              })
+            })]
+          end
+
+          it 'returns nil' do
+            response = @dummy_class.new_subnet_address_prefix(
+              @vnet_address_prefix, @subnets
+            )
+            expect(response).to be == nil
+          end
+        end
+      end
+    end
+  end
+
+  describe 'add_subnet' do
+    context 'space does not exist in any of the address_prefixes of the virtual network' do
+      context 'example-1' do
+        before do
+          resource_group_name = 'rgrp-4'
+          vnet_name = 'vnet-6'
+          @vnet_config = { :virtualNetworkName => vnet_name,
+            :addressPrefixes => [ '130.88.9.0/24', '112.90.2.0/24' ],
+            :subnets => Array.new
+          }
+          @subnets = stub_subnets_list_response(resource_group_name, vnet_name)
+        end
+
+        it 'raises error saying no space available to add subnet' do
+          expect{ @dummy_class.add_subnet('sbn18',
+            @vnet_config, @subnets) }.to raise_error(RuntimeError,
+              "Unable to add subnet sbn18 into the virtual network #{@vnet_config[:virtualNetworkName]}, no address space available !!!"
+            )
+        end
+      end
+
+      context 'example-2' do
+        before do
+          @vnet_config = { :virtualNetworkName => 'vnet-6',
+            :addressPrefixes => [ '10.10.11.0/24' ],
+            :subnets => Array.new
+          }
+          @subnets = [OpenStruct.new({'name'=> 'sbn19',
+            'properties'=> OpenStruct.new({
+              'address_prefix'=> '10.10.11.0/25'
+            })
+          }),
+          OpenStruct.new({'name'=> 'sbn20',
+            'properties'=> OpenStruct.new({
+              'address_prefix'=> '10.10.11.128/26'
+            })
+          }),
+          OpenStruct.new({'name'=> 'sbn21',
+            'properties'=> OpenStruct.new({
+              'address_prefix'=> '10.10.11.192/26'
+            })
+          })]
+        end
+
+        it 'raises error saying no space available to add subnet' do
+          expect{ @dummy_class.add_subnet('sbn22',
+            @vnet_config, @subnets) }.to raise_error(RuntimeError,
+              "Unable to add subnet sbn22 into the virtual network #{@vnet_config[:virtualNetworkName]}, no address space available !!!"
+            )
+        end
+      end
+    end
+
+    context 'space exist in the virtual network' do
+      context 'example-1' do
+        before do
+          resource_group_name = 'rgrp-3'
+          vnet_name = 'vnet-4'
+          @subnet_name = 'sbn23'
+          new_subnet_prefix = '10.15.0.0/24'
+          @vnet_config = { :virtualNetworkName => vnet_name,
+            :addressPrefixes => [ '10.15.0.0/20', '40.23.19.0/29' ],
+            :subnets => [{'name'=> 'sbn8',
+              'properties'=> {
+                'address_prefix'=> '40.23.19.0/29'
+              }
+            }]
+          }
+          @subnets = stub_subnets_list_response(resource_group_name, vnet_name)
+          @updated_vnet_config = { :virtualNetworkName => vnet_name,
+            :addressPrefixes => [ '10.15.0.0/20', '40.23.19.0/29' ],
+            :subnets => [{'name'=> 'sbn8',
+              'properties'=> {
+                'address_prefix'=> '40.23.19.0/29'
+              }
+            },
+            {'name'=> 'sbn23',
+              'properties'=> {
+                'addressPrefix'=> new_subnet_prefix
+              }
+            }]
+          }
+        end
+
+        it 'returns the updated vnet_config with the hash added for the new subnet' do
+          response = @dummy_class.add_subnet(@subnet_name, @vnet_config, @subnets)
+          expect(response).to be == @updated_vnet_config
+        end
+      end
+
+      context 'example-2' do
+        before do
+          resource_group_name = 'rgrp-2'
+          vnet_name = 'vnet-2'
+          @subnet_name = 'sbn24'
+          new_subnet_prefix = '10.2.16.16/28'
+          @vnet_config = { :virtualNetworkName => vnet_name,
+            :addressPrefixes => [ '10.2.0.0/16', '192.168.172.0/24', '16.2.0.0/24' ],
+            :subnets => [{'name'=> 'sbn3',
+              'properties'=> {
+                'address_prefix'=> '10.2.0.0/20'
+              }
+            },
+            {'name'=> 'sbn4',
+              'properties'=> {
+                'address_prefix'=> '192.168.172.0/25'
+              }
+            },
+            {'name'=> 'sbn5',
+              'properties'=> {
+                'address_prefix'=> '10.2.16.0/28'
+              }
+            }]
+          }
+          @subnets = stub_subnets_list_response(resource_group_name, vnet_name)
+          @updated_vnet_config = { :virtualNetworkName => vnet_name,
+            :addressPrefixes => [ '10.2.0.0/16', '192.168.172.0/24', '16.2.0.0/24' ],
+            :subnets => [{'name'=> 'sbn3',
+              'properties'=> {
+                'address_prefix'=> '10.2.0.0/20'
+              }
+            },
+            {'name'=> 'sbn4',
+              'properties'=> {
+                'address_prefix'=> '192.168.172.0/25'
+              }
+            },
+            {'name'=> 'sbn5',
+              'properties'=> {
+                'address_prefix'=> '10.2.16.0/28'
+              }
+            },
+            {'name'=> 'sbn24',
+              'properties'=> {
+                'addressPrefix'=> new_subnet_prefix
+              }
+            }]
+          }
+        end
+
+        it 'returns the updated vnet_config with the hash added for the new subnet' do
+          response = @dummy_class.add_subnet(@subnet_name, @vnet_config, @subnets)
+          expect(response).to be == @updated_vnet_config
+        end
+      end
+    end
+  end
+
+  describe 'create_vnet_config' do
+    context 'user passed or default named vnet does not exist in the given resource_group' do
+      before do
+        @resource_group_name = 'rgrp-1'
+        @vnet_name = 'vnet-11'
+        @subnet_name = 'sbn11'
+        allow(@dummy_class).to receive(:vnet_exist?).and_return(false)
+        @vnet_config = {:virtualNetworkName => 'vnet-11',
+          :addressPrefixes => [ "10.0.0.0/16" ],
+          :subnets => [{'name'=> 'sbn11',
+            'properties'=> {
+              'addressPrefix'=> '10.0.0.0/24'
+            }
+          }]
+        }
+      end
+
+      it 'returns vnet_config with default values for vnet and subnet configurations' do
+        response = @dummy_class.create_vnet_config(
+          @resource_group_name, @vnet_name, @subnet_name
+        )
+        expect(response).to be == @vnet_config
+      end
+    end
+
+    context 'user passed or default named vnet exist in the given resource_group' do
+      context 'user passed subnet_name exist in the given virtual network' do
+        context 'example-1' do
+          before do
+            @resource_group_name = 'rgrp-2'
+            @vnet_name = 'vnet-3'
+            @subnet_name = 'sbn7'
+            allow(@dummy_class).to receive(:network_resource_client).and_return(
+              stub_network_resource_client(nil, @resource_group_name, @vnet_name))
+            @vnet_config = @vnet_config = { :virtualNetworkName => 'vnet-3',
+              :addressPrefixes => [ '25.3.16.0/20', '141.154.163.0/26' ],
+              :subnets => [{'name'=> 'sbn6',
+                'properties'=> {
+                  'addressPrefix'=> '25.3.29.0/25'
+                }
+              },
+              {'name'=> 'sbn7',
+                'properties'=> {
+                  'addressPrefix'=> '25.3.29.128/25'
+                }
+              }]
+            }
+          end
+
+          it 'returns vnet_config with no change' do
+            response = @dummy_class.create_vnet_config(
+              @resource_group_name, @vnet_name, @subnet_name
+            )
+            expect(response).to be == @vnet_config
+          end
+        end
+
+        context 'example-2' do
+          before do
+            @resource_group_name = 'rgrp-3'
+            @vnet_name = 'vnet-4'
+            @subnet_name = 'sbn8'
+            allow(@dummy_class).to receive(:network_resource_client).and_return(
+              stub_network_resource_client(nil, @resource_group_name, @vnet_name))
+            @vnet_config = @vnet_config = { :virtualNetworkName => 'vnet-4',
+              :addressPrefixes => [ '10.15.0.0/20', '40.23.19.0/29' ],
+              :subnets => [{'name'=> 'sbn8',
+                'properties'=> {
+                  'addressPrefix'=> '40.23.19.0/29'
+                }
+              }]
+            }
+          end
+
+          it 'returns vnet_config with no change' do
+            response = @dummy_class.create_vnet_config(
+              @resource_group_name, @vnet_name, @subnet_name
+            )
+            expect(response).to be == @vnet_config
+          end
+        end
+      end
+
+      context 'user passed subnet_name does not exist in the given virtual network' do
+        context 'example-1' do
+          before do
+            @resource_group_name = 'rgrp-3'
+            @vnet_name = 'vnet-4'
+            @subnet_name = 'sbn26'
+            new_subnet_prefix = '10.15.0.0/24'
+            allow(@dummy_class).to receive(:network_resource_client).and_return(
+              stub_network_resource_client(nil, @resource_group_name, @vnet_name))
+            @vnet_config = @vnet_config = { :virtualNetworkName => 'vnet-4',
+              :addressPrefixes => [ '10.15.0.0/20', '40.23.19.0/29' ],
+              :subnets => [{'name'=> 'sbn8',
+                'properties'=> {
+                  'addressPrefix'=> '40.23.19.0/29'
+                }
+              },
+              {'name'=> 'sbn26',
+                'properties'=> {
+                  'addressPrefix'=> new_subnet_prefix
+                }
+              }]
+            }
+          end
+
+          it 'returns vnet_config with new subnet added' do
+            response = @dummy_class.create_vnet_config(
+              @resource_group_name, @vnet_name, @subnet_name
+            )
+            expect(response).to be == @vnet_config
+          end
+        end
+
+        context 'example-2' do
+          before do
+            @resource_group_name = 'rgrp-3'
+            @vnet_name = 'vnet-5'
+            @subnet_name = 'sbn27'
+            new_subnet_prefix = '69.182.8.0/24'
+            allow(@dummy_class).to receive(:network_resource_client).and_return(
+              stub_network_resource_client(nil, @resource_group_name, @vnet_name))
+            @vnet_config = @vnet_config = { :virtualNetworkName => 'vnet-5',
+              :addressPrefixes => [ '69.182.8.0/21', '12.3.19.0/24' ],
+              :subnets => [{'name'=> 'sbn9',
+                'properties'=> {
+                  'addressPrefix'=> '69.182.9.0/24'
+                }
+              },
+              {'name'=> 'sbn10',
+                'properties'=> {
+                  'addressPrefix'=> '69.182.11.0/24'
+                }
+              },
+              {'name'=> 'sbn11',
+                'properties'=> {
+                  'addressPrefix'=> '12.3.19.0/25'
+                }
+              },
+              {'name'=> 'sbn12',
+                'properties'=> {
+                  'addressPrefix'=> '69.182.14.0/24'
+                }
+              },
+              {'name'=> 'sbn13',
+                'properties'=> {
+                  'addressPrefix'=> '12.3.19.128/25'
+                }
+              },
+              {'name'=> 'sbn27',
+                'properties'=> {
+                  'addressPrefix'=> new_subnet_prefix
+                }
+              }]
+            }
+          end
+
+          it 'returns vnet_config with new subnet added' do
+            response = @dummy_class.create_vnet_config(
+              @resource_group_name, @vnet_name, @subnet_name
+            )
+            expect(response).to be == @vnet_config
+          end
+        end
+      end
+    end
   end
 end

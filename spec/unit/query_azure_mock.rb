@@ -161,10 +161,17 @@ module QueryAzureMock
       :body,
       :properties,
       :security_rules).and_return(['default_security_rule'])
-    allow(network_resource_client.virtual_networks).to receive_message_chain(
-      :get,
-      :value!,
-      :body).and_return(nil)
+    if resource_group_name.nil? && vnet_name.nil?
+      allow(network_resource_client.virtual_networks).to receive_message_chain(
+        :get,
+        :value!,
+        :body).and_return(nil)
+    else
+      allow(network_resource_client.virtual_networks).to receive_message_chain(
+        :get,
+        :value!,
+        :body).and_return(stub_vnet_exist_response(resource_group_name, vnet_name))
+    end
     if platform == 'Windows'
       allow(network_resource_client.network_security_groups.get.value!.body.properties.security_rules[0]).to receive_message_chain(
         :properties,
@@ -191,7 +198,7 @@ module QueryAzureMock
     network_resource_client
   end
 
-  def stub_subnets_list_response(resource_group_name, vnet_name)
+  def locate_resource_group_and_vnet(resource_group_name, vnet_name)
     rgrp_index = nil
     vnet_index = nil
     @resource_groups.each_with_index do |resource_group, rindex|
@@ -207,7 +214,19 @@ module QueryAzureMock
       end
     end
 
+    return rgrp_index, vnet_index
+  end
+
+  def stub_subnets_list_response(resource_group_name, vnet_name)
+    rgrp_index, vnet_index = locate_resource_group_and_vnet(resource_group_name, vnet_name)
+
     @resource_groups[rgrp_index][resource_group_name]['vnets'][vnet_index][vnet_name]['properties']['subnets']
+  end
+
+  def stub_vnet_exist_response(resource_group_name, vnet_name)
+    rgrp_index, vnet_index = locate_resource_group_and_vnet(resource_group_name, vnet_name)
+
+    @resource_groups[rgrp_index][resource_group_name]['vnets'][vnet_index][vnet_name]
   end
 
   def stub_deployments_create_response

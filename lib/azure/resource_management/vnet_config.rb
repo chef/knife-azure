@@ -72,7 +72,7 @@ module Azure::ARM
     ## sort existing subnets in ascending order based on their cidr prefix or
     ## netmask to have subnets with larger networks on the top ##
     def sort_subnets_by_cidr_prefix(subnets)
-      subnets.sort_by { |sbn| subnet_address_prefix(sbn).split('/').map(&:to_i) }
+      subnets.sort_by { |sbn| [ subnet_address_prefix(sbn).split('/')[1] ].map(&:to_i) }
     end
 
     ## sort used networks pool in descending order based on the number of hosts
