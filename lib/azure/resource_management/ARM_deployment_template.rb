@@ -36,6 +36,50 @@ module Azure::ARM
       hints_json
     end
 
+    def tcp_ports(tcp_ports, sec_grp_name, depVm2, vm_name)
+      tcp_ports = tcp_ports.split(",")
+      sec_grp_json = 
+        {
+          "apiVersion": "[variables('apiVersion')]",
+          "type": "Microsoft.Network/networkSecurityGroups",
+          "name": sec_grp_name,
+          "location": "[resourceGroup().location]",
+          "dependsOn": [
+            depVm2
+          ],
+          "tags": {
+          "displayName": sec_grp_name
+          },
+          "properties": {
+          "securityRules": [
+          ]
+        }
+      }
+      random_no = rand(100..4094)
+      for port in tcp_ports
+        incremental=0
+        random_no  = random_no + 1
+        sec_grp_json[:properties][:securityRules].push(
+        {
+          "name": vm_name + '_' + incremental.to_s,
+          "properties": {
+          "description": "Port Provided by user",
+          "protocol": "Tcp",
+          "sourcePortRange": "*",
+          "destinationPortRange": port,
+          "sourceAddressPrefix": "Internet",
+          "destinationAddressPrefix": "*",
+          "access": "Allow",
+          "priority": random_no,
+          "direction": "Inbound"
+          }
+        })
+        incremental=incremental+1
+      end
+      # Priority cab be between 100 and 4096
+      sec_grp_json
+    end
+    
     def create_deployment_template(params)
       if params[:chef_extension_public_param][:bootstrap_options][:chef_node_name]
         chef_node_name = "[concat(parameters('chef_node_name'),copyIndex())]"
@@ -62,6 +106,9 @@ module Azure::ARM
         # Extension Variables
         extName = "[concat(variables('vmName'),copyIndex(),'/', variables('vmExtensionName'))]"
         depExt = "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'), copyIndex())]"
+
+        # tcp port 
+        sec_grp_name = "[concat(variables('vmName'),'_sec_grp_',copyIndex())]"
       else
         # publicIPAddresses Resource Variables
         publicIPAddressName = "[variables('publicIPAddressName')]"
@@ -83,6 +130,9 @@ module Azure::ARM
         # Extension Variables
         extName = "[concat(variables('vmName'),'/', variables('vmExtensionName'))]"
         depExt = "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
+
+        # tcp port 
+        sec_grp_name = "[concat(variables('vmName'),'_sec_grp')]"
       end
 
       resource_ids = {}
@@ -438,6 +488,11 @@ module Azure::ARM
           }
         ]
       }
+
+      if params[:tcp_endpoints]
+        sec_grp_json = tcp_ports(params[:tcp_endpoints],sec_grp_name, depVm2, params[:azure_vm_name])
+        template['resources'].insert(4,sec_grp_json)
+      end
 
       if params[:chef_extension_public_param][:extendedLogs] == "true"
         template['resources'].each do |resource|
