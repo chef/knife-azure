@@ -173,7 +173,7 @@ User can also pass names for virtual network and subnet while server create by p
 
 3. `--azure-vnet-name` option provided by user but `--azure-vnet-subnet-name` option not provided by user: `--azure-vm-name` will be assigned as the default value to the `--azure-vnet-subnet-name` option.
 
-4. `--azure-vnet-subnet-name` option provided by user but `--azure-vnet-name` option not provided by user: It will raise error saying `--azure-vnet-name` must also be specified with the `--azure-vnet-subnet-name` option.
+4. `--azure-vnet-subnet-name` option provided by user but `--azure-vnet-name` option not provided by user: It will raise error saying `--azure-vnet-name` option must also be specified with the `--azure-vnet-subnet-name` option.
 
 
 ***Note***:
@@ -181,7 +181,8 @@ User can also pass names for virtual network and subnet while server create by p
 - Vnet and subnet (user provided or default valued) if do not exist will be newly created in the resource group while server creation.
 - Vnet and subnet (user provided or default valued) if exist will be used while server creation.
 - Vnet (user provided or default valued) if exist and subnet (user provided or default valued) do not exist then new subnet will be added in the virtual network.
-- Vnet name can be specified with or without Subnet name. However, Subnet name can only be specified with Vnet name. 
+- Vnet name can be specified with or without Subnet name. However, Subnet name can only be specified with Vnet name.
+- Value as `GatewaySubnet` cannot be used as the name for the `--azure-vnet-subnet-name option`.
 
 ***New subnet addition in virtual network or use of existing subnet for server creation completely depends on the address space availability in the virtual network or in the existing subnet itself respectively.***
 

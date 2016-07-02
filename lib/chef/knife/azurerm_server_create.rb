@@ -144,7 +144,8 @@ class Chef
                          Must be specified only with azure-vnet-name option.
                          This may be the name of an existing subnet present under the given virtual network
                          or this may be the name of a new subnet to be added in the given virtual network.
-                         If not specified then azure-vm-name will be taken as the default name for subnet name as well."
+                         If not specified then azure-vm-name will be taken as the default name for subnet name as well.
+                         Value as 'GatewaySubnet' cannot be used as the name for the --azure-vnet-subnet-name option."
 
       option :ssh_public_key,
         :long => "--ssh-public-key FILENAME",
