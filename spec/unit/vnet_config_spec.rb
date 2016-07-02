@@ -17,143 +17,7 @@ describe Azure::ARM::VnetConfig do
   end
 
   before do
-    @resource_groups = [{'rgrp-1' => {
-      'vnets' => [{'vnet-1' => OpenStruct.new({
-        'location' => 'westus',
-        'properties' => OpenStruct.new({
-          'address_space' => OpenStruct.new({
-            'address_prefixes' => [ '10.1.0.0/16' ]
-          }),
-          'subnets' => [OpenStruct.new({'name'=> 'sbn1',
-            'properties'=> OpenStruct.new({
-              'address_prefix'=> '10.1.0.0/24'
-            })
-          }),
-          OpenStruct.new({'name'=> 'sbn2',
-            'properties'=> OpenStruct.new({
-              'address_prefix'=> '10.1.48.0/20'
-            })
-          })]
-        })
-      })}]
-    }},
-    {'rgrp-2' => {
-      'vnets' => [{'vnet-2' => OpenStruct.new({
-        'location' => 'westus',
-        'properties' => OpenStruct.new({
-          'address_space' => OpenStruct.new({
-            'address_prefixes' => [ '10.2.0.0/16', '192.168.172.0/24', '16.2.0.0/24' ]
-          }),
-          'subnets' => [OpenStruct.new({'name'=> 'sbn3',
-            'properties'=> OpenStruct.new({
-              'address_prefix'=> '10.2.0.0/20'
-            })
-          }),
-          OpenStruct.new({'name'=> 'sbn4',
-            'properties'=> OpenStruct.new({
-              'address_prefix'=> '192.168.172.0/25'
-            })
-          }),
-          OpenStruct.new({'name'=> 'sbn5',
-            'properties'=> OpenStruct.new({
-              'address_prefix'=> '10.2.16.0/28'
-            })
-          })]
-        })
-      })},
-      {'vnet-3' => OpenStruct.new({
-        'location' => 'westus',
-        'properties' => OpenStruct.new({
-          'address_space' => OpenStruct.new({
-            'address_prefixes' => [ '25.3.16.0/20', '141.154.163.0/26']
-          }),
-          'subnets' => [OpenStruct.new({'name'=> 'sbn6',
-            'properties'=> OpenStruct.new({
-              'address_prefix'=> '25.3.29.0/25'
-            })
-          }),
-          OpenStruct.new({'name'=> 'sbn7',
-            'properties'=> OpenStruct.new({
-              'address_prefix'=> '25.3.29.128/25'
-            })
-          })]
-        })
-      })}]
-    }},
-    {'rgrp-3' => {
-      'vnets' => [{'vnet-4' => OpenStruct.new({
-        'location' => 'westus',
-        'properties' => OpenStruct.new({
-          'address_space' => OpenStruct.new({
-            'address_prefixes' => [ '10.15.0.0/20', '40.23.19.0/29' ]
-          }),
-          'subnets' => [OpenStruct.new({'name'=> 'sbn8',
-            'properties'=> OpenStruct.new({
-              'address_prefix'=> '40.23.19.0/29'
-            })
-          })]
-        })
-      })},
-      {'vnet-5' => OpenStruct.new({
-        'location' => 'westus',
-        'properties' => OpenStruct.new({
-          'address_space' => OpenStruct.new({
-            'address_prefixes' => [ '69.182.8.0/21', '12.3.19.0/24' ]
-          }),
-          'subnets' => [OpenStruct.new({'name'=> 'sbn9',
-            'properties'=> OpenStruct.new({
-              'address_prefix'=> '69.182.9.0/24'
-            })
-          }),
-          OpenStruct.new({'name'=> 'sbn10',
-            'properties'=> OpenStruct.new({
-              'address_prefix'=> '69.182.11.0/24'
-            })
-          }),
-          OpenStruct.new({'name'=> 'sbn11',
-            'properties'=> OpenStruct.new({
-              'address_prefix'=> '12.3.19.0/25'
-            })
-          }),
-          OpenStruct.new({'name'=> 'sbn12',
-            'properties'=> OpenStruct.new({
-              'address_prefix'=> '69.182.14.0/24'
-            })
-          }),
-          OpenStruct.new({'name'=> 'sbn13',
-            'properties'=> OpenStruct.new({
-              'address_prefix'=> '12.3.19.128/25'
-            })
-          })]
-        })
-      })}]
-    }},
-    {'rgrp-4' => {
-      'vnets' => [{'vnet-6' => OpenStruct.new({
-        'location' => 'westus',
-        'properties' => OpenStruct.new({
-          'address_space' => OpenStruct.new({
-            'address_prefixes' => [ '130.88.9.0/24', '112.90.2.0/24' ]
-          }),
-          'subnets' => [OpenStruct.new({'name'=> 'sbn14',
-            'properties'=> OpenStruct.new({
-              'address_prefix'=> '112.90.2.128/25'
-            })
-          }),
-          OpenStruct.new({'name'=> 'sbn15',
-            'properties'=> OpenStruct.new({
-              'address_prefix'=> '130.88.9.0/24'
-            })
-          }),
-          OpenStruct.new({'name'=> 'sbn16',
-            'properties'=> OpenStruct.new({
-              'address_prefix'=> '112.90.2.0/25'
-            })
-          })]
-        })
-      })}]
-    }}]
-
+    stub_resource_groups
     @dummy_class = Azure::ARM::DummyClass.new
   end
 
@@ -1017,7 +881,7 @@ describe Azure::ARM::VnetConfig do
         @resource_group_name = 'rgrp-1'
         @vnet_name = 'vnet-11'
         @subnet_name = 'sbn11'
-        allow(@dummy_class).to receive(:vnet_exist?).and_return(false)
+        allow(@dummy_class).to receive(:vnet_get).and_return(false)
         @vnet_config = {:virtualNetworkName => 'vnet-11',
           :addressPrefixes => [ "10.0.0.0/16" ],
           :subnets => [{'name'=> 'sbn11',
@@ -1037,7 +901,7 @@ describe Azure::ARM::VnetConfig do
     end
 
     context 'user passed or default named vnet exist in the given resource_group' do
-      context 'user passed subnet_name exist in the given virtual network' do
+      context 'user passed or default named subnet exist in the given virtual network' do
         context 'example-1' do
           before do
             @resource_group_name = 'rgrp-2'
@@ -1094,88 +958,347 @@ describe Azure::ARM::VnetConfig do
         end
       end
 
-      context 'user passed subnet_name does not exist in the given virtual network' do
-        context 'example-1' do
-          before do
-            @resource_group_name = 'rgrp-3'
-            @vnet_name = 'vnet-4'
-            @subnet_name = 'sbn26'
-            new_subnet_prefix = '10.15.0.0/24'
-            allow(@dummy_class).to receive(:network_resource_client).and_return(
-              stub_network_resource_client(nil, @resource_group_name, @vnet_name))
-            @vnet_config = @vnet_config = { :virtualNetworkName => 'vnet-4',
-              :addressPrefixes => [ '10.15.0.0/20', '40.23.19.0/29' ],
-              :subnets => [{'name'=> 'sbn8',
-                'properties'=> {
-                  'addressPrefix'=> '40.23.19.0/29'
-                }
-              },
-              {'name'=> 'sbn26',
-                'properties'=> {
-                  'addressPrefix'=> new_subnet_prefix
-                }
-              }]
-            }
+      context 'user passed or default named subnet does not exist in the given virtual network' do
+        context 'no space available in the given virtual network to add the new subnet' do
+          context 'example-1' do
+            before do
+              @resource_group_name = 'rgrp-4'
+              @vnet_name = 'vnet-6'
+              @subnet_name = 'sbn40'
+              allow(@dummy_class).to receive(:network_resource_client).and_return(
+                stub_network_resource_client(nil, @resource_group_name, @vnet_name))
+            end
+
+            it 'raises error' do
+              expect{ @dummy_class.create_vnet_config(
+                @resource_group_name, @vnet_name, @subnet_name)
+              }.to raise_error(RuntimeError,
+                  "Unable to add subnet #{@subnet_name} into the virtual network #{@vnet_name}, no address space available !!!"
+                )
+            end
           end
 
-          it 'returns vnet_config with new subnet added' do
-            response = @dummy_class.create_vnet_config(
-              @resource_group_name, @vnet_name, @subnet_name
-            )
-            expect(response).to be == @vnet_config
+          context 'example-2' do
+            before do
+              @resource_group_name = 'rgrp-5'
+              @vnet_name = 'vnet-50'
+              @subnet_name = 'sbn60'
+
+              subnets = [OpenStruct.new({'name'=> 'sbn19',
+                'properties'=> OpenStruct.new({
+                  'address_prefix'=> '10.10.11.0/25'
+                })
+              }),
+              OpenStruct.new({'name'=> 'sbn20',
+                'properties'=> OpenStruct.new({
+                  'address_prefix'=> '10.10.11.128/26'
+                })
+              }),
+              OpenStruct.new({'name'=> 'sbn21',
+                'properties'=> OpenStruct.new({
+                  'address_prefix'=> '10.10.11.192/26'
+                })
+              })]
+
+              vnet = OpenStruct.new({
+                'location' => 'westus',
+                'properties' => OpenStruct.new({
+                  'address_space' => OpenStruct.new({
+                    'address_prefixes' => [ '10.10.11.0/24' ]
+                  }),
+                  'subnets' => subnets
+                })
+              })
+
+              allow(@dummy_class).to receive(:vnet_get).and_return(vnet)
+              allow(@dummy_class).to receive(:subnets_list).and_return(subnets)
+            end
+
+            it 'raises error' do
+              expect{ @dummy_class.create_vnet_config(
+                @resource_group_name, @vnet_name, @subnet_name)
+              }.to raise_error(RuntimeError,
+                  "Unable to add subnet #{@subnet_name} into the virtual network #{@vnet_name}, no address space available !!!"
+                )
+            end
           end
         end
 
-        context 'example-2' do
-          before do
-            @resource_group_name = 'rgrp-3'
-            @vnet_name = 'vnet-5'
-            @subnet_name = 'sbn27'
-            new_subnet_prefix = '69.182.8.0/24'
-            allow(@dummy_class).to receive(:network_resource_client).and_return(
-              stub_network_resource_client(nil, @resource_group_name, @vnet_name))
-            @vnet_config = @vnet_config = { :virtualNetworkName => 'vnet-5',
-              :addressPrefixes => [ '69.182.8.0/21', '12.3.19.0/24' ],
-              :subnets => [{'name'=> 'sbn9',
-                'properties'=> {
-                  'addressPrefix'=> '69.182.9.0/24'
-                }
-              },
-              {'name'=> 'sbn10',
-                'properties'=> {
-                  'addressPrefix'=> '69.182.11.0/24'
-                }
-              },
-              {'name'=> 'sbn11',
-                'properties'=> {
-                  'addressPrefix'=> '12.3.19.0/25'
-                }
-              },
-              {'name'=> 'sbn12',
-                'properties'=> {
-                  'addressPrefix'=> '69.182.14.0/24'
-                }
-              },
-              {'name'=> 'sbn13',
-                'properties'=> {
-                  'addressPrefix'=> '12.3.19.128/25'
-                }
-              },
-              {'name'=> 'sbn27',
-                'properties'=> {
-                  'addressPrefix'=> new_subnet_prefix
-                }
-              }]
-            }
+        context 'space available in the given virtual network to add the new subnet' do
+          context 'example for subnet allocation in first prefix' do
+            before do
+              @resource_group_name = 'rgrp-3'
+              @vnet_name = 'vnet-5'
+              @subnet_name = 'sbn27'
+              new_subnet_prefix = '69.182.8.0/24'
+              allow(@dummy_class).to receive(:network_resource_client).and_return(
+                stub_network_resource_client(nil, @resource_group_name, @vnet_name))
+              @vnet_config = { :virtualNetworkName => 'vnet-5',
+                :addressPrefixes => [ '69.182.8.0/21', '12.3.19.0/24' ],
+                :subnets => [{'name'=> 'sbn9',
+                  'properties'=> {
+                    'addressPrefix'=> '69.182.9.0/24'
+                  }
+                },
+                {'name'=> 'sbn10',
+                  'properties'=> {
+                    'addressPrefix'=> '69.182.11.0/24'
+                  }
+                },
+                {'name'=> 'sbn11',
+                  'properties'=> {
+                    'addressPrefix'=> '12.3.19.0/25'
+                  }
+                },
+                {'name'=> 'sbn12',
+                  'properties'=> {
+                    'addressPrefix'=> '69.182.14.0/24'
+                  }
+                },
+                {'name'=> 'sbn13',
+                  'properties'=> {
+                    'addressPrefix'=> '12.3.19.128/25'
+                  }
+                },
+                {'name'=> 'sbn27',
+                  'properties'=> {
+                    'addressPrefix'=> new_subnet_prefix
+                  }
+                }]
+              }
+            end
+
+            it 'returns vnet_config with new subnet added in first prefix' do
+              response = @dummy_class.create_vnet_config(
+                @resource_group_name, @vnet_name, @subnet_name
+              )
+              expect(response).to be == @vnet_config
+            end
           end
 
-          it 'returns vnet_config with new subnet added' do
-            response = @dummy_class.create_vnet_config(
-              @resource_group_name, @vnet_name, @subnet_name
-            )
-            expect(response).to be == @vnet_config
+          context 'example for subnet allocation in subsequent prefix but first' do
+            before do
+              @resource_group_name = 'rgrp-6'
+              @vnet_name = 'vnet-60'
+              @subnet_name = 'sbn70'
+              new_subnet_prefix = '133.72.16.128/25'
+
+              subnets = [OpenStruct.new({'name'=> 'sbn19',
+                'properties'=> OpenStruct.new({
+                  'address_prefix'=> '10.10.11.0/25'
+                })
+              }),
+              OpenStruct.new({'name'=> 'sbn20',
+                'properties'=> OpenStruct.new({
+                  'address_prefix'=> '10.10.11.128/26'
+                })
+              }),
+              OpenStruct.new({'name'=> 'sbn21',
+                'properties'=> OpenStruct.new({
+                  'address_prefix'=> '10.10.11.192/26'
+                })
+              }),
+              OpenStruct.new({'name'=> 'sbn22',
+                'properties'=> OpenStruct.new({
+                  'address_prefix'=> '192.168.172.0/24'
+                })
+              }),
+              OpenStruct.new({'name'=> 'sbn23',
+                'properties'=> OpenStruct.new({
+                  'address_prefix'=> '133.72.16.0/25'
+                })
+              })]
+
+              vnet = OpenStruct.new({
+                'location' => 'westus',
+                'properties' => OpenStruct.new({
+                  'address_space' => OpenStruct.new({
+                    'address_prefixes' => [ '10.10.11.0/24', '192.168.172.0/24', '133.72.16.0/24' ]
+                  }),
+                  'subnets' => subnets
+                })
+              })
+
+              allow(@dummy_class).to receive(:vnet_get).and_return(vnet)
+              allow(@dummy_class).to receive(:subnets_list).and_return(subnets)
+
+              @vnet_config = { :virtualNetworkName => 'vnet-60',
+                :addressPrefixes => [ '10.10.11.0/24', '192.168.172.0/24', '133.72.16.0/24' ],
+                :subnets => [{'name'=> 'sbn19',
+                  'properties'=> {
+                    'addressPrefix'=> '10.10.11.0/25'
+                  }
+                },
+                {'name'=> 'sbn20',
+                  'properties'=> {
+                    'addressPrefix'=> '10.10.11.128/26'
+                  }
+                },
+                {'name'=> 'sbn21',
+                  'properties'=> {
+                    'addressPrefix'=> '10.10.11.192/26'
+                  }
+                },
+                {'name'=> 'sbn22',
+                  'properties'=> {
+                    'addressPrefix'=> '192.168.172.0/24'
+                  }
+                },
+                {'name'=> 'sbn23',
+                  'properties'=> {
+                    'addressPrefix'=> '133.72.16.0/25'
+                  }
+                },
+                {'name'=> 'sbn70',
+                  'properties'=> {
+                    'addressPrefix'=> new_subnet_prefix
+                  }
+                }]
+              }
+            end
+
+            it 'returns vnet_config with new subnet added in subsequent prefix but first' do
+              response = @dummy_class.create_vnet_config(
+                @resource_group_name, @vnet_name, @subnet_name
+              )
+              expect(response).to be == @vnet_config
+            end
+          end
+
+          context 'divide_network example' do
+            before do
+              @resource_group_name = 'rgrp-3'
+              @vnet_name = 'vnet-4'
+              @subnet_name = 'sbn26'
+              new_subnet_prefix = '10.15.0.0/24'
+              allow(@dummy_class).to receive(:network_resource_client).and_return(
+                stub_network_resource_client(nil, @resource_group_name, @vnet_name))
+              @vnet_config = @vnet_config = { :virtualNetworkName => 'vnet-4',
+                :addressPrefixes => [ '10.15.0.0/20', '40.23.19.0/29' ],
+                :subnets => [{'name'=> 'sbn8',
+                  'properties'=> {
+                    'addressPrefix'=> '40.23.19.0/29'
+                  }
+                },
+                {'name'=> 'sbn26',
+                  'properties'=> {
+                    'addressPrefix'=> new_subnet_prefix
+                  }
+                }]
+              }
+            end
+
+            it 'returns vnet_config with new subnet added' do
+              response = @dummy_class.create_vnet_config(
+                @resource_group_name, @vnet_name, @subnet_name
+              )
+              expect(response).to be == @vnet_config
+            end
           end
         end
+      end
+    end
+  end
+
+  describe 'GatewaySubnet' do
+    context 'user provided or default named virtual network exist along with GatewaySubnet and other subnets also present' do
+      context 'user provided or default named subnet does not exist in the virtual network' do
+        before do
+          @resource_group_name = 'rgrp-4'
+          @vnet_name = 'vnet-7'
+          @subnet_name = 'sbn30'
+          new_subnet_prefix = '10.3.0.0/24'
+          allow(@dummy_class).to receive(:network_resource_client).and_return(
+            stub_network_resource_client(nil, @resource_group_name, @vnet_name))
+          @vnet_config = { :virtualNetworkName => 'vnet-7',
+            :addressPrefixes => [ '10.3.0.0/16', '160.10.2.0/24' ],
+            :subnets => [{'name'=> 'sbn15',
+              'properties'=> {
+                'addressPrefix'=> '160.10.2.192/26'
+              }
+            },
+            {'name'=> 'GatewaySubnet',
+              'properties'=> {
+                'addressPrefix'=> '10.3.1.0/24'
+              }
+            },
+            {'name'=> 'sbn16',
+              'properties'=> {
+                'addressPrefix'=> '160.10.2.0/25'
+              }
+            },
+            {'name'=> 'sbn30',
+              'properties'=> {
+                'addressPrefix'=> new_subnet_prefix
+              }
+            }]
+          }
+        end
+
+        it 'returns vnet_config with GatewaySubnet along with other subnets preserved and also new subnet added' do
+          response = @dummy_class.create_vnet_config(
+            @resource_group_name, @vnet_name, @subnet_name
+          )
+          expect(response).to be == @vnet_config
+        end
+      end
+
+      context 'user provided or default named subnet exist in the virtual network' do
+        before do
+          @resource_group_name = 'rgrp-4'
+          @vnet_name = 'vnet-7'
+          @subnet_name = 'sbn16'
+          allow(@dummy_class).to receive(:network_resource_client).and_return(
+            stub_network_resource_client(nil, @resource_group_name, @vnet_name))
+          @vnet_config = { :virtualNetworkName => 'vnet-7',
+            :addressPrefixes => [ '10.3.0.0/16', '160.10.2.0/24' ],
+            :subnets => [{'name'=> 'sbn15',
+              'properties'=> {
+                'addressPrefix'=> '160.10.2.192/26'
+              }
+            },
+            {'name'=> 'GatewaySubnet',
+              'properties'=> {
+                'addressPrefix'=> '10.3.1.0/24'
+              }
+            },
+            {'name'=> 'sbn16',
+              'properties'=> {
+                'addressPrefix'=> '160.10.2.0/25'
+              }
+            }]
+          }
+        end
+
+        it 'returns vnet_config with no change' do
+          response = @dummy_class.create_vnet_config(
+            @resource_group_name, @vnet_name, @subnet_name
+          )
+          expect(response).to be == @vnet_config
+        end
+      end
+    end
+
+    context 'user provided or default named subnet value is GatewaySubnet' do
+      it 'raises error' do
+        expect { @dummy_class.create_vnet_config(
+          'rgrp-1', 'vnet-1', 'GatewaySubnet')
+        }.to raise_error(ArgumentError, 'GatewaySubnet cannot be used as the name for --azure-vnet-subnet-name option. GatewaySubnet can only be used for virtual network gateways.')
+      end
+    end
+
+    context 'user provided or default named subnet value is not GatewaySubnet' do
+      before do
+        @resource_group_name = 'rgrp-4'
+        @vnet_name = 'vnet-7'
+        @subnet_name = 'sbn26'
+        allow(@dummy_class).to receive(:network_resource_client).and_return(
+          stub_network_resource_client(nil, @resource_group_name, @vnet_name))
+      end
+
+      it 'does not raise error' do
+        expect { @dummy_class.create_vnet_config(
+          @resource_group_name, @vnet_name, @subnet_name) }.to_not raise_error
       end
     end
   end

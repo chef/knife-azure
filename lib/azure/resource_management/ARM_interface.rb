@@ -402,22 +402,6 @@ module Azure
         deployment
       end
 
-      def vnet_exist?(resource_group_name, vnet_name)
-        begin
-          network_resource_client.virtual_networks.get(resource_group_name, vnet_name).value!.body
-        rescue
-          return false
-        end
-      end
-
-      def subnet_exist?(resource_group_name, vnet_name, subnet_name)
-        begin
-          network_resource_client.subnets.get(resource_group_name, vnet_name, subnet_name).value!.body
-        rescue
-          return false
-        end
-      end
-
       def create_network_security_group(resource_group_name, vm_name, service_location)
         network_security_group_prop_format = NetworkSecurityGroupPropertiesFormat.new
         network_security_group = NetworkSecurityGroup.new

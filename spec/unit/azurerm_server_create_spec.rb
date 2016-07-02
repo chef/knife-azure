@@ -41,6 +41,15 @@ describe Chef::Knife::AzurermServerCreate do
       :chef_extension_public_param => {
         :hints => ['vm_name', 'public_fqdn', 'platform'],
         :bootstrap_options => { :bootstrap_version => '12.8.1'}
+      },
+      :vnet_config => {
+        :virtualNetworkName => 'vnet1',
+        :addressPrefixes => [ '10.0.0.0/16' ],
+        :subnets => [{'name'=> 'sbn1',
+          'properties'=> {
+            'addressPrefix'=> '10.0.0.0/24'
+          }
+        }]
       }
     }
 
@@ -214,15 +223,14 @@ describe Chef::Knife::AzurermServerCreate do
           expect(@server_params[:azure_os_disk_name]).to be == @vm_name_with_no_special_chars
         end
 
-        it "azure_network_name not provided by user so vm_name gets assigned to it" do
+        it "azure_vnet_name not provided by user so vm_name gets assigned to it" do
           Chef::Config[:knife].delete(:azure_vnet_name)
           @server_params = @arm_server_instance.create_server_def
           expect(@server_params[:azure_vnet_name]).to be == 'test-vm'
         end
 
-        it "azure_subnet_name not provided by user so vm_name gets assigned to it" do
+        it "azure_vnet_subnet_name not provided by user so vm_name gets assigned to it" do
           Chef::Config[:knife].delete(:azure_vnet_subnet_name)
-          Chef::Config[:knife].delete(:azure_vnet_name)
           @server_params = @arm_server_instance.create_server_def
           expect(@server_params[:azure_vnet_subnet_name]).to be == 'test-vm'
         end
@@ -262,14 +270,47 @@ describe Chef::Knife::AzurermServerCreate do
           expect(@server_params[:azure_os_disk_name]).to be == @os_disk_name_with_no_special_chars
         end
 
-        it "azure_network_name provided by user so vm_name does not get assigned to it" do
+        it "azure_vnet_name provided by user so vm_name does not get assigned to it" do
           @server_params = @arm_server_instance.create_server_def
           expect(@server_params[:azure_vnet_name]).to be == 'azure_vnet_name'
         end
 
-        it "azure_subnet_name provided by user so vm_name does not get assigned to it" do
+        it "azure_vnet_subnet_name provided by user so vm_name does not get assigned to it" do
           @server_params = @arm_server_instance.create_server_def
           expect(@server_params[:azure_vnet_subnet_name]).to be == 'azure_vnet_subnet_name'
+        end
+
+        context 'azure_vnet_name provided by user but azure_vnet_subnet_name not provided by user' do
+          before do
+            Chef::Config[:knife].delete(:azure_vnet_subnet_name)
+          end
+
+          it "assigns vm_name to the azure_vnet_subnet_name" do
+            @server_params = @arm_server_instance.create_server_def
+            expect(@server_params[:azure_vnet_subnet_name]).to be == 'test-vm'
+          end
+        end
+
+        context 'azure_vnet_subnet_name provided by user but azure_vnet_name not provided by user' do
+          before do
+            Chef::Config[:knife].delete(:azure_vnet_name)
+          end
+
+          it "raises error" do
+            expect { @arm_server_instance.validate_params! }.to raise_error(
+              ArgumentError, 'When --azure-vnet-subnet-name is specified, the --azure-vnet-name must also be specified.'
+            )
+          end
+        end
+
+        context "GatewaySubnet name provided by user as the name for azure_vnet_subnet_name option" do
+          it 'raises error' do
+            Chef::Config[:knife][:azure_vnet_name] = 'MyVnet'
+            Chef::Config[:knife][:azure_vnet_subnet_name] = 'GatewaySubnet'
+            expect { @arm_server_instance.validate_params! }.to raise_error(
+              ArgumentError, 'GatewaySubnet cannot be used as the name for --azure-vnet-subnet-name option. GatewaySubnet can only be used for virtual network gateways.'
+            )
+          end
         end
 
         it "azure_vm_size provided by user so default value does not get assigned to it" do
@@ -293,8 +334,8 @@ describe Chef::Knife::AzurermServerCreate do
           Chef::Config[:knife].delete(:ssh_password)
           Chef::Config[:knife].delete(:azure_storage_account)
           Chef::Config[:knife].delete(:azure_os_disk_name)
-          Chef::Config[:knife].delete(:azure_network_name)
-          Chef::Config[:knife].delete(:azure_subnet_name)
+          Chef::Config[:knife].delete(:azure_vnet_name)
+          Chef::Config[:knife].delete(:azure_vnet_subnet_name)
           Chef::Config[:knife].delete(:azure_vm_size)
           Chef::Config[:knife].delete(:server_count)
         end
@@ -381,6 +422,7 @@ describe Chef::Knife::AzurermServerCreate do
 
         it "create virtual machine when it does not exist already and does not show chef-client run logs when extended_logs is false" do
           expect(@service).to receive(:virtual_machine_exist?).and_return(false)
+          expect(@service).to receive(:create_vnet_config)
           expect(@service).to receive(:create_virtual_machine_using_template).exactly(1).and_return(stub_deployments_create_response)
           expect(@service).to_not receive(:print)
           expect(@service).to_not receive(:fetch_chef_client_logs)
@@ -392,6 +434,7 @@ describe Chef::Knife::AzurermServerCreate do
         it "create virtual machine when it does not exist already and also shows chef-client run logs when extended_logs is true" do
           @arm_server_instance.config[:extended_logs] = true
           expect(@service).to receive(:virtual_machine_exist?).and_return(false)
+          expect(@service).to receive(:create_vnet_config)
           expect(@service).to receive(:create_virtual_machine_using_template).exactly(1).and_return(stub_deployments_create_response)
           expect(@service).to receive(:print).exactly(1).times
           expect(@service).to receive(:fetch_chef_client_logs).exactly(1).times
@@ -402,6 +445,7 @@ describe Chef::Knife::AzurermServerCreate do
 
         it "skip virtual machine creation when it does exist already" do
           expect(@service).to receive(:virtual_machine_exist?).and_return(true)
+          expect(@service).to_not receive(:create_vnet_config)
           expect(@service).to_not receive(:create_virtual_machine_using_template)
           expect(@service).to_not receive(:show_server)
           @arm_server_instance.run
@@ -432,6 +476,7 @@ describe Chef::Knife::AzurermServerCreate do
 
         it "skip virtual machine creation when it does exist already" do
           expect(@service).to receive(:virtual_machine_exist?).and_return(true)
+          expect(@service).to_not receive(:create_vnet_config)
           expect(@service).to_not receive(:create_virtual_machine_using_template)
           expect(@service).to_not receive(:show_server)
           @arm_server_instance.run
@@ -462,6 +507,7 @@ describe Chef::Knife::AzurermServerCreate do
           @deploy3 = double("deploy3", :resource_type => "Microsoft.Compute/virtualMachines", :resource_name => "MyVM2", :id => "/subscriptions/e00d2b3f-3b94-4dfc-ae8e-ca34c8ba1a99/resourceGroups/vjgroup/providers/Microsoft.Compute/virtualMachines/MyVM2")
           allow(deployment.properties).to receive(:dependencies).and_return([@deploy1, @deploy2, @deploy3])
           allow(@service.ui).to receive(:log).at_least(:once)
+          expect(@service).to receive(:create_vnet_config)
           expect(@service).to receive(:create_virtual_machine_using_template).and_return(deployment)
           expect(@service).to_not receive(:print)
           expect(@service).to_not receive(:fetch_chef_client_logs)
@@ -480,6 +526,7 @@ describe Chef::Knife::AzurermServerCreate do
           @deploy3 = double("deploy3", :resource_type => "Microsoft.Compute/virtualMachines", :resource_name => "MyVM2", :id => "/subscriptions/e00d2b3f-3b94-4dfc-ae8e-ca34c8ba1a99/resourceGroups/vjgroup/providers/Microsoft.Compute/virtualMachines/MyVM2")
           allow(deployment.properties).to receive(:dependencies).and_return([@deploy1, @deploy2, @deploy3])
           allow(@service.ui).to receive(:log).at_least(:once)
+          expect(@service).to receive(:create_vnet_config)
           expect(@service).to receive(:create_virtual_machine_using_template).and_return(deployment)
           expect(@service).to receive(:print).exactly(3).times
           expect(@service).to receive(:fetch_chef_client_logs).exactly(3).times

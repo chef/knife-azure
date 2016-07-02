@@ -132,13 +132,19 @@ class Chef
 
       option :azure_vnet_name,
         :long => "--azure-vnet-name VNET_NAME",
-        :description => "Optional. Specifies the virtual network name
-                        If this is an existing vnet then it must exists under the current resource group identified by resource-group
-                        If this is an existing vnet then vnet-subnet-name is required"
+        :description => "Optional. Specifies the virtual network name.
+                         This may be the name of an existing vnet present under the given resource group
+                         or this may be the name of a new vnet to be added in the given resource group.
+                         If not specified then azure-vm-name will be taken as the default name for vnet name as well.
+                         Along with this option azure-vnet-subnet-name option can also be specified or it can also be skipped."
 
       option :azure_vnet_subnet_name,
         :long => "--azure-vnet-subnet-name VNET_SUBNET_NAME",
-        :description => "Optional. Specifies the virtual network subnet name."
+        :description => "Optional. Specifies the virtual network subnet name.
+                         Must be specified only with azure-vnet-name option.
+                         This may be the name of an existing subnet present under the given virtual network
+                         or this may be the name of a new subnet to be added in the given virtual network.
+                         If not specified then azure-vm-name will be taken as the default name for subnet name as well."
 
       option :ssh_public_key,
         :long => "--ssh-public-key FILENAME",
@@ -225,7 +231,7 @@ class Chef
         server_def[:azure_os_disk_name] = server_def[:azure_os_disk_name].gsub(/[!@#$%^&*()_-]/,'')
 
         server_def[:azure_vnet_name] = locate_config_value(:azure_vm_name) if server_def[:azure_vnet_name].nil?
-        server_def[:azure_vnet_subnet_name] = locate_config_value(:azure_vm_name) if locate_config_value(:azure_vnet_subnet_name).nil? && locate_config_value(:azure_vnet_name).nil?
+        server_def[:azure_vnet_subnet_name] = locate_config_value(:azure_vm_name) if locate_config_value(:azure_vnet_subnet_name).nil?
 
         server_def[:chef_extension] = get_chef_extension_name
         server_def[:chef_extension_publisher] = get_chef_extension_publisher
@@ -276,12 +282,12 @@ class Chef
       end
 
       def validate_params!
-        if locate_config_value(:azure_vnet_name) && !locate_config_value(:azure_vnet_subnet_name)
-          raise ArgumentError,  "When a --azure-vnet-name is specified, the --azure-vnet-subnet-name must also be specified."
-        end
-
         if locate_config_value(:azure_vnet_subnet_name) && !locate_config_value(:azure_vnet_name)
           raise ArgumentError, "When --azure-vnet-subnet-name is specified, the --azure-vnet-name must also be specified."
+        end
+
+        if locate_config_value(:azure_vnet_subnet_name) == 'GatewaySubnet'
+          raise ArgumentError, 'GatewaySubnet cannot be used as the name for --azure-vnet-subnet-name option. GatewaySubnet can only be used for virtual network gateways.'
         end
 
         if is_image_windows?

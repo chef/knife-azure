@@ -36,9 +36,24 @@ module Azure::ARM
       list
     end
 
+    def vnet_get(resource_group_name, vnet_name)
+      begin
+        network_resource_client.virtual_networks.get(resource_group_name, vnet_name)
+      rescue MsRestAzure::AzureOperationError => error
+        if error.body
+          err_json = JSON.parse(error.response.body)
+          if err_json['error']['code'] == "ResourceNotFound"
+            return false
+          else
+            raise error
+          end
+        end
+      end
+    end
+
     ## lists all subnets under a virtual network or lists subnets of only a particular address space ##
     def subnets_list(resource_group_name, vnet_name, address_prefix = nil)
-      list = network_resource_client.subnets.list(resource_group_name, vnet_name).value!.body.value
+      list = network_resource_client.subnets.list(resource_group_name, vnet_name).value
       !address_prefix.nil? && !list.empty? ? subnets_list_specific_address_space(address_prefix, list) : list
     end
 
@@ -202,10 +217,13 @@ module Azure::ARM
     ## virtual network configuration creation for the new vnet creation or to 
     ## handle existing vnet ##
     def create_vnet_config(resource_group_name, vnet_name, vnet_subnet_name)
+      raise ArgumentError, 'GatewaySubnet cannot be used as the name for --azure-vnet-subnet-name option. GatewaySubnet can only be used for virtual network gateways.' if vnet_subnet_name == 'GatewaySubnet'
+
       vnet_config = {}
       subnets = nil
       flag = true
-      vnet = vnet_exist?(resource_group_name, vnet_name)
+      ## check whether user passed or default named virtual network exist or not ##
+      vnet = vnet_get(resource_group_name, vnet_name)
       vnet_config[:virtualNetworkName] = vnet_name
       if vnet  ## handle resources in the existing virtual network ##
         vnet_config[:addressPrefixes] = vnet_address_spaces(vnet)
