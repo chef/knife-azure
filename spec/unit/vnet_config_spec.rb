@@ -105,6 +105,72 @@ describe Azure::ARM::VnetConfig do
     end
   end
 
+  describe 'vnet_get' do
+    context 'given vnet exist under the given resource group' do
+      before do
+        @resource_group_name = 'rgrp-2'
+        @vnet_name = 'vnet-2'
+        allow(@dummy_class).to receive(:network_resource_client).and_return(
+          stub_network_resource_client(nil, @resource_group_name, @vnet_name))
+      end
+
+      it 'returns vnet object' do
+        response = @dummy_class.vnet_get(@resource_group_name, @vnet_name)
+        expect(response.properties.address_space.address_prefixes).to be == [ '10.2.0.0/16', '192.168.172.0/24', '16.2.0.0/24' ]
+        expect(response.properties.subnets.class).to be == Array
+        expect(response.properties.subnets.length).to be == 3
+      end
+    end
+
+    context 'given vnet does not exist under the given resource group' do
+      before do
+        @resource_group_name = 'rgrp-2'
+        @vnet_name = 'vnet-22'
+        request = {}
+        response = OpenStruct.new({
+          'body'=>'{"error": {"code": "ResourceNotFound"}}'
+        })
+        body = 'MsRestAzure::AzureOperationError'
+        error = MsRestAzure::AzureOperationError.new(request, response, body)
+        network_resource_client = double("NetworkResourceClient",
+          :virtual_networks => double)
+        allow(network_resource_client.virtual_networks).to receive(
+          :get).and_raise(error)
+        allow(@dummy_class).to receive(:network_resource_client).and_return(
+          network_resource_client)
+      end
+
+      it 'returns false' do
+        response = @dummy_class.vnet_get(@resource_group_name, @vnet_name)
+        expect(response).to be == false
+      end
+    end
+
+    context 'vnet get api call raises some unknown exception' do
+      before do
+        @resource_group_name = 'rgrp-2'
+        @vnet_name = 'vnet-22'
+        request = {}
+        response = OpenStruct.new({
+          'body'=>'{"error": {"code": "SomeProblemOccurred"}}'
+        })
+        body = 'MsRestAzure::AzureOperationError'
+        @error = MsRestAzure::AzureOperationError.new(request, response, body)
+        network_resource_client = double("NetworkResourceClient",
+          :virtual_networks => double)
+        allow(network_resource_client.virtual_networks).to receive(
+          :get).and_raise(@error)
+        allow(@dummy_class).to receive(:network_resource_client).and_return(
+          network_resource_client)
+      end
+
+      it 'raises error' do
+        expect { @dummy_class.vnet_get(@resource_group_name, @vnet_name)
+          }.to raise_error(@error)
+      end
+    end
+  end
+
   describe 'subnets_list' do
     context 'when address_prefix is not passed' do
       context 'example-1' do
