@@ -36,7 +36,7 @@ module Azure::ARM
       hints_json
     end
 
-    def tcp_ports(tcp_ports, sec_grp_name, depVm2, vm_name)
+    def tcp_ports(tcp_ports, sec_grp_name, vm_name)
       tcp_ports = tcp_ports.split(",")
       sec_grp_json = 
         {
@@ -44,24 +44,18 @@ module Azure::ARM
           "type": "Microsoft.Network/networkSecurityGroups",
           "name": sec_grp_name,
           "location": "[resourceGroup().location]",
-          "dependsOn": [
-            depVm2
-          ],
-          "tags": {
-          "displayName": sec_grp_name
-          },
           "properties": {
           "securityRules": [
           ]
         }
       }
       random_no = rand(100..4094)
+      incremental=0  
       for port in tcp_ports
-        incremental=0
         random_no  = random_no + 1
         sec_grp_json[:properties][:securityRules].push(
         {
-          "name": vm_name + '_' + incremental.to_s,
+          "name": vm_name + '_rule_' + incremental.to_s,
           "properties": {
           "description": "Port Provided by user",
           "protocol": "Tcp",
@@ -73,10 +67,10 @@ module Azure::ARM
           "priority": random_no,
           "direction": "Inbound"
           }
-        })
+        }
+        )
         incremental=incremental+1
       end
-      # Priority cab be between 100 and 4096
       sec_grp_json
     end
     
@@ -107,8 +101,10 @@ module Azure::ARM
         extName = "[concat(variables('vmName'),copyIndex(),'/', variables('vmExtensionName'))]"
         depExt = "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'), copyIndex())]"
 
-        # tcp port 
-        sec_grp_name = "[concat(variables('vmName'),'_sec_grp_',copyIndex())]"
+        # tcp port
+        sec_grp_name = "[concat(variables('vmName'),'_sec_grp_',copyIndex())]" 
+        sec_grp = "[concat('Microsoft.Network/networkSecurityGroups/',variables('vmName'), '_sec_grp_',copyIndex())]"
+        sec_grp_id = "[resourceId('Microsoft.Network/networkSecurityGroups/', concat(variables('vmName'), '_sec_grp', copyIndex()))]"
       else
         # publicIPAddresses Resource Variables
         publicIPAddressName = "[variables('publicIPAddressName')]"
@@ -133,6 +129,8 @@ module Azure::ARM
 
         # tcp port 
         sec_grp_name = "[concat(variables('vmName'),'_sec_grp')]"
+        sec_grp = "[concat('Microsoft.Network/networkSecurityGroups/', variables('vmName'), '_sec_grp')]"
+        sec_grp_id = "[resourceId('Microsoft.Network/networkSecurityGroups/', concat(variables('vmName'), '_sec_grp'))]"
       end
 
       resource_ids = {}
@@ -490,8 +488,17 @@ module Azure::ARM
       }
 
       if params[:tcp_endpoints]
-        sec_grp_json = tcp_ports(params[:tcp_endpoints],sec_grp_name, depVm2, params[:azure_vm_name])
-        template['resources'].insert(4,sec_grp_json)
+        sec_grp_json = tcp_ports(params[:tcp_endpoints],sec_grp_name, params[:azure_vm_name])
+        template['resources'].insert(1,sec_grp_json)
+        length = template['resources'].length.to_i - 1
+        for i in 0..length do
+          if template['resources'][i]['type'] == "Microsoft.Network/virtualNetworks"
+            template['resources'][i] = template['resources'][i].merge({"dependsOn" => [sec_grp]})
+          end
+          if template['resources'][i]['type'] == "Microsoft.Network/networkInterfaces"
+          template['resources'][i]['properties'] = template['resources'][i]['properties'].merge({"networkSecurityGroup" => {"id" => sec_grp_id}})
+          end
+        end
       end
 
       if params[:chef_extension_public_param][:extendedLogs] == "true"
