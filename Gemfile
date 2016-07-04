@@ -8,7 +8,7 @@ group :development do
   gem 'rspec_junit_formatter'
   gem 'rake'
   gem 'mixlib-shellout'
-  gem 'activesupport'
+  gem 'activesupport', '4.2.6'
   gem 'byebug', '~>6.0.2'
   gem 'rb-readline'
 end
