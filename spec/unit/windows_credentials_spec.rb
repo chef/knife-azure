@@ -24,6 +24,7 @@ describe Chef::Knife::AzurermBase, :windows_only do
   context "token_details_for_windows" do
     it "should raise error if target doesn't exist" do
       allow(@windows_credentials).to receive(:target_name)
+      allow(@windows_credentials.ui).to receive(:error)
       expect {@windows_credentials.token_details_for_windows}.to raise_error(SystemExit)
     end
 
@@ -37,6 +38,7 @@ describe Chef::Knife::AzurermBase, :windows_only do
       allow(Azure::ARM::ReadCred::CREDENTIAL_OBJECT).to receive(:new).exactly(2).and_return(translated_cred)
       allow(@windows_credentials).to receive(:CredReadW)
       allow_any_instance_of(NilClass).to receive(:read_pointer)
+      allow(@windows_credentials.ui).to receive(:error)
       expect {@windows_credentials.token_details_for_windows}.to raise_error(SystemExit)
     end
 
@@ -49,6 +51,7 @@ describe Chef::Knife::AzurermBase, :windows_only do
       allow(Azure::ARM::ReadCred::CREDENTIAL_OBJECT).to receive(:new).exactly(2).and_return(translated_cred)
       allow(@windows_credentials).to receive(:CredReadW)
       allow_any_instance_of(NilClass).to receive(:read_pointer)
+      allow_any_instance_of(NilClass).to receive(:free)
       credential = @windows_credentials.token_details_for_windows
       expect(credential[:tokentype]).to be == "Bearer"
       expect(credential[:user]).to be == "abc@outlook.com--0-2"

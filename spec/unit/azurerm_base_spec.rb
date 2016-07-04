@@ -95,7 +95,7 @@ describe Chef::Knife::AzurermBase do
         allow(Chef::Platform).to receive(:windows?).and_return(false)
         allow(File).to receive(:exists?).and_return(true)
         allow(File).to receive(:size?).and_return(4)
-        expect { @arm_server_instance.validate_azure_login }.not_to raise_error("Please run XPLAT's 'azure login' command OR specify azure_tenant_id, azure_subscription_id, azure_client_id, azure_client_secret in your knife.rb")
+        expect { @arm_server_instance.validate_azure_login }.not_to raise_error
       end
 
       it 'Accesstoken file contain [] value upon running azure logout command for Linux' do
@@ -113,17 +113,6 @@ describe Chef::Knife::AzurermBase do
         allow(@result).to receive(:stdout).and_return("")
         expect { @arm_server_instance.validate_azure_login }.to raise_error("Please run XPLAT's 'azure login' command OR specify azure_tenant_id, azure_subscription_id, azure_client_id, azure_client_secret in your knife.rb")
       end
-
-      it 'Token Object present in windows credential manager' do
-        @xplat_creds_cmd = double(:run_command => double)
-        @result = double(:stdout => double)
-        allow(Chef::Platform).to receive(:windows?).and_return(true)
-        allow(Mixlib::ShellOut).to receive(:new).and_return(@xplat_creds_cmd)
-        allow(@xplat_creds_cmd).to receive(:run_command).and_return(@result)
-        allow(@result).to receive(:stdout).and_return(double)
-        expect { @arm_server_instance.validate_azure_login }.not_to raise_error("Please run XPLAT's 'azure login' command OR specify azure_tenant_id, azure_subscription_id, azure_client_id, azure_client_secret in your knife.rb")
-      end
-
     end
 
     context "Token Validation test cases" do
@@ -149,7 +138,7 @@ describe Chef::Knife::AzurermBase do
 
       it 'Token is valid, no exception is raised' do
         token_details = {:tokentype => "Bearer", :user => "xxx@outlook.com", :token => "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1iIxLjAifQ.hZjHXXjbSdMmMs9oSZxGKa62EnNG6jkTY4RSmq8dQMvmwHgDCF4KoT_sOIsrAJTVwXuCdxYa5Jr83sfydFwiO2QWWOaSgyRXGPouex4NXFI_LFdnRzhLBoN0ONwUWHrV12N4LBgHyNLiyfeZQJFCbD0LTcPdjh7qQZ5aVgcoz_CB33PGD_z2L_6ynWrlAoihLEmYD6vbebMDSSFazvzoVg", :expiry_time => "2116-05-31T09:42:15.617Z", :clientid => "dsff-8df-sd45e-34345f7b46", :refreshtoken => "FPbm0gXiszvV_cMwGkgACwMBZ26fWA6fH3ToRLTHYU3wvvTWiU74ukRhMHhv20OJOtZBOtbckh3kTMT7QvzUYfd4uHFzwAYCtsh2SOY-dCAA"}
-        expect { @arm_server_instance.check_token_validity(token_details) }.not_to raise_error("Token has expired. Please run 'azure login' command")
+        expect { @arm_server_instance.check_token_validity(token_details) }.not_to raise_error
       end
 
       it 'New token is got using refresh token for Linux when token has expired' do
@@ -158,7 +147,7 @@ describe Chef::Knife::AzurermBase do
         allow(Chef::Platform).to receive(:windows?).and_return(false)
         allow(@arm_server_instance).to receive(:refresh_token).and_return(token_details1)
         allow(@arm_server_instance).to receive(:token_details_for_linux).and_return(token_details)
-        expect { @arm_server_instance.check_token_validity(token_details) }.not_to raise_error("Token has expired. Please run 'azure login' command")
+        expect { @arm_server_instance.check_token_validity(token_details) }.not_to raise_error
       end
 
       it 'New valid token is got using refresh token for Windows when token has expired' do
@@ -167,7 +156,7 @@ describe Chef::Knife::AzurermBase do
         allow(Chef::Platform).to receive(:windows?).and_return(true)
         allow(@arm_server_instance).to receive(:refresh_token).and_return(token_details1)
         allow(@arm_server_instance).to receive(:token_details_for_windows).and_return(token_details)
-        expect { @arm_server_instance.check_token_validity(token_details) }.not_to raise_error("Token has expired. Please run 'azure login' command")
+        expect { @arm_server_instance.check_token_validity(token_details) }.not_to raise_error
       end
 
       it 'Mixlib shellout command for xplat raises Timeout error' do
