@@ -215,12 +215,6 @@ describe Chef::Knife::AzurermBase do
         @authentication_details = @arm_server_instance.token_details_for_linux
         expect(@authentication_details[:clientid]).to be ==  "dsff-8df-sd45e-34345f7b46"
       end
-
-      it 'Get Target name from Windows credential manager for Windows platform' do
-        allow(Chef::Platform).to receive(:windows?).and_return(true)
-        target = "AzureXplatCli:target=_authority:https\://login.microsoftonline.com/abeb039a-rfrgrggb48f-0c99bdc99d15::_clientId:dsff-8df-sd45e-34345f7b46::expiresIn:3599::expiresOn:2116-05-31T09\:42\:15.617Z::identityProvider:live.com::isMRRT:true::resource:https\://management.core.windows.net/::tokenType:Bearer::userId:xxx@outlook.com--0-2"
-        allow(@arm_server_instance).to receive(:target_name).and_return(target)
-      end
     end
 
     context "find_file" do
