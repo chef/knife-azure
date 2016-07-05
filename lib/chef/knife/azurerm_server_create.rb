@@ -233,6 +233,11 @@ class Chef
         if locate_config_value(:tcp_endpoints)
           server_def[:tcp_endpoints] = locate_config_value(:tcp_endpoints)
         end
+        if is_image_windows?
+          server_def[:is_linux] =  false 
+        else 
+          server_def[:is_linux] = true
+        end
         server_def[:azure_storage_account] = locate_config_value(:azure_vm_name) if server_def[:azure_storage_account].nil?
         server_def[:azure_storage_account] = server_def[:azure_storage_account].gsub(/[!@#$%^&*()_-]/,'')
 

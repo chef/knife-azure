@@ -225,6 +225,22 @@ module Azure
         end
       end
 
+      def security_group_exist?(resource_group_name, security_group_name)
+        begin
+          network_resource_client.network_security_groups.get(resource_group_name, security_group_name)
+          return true
+        rescue MsRestAzure::AzureOperationError => error
+          if error.body
+            err_json = JSON.parse(error.response.body)
+            if err_json['error']['code'] == "ResourceNotFound"
+              return false
+            else
+              raise error
+            end
+          end
+        end
+      end
+
       def resource_group_exist?(resource_group_name)
         resource_management_client.resource_groups.check_existence(resource_group_name)
       end
@@ -328,6 +344,20 @@ module Azure
             params[:azure_vnet_name],
             params[:azure_vnet_subnet_name]
           )
+          if params[:tcp_endpoints]
+            if params[:is_linux]
+              params[:tcp_endpoints] = '22,16001,' + params[:tcp_endpoints]
+            else
+              params[:tcp_endpoints] = '3389,' + params[:tcp_endpoints]
+            end
+            random_no = rand(100..1000)
+            params[:azure_sec_group_name] = params[:azure_vm_name] + '_sec_grp_' + random_no.to_s
+            if security_group_exist?(params[:azure_resource_group_name], params[:azure_sec_group_name])
+              random_no = rand(100..1000)
+              params[:azure_sec_group_name] = params[:azure_vm_name] + '_sec_grp_' + random_no.to_s
+            end
+          end
+
           ui.log("Creating Virtual Machine....")
           deployment = create_virtual_machine_using_template(params)
           ui.log("Virtual Machine creation successfull.") unless deployment.nil?
