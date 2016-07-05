@@ -75,13 +75,13 @@ describe Chef::Knife::AzurermServerCreate do
       it "vm name validation success for Linux" do
         Chef::Config[:knife][:azure_vm_name] = 'test-vm1234'
         allow(@arm_server_instance).to receive(:is_image_windows?).and_return(false)
-        expect{@arm_server_instance.validate_params!}.to_not raise_error(ArgumentError)
+        expect{@arm_server_instance.validate_params!}.not_to raise_error
       end
 
       it "vm name validation success for Windows" do
         Chef::Config[:knife][:azure_vm_name] = 'test-vm1234'
         allow(@arm_server_instance).to receive(:is_image_windows?).and_return(true)
-        expect{@arm_server_instance.validate_params!}.to_not raise_error(ArgumentError)
+        expect{@arm_server_instance.validate_params!}.not_to raise_error
       end
 
       it "vm name validation failure for name containing special characters for Linux" do
@@ -457,12 +457,9 @@ describe Chef::Knife::AzurermServerCreate do
 
         it "uses template for VM creation and does not show chef-client run logs to user when extended_logs is false" do
           deployment = double("deployment", :name => "name", :id => "id", :properties => double)
-          @deploy1 = double("deploy1", :resource_type => "Microsoft.Compute/virtualMachines", :resource_name => "MyVM0", :id => "/subscriptions/e00d2b3f-3b94-4dfc-ae8e-ca34c8ba1a99/resourceGroups/vjgroup/providers/Microsoft.Compute/virtualMachines/MyVM0
-")
-          @deploy2 = double("deploy2", :resource_type => "Microsoft.Compute/virtualMachines", :resource_name => "MyVM1", :id => "/subscriptions/e00d2b3f-3b94-4dfc-ae8e-ca34c8ba1a99/resourceGroups/vjgroup/providers/Microsoft.Compute/virtualMachines/MyVM1
-")
-          @deploy3 = double("deploy3", :resource_type => "Microsoft.Compute/virtualMachines", :resource_name => "MyVM2", :id => "/subscriptions/e00d2b3f-3b94-4dfc-ae8e-ca34c8ba1a99/resourceGroups/vjgroup/providers/Microsoft.Compute/virtualMachines/MyVM2
-")
+          @deploy1 = double("deploy1", :resource_type => "Microsoft.Compute/virtualMachines", :resource_name => "MyVM0", :id => "/subscriptions/e00d2b3f-3b94-4dfc-ae8e-ca34c8ba1a99/resourceGroups/vjgroup/providers/Microsoft.Compute/virtualMachines/MyVM0")
+          @deploy2 = double("deploy2", :resource_type => "Microsoft.Compute/virtualMachines", :resource_name => "MyVM1", :id => "/subscriptions/e00d2b3f-3b94-4dfc-ae8e-ca34c8ba1a99/resourceGroups/vjgroup/providers/Microsoft.Compute/virtualMachines/MyVM1")
+          @deploy3 = double("deploy3", :resource_type => "Microsoft.Compute/virtualMachines", :resource_name => "MyVM2", :id => "/subscriptions/e00d2b3f-3b94-4dfc-ae8e-ca34c8ba1a99/resourceGroups/vjgroup/providers/Microsoft.Compute/virtualMachines/MyVM2")
           allow(deployment.properties).to receive(:dependencies).and_return([@deploy1, @deploy2, @deploy3])
           allow(@service.ui).to receive(:log).at_least(:once)
           expect(@service).to receive(:create_virtual_machine_using_template).and_return(deployment)
@@ -478,12 +475,9 @@ describe Chef::Knife::AzurermServerCreate do
         it "uses template for VM creation and also shows chef-client run logs to user when extended_logs is true" do
           @arm_server_instance.config[:extended_logs] = true
           deployment = double("deployment", :name => "name", :id => "id", :properties => double)
-          @deploy1 = double("deploy1", :resource_type => "Microsoft.Compute/virtualMachines", :resource_name => "MyVM0", :id => "/subscriptions/e00d2b3f-3b94-4dfc-ae8e-ca34c8ba1a99/resourceGroups/vjgroup/providers/Microsoft.Compute/virtualMachines/MyVM0
-")
-          @deploy2 = double("deploy2", :resource_type => "Microsoft.Compute/virtualMachines", :resource_name => "MyVM1", :id => "/subscriptions/e00d2b3f-3b94-4dfc-ae8e-ca34c8ba1a99/resourceGroups/vjgroup/providers/Microsoft.Compute/virtualMachines/MyVM1
-")
-          @deploy3 = double("deploy3", :resource_type => "Microsoft.Compute/virtualMachines", :resource_name => "MyVM2", :id => "/subscriptions/e00d2b3f-3b94-4dfc-ae8e-ca34c8ba1a99/resourceGroups/vjgroup/providers/Microsoft.Compute/virtualMachines/MyVM2
-")
+          @deploy1 = double("deploy1", :resource_type => "Microsoft.Compute/virtualMachines", :resource_name => "MyVM0", :id => "/subscriptions/e00d2b3f-3b94-4dfc-ae8e-ca34c8ba1a99/resourceGroups/vjgroup/providers/Microsoft.Compute/virtualMachines/MyVM0")
+          @deploy2 = double("deploy2", :resource_type => "Microsoft.Compute/virtualMachines", :resource_name => "MyVM1", :id => "/subscriptions/e00d2b3f-3b94-4dfc-ae8e-ca34c8ba1a99/resourceGroups/vjgroup/providers/Microsoft.Compute/virtualMachines/MyVM1")
+          @deploy3 = double("deploy3", :resource_type => "Microsoft.Compute/virtualMachines", :resource_name => "MyVM2", :id => "/subscriptions/e00d2b3f-3b94-4dfc-ae8e-ca34c8ba1a99/resourceGroups/vjgroup/providers/Microsoft.Compute/virtualMachines/MyVM2")
           allow(deployment.properties).to receive(:dependencies).and_return([@deploy1, @deploy2, @deploy3])
           allow(@service.ui).to receive(:log).at_least(:once)
           expect(@service).to receive(:create_virtual_machine_using_template).and_return(deployment)
@@ -901,7 +895,7 @@ describe Chef::Knife::AzurermServerCreate do
         end
 
         it 'raises an exception if validation_key is not present in chef 11' do
-          expect(@arm_server_instance.ui).to receive(:error)
+          expect(@arm_server_instance.ui).to receive(:error).twice
           expect { @arm_server_instance.run }.to raise_error(SystemExit)
         end
       end
@@ -950,10 +944,9 @@ describe Chef::Knife::AzurermServerCreate do
 
     it "calls validation for azure_image_os_type if azure_image_os_type and other image reference parameters are not given" do
       @arm_server_instance.config.delete(:azure_image_os_type)
-      expect(@arm_server_instance).to receive(
-        :validate_arm_keys!).with(
-          :azure_image_os_type).and_raise(SystemExit)
-      @arm_server_instance.send(:set_default_image_reference!)
+      @arm_server_instance.config.delete(:azure_image_reference_version)
+      @arm_server_instance.default_config.delete(:azure_image_reference_version)
+      expect{ @arm_server_instance.send(:set_default_image_reference!) }.to raise_error(SystemExit)
     end
 
     it "raises error and exits if azure_image_os_type or other image reference parameters are not specified" do
@@ -994,7 +987,7 @@ describe Chef::Knife::AzurermServerCreate do
       expect(@arm_server_instance.config[:azure_image_reference_publisher]).to be == "RedHat"
       expect(@arm_server_instance.config[:azure_image_reference_offer]).to be == "RHEL"
       expect(@arm_server_instance.config[:azure_image_reference_sku]).to be == "7.2"
-      expect(@arm_server_instance.config[:azure_image_reference_version]).to be == 'latest'
+      expect(@arm_server_instance.default_config[:azure_image_reference_version]).to be == 'latest'
     end
 
     it "sets default image reference parameters for azure_image_os_type=debian" do
@@ -1003,7 +996,7 @@ describe Chef::Knife::AzurermServerCreate do
       expect(@arm_server_instance.config[:azure_image_reference_publisher]).to be == "credativ"
       expect(@arm_server_instance.config[:azure_image_reference_offer]).to be == "Debian"
       expect(@arm_server_instance.config[:azure_image_reference_sku]).to be == "7"
-      expect(@arm_server_instance.config[:azure_image_reference_version]).to be == 'latest'
+      expect(@arm_server_instance.default_config[:azure_image_reference_version]).to be == 'latest'
     end
 
     it "sets default image reference parameters for azure_image_os_type=windows" do
@@ -1081,9 +1074,7 @@ describe Chef::Knife::AzurermServerCreate do
       expect(@service).to receive(:create_deployment_parameters)
       allow(@resource_client).to receive_message_chain(
           :deployments, :create_or_update, :value!, :body).and_raise(Exception)
-      expect(Chef::Log).to receive(:error)
-      expect(Chef::Log).to receive(:debug)
-      @service.create_virtual_machine_using_template(@params)
+      expect{ @service.create_virtual_machine_using_template(@params) }.to raise_error(Exception)
     end
 
     after do

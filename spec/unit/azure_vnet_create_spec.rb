@@ -16,7 +16,7 @@ describe Chef::Knife::AzureVnetCreate do
   it 'should fail missing args.' do
     expect(@connection.vnets).to_not receive(:create)
     expect(@server_instance.ui).to receive(:error).exactly(3).times
-    expect { @server_instance.run }.to raise_error
+    expect { @server_instance.run }.to raise_error(SystemExit)
   end
 
   it 'should succeed.' do
