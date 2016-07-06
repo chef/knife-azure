@@ -33,8 +33,6 @@ describe Chef::Knife::AzurermServerCreate do
       :azure_vnet_subnet_name => 'azure_subnet_name',
       :rdp_port => '3389',
       :ssh_port => '22',
-      :tcp_endpoints => '111,123',
-      :azure_sec_group_name => Chef::Config[:knife][:azure_vm_name].to_s + '_sec_grp_100',
       :chef_extension_publisher => 'chef_extension_publisher',
       :chef_extension => 'chef_extension',
       :chef_extension_version => '11.10.1',
@@ -378,6 +376,7 @@ describe Chef::Knife::AzurermServerCreate do
 
     describe "resource group" do
       before do
+        allow(@service).to receive(:security_group_exist?).and_return(true)
         allow(@service).to receive(:virtual_machine_exist?).and_return(true)
       end
 
@@ -423,6 +422,7 @@ describe Chef::Knife::AzurermServerCreate do
         end
 
         it "create virtual machine when it does not exist already and does not show chef-client run logs when extended_logs is false" do
+          allow(@service).to receive(:security_group_exist?).and_return(true)
           expect(@service).to receive(:virtual_machine_exist?).and_return(false)
           expect(@service).to receive(:create_vnet_config)
           expect(@service).to receive(:create_virtual_machine_using_template).exactly(1).and_return(stub_deployments_create_response)
@@ -435,6 +435,7 @@ describe Chef::Knife::AzurermServerCreate do
 
         it "create virtual machine when it does not exist already and also shows chef-client run logs when extended_logs is true" do
           @arm_server_instance.config[:extended_logs] = true
+          allow(@service).to receive(:security_group_exist?).and_return(true)
           expect(@service).to receive(:virtual_machine_exist?).and_return(false)
           expect(@service).to receive(:create_vnet_config)
           expect(@service).to receive(:create_virtual_machine_using_template).exactly(1).and_return(stub_deployments_create_response)
@@ -448,6 +449,7 @@ describe Chef::Knife::AzurermServerCreate do
         it "skip virtual machine creation when it does exist already" do
           expect(@service).to receive(:virtual_machine_exist?).and_return(true)
           expect(@service).to_not receive(:create_vnet_config)
+          expect(@service).to_not receive(:security_group_exist?)
           expect(@service).to_not receive(:create_virtual_machine_using_template)
           expect(@service).to_not receive(:show_server)
           @arm_server_instance.run
@@ -479,6 +481,7 @@ describe Chef::Knife::AzurermServerCreate do
         it "skip virtual machine creation when it does exist already" do
           expect(@service).to receive(:virtual_machine_exist?).and_return(true)
           expect(@service).to_not receive(:create_vnet_config)
+          expect(@service).to_not receive(:security_group_exist?)
           expect(@service).to_not receive(:create_virtual_machine_using_template)
           expect(@service).to_not receive(:show_server)
           @arm_server_instance.run
@@ -499,6 +502,7 @@ describe Chef::Knife::AzurermServerCreate do
             :create_resource_group).and_return(
               stub_resource_group_create_response)
 
+          allow(@service).to receive(:security_group_exist?).and_return(false)
           allow(@service).to receive(:virtual_machine_exist?).and_return(false)
         end
 
