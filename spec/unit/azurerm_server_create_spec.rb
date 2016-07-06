@@ -33,6 +33,8 @@ describe Chef::Knife::AzurermServerCreate do
       :azure_vnet_subnet_name => 'azure_subnet_name',
       :rdp_port => '3389',
       :ssh_port => '22',
+      :tcp_endpoints => '111,123',
+      :azure_sec_group_name => Chef::Config[:knife][:azure_vm_name].to_s + '_sec_grp_100',
       :chef_extension_publisher => 'chef_extension_publisher',
       :chef_extension => 'chef_extension',
       :chef_extension_version => '11.10.1',
@@ -606,89 +608,6 @@ describe Chef::Knife::AzurermServerCreate do
           expect(@service).to receive(:network_resource_client).and_return(stub_network_resource_client(@platform))
           response = @service.vm_default_port(@params)
           expect(response).to be == '3389'
-        end
-      end
-    end
-
-    describe "create_network_security_group" do
-      it "successfully creates network security group" do
-        @platform = 'NA'
-        expect(@service).to receive(:network_resource_client).and_return(stub_network_resource_client('NA'))
-        expect(@service).to receive(
-          :add_security_rule).and_return(
-            stub_default_security_rule_add_response('NA'))
-        response = @service.create_network_security_group(
-          @params[:azure_resource_group_name],
-          @params[:azure_vm_name],
-          @params[:azure_service_location])
-        expect(response.name).to_not be nil
-        expect(response.id).to_not be nil
-        expect(response.location).to_not be nil
-        expect(response.properties).to_not be nil
-        expect(response.properties.default_security_rules).to be_a(Array)
-        expect(response.properties.default_security_rules).to be == ['nsg_default_security_rules']
-        expect(response.properties.security_rules).to be nil
-      end
-    end
-
-    describe "add_security_rule" do
-      context "for Linux" do
-        before do
-          @platform = 'Linux'
-        end
-
-        it "successfully adds default security rule" do
-          expect(@service).to receive(:network_resource_client).and_return(stub_network_resource_client(@platform))
-          response = @service.add_security_rule(
-            @params[:ssh_port],
-            "Port desc",
-            "1000",
-            @params[:azure_resource_group_name],
-            @params[:azure_vm_name],
-            stub_network_security_group_create_response)
-          expect(response.name).to_not be nil
-          expect(response.id).to_not be nil
-          expect(response.location).to_not be nil
-          expect(response.properties).to_not be nil
-          expect(response.properties.description).to be == 'Linux port.'
-          expect(response.properties.destination_port_range).to be == '22'
-          expect(response.properties.protocol).to be == 'Tcp'
-          expect(response.properties.source_port_range).to be == '*'
-          expect(response.properties.source_address_prefix).to be == '*'
-          expect(response.properties.destination_address_prefix).to be == '*'
-          expect(response.properties.access).to be == 'Allow'
-          expect(response.properties.priority).to be == 1000
-          expect(response.properties.direction).to be == 'Inbound'
-        end
-      end
-
-      context "for Windows" do
-        before do
-          @platform = 'Windows'
-        end
-
-        it "successfully adds default security rule" do
-          expect(@service).to receive(:network_resource_client).and_return(stub_network_resource_client(@platform))
-          response = @service.add_security_rule(
-            @params[:rdp_port],
-            "Port desc",
-            "1000",
-            @params[:azure_resource_group_name],
-            @params[:azure_vm_name],
-            stub_network_security_group_create_response)
-            expect(response.name).to_not be nil
-            expect(response.id).to_not be nil
-            expect(response.location).to_not be nil
-            expect(response.properties).to_not be nil
-            expect(response.properties.description).to be == 'Windows port.'
-            expect(response.properties.destination_port_range).to be == '3389'
-            expect(response.properties.protocol).to be == 'Tcp'
-            expect(response.properties.source_port_range).to be == '*'
-            expect(response.properties.source_address_prefix).to be == '*'
-            expect(response.properties.destination_address_prefix).to be == '*'
-            expect(response.properties.access).to be == 'Allow'
-            expect(response.properties.priority).to be == 1000
-            expect(response.properties.direction).to be == 'Inbound'
         end
       end
     end
