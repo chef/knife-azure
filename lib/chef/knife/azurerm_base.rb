@@ -49,7 +49,7 @@ class Chef
       end
 
       def service
-        details = authentication_details()
+        details = authentication_details
         details.update(:azure_subscription_id => locate_config_value(:azure_subscription_id))
         @service ||= begin
                       service = Azure::ResourceManagement::ARMInterface.new(details)
@@ -87,7 +87,7 @@ class Chef
       end
 
       def authentication_details
-        if(!locate_config_value(:azure_tenant_id).nil? && !locate_config_value(:azure_client_id).nil? && !locate_config_value(:azure_client_secret).nil?)
+        if(locate_config_value(:azure_tenant_id) && locate_config_value(:azure_client_id) && locate_config_value(:azure_client_secret))
           return {:azure_tenant_id => locate_config_value(:azure_tenant_id), :azure_client_id => locate_config_value(:azure_client_id), :azure_client_secret => locate_config_value(:azure_client_secret)}
         elsif Chef::Platform.windows?
           token_details = token_details_for_windows()
@@ -95,7 +95,7 @@ class Chef
           token_details = token_details_for_linux()
         end
         token_details = check_token_validity(token_details)
-        return token_details
+        token_details
       end
 
       def token_details_for_linux
@@ -103,12 +103,19 @@ class Chef
         file = File.read(home_dir + '/.azure/accessTokens.json')
         file = JSON.parse(file)
         token_details = {:tokentype => file[-1]["tokenType"], :user => file[-1]["userId"], :token => file[-1]["accessToken"], :clientid => file[-1]["_clientId"], :expiry_time => file[-1]["expiresOn"], :refreshtoken => file[-1]["refreshToken"]}
-        return token_details
+        token_details
       end
 
       def is_token_valid?(token_details)
         time_difference = Time.parse(token_details[:expiry_time]) - Time.now.utc
-        time_difference <= 0 ? false : true
+        if time_difference <= 0
+          return false
+        elsif time_difference <= 600 # 600sec = 10min
+          # This is required otherwise a long running command may fail inbetween if the token gets expired.
+          raise "Token will expire within 10 minutes. Please run 'azure login' command"
+        else
+          return true
+        end
       end
 
       def refresh_token
@@ -124,7 +131,7 @@ class Chef
         else
           token_details = token_details_for_linux()
         end
-        return token_details
+        token_details
       end
 
       def check_token_validity(token_details)
@@ -134,7 +141,7 @@ class Chef
             raise "Token has expired. Please run 'azure login' command"
           end
         end
-        return token_details
+        token_details
       end
 
       def validate_azure_login

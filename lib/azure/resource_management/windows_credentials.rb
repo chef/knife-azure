@@ -102,6 +102,8 @@ module Azure::ARM
             credential[:tokentype] = tokentype[0].split(":")[1]
             credential[:user] = user[0].split(":")[1]
             credential[:token] = access_token[0].split(":")[1]
+            #Todo: refresh_token is not complete currently
+            # target_name method needs to be modified for that
             credential[:refresh_token] = refresh_token[0].split(":")[1]
             credential[:clientid] = clientid[0].split(":")[1]
             credential[:expiry_time] = expiry_time[0].split("expiresOn:")[1].gsub("\\","")
@@ -119,15 +121,17 @@ module Azure::ARM
         end
       end
 
+      #Todo: For getting the complete refreshToken, both credentials (ending with --0-2 and --1-2) have to be read
       def target_name
-        # cmdkey command is used for accessing windows credential manager
-        # Three credentials get created in windows credential manager for a single Azure account in xplat-cli
+        # cmdkey command is used for accessing windows credential manager.
+        # Multiple credentials get created in windows credential manager for a single Azure account in xplat-cli
         # One of them is for common tanent id, which can't be used
-        # Two of them end with --0-2 and --1-2. The one ending with --1-2 doesn't have
-        # accessToken and refreshToken in the credentialBlob.
-        # Since xplat is uses logic to split entries where it splits the credentials based
-        # on number of bytes of the tokens the access token is always been found in the one which start with --0- so
-        # selecting it on the basis of --0-
+        # Two of them end with --0-2 and --1-2. The one ending with --0-2 has the complete
+        # accessToken in the credentialBlob.
+        # Refresh Token is split across both credentials (ending with --0-2 and --1-2).
+        # Xplat splits the credentials based on the number of bytes of the tokens.
+        # Hence the access token is always found in the one which start with --0-
+        # So selecting the credential on the basis of --0-
         xplat_creds_cmd = Mixlib::ShellOut.new('cmdkey /list | findstr AzureXplatCli | findstr \--0- | findstr -v common')
         result = xplat_creds_cmd.run_command
         target_names = []
