@@ -20,6 +20,8 @@
 require 'chef/knife/azurerm_base'
 require 'chef/knife/bootstrap/common_bootstrap_options'
 require 'chef/knife/bootstrap/bootstrapper'
+require 'azure/resource_management/ARM_interface'
+require 'time'
 
 class Chef
   class Knife
@@ -42,21 +44,25 @@ class Chef
         validate_arm_keys!(:azure_resource_group_name, :azure_service_location)
 
         begin
-           if @name_args.length == 1
+          if @name_args.length == 1
             ui.log("Creating VirtualMachineExtension....")
-            vm_extension = service.create_vm_extension(set_ext_params)
+            ext_params = set_ext_params
+            vm_extension = service.create_vm_extension(ext_params)
             if vm_extension
+              if config[:extended_logs] == true
+                service.fetch_chef_client_logs(locate_config_value(:azure_resource_group_name), name_args[0], ext_params[:chef_extension], Time.now)
+              end 
               ui.log("VirtualMachineExtension creation successfull.")
               ui.log("Virtual Machine Extension name is: #{vm_extension.name}")
               ui.log("Virtual Machine Extension ID is: #{vm_extension.id}")
             end
-           else
-             raise ArgumentError, 'Please specify the SERVER name which needs to be bootstrapped via the Chef Extension.' if @name_args.length == 0
-             raise ArgumentError, 'Please specify only one SERVER name which needs to be bootstrapped via the Chef Extension.' if @name_args.length > 1
-           end
-         rescue => error
-            service.common_arm_rescue_block(error)
-         end
+          else
+            raise ArgumentError, 'Please specify the SERVER name which needs to be bootstrapped via the Chef Extension.' if @name_args.length == 0
+            raise ArgumentError, 'Please specify only one SERVER name which needs to be bootstrapped via the Chef Extension.' if @name_args.length > 1
+          end
+        rescue => error
+          service.common_arm_rescue_block(error)
+        end
       end
 
       def set_ext_params

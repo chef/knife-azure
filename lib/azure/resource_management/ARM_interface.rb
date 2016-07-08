@@ -250,7 +250,7 @@ module Azure
           virtual_machine_name,
           chef_extension_name,
           'instanceView'
-        ).value!.body.properties.instance_view.substatuses
+        ).properties.instance_view.substatuses
 
         return nil if substatuses.nil?
 
