@@ -23,7 +23,7 @@ module Azure::ARM
   module VnetConfig
 
     ## lists subnets of only a specific virtual network address space ##
-    def subnets_list_specific_address_space(address_prefix, subnets_list)
+    def subnets_list_for_specific_address_space(address_prefix, subnets_list)
       list = []
       address_space = IPAddress(address_prefix)
       subnets_list.each do |sbn|
@@ -36,7 +36,7 @@ module Azure::ARM
       list
     end
 
-    def vnet_get(resource_group_name, vnet_name)
+    def get_vnet(resource_group_name, vnet_name)
       begin
         network_resource_client.virtual_networks.get(resource_group_name, vnet_name)
       rescue MsRestAzure::AzureOperationError => error
@@ -54,7 +54,7 @@ module Azure::ARM
     ## lists all subnets under a virtual network or lists subnets of only a particular address space ##
     def subnets_list(resource_group_name, vnet_name, address_prefix = nil)
       list = network_resource_client.subnets.list(resource_group_name, vnet_name).value
-      !address_prefix.nil? && !list.empty? ? subnets_list_specific_address_space(address_prefix, list) : list
+      !address_prefix.nil? && !list.empty? ? subnets_list_for_specific_address_space(address_prefix, list) : list
     end
 
     ## single subnet body creation to be added in template ##
@@ -196,7 +196,7 @@ module Azure::ARM
       while new_subnet_prefix.nil? && vnet_address_space.length > vnet_address_prefix_count
         new_subnet_prefix = new_subnet_address_prefix(
           vnet_address_space[vnet_address_prefix_count],
-          subnets_list_specific_address_space(
+          subnets_list_for_specific_address_space(
             vnet_address_space[vnet_address_prefix_count], subnets
           )
         )
@@ -223,7 +223,7 @@ module Azure::ARM
       subnets = nil
       flag = true
       ## check whether user passed or default named virtual network exist or not ##
-      vnet = vnet_get(resource_group_name, vnet_name)
+      vnet = get_vnet(resource_group_name, vnet_name)
       vnet_config[:virtualNetworkName] = vnet_name
       if vnet  ## handle resources in the existing virtual network ##
         vnet_config[:addressPrefixes] = vnet_address_spaces(vnet)

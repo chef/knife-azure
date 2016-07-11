@@ -36,7 +36,7 @@ describe Azure::ARM::VnetConfig do
     used_networks_pool
   end
 
-  describe 'subnets_list_specific_address_space' do
+  describe 'subnets_list_for_specific_address_space' do
     context 'subnets exist in the given address_prefix of the virtual network' do
       context 'example-1' do
         before do
@@ -49,7 +49,7 @@ describe Azure::ARM::VnetConfig do
         end
 
         it 'returns the list of subnets which belongs to the given address_prefix of the virtual network' do
-          response = @dummy_class.subnets_list_specific_address_space('10.2.0.0/16', @subnets)
+          response = @dummy_class.subnets_list_for_specific_address_space('10.2.0.0/16', @subnets)
           expect(response.class).to be == Array
           expect(response).to be == @subnets_address_prefix
         end
@@ -66,7 +66,7 @@ describe Azure::ARM::VnetConfig do
         end
 
         it 'returns the list of subnets which belongs to the given address_prefix of the virtual network' do
-          response = @dummy_class.subnets_list_specific_address_space('10.1.0.0/16', @subnets)
+          response = @dummy_class.subnets_list_for_specific_address_space('10.1.0.0/16', @subnets)
           expect(response.class).to be == Array
           expect(response).to be == @subnets_address_prefix
         end
@@ -83,7 +83,7 @@ describe Azure::ARM::VnetConfig do
         end
 
         it 'returns the empty list of subnets' do
-          response = @dummy_class.subnets_list_specific_address_space('10.15.0.0/20', @subnets)
+          response = @dummy_class.subnets_list_for_specific_address_space('10.15.0.0/20', @subnets)
           expect(response.class).to be == Array
           expect(response).to be == @subnets_address_prefix
         end
@@ -97,7 +97,7 @@ describe Azure::ARM::VnetConfig do
         end
 
         it 'returns the empty list of subnets' do
-          response = @dummy_class.subnets_list_specific_address_space('141.154.163.0/26', @subnets)
+          response = @dummy_class.subnets_list_for_specific_address_space('141.154.163.0/26', @subnets)
           expect(response.class).to be == Array
           expect(response.empty?).to be == true
         end
@@ -105,7 +105,7 @@ describe Azure::ARM::VnetConfig do
     end
   end
 
-  describe 'vnet_get' do
+  describe 'get_vnet' do
     context 'given vnet exist under the given resource group' do
       before do
         @resource_group_name = 'rgrp-2'
@@ -115,7 +115,7 @@ describe Azure::ARM::VnetConfig do
       end
 
       it 'returns vnet object' do
-        response = @dummy_class.vnet_get(@resource_group_name, @vnet_name)
+        response = @dummy_class.get_vnet(@resource_group_name, @vnet_name)
         expect(response.properties.address_space.address_prefixes).to be == [ '10.2.0.0/16', '192.168.172.0/24', '16.2.0.0/24' ]
         expect(response.properties.subnets.class).to be == Array
         expect(response.properties.subnets.length).to be == 3
@@ -141,7 +141,7 @@ describe Azure::ARM::VnetConfig do
       end
 
       it 'returns false' do
-        response = @dummy_class.vnet_get(@resource_group_name, @vnet_name)
+        response = @dummy_class.get_vnet(@resource_group_name, @vnet_name)
         expect(response).to be == false
       end
     end
@@ -165,7 +165,7 @@ describe Azure::ARM::VnetConfig do
       end
 
       it 'raises error' do
-        expect { @dummy_class.vnet_get(@resource_group_name, @vnet_name)
+        expect { @dummy_class.get_vnet(@resource_group_name, @vnet_name)
           }.to raise_error(@error)
       end
     end
@@ -947,7 +947,7 @@ describe Azure::ARM::VnetConfig do
         @resource_group_name = 'rgrp-1'
         @vnet_name = 'vnet-11'
         @subnet_name = 'sbn11'
-        allow(@dummy_class).to receive(:vnet_get).and_return(false)
+        allow(@dummy_class).to receive(:get_vnet).and_return(false)
         @vnet_config = {:virtualNetworkName => 'vnet-11',
           :addressPrefixes => [ "10.0.0.0/16" ],
           :subnets => [{'name'=> 'sbn11',
@@ -1076,7 +1076,7 @@ describe Azure::ARM::VnetConfig do
                 })
               })
 
-              allow(@dummy_class).to receive(:vnet_get).and_return(vnet)
+              allow(@dummy_class).to receive(:get_vnet).and_return(vnet)
               allow(@dummy_class).to receive(:subnets_list).and_return(subnets)
             end
 
@@ -1185,7 +1185,7 @@ describe Azure::ARM::VnetConfig do
                 })
               })
 
-              allow(@dummy_class).to receive(:vnet_get).and_return(vnet)
+              allow(@dummy_class).to receive(:get_vnet).and_return(vnet)
               allow(@dummy_class).to receive(:subnets_list).and_return(subnets)
 
               @vnet_config = { :virtualNetworkName => 'vnet-60',
