@@ -165,15 +165,43 @@ knife azurerm server create
   -c ~/.chef/knife.rb
 ```
 
-User can use existing virtual network and subnet while server create by providing `--azure-vnet-name` and `--azure-vnet-subnet-name` options.
+User can also pass names for virtual network and subnet while server create by providing `--azure-vnet-name` and `--azure-vnet-subnet-name` options. Following are the possible scenarios for the usage of these two options:
 
-Note:
+1. ***--azure-vnet-name* and *--azure-vnet-subnet-name* options not provided by user** : `--azure-vm-name` will be taken as the default value for both the options.
 
-1. If these options are not given, default vnet and subnet with the VM name will be created.
-2. User needs to provide valid existing vnet name and subnet name otherwise it will raise vnet or subnet not found error.
-3. Vnet should belong to the same resource group that is provided in the command.
-4. Subnet should belong to the same vnet that is provided in the command.
+2. ***--azure-vnet-name* and *--azure-vnet-subnet-name* options provided by user** : User provided values will be assigned to these options respectively.
 
+3. ***--azure-vnet-name* option provided by user but *--azure-vnet-subnet-name* option not provided by user** : `--azure-vm-name` will be assigned as the default value to the `--azure-vnet-subnet-name` option.
+
+4. ***--azure-vnet-subnet-name* option provided by user but *--azure-vnet-name* option not provided by user** : It will raise error saying `--azure-vnet-name` option must also be specified with the `--azure-vnet-subnet-name` option.
+
+
+**Note**:
+
+***
+*Vnet* and *Subnet* names can be *user provided* or it can also be *default valued*.
+***
+
+- *Vnet* and *Subnet*, if do not exist, will be newly created in the resource group while server creation.
+- *Vnet* and *Subnet*, if exist, will be used while server creation.
+- *Vnet*, if exists and *Subnet*, does not exist, then new subnet will be added in the virtual network.
+- *Vnet name* can be specified with or without *Subnet name*. However, *Subnet name* can only be specified with *Vnet name*.
+- Value as `GatewaySubnet` cannot be used as the name for the `--azure-vnet-subnet-name option`.
+
+***New subnet addition in virtual network or use of existing subnet for server creation completely depends on the address space availability in the virtual network or in the existing subnet itself respectively.***
+
+```
+knife azurerm server create
+  --azure-resource-group-name MyResourceGrpName
+  --azure-vm-name MyNewVMName
+  --azure-service-location 'WEST US'
+  --azure-image-os-type ubuntu
+  --ssh-user myuser --ssh-password mypassword
+  --azure-vm-size Small
+  -r "recipe[cbk1::rec1]"
+  -c ~/.chef/knife.rb
+```
+OR
 ```
 knife azurerm server create
   --azure-resource-group-name MyResourceGrpName
@@ -184,6 +212,19 @@ knife azurerm server create
   --azure-vm-size Small
   --azure-vnet-name 'VnetName'
   --azure-vnet-subnet-name 'VnetSubnetName'
+  -r "recipe[cbk1::rec1]"
+  -c ~/.chef/knife.rb
+```
+OR
+```
+knife azurerm server create
+  --azure-resource-group-name MyResourceGrpName
+  --azure-vm-name MyNewVMName
+  --azure-service-location 'WEST US'
+  --azure-image-os-type ubuntu
+  --ssh-user myuser --ssh-password mypassword
+  --azure-vm-size Small
+  --azure-vnet-name 'VnetName'
   -r "recipe[cbk1::rec1]"
   -c ~/.chef/knife.rb
 ```

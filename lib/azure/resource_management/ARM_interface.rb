@@ -16,6 +16,7 @@
 require 'azure/azure_interface'
 require 'azure/resource_management/ARM_base'
 require 'azure/resource_management/ARM_deployment_template'
+require 'azure/resource_management/vnet_config'
 require 'azure_mgmt_resources'
 require 'azure_mgmt_compute'
 require 'azure_mgmt_storage'
@@ -26,6 +27,7 @@ module Azure
     class ARMInterface < AzureInterface
       include Azure::ARM::ARMBase
       include Azure::ARM::ARMDeploymentTemplate
+      include Azure::ARM::VnetConfig
 
       include Azure::ARM::Resources
       include Azure::ARM::Resources::Models
@@ -321,6 +323,11 @@ module Azure
         else
           params[:chef_extension_version] = params[:chef_extension_version].nil? ? get_latest_chef_extension_version(params) : params[:chef_extension_version]
           params[:vm_size] = get_vm_size(params[:azure_vm_size])
+          params[:vnet_config] = create_vnet_config(
+            params[:azure_resource_group_name],
+            params[:azure_vnet_name],
+            params[:azure_vnet_subnet_name]
+          )
           ui.log("Creating Virtual Machine....")
           deployment = create_virtual_machine_using_template(params)
           ui.log("Virtual Machine creation successfull.") unless deployment.nil?
@@ -393,22 +400,6 @@ module Azure
 
         deployment = resource_management_client.deployments.create_or_update(params[:azure_resource_group_name], "#{params[:azure_vm_name]}_deploy", deploy_params).value!.body
         deployment
-      end
-
-      def vnet_exist?(resource_group_name, vnet_name)
-        begin
-          network_resource_client.virtual_networks.get(resource_group_name, vnet_name).value!.body
-        rescue
-          return false
-        end
-      end
-
-      def subnet_exist?(resource_group_name, vnet_name, subnet_name)
-        begin
-          network_resource_client.subnets.get(resource_group_name, vnet_name, subnet_name).value!.body
-        rescue
-          return false
-        end
       end
 
       def create_network_security_group(resource_group_name, vm_name, service_location)
