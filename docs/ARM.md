@@ -184,7 +184,7 @@ User can also pass names for virtual network and subnet while server create by p
 
 - *Vnet* and *Subnet*, if do not exist, will be newly created in the resource group while server creation.
 - *Vnet* and *Subnet*, if exist, will be used while server creation.
-- *Vnet*, if exist and *Subnet*, do not exist, then new subnet will be added in the virtual network.
+- *Vnet*, if exists and *Subnet*, does not exist, then new subnet will be added in the virtual network.
 - *Vnet name* can be specified with or without *Subnet name*. However, *Subnet name* can only be specified with *Vnet name*.
 - Value as `GatewaySubnet` cannot be used as the name for the `--azure-vnet-subnet-name option`.
 
