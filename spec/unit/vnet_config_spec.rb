@@ -451,13 +451,23 @@ describe Azure::ARM::VnetConfig do
         @used_networks_pool = used_networks(subnets)
       end
 
-      it 'returns the list of used_networks sorted in descending order of their hosts size' do
+      it 'returns the list of used_networks sorted in descending order of their hosts size', :if => (RUBY_VERSION.to_f <= 2.1) do
         response = @dummy_class.sort_used_networks_by_hosts_size(@used_networks_pool)
         expect(response[0].network.address.concat("/" + response[0].prefix.to_s)).to be == '69.182.14.0/24'
         expect(response[1].network.address.concat("/" + response[1].prefix.to_s)).to be == '69.182.9.0/24'
         expect(response[2].network.address.concat("/" + response[2].prefix.to_s)).to be == '69.182.11.0/24'
         expect(response[3].network.address.concat("/" + response[3].prefix.to_s)).to be == '12.3.19.128/25'
         expect(response[4].network.address.concat("/" + response[4].prefix.to_s)).to be == '12.3.19.0/25'
+        expect(response[5].network.address.concat("/" + response[5].prefix.to_s)).to be == '40.23.19.0/29'
+      end
+
+      it 'returns the list of used_networks sorted in descending order of their hosts size', :if => (RUBY_VERSION.to_f >= 2.2) do
+        response = @dummy_class.sort_used_networks_by_hosts_size(@used_networks_pool)
+        expect(response[0].network.address.concat("/" + response[0].prefix.to_s)).to be == '69.182.9.0/24'
+        expect(response[1].network.address.concat("/" + response[1].prefix.to_s)).to be == '69.182.11.0/24'
+        expect(response[2].network.address.concat("/" + response[2].prefix.to_s)).to be == '69.182.14.0/24'
+        expect(response[3].network.address.concat("/" + response[3].prefix.to_s)).to be == '12.3.19.0/25'
+        expect(response[4].network.address.concat("/" + response[4].prefix.to_s)).to be == '12.3.19.128/25'
         expect(response[5].network.address.concat("/" + response[5].prefix.to_s)).to be == '40.23.19.0/29'
       end
     end
