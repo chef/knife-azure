@@ -1173,7 +1173,7 @@ describe Chef::Knife::AzurermServerCreate do
       expect(template["variables"]["vmStorageAccountContainerName"]).to be == "test-vm"
       expect(template["variables"]["vmName"]).to be == "test-vm"
       expect(template["variables"]["vmSize"]).to be == "Standard_A1"
-      expect(template["variables"]["virtualNetworkName"]).to be == "azure_virtual_network_name"
+      expect(template["variables"]["virtualNetworkName"]).to be == "vnet1"
       expect(template["variables"]["vmExtensionName"]).to be == "chef_extension"
 
       extension = ""
