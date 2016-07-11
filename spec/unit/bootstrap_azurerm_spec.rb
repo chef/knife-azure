@@ -137,19 +137,40 @@ describe Chef::Knife::BootstrapAzurerm do
   end
 
   context "when correct parameters are given" do
-    it "creates VM extension" do
+    it "creates VM extension with no extended log option passed" do
       @server = double("server", :name => "foo", :id => 1)
+      vm_extension = double("vm_extension", :name => "foo", :id => 1)
+      public_params = {:extendedLogs => "false"}
       allow(@service).to receive(:find_server).and_return(@server)
       allow(@service).to receive(:extension_already_installed?).and_return(false)
       allow(@server).to receive_message_chain(:properties, :storage_profile, :os_disk, :os_type).and_return("linux")
       allow(@server).to receive_message_chain(:properties, :storage_profile, :image_reference, :offer).and_return("ubuntu")
       allow(@bootstrap_azurerm_instance.ui).to receive(:log)
       allow(@bootstrap_azurerm_instance).to receive(:get_chef_extension_version).and_return("1210.*")
-      allow(@bootstrap_azurerm_instance).to receive(:get_chef_extension_public_params).and_return("public_params")
+      allow(@bootstrap_azurerm_instance).to receive(:get_chef_extension_public_params).and_return(public_params)
       allow(@bootstrap_azurerm_instance).to receive(:get_chef_extension_private_params).and_return("private_params")
-      expect(@service).to receive(:create_vm_extension)
+      expect(@service).to receive(:create_vm_extension).and_return(vm_extension)
+      expect(@service).not_to receive(:fetch_chef_client_logs)
       @bootstrap_azurerm_instance.run
     end
+
+    it "creates VM extension with extended log option passed" do
+      @server = double("server", :name => "foo", :id => 1)
+      vm_extension = double("vm_extension", :name => "foo", :id => 1)
+      public_params = {:extendedLogs => "true"}
+      allow(@service).to receive(:find_server).and_return(@server)
+      allow(@service).to receive(:extension_already_installed?).and_return(false)
+      allow(@server).to receive_message_chain(:properties, :storage_profile, :os_disk, :os_type).and_return("linux")
+      allow(@server).to receive_message_chain(:properties, :storage_profile, :image_reference, :offer).and_return("ubuntu")
+      allow(@bootstrap_azurerm_instance.ui).to receive(:log)
+      allow(@bootstrap_azurerm_instance).to receive(:get_chef_extension_version).and_return("1210.*")
+      allow(@bootstrap_azurerm_instance).to receive(:get_chef_extension_public_params).and_return(public_params)
+      allow(@bootstrap_azurerm_instance).to receive(:get_chef_extension_private_params).and_return("private_params")
+      expect(@service).to receive(:create_vm_extension).and_return(vm_extension)
+      expect(@service).to receive(:fetch_chef_client_logs).exactly(1).times
+      @bootstrap_azurerm_instance.run
+    end
+
   end
 
   context "find_server" do

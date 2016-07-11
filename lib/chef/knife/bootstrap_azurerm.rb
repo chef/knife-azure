@@ -49,8 +49,8 @@ class Chef
             ext_params = set_ext_params
             vm_extension = service.create_vm_extension(ext_params)
             if vm_extension
-              if config[:extended_logs] == true
-                service.fetch_chef_client_logs(locate_config_value(:azure_resource_group_name), name_args[0], ext_params[:chef_extension], Time.now)
+              if ext_params[:chef_extension_public_param][:extendedLogs] == 'true'
+                service.fetch_chef_client_logs(ext_params[:azure_resource_group_name], ext_params[:azure_vm_name], ext_params[:chef_extension], Time.now)
               end 
               ui.log("VirtualMachineExtension creation successfull.")
               ui.log("Virtual Machine Extension name is: #{vm_extension.name}")
