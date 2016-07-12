@@ -86,8 +86,6 @@ module QueryAzureMock
 
     allow(compute_management_client.virtual_machine_extensions).to receive_message_chain(
       :get,
-      :value!,
-      :body,
       :properties,
       :instance_view,
       :substatuses).and_return(stub_substatuses(user_supplied_value))
