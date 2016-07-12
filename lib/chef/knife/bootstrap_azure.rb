@@ -42,6 +42,11 @@ class Chef
         begin
           if @name_args.length == 1
             service.add_extension(@name_args[0], set_ext_params)
+            if locate_config_value(:extended_logs)
+              print "\n\nWaiting for the first chef-client run"
+              wait_until_extension_available
+              fetch_chef_client_logs(Time.now, 30)
+            end
           else
             raise ArgumentError, 'Please specify the SERVER name which needs to be bootstrapped via the Chef Extension.' if @name_args.length == 0
             raise ArgumentError, 'Please specify only one SERVER name which needs to be bootstrapped via the Chef Extension.' if @name_args.length > 1
