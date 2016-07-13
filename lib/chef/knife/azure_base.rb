@@ -253,38 +253,6 @@ class Chef
         deployment
       end
 
-      def wait_until_extension_available
-        my_role = nil
-        deployment = fetch_deployment
-        if deployment.at_css('Deployment Name') != nil
-          role_list_xml =  deployment.css('RoleInstanceList RoleInstance')
-          role_list_xml.each do |role|
-            if role.at_css("RoleName").text == (locate_config_value(:azure_vm_name) || @name_args[0])
-              my_role = role
-              break
-            end
-          end
-
-          if my_role
-            if my_role.at_css("GuestAgentStatus Status").text == "Ready"
-              if my_role.at_css("ResourceExtensionStatusList").nil?
-                sleep 30
-                wait_until_extension_available
-              end
-            else
-              sleep 30
-              wait_until_extension_available
-            end
-          else
-            sleep 30
-            wait_until_extension_available
-          end
-        else
-          sleep 30
-          wait_until_extension_available
-        end
-      end
-
       def fetch_role
         deployment = fetch_deployment
 
@@ -301,6 +269,8 @@ class Chef
 
       def fetch_extension(role)
         ext_list_xml = role.css("ResourceExtensionStatusList ResourceExtensionStatus")
+        return nil if ext_list_xml.nil?
+
         ext_list_xml.each do |ext|
           if ext.at_css("HandlerName").text == "Chef.Bootstrap.WindowsAzure.LinuxChefClient" || ext.at_css("HandlerName").text == "Chef.Bootstrap.WindowsAzure.ChefClient"
             return ext
