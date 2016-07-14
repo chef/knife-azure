@@ -374,6 +374,82 @@ describe Chef::Knife::AzurermServerCreate do
             :set_default_image_reference!)
     end
 
+    describe 'security_group_exist' do
+      module Azure
+        module ARM
+          class DummyClass < Azure::ResourceManagement::ARMInterface
+          end
+        end
+      end
+
+      before do
+        @dummy_class = Azure::ARM::DummyClass.new
+      end
+
+      context 'given security group exist under the given resource group' do
+        before do
+          @resource_group_name = 'rgrp-2'
+          @vnet_name = 'vnet-2'
+          @sec_grp_name = 'sec_grp_2'
+          allow(@dummy_class).to receive(:network_resource_client).and_return(
+            stub_network_resource_client(nil, @resource_group_name, @vnet_name, @sec_grp_name))
+        end
+
+        it 'returns true' do
+          response = @dummy_class.security_group_exist?(@resource_group_name, @sec_grp_name)
+          expect(response).to be == true
+        end
+      end
+
+      context 'given security group does not exist under the given resource group' do
+        before do
+          @resource_group_name = 'rgrp-2'
+          @sec_grp_name = 'sec_grp_2'
+          request = {}
+          response = OpenStruct.new({
+            'body'=>'{"error": {"code": "ResourceNotFound"}}'
+          })
+          body = 'MsRestAzure::AzureOperationError'
+          error = MsRestAzure::AzureOperationError.new(request, response, body)
+          network_resource_client = double("NetworkResourceClient",
+            :network_security_groups => double)
+          allow(network_resource_client.network_security_groups).to receive(
+            :get).and_raise(error)
+          allow(@dummy_class).to receive(:network_resource_client).and_return(
+            network_resource_client)
+        end
+
+        it 'returns false' do
+          response = @dummy_class.security_group_exist?(@resource_group_name, @sec_grp_name)
+          expect(response).to be == false
+        end
+      end
+
+      context 'security group get api call raises some unknown exception' do
+        before do
+          @resource_group_name = 'rgrp-2'
+          @sec_grp_name = 'sec_grp_2'
+          request = {}
+          response = OpenStruct.new({
+            'body'=>'{"error": {"code": "SomeProblemOccurred"}}'
+          })
+          body = 'MsRestAzure::AzureOperationError'
+          @error = MsRestAzure::AzureOperationError.new(request, response, body)
+          network_resource_client = double("NetworkResourceClient",
+            :network_security_groups => double)
+          allow(network_resource_client.network_security_groups).to receive(
+            :get).and_raise(@error)
+          allow(@dummy_class).to receive(:network_resource_client).and_return(
+            network_resource_client)
+        end
+
+        it 'raises error' do
+          expect { @dummy_class.security_group_exist?(@resource_group_name, @sec_grp_name)
+            }.to raise_error(@error)
+        end
+      end
+    end
+
     describe "resource group" do
       before do
         allow(@service).to receive(:security_group_exist?).and_return(true)

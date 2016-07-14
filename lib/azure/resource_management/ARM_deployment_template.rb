@@ -49,10 +49,11 @@ module Azure::ARM
           ]
         }
       }
-      random_no = rand(101..4080)
-      incremental=0  
+      #Security Rule priority can be set between 100 and 4096
+      rule_no = 300
+      incremental=0
       for port in tcp_ports
-        random_no  = random_no + 1
+        rule_no  = rule_no + 2
         sec_grp_json["properties"]["securityRules"].push(
         {
           "name" => vm_name + '_rule_' + incremental.to_s,
@@ -64,7 +65,7 @@ module Azure::ARM
           "sourceAddressPrefix" => "*",
           "destinationAddressPrefix" => "*",
           "access" => "Allow",
-          "priority" => random_no,
+          "priority" => rule_no,
           "direction" => "Inbound"
           }
         }
