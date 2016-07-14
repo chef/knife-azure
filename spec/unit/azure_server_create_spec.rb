@@ -1137,26 +1137,54 @@ describe Chef::Knife::AzureServerCreate do
     end
 
     describe "fetch_extension" do
-      context "extension not found" do
-        before do
-          Chef::Config[:knife][:azure_vm_name] = 'vm01'
-          @role = fetch_role_from_xml
+      context "Chef Extension not found" do
+        context 'other extension(s) available' do
+          context 'example-1' do
+            before do
+              Chef::Config[:knife][:azure_vm_name] = 'vm01'
+              @role = fetch_role_from_xml
+            end
+
+            it "returns nil" do
+              response = @server_instance.fetch_extension(@role)
+              expect(response).to be nil
+            end
+          end
+
+          context 'example-2' do
+            before do
+              Chef::Config[:knife][:azure_vm_name] = 'vm07'
+              @role = fetch_role_from_xml
+            end
+
+            it "returns nil" do
+              response = @server_instance.fetch_extension(@role)
+              expect(response).to be nil
+            end
+          end
         end
 
-        it "returns nil" do
-          response = @server_instance.fetch_extension(@role)
-          expect(response).to be nil
+        context 'none of the extension available' do
+          before do
+            Chef::Config[:knife][:azure_vm_name] = 'vm06'
+            @role = fetch_role_from_xml
+          end
+
+          it "returns nil" do
+            response = @server_instance.fetch_extension(@role)
+            expect(response).to be nil
+          end
         end
       end
 
-      context "extension found" do
+      context "Chef Extension found" do
         context "for Windows platform" do
           before do
             Chef::Config[:knife][:azure_vm_name] = 'vm02'
             @role = fetch_role_from_xml
           end
 
-          it "returns the extension" do
+          it "returns the Windows Chef Extension" do
             response = @server_instance.fetch_extension(@role)
             expect(response).to_not be nil
             expect(response.at_css('HandlerName').text).to eq \
@@ -1170,7 +1198,7 @@ describe Chef::Knife::AzureServerCreate do
             @role = fetch_role_from_xml
           end
 
-          it "returns the extension" do
+          it "returns the Linux Chef Extension" do
             response = @server_instance.fetch_extension(@role)
             expect(response).to_not be nil
             expect(response.at_css('HandlerName').text).to eq \

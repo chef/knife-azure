@@ -46,7 +46,7 @@ class Chef
               print "\n\nWaiting for the Chef Extension to become available/ready"
               wait_until_extension_available(Time.now, 10)
               print "\n\nWaiting for the first chef-client run"
-              fetch_chef_client_logs(Time.now, 30)
+              fetch_chef_client_logs(Time.now, 35)
             end
           else
             raise ArgumentError, 'Please specify the SERVER name which needs to be bootstrapped via the Chef Extension.' if @name_args.length == 0
@@ -68,7 +68,7 @@ class Chef
             })
 
           ## if azure_dns_name value not passed by user then set it using the hostedservicename attribute from the retrieved server's object ##
-          config[:azure_dns_name] = server.hostedservicename if locate_config_value(:azure_dns_name).nil?
+          config[:azure_dns_name] = server.hostedservicename if locate_config_value(:azure_dns_name).nil? && (server.instance_of? Azure::Role)
           if !server.instance_of? Azure::Role
             if server.nil?
               if !locate_config_value(:azure_dns_name).nil?

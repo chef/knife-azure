@@ -331,7 +331,7 @@ class Chef
                 sleep 30
                 fetch_chef_client_logs(fetch_process_start_time, fetch_process_wait_timeout)
               else
-                ## wait time exceeded 30 minutes timeout ##
+                ## wait time exceeded maximum threshold set for the wait timeout ##
                 ui.error "\nchef-client run logs could not be fetched since fetch process exceeded wait timeout of #{fetch_process_wait_timeout} minutes.\n"
               end
             end
