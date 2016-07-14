@@ -786,21 +786,21 @@ describe Chef::Knife::AzureServerCreate do
 
         it "sets secret parameter" do
           expect(@bootstrap).to receive(:run)
-          Chef::Config[:knife][:secret] = 'test_secret'
+          Chef::Config[:knife][:encrypted_data_bag_secret] = 'test_secret'
           @server_instance.run
           expect(@bootstrap.config[:secret]).to be == 'test_secret'
         end
 
         it "sets secret file parameter" do
           expect(@bootstrap).to receive(:run)
-          Chef::Config[:knife][:secret_file] = 'test_secret_file'
+          Chef::Config[:knife][:encrypted_data_bag_secret_file] = 'test_secret_file'
           @server_instance.run
           expect(@bootstrap.config[:secret_file]).to be == 'test_secret_file'
         end
 
         it "sets secret file parameter" do
           expect(@bootstrap).to receive(:run)
-          Chef::Config[:knife][:secret_file] = 'test_secret_file'
+          Chef::Config[:knife][:encrypted_data_bag_secret_file] = 'test_secret_file'
           @server_instance.run
           expect(@bootstrap.config[:secret_file]).to be == 'test_secret_file'
         end
