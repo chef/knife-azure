@@ -251,7 +251,7 @@ knife azurerm server create
 ```
 This will create 3 VMs with names: `MyNewVMName0`, `MyNewVMName1` and `MyNewVMName2`
 
-### --extended-logs option
+#### --extended-logs option
 User can pass `--extended-logs` option to show detailed chef convergence logs.
 ```
 --extended-logs              Optional. It shows chef convergence logs in detail.
@@ -266,7 +266,7 @@ knife azurerm server create
 -x myuser -P mypassword
 ```
 
-### --tcp-endpoints option
+#### --tcp-endpoints option
 User can pass `--tcp-endpoints` option to open the comma seperated ports passed with the option
 ```
 -t, --tcp-endpoints PORT_LIST    Comma-separated list of TCP ports to open e.g. '100,123'
@@ -281,7 +281,7 @@ knife azurerm server create
 -x myuser -P mypassword
 ```
 
-### --ohai-hints option
+#### --ohai-hints option
 User can pass `--ohai-hints` option to set the hints passed in the ohai configuration of the target node
 ```
 --ohai-hints HINT_OPTIONS    Hint option names to be set in Ohai configuration of the target node.
@@ -301,7 +301,7 @@ knife azurerm server create
 -x myuser -P mypassword
 ```
 
-### --azure-storage-account
+#### --azure-storage-account
 User can pass `--azure-storage-account` option to set storage account name.
 ```
 -a, --azure-storage-account NAME Required for advanced server-create option.
