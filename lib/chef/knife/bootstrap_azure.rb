@@ -132,23 +132,16 @@ class Chef
               end
             end
 
-            if my_role
-              ## given role found ##
-              if my_role.at_css("GuestAgentStatus Status").text == "Ready"
-                extension = fetch_extension(my_role)
-                if extension.nil?
-                  ## Chef Extension could not be found in the given role which means it is not available/ready yet ##
-                  sleep_and_wait = true
-                else
-                  ## Chef Extension found in the given role which means it is available/ready now ##
-                  ## do nothing and proceed further with chef-client run logs fetch process ##
-                end
-              else
-                ## GuestAgent not ready yet ##
+            if my_role && my_role.at_css("GuestAgentStatus Status").text == "Ready"
+              ## given role found and also GuestAgent is ready ##
+              extension = fetch_extension(my_role)
+              ## check if Chef Extension not found (which means it is not available/ready yet) then sleep_and_wait OR
+              ## if found (which means it is available/ready now) then proceed further with chef-client run logs fetch process ##
+              if extension.nil?
                 sleep_and_wait = true
               end
             else
-              ## given role could not be found ##
+              ## given role not found or GuestAgent not ready yet ##
               sleep_and_wait = true
             end
           else
