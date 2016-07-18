@@ -245,6 +245,105 @@ class Chef
         end
         file
       end
+
+      def fetch_deployment
+        deployment_name = service.deployment_name(locate_config_value(:azure_dns_name))
+        deployment = service.deployment("hostedservices/#{locate_config_value(:azure_dns_name)}/deployments/#{deployment_name}")
+
+        deployment
+      end
+
+      def fetch_role
+        deployment = fetch_deployment
+
+        if deployment.at_css('Deployment Name') != nil
+          role_list_xml =  deployment.css('RoleInstanceList RoleInstance')
+          role_list_xml.each do |role|
+            if role.at_css("RoleName").text == (locate_config_value(:azure_vm_name) || @name_args[0])
+              return role
+            end
+          end
+        end
+        return nil
+      end
+
+      def fetch_extension(role)
+        ext_list_xml = role.css("ResourceExtensionStatusList ResourceExtensionStatus")
+        return nil if ext_list_xml.nil?
+
+        ext_list_xml.each do |ext|
+          if ext.at_css("HandlerName").text == "Chef.Bootstrap.WindowsAzure.LinuxChefClient" || ext.at_css("HandlerName").text == "Chef.Bootstrap.WindowsAzure.ChefClient"
+            return ext
+          end
+        end
+        return nil
+      end
+
+      def fetch_substatus(extension)
+        return nil if extension.at_css("ExtensionSettingStatus SubStatusList SubStatus").nil?
+        substatus_list_xml = extension.css("ExtensionSettingStatus SubStatusList SubStatus")
+        substatus_list_xml.each do |substatus|
+          if substatus.at_css("Name").text == "Chef Client run logs"
+            return substatus
+          end
+        end
+        return nil
+      end
+
+      def fetch_chef_client_logs(fetch_process_start_time, fetch_process_wait_timeout)
+        ## fetch server details ##
+        role = fetch_role
+        if role != nil
+          ## fetch Chef Extension details deployed on the server ##
+          ext = fetch_extension(role)
+          if ext != nil
+            ## fetch substatus field which contains the chef-client run logs ##
+            substatus = fetch_substatus(ext)
+            if substatus != nil
+              ## chef-client run logs becomes available ##
+              name = substatus.at_css("Name").text
+              status = substatus.at_css("Status").text
+              message = substatus.at_css("Message").text
+
+              ## printing the logs ##
+              puts "\n\n******** Please find the chef-client run details below ********\n\n"
+              print "----> chef-client run status: "
+              case status
+              when "Success"
+                ## chef-client run succeeded ##
+                color = :green
+              when "Error"
+                ## chef-client run failed ##
+                color = :red
+              when "Transitioning"
+                ## chef-client run did not complete within maximum timeout of 30 minutes ##
+                ## fetch whatever logs available under the chef-client.log file ##
+                color = :yellow
+              end
+              puts "#{ui.color(status, color, :bold)}"
+              puts "----> chef-client run logs: "
+              puts "\n#{message}\n"  ## message field of substatus contains the chef-client run logs ##
+            else
+              ## unavailability of the substatus field indicates that chef-client run is not completed yet on the server ##
+              fetch_process_wait_time = ((Time.now - fetch_process_start_time) / 60).round
+              if fetch_process_wait_time <= fetch_process_wait_timeout  ## wait for maximum 30 minutes until chef-client run logs becomes available ##
+                print "#{ui.color('.', :bold)}"
+                sleep 30
+                fetch_chef_client_logs(fetch_process_start_time, fetch_process_wait_timeout)
+              else
+                ## wait time exceeded maximum threshold set for the wait timeout ##
+                ui.error "\nchef-client run logs could not be fetched since fetch process exceeded wait timeout of #{fetch_process_wait_timeout} minutes.\n"
+              end
+            end
+          else
+            ## Chef Extension could not be found ##
+            ui.error("Unable to find Chef extension under role #{locate_config_value(:azure_vm_name) || @name_args[0]}.")
+          end
+        else
+          ## server could not be found ##
+          ui.error("chef-client run logs could not be fetched since role #{locate_config_value(:azure_vm_name) || @name_args[0]} could not be found.")
+        end
+      end
     end
   end
 end

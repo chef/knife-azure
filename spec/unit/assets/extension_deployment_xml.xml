@@ -277,6 +277,201 @@
         </ResourceExtensionStatus>
       </ResourceExtensionStatusList>
     </RoleInstance>
+    <RoleInstance>
+      <RoleName>vm05</RoleName>
+      <InstanceName>vm05</InstanceName>
+      <InstanceStatus>ReadyRole</InstanceStatus>
+      <InstanceUpgradeDomain>0</InstanceUpgradeDomain>
+      <InstanceFaultDomain>0</InstanceFaultDomain>
+      <InstanceSize>Small</InstanceSize>
+      <InstanceStateDetails/>
+      <IpAddress>88.12.110.32</IpAddress>
+      <InstanceEndpoints>
+        <InstanceEndpoint>
+          <Name>SSH</Name>
+          <Vip>29.13.17.45</Vip>
+          <PublicPort>22</PublicPort>
+          <LocalPort>22</LocalPort>
+          <Protocol>tcp</Protocol>
+        </InstanceEndpoint>
+      </InstanceEndpoints>
+      <PowerState>Started</PowerState>
+      <HostName>vm05</HostName>
+      <RemoteAccessCertificateThumbprint>88gfshbhebf7e9c5ddsdd8efvsffcsf4e3</RemoteAccessCertificateThumbprint>
+      <GuestAgentStatus>
+        <ProtocolVersion>1.0</ProtocolVersion>
+        <Timestamp>2014-03-12T04:43:09Z</Timestamp>
+        <GuestAgentVersion>WALinuxAgent-2.0.14</GuestAgentVersion>
+        <Status>NotReady</Status>
+        <FormattedMessage>
+          <Language>en-US</Language>
+          <Message>GuestAgent is not running.</Message>
+        </FormattedMessage>
+      </GuestAgentStatus>
+      <ResourceExtensionStatusList>
+        <ResourceExtensionStatus>
+          <HandlerName>ABC.XYZ</HandlerName>
+          <Version>1.2.3.4</Version>
+          <Status>Ready</Status>
+          <ExtensionSettingStatus>
+            <Timestamp>2015-03-20T05:32:10Z</Timestamp>
+            <Name>ABC handler</Name>
+            <Operation>ABC run</Operation>
+            <Status>Success</Status>
+            <FormattedMessage>
+              <Language>en-US</Language>
+              <Message>ABC enabled</Message>
+            </FormattedMessage>
+          </ExtensionSettingStatus>
+        </ResourceExtensionStatus>
+      </ResourceExtensionStatusList>
+    </RoleInstance>
+    <RoleInstance>
+      <RoleName>vm06</RoleName>
+      <InstanceName>vm06</InstanceName>
+      <InstanceStatus>ReadyRole</InstanceStatus>
+      <InstanceUpgradeDomain>0</InstanceUpgradeDomain>
+      <InstanceFaultDomain>0</InstanceFaultDomain>
+      <InstanceSize>Small</InstanceSize>
+      <InstanceStateDetails/>
+      <IpAddress>88.22.110.32</IpAddress>
+      <InstanceEndpoints>
+        <InstanceEndpoint>
+          <Name>SSH</Name>
+          <Vip>29.33.17.45</Vip>
+          <PublicPort>22</PublicPort>
+          <LocalPort>22</LocalPort>
+          <Protocol>tcp</Protocol>
+        </InstanceEndpoint>
+      </InstanceEndpoints>
+      <PowerState>Started</PowerState>
+      <HostName>vm06</HostName>
+      <RemoteAccessCertificateThumbprint>88gfshbhebf7e9c5dds33324e3</RemoteAccessCertificateThumbprint>
+      <GuestAgentStatus>
+        <ProtocolVersion>1.0</ProtocolVersion>
+        <Timestamp>2015-03-12T04:43:09Z</Timestamp>
+        <GuestAgentVersion>WALinuxAgent-2.0.14</GuestAgentVersion>
+        <Status>Ready</Status>
+        <FormattedMessage>
+          <Language>en-US</Language>
+          <Message>GuestAgent is running and accepting new configurations.</Message>
+        </FormattedMessage>
+      </GuestAgentStatus>
+      <ResourceExtensionStatusList/>
+    </RoleInstance>
+    <RoleInstance>
+      <RoleName>vm07</RoleName>
+      <InstanceName>vm07</InstanceName>
+      <InstanceStatus>ReadyRole</InstanceStatus>
+      <InstanceUpgradeDomain>0</InstanceUpgradeDomain>
+      <InstanceFaultDomain>0</InstanceFaultDomain>
+      <InstanceSize>Small</InstanceSize>
+      <InstanceStateDetails/>
+      <IpAddress>98.12.120.32</IpAddress>
+      <InstanceEndpoints>
+        <InstanceEndpoint>
+          <Name>SSH</Name>
+          <Vip>19.13.27.45</Vip>
+          <PublicPort>22</PublicPort>
+          <LocalPort>22</LocalPort>
+          <Protocol>tcp</Protocol>
+        </InstanceEndpoint>
+      </InstanceEndpoints>
+      <PowerState>Started</PowerState>
+      <HostName>vm07</HostName>
+      <RemoteAccessCertificateThumbprint>88gfshbhebf7e958esf91ss453</RemoteAccessCertificateThumbprint>
+      <GuestAgentStatus>
+        <ProtocolVersion>1.0</ProtocolVersion>
+        <Timestamp>2013-03-12T04:43:09Z</Timestamp>
+        <GuestAgentVersion>WALinuxAgent-2.0.14</GuestAgentVersion>
+        <Status>Ready</Status>
+        <FormattedMessage>
+          <Language>en-US</Language>
+          <Message>GuestAgent is running and accepting new configurations.</Message>
+        </FormattedMessage>
+      </GuestAgentStatus>
+      <ResourceExtensionStatusList>
+        <ResourceExtensionStatus>
+          <HandlerName>XYZ.DEF</HandlerName>
+          <Version>2.9.2.1</Version>
+          <Status>Ready</Status>
+          <ExtensionSettingStatus>
+            <Timestamp>2013-03-20T05:32:10Z</Timestamp>
+            <Name>DEF handler</Name>
+            <Operation>DEF run</Operation>
+            <Status>Success</Status>
+            <FormattedMessage>
+              <Language>en-US</Language>
+              <Message>DEF enabled</Message>
+            </FormattedMessage>
+          </ExtensionSettingStatus>
+        </ResourceExtensionStatus>
+        <ResourceExtensionStatus>
+          <HandlerName>ABC.XYZ</HandlerName>
+          <Version>1.2.3.4</Version>
+          <Status>Ready</Status>
+          <ExtensionSettingStatus>
+            <Timestamp>2013-03-20T05:32:10Z</Timestamp>
+            <Name>ABC handler</Name>
+            <Operation>ABC run</Operation>
+            <Status>Success</Status>
+            <FormattedMessage>
+              <Language>en-US</Language>
+              <Message>ABC enabled</Message>
+            </FormattedMessage>
+          </ExtensionSettingStatus>
+        </ResourceExtensionStatus>
+      </ResourceExtensionStatusList>
+    </RoleInstance>
+    <RoleInstance>
+      <RoleName>vm08</RoleName>
+      <InstanceName>vm08</InstanceName>
+      <InstanceStatus>ReadyRole</InstanceStatus>
+      <InstanceUpgradeDomain>0</InstanceUpgradeDomain>
+      <InstanceFaultDomain>0</InstanceFaultDomain>
+      <InstanceSize>Small</InstanceSize>
+      <InstanceStateDetails/>
+      <IpAddress>77.19.123.76</IpAddress>
+      <InstanceEndpoints>
+        <InstanceEndpoint>
+          <Name>RDP</Name>
+          <Vip>91.10.28.30</Vip>
+          <PublicPort>3389</PublicPort>
+          <LocalPort>3389</LocalPort>
+          <Protocol>tcp</Protocol>
+        </InstanceEndpoint>
+      </InstanceEndpoints>
+      <PowerState>Started</PowerState>
+      <HostName>vm08</HostName>
+      <RemoteAccessCertificateThumbprint>58dubfshrgsdfcvf7e9cbh34fdf4f</RemoteAccessCertificateThumbprint>
+      <GuestAgentStatus>
+        <ProtocolVersion>1.0</ProtocolVersion>
+        <Timestamp>2015-04-12T05:45:05Z</Timestamp>
+        <GuestAgentVersion>WAWindowsAgent-2.0.14</GuestAgentVersion>
+        <Status>Ready</Status>
+        <FormattedMessage>
+          <Language>en-US</Language>
+          <Message>GuestAgent is running and accepting new configurations.</Message>
+        </FormattedMessage>
+      </GuestAgentStatus>
+      <ResourceExtensionStatusList>
+        <ResourceExtensionStatus>
+          <HandlerName>Chef.Bootstrap.WindowsAzure.ChefClient</HandlerName>
+          <Version>1211.12.100</Version>
+          <Status>Ready</Status>
+          <ExtensionSettingStatus>
+            <Timestamp>2015-04-19T07:48:49Z</Timestamp>
+            <Name>Chef Extension Handler</Name>
+            <Operation>chef-client-run</Operation>
+            <Status>Success</Status>
+            <FormattedMessage>
+              <Language>en-US</Language>
+              <Message>chef-service enabled</Message>
+            </FormattedMessage>
+          </ExtensionSettingStatus>
+        </ResourceExtensionStatus>
+      </ResourceExtensionStatusList>
+    </RoleInstance>
   </RoleInstanceList>
   <UpgradeDomainCount>1</UpgradeDomainCount>
   <RoleList>
@@ -525,6 +720,198 @@
       <RoleSize>Small</RoleSize>
       <ProvisionGuestAgent>true</ProvisionGuestAgent>
     </Role>
+    <Role i:type="PersistentVMRole">
+      <RoleName>vm05</RoleName>
+      <OsVersion/>
+      <RoleType>PersistentVMRole</RoleType>
+      <ConfigurationSets>
+        <ConfigurationSet i:type="NetworkConfigurationSet">
+          <ConfigurationSetType>NetworkConfiguration</ConfigurationSetType>
+          <InputEndpoints>
+            <InputEndpoint>
+              <LocalPort>22</LocalPort>
+              <Name>SSH</Name>
+              <Port>22</Port>
+              <Protocol>tcp</Protocol>
+              <Vip>29.13.17.45</Vip>
+              <EnableDirectServerReturn>false</EnableDirectServerReturn>
+            </InputEndpoint>
+          </InputEndpoints>
+          <SubnetNames/>
+        </ConfigurationSet>
+      </ConfigurationSets>
+      <ResourceExtensionReferences>
+        <ResourceExtensionReference>
+          <ReferenceName>ABCClient</ReferenceName>
+          <Publisher>ABC.XYZ</Publisher>
+          <Name>ABCClient</Name>
+          <Version>1.2.3.4</Version>
+          <ResourceExtensionParameterValues>
+            <ResourceExtensionParameterValue>
+              <Key>PublicParams</Key>
+              <Value>PublicParamsValue</Value>
+              <Type>Public</Type>
+            </ResourceExtensionParameterValue>
+          </ResourceExtensionParameterValues>
+          <State>Enable</State>
+        </ResourceExtensionReference>
+      </ResourceExtensionReferences>
+      <DataVirtualHardDisks/>
+      <OSVirtualHardDisk>
+        <HostCaching>ReadWrite</HostCaching>
+        <DiskName>disk_fsf4jh5-1098-338-238b-3bjd2dsfgf9</DiskName>
+        <MediaLink>http://mystorage.blob.core.windows.net/vhds/disk_fsf4jh5-1098-338-238b-3bjd2dsfgf9.vhd</MediaLink>
+        <SourceImageName>MyImage</SourceImageName>
+        <OS>Linux</OS>
+      </OSVirtualHardDisk>
+      <RoleSize>Small</RoleSize>
+      <ProvisionGuestAgent>true</ProvisionGuestAgent>
+    </Role>
+    <Role i:type="PersistentVMRole">
+      <RoleName>vm06</RoleName>
+      <OsVersion/>
+      <RoleType>PersistentVMRole</RoleType>
+      <ConfigurationSets>
+        <ConfigurationSet i:type="NetworkConfigurationSet">
+          <ConfigurationSetType>NetworkConfiguration</ConfigurationSetType>
+          <InputEndpoints>
+            <InputEndpoint>
+              <LocalPort>22</LocalPort>
+              <Name>SSH</Name>
+              <Port>22</Port>
+              <Protocol>tcp</Protocol>
+              <Vip>29.33.17.45</Vip>
+              <EnableDirectServerReturn>false</EnableDirectServerReturn>
+            </InputEndpoint>
+          </InputEndpoints>
+          <SubnetNames/>
+        </ConfigurationSet>
+      </ConfigurationSets>
+      <ResourceExtensionReferences/>
+      <DataVirtualHardDisks/>
+      <OSVirtualHardDisk>
+        <HostCaching>ReadWrite</HostCaching>
+        <DiskName>disk_gsf4jh5-1098-338-238b-3bjd2dsfgf7</DiskName>
+        <MediaLink>http://mystorage.blob.core.windows.net/vhds/disk_gsf4jh5-1098-338-238b-3bjd2dsfgf7</MediaLink>
+        <SourceImageName>MyImage</SourceImageName>
+        <OS>Linux</OS>
+      </OSVirtualHardDisk>
+      <RoleSize>Small</RoleSize>
+      <ProvisionGuestAgent>true</ProvisionGuestAgent>
+    </Role>
+    <Role i:type="PersistentVMRole">
+      <RoleName>vm07</RoleName>
+      <OsVersion/>
+      <RoleType>PersistentVMRole</RoleType>
+      <ConfigurationSets>
+        <ConfigurationSet i:type="NetworkConfigurationSet">
+          <ConfigurationSetType>NetworkConfiguration</ConfigurationSetType>
+          <InputEndpoints>
+            <InputEndpoint>
+              <LocalPort>22</LocalPort>
+              <Name>SSH</Name>
+              <Port>22</Port>
+              <Protocol>tcp</Protocol>
+              <Vip>19.13.27.45</Vip>
+              <EnableDirectServerReturn>false</EnableDirectServerReturn>
+            </InputEndpoint>
+          </InputEndpoints>
+          <SubnetNames/>
+        </ConfigurationSet>
+      </ConfigurationSets>
+      <ResourceExtensionReferences>
+        <ResourceExtensionReference>
+          <ReferenceName>DEFClient</ReferenceName>
+          <Publisher>XYZ.DEF</Publisher>
+          <Name>DEFClient</Name>
+          <Version>2.9.2.1</Version>
+          <ResourceExtensionParameterValues>
+            <ResourceExtensionParameterValue>
+              <Key>PublicParams</Key>
+              <Value>PublicParamsValue</Value>
+              <Type>Public</Type>
+            </ResourceExtensionParameterValue>
+          </ResourceExtensionParameterValues>
+          <State>Enable</State>
+        </ResourceExtensionReference>
+        <ResourceExtensionReference>
+          <ReferenceName>ABCClient</ReferenceName>
+          <Publisher>ABC.XYZ</Publisher>
+          <Name>ABCClient</Name>
+          <Version>1.2.3.4</Version>
+          <ResourceExtensionParameterValues>
+            <ResourceExtensionParameterValue>
+              <Key>PublicParams</Key>
+              <Value>PublicParamsValue</Value>
+              <Type>Public</Type>
+            </ResourceExtensionParameterValue>
+          </ResourceExtensionParameterValues>
+          <State>Enable</State>
+        </ResourceExtensionReference>
+      </ResourceExtensionReferences>
+      <DataVirtualHardDisks/>
+      <OSVirtualHardDisk>
+        <HostCaching>ReadWrite</HostCaching>
+        <DiskName>disk_fsf4jh5-1098-3jh8-238b-45cjd2dsfgf9</DiskName>
+        <MediaLink>http://mystorage.blob.core.windows.net/vhds/disk_fsf4jh5-1098-3jh8-238b-45cjd2dsfgf9</MediaLink>
+        <SourceImageName>MyImage</SourceImageName>
+        <OS>Linux</OS>
+      </OSVirtualHardDisk>
+      <RoleSize>Small</RoleSize>
+      <ProvisionGuestAgent>true</ProvisionGuestAgent>
+    </Role>
+    <Role i:type="PersistentVMRole">
+      <RoleName>vm08</RoleName>
+      <OsVersion/>
+      <RoleType>PersistentVMRole</RoleType>
+      <ConfigurationSets>
+        <ConfigurationSet i:type="NetworkConfigurationSet">
+          <ConfigurationSetType>NetworkConfiguration</ConfigurationSetType>
+          <InputEndpoints>
+            <InputEndpoint>
+              <LocalPort>22</LocalPort>
+              <Name>RDP</Name>
+              <Port>3389</Port>
+              <Protocol>tcp</Protocol>
+              <Vip>91.10.28.30</Vip>
+              <EnableDirectServerReturn>false</EnableDirectServerReturn>
+            </InputEndpoint>
+          </InputEndpoints>
+          <SubnetNames/>
+        </ConfigurationSet>
+      </ConfigurationSets>
+      <ResourceExtensionReferences>
+        <ResourceExtensionReference>
+          <ReferenceName>ChefClient</ReferenceName>
+          <Publisher>Chef.Bootstrap.WindowsAzure</Publisher>
+          <Name>ChefClient</Name>
+          <Version>1211.12.100</Version>
+          <ResourceExtensionParameterValues>
+            <ResourceExtensionParameterValue>
+              <Key>PublicParams</Key>
+              <Value>PublicParamsValue</Value>
+              <Type>Public</Type>
+            </ResourceExtensionParameterValue>
+            <ResourceExtensionParameterValue>
+              <Key>PrivateParams</Key>
+              <Value>PrivateParamsValue</Value>
+              <Type>Private</Type>
+            </ResourceExtensionParameterValue>
+          </ResourceExtensionParameterValues>
+          <State>Enable</State>
+        </ResourceExtensionReference>
+      </ResourceExtensionReferences>
+      <DataVirtualHardDisks/>
+      <OSVirtualHardDisk>
+        <HostCaching>ReadWrite</HostCaching>
+        <DiskName>disk_332ygdv-0387-37bv-994a-hgdflf34f43wd1</DiskName>
+        <MediaLink>http://mystorage.blob.core.windows.net/vhds/disk_332ygdv-0387-37bv-994a-hgdflf34f43wd1</MediaLink>
+        <SourceImageName>MyImage2</SourceImageName>
+        <OS>Windows</OS>
+      </OSVirtualHardDisk>
+      <RoleSize>Small</RoleSize>
+      <ProvisionGuestAgent>true</ProvisionGuestAgent>
+    </Role>
   </RoleList>
   <SdkVersion/>
   <Locked>false</Locked>
@@ -558,10 +945,34 @@
       <IsDnsProgrammed>true</IsDnsProgrammed>
       <Name>vm04ContractContract</Name>
     </VirtualIP>
+    <VirtualIP>
+      <Address>29.13.17.45</Address>
+      <IsDnsProgrammed>true</IsDnsProgrammed>
+      <Name>vm05ContractContract</Name>
+    </VirtualIP>
+    <VirtualIP>
+      <Address>29.33.17.45</Address>
+      <IsDnsProgrammed>true</IsDnsProgrammed>
+      <Name>vm06ContractContract</Name>
+    </VirtualIP>
+    <VirtualIP>
+      <Address>19.13.27.45</Address>
+      <IsDnsProgrammed>true</IsDnsProgrammed>
+      <Name>vm07ContractContract</Name>
+    </VirtualIP>
+    <VirtualIP>
+      <Address>91.10.28.30</Address>
+      <IsDnsProgrammed>true</IsDnsProgrammed>
+      <Name>vm08ContractContract</Name>
+    </VirtualIP>
   </VirtualIPs>
   <InternalDnsSuffix>vm01.d8.internal.cloudapp.net</InternalDnsSuffix>
   <InternalDnsSuffix>vm02.d8.internal.cloudapp.net</InternalDnsSuffix>
   <InternalDnsSuffix>vm03.d8.internal.cloudapp.net</InternalDnsSuffix>
   <InternalDnsSuffix>vm04.d8.internal.cloudapp.net</InternalDnsSuffix>
+  <InternalDnsSuffix>vm05.d8.internal.cloudapp.net</InternalDnsSuffix>
+  <InternalDnsSuffix>vm06.d8.internal.cloudapp.net</InternalDnsSuffix>
+  <InternalDnsSuffix>vm07.d8.internal.cloudapp.net</InternalDnsSuffix>
+  <InternalDnsSuffix>vm08.d8.internal.cloudapp.net</InternalDnsSuffix>
   <LoadBalancers/>
 </Deployment>

@@ -95,26 +95,119 @@ describe Chef::Knife::BootstrapAzure do
     end
 
     context "server name specified do exist" do
-      before do
-        allow(@server_role).to receive_message_chain(
-          :os_type, :downcase).and_return('windows')
-        allow(@server_role).to receive(
-          :deployname).and_return('')
-        allow(@server_role).to receive(:role_xml).and_return('')
-        allow(@bootstrap_azure_instance).to receive(
-          :get_chef_extension_version)
-        allow(@bootstrap_azure_instance).to receive(
-          :get_chef_extension_public_params)
-        allow(@bootstrap_azure_instance).to receive(
-          :get_chef_extension_private_params)
+      context "hosted service name is specified in Chef::Config[:knife] object" do
+        before do
+          @server_role.hostedservicename = 'my_new_dns'
+          allow(@server_role).to receive_message_chain(
+            :os_type, :downcase).and_return('windows')
+          allow(@server_role).to receive(
+            :deployname).and_return('')
+          allow(@server_role).to receive(:role_xml).and_return('')
+          allow(@bootstrap_azure_instance).to receive(
+            :get_chef_extension_version)
+          allow(@bootstrap_azure_instance).to receive(
+            :get_chef_extension_public_params)
+          allow(@bootstrap_azure_instance).to receive(
+            :get_chef_extension_private_params)
+        end
+
+        it "does not raise error when server name do exist and does not re-initializes azure_dns_name in bootstrap_azure_instance's config using server object" do
+          expect(@bootstrap_azure_instance.name_args.length).to be == 1
+          expect(@service).to receive(:add_extension)
+          expect(@service).to receive(
+            :find_server).and_return(@server_role)
+          expect {@bootstrap_azure_instance.run}.not_to raise_error
+          expect(Chef::Config[:knife][:azure_dns_name]).to be == 'test-dns-01'
+          expect(@bootstrap_azure_instance.config[:azure_dns_name]).to be == nil
+        end
       end
 
-      it "does not raise error when server name do exist" do
+      context "hosted service name is not specified in Chef::Config[:knife] object or anywhere else" do
+        before do
+          Chef::Config[:knife].delete(:azure_dns_name)
+          @server_role.hostedservicename = 'my_new_dns'
+          allow(@server_role).to receive_message_chain(
+            :os_type, :downcase).and_return('windows')
+          allow(@server_role).to receive(
+            :deployname).and_return('')
+          allow(@server_role).to receive(:role_xml).and_return('')
+          allow(@bootstrap_azure_instance).to receive(
+            :get_chef_extension_version)
+          allow(@bootstrap_azure_instance).to receive(
+            :get_chef_extension_public_params)
+          allow(@bootstrap_azure_instance).to receive(
+            :get_chef_extension_private_params)
+        end
+
+        it "does not raise error when server name do exist and initializes azure_dns_name in bootstrap_azure_instance's config using server object" do
+          expect(@bootstrap_azure_instance.name_args.length).to be == 1
+          expect(@service).to receive(:add_extension)
+          expect(@service).to receive(
+            :find_server).and_return(@server_role)
+          expect {@bootstrap_azure_instance.run}.not_to raise_error
+          expect(@bootstrap_azure_instance.config[:azure_dns_name]).to be == 'my_new_dns'
+          expect(Chef::Config[:knife][:azure_dns_name]).to be == nil
+        end
+      end
+    end
+  end
+
+  describe 'extended_logs functionality' do
+    context 'when extended_logs is false' do
+      it 'deploys the Chef Extension on the server but then does not wait and fetch the chef-client run logs' do
         expect(@bootstrap_azure_instance.name_args.length).to be == 1
+        expect(@bootstrap_azure_instance).to receive(:set_ext_params)
         expect(@service).to receive(:add_extension)
-        expect(@service).to receive(
-          :find_server).and_return(@server_role)
-        expect {@bootstrap_azure_instance.run}.not_to raise_error
+        expect(@bootstrap_azure_instance).to_not receive(:print)
+        expect(@bootstrap_azure_instance).to_not receive(:wait_until_extension_available)
+        expect(@bootstrap_azure_instance).to_not receive(:fetch_chef_client_logs)
+        @bootstrap_azure_instance.run
+      end
+    end
+
+    context 'when extended_logs is true' do
+      before do
+        Chef::Config[:knife][:extended_logs] = true
+      end
+
+      it 'deploys the Chef Extension on the server and also waits and fetch the chef-client run logs' do
+        expect(@bootstrap_azure_instance.name_args.length).to be == 1
+        expect(@bootstrap_azure_instance).to receive(:set_ext_params)
+        expect(@service).to receive(:add_extension)
+        expect(@bootstrap_azure_instance).to receive(:print).exactly(2).times
+        expect(@bootstrap_azure_instance).to receive(:wait_until_extension_available)
+        expect(@bootstrap_azure_instance).to receive(:fetch_chef_client_logs)
+        @bootstrap_azure_instance.run
+      end
+
+      context 'when Chef Extension becomes available/ready within the prescribed timeout' do
+        it 'successfully deploys the Chef Extension on the server and also successfully fetches the chef-client run logs without raising any error' do
+          expect(@bootstrap_azure_instance.name_args.length).to be == 1
+          expect(@bootstrap_azure_instance).to receive(:set_ext_params)
+          expect(@service).to receive(:add_extension)
+          expect(@bootstrap_azure_instance).to receive(:print).exactly(2).times
+          expect(@bootstrap_azure_instance).to receive(:wait_until_extension_available)
+          expect(@bootstrap_azure_instance).to receive(:fetch_chef_client_logs)
+          expect { @bootstrap_azure_instance.run }.to_not raise_error
+        end
+      end
+
+      context 'when Chef Extension does not become available/ready within the prescribed timeout' do
+        it 'successfully deploys the Chef Extension on the server but fails to fetch the chef-client run logs as extension is unavailable and so it raises error and exits' do
+          expect(@bootstrap_azure_instance.name_args.length).to be == 1
+          expect(@bootstrap_azure_instance).to receive(:set_ext_params)
+          expect(@service).to receive(:add_extension)
+          expect(@bootstrap_azure_instance).to receive(:print).exactly(1).times
+          allow(@bootstrap_azure_instance).to receive(
+            :wait_until_extension_available).and_raise(
+              "\nUnable to fetch chef-client run logs as Chef Extension seems to be unavailable even after 11 minutes of its deployment.\n"
+            )
+          expect(@bootstrap_azure_instance).to_not receive(:fetch_chef_client_logs)
+          expect(@bootstrap_azure_instance.ui).to receive(:error).with(
+            "\nUnable to fetch chef-client run logs as Chef Extension seems to be unavailable even after 11 minutes of its deployment.\n"
+          )
+          expect { @bootstrap_azure_instance.run }.to raise_error(SystemExit)
+        end
       end
     end
   end
@@ -407,6 +500,218 @@ describe Chef::Knife::BootstrapAzure do
         expect(@service).to_not receive(:get_latest_chef_extension_version)
         response = @bootstrap_azure_instance.get_chef_extension_version('MyChefClient')
         expect(response).to be == '1210.*'
+      end
+    end
+  end
+
+  describe 'wait_until_extension_available' do
+    context 'extension_availaibility_wait_time has exceeded the extension_availaibility_wait_timeout' do
+      before do
+        @start_time = Time.now
+      end
+
+      it 'raises error saying unable to fetch chef-client run logs' do
+        expect { @bootstrap_azure_instance.wait_until_extension_available(@start_time, -1) }.to raise_error(
+          "\nUnable to fetch chef-client run logs as Chef Extension seems to be unavailable even after -1 minutes of its deployment.\n"
+        )
+      end
+    end
+
+    context 'extension_availaibility_wait_time has not exceeded the extension_availaibility_wait_timeout' do
+      context 'deployment not available' do
+        before do
+          @start_time = Time.now
+          deployment = Nokogiri::XML('')
+          allow(@bootstrap_azure_instance).to receive(:fetch_deployment).and_return(deployment)
+        end
+
+        it 'goes to sleep and then re-invokes the wait_until_extension_available method recursively' do
+          mock_recursive_call
+          expect(@bootstrap_azure_instance).to receive(:print).exactly(1).times
+          expect(@bootstrap_azure_instance).to receive(:sleep).with(30)
+          expect(@bootstrap_azure_instance).to receive(
+            :wait_until_extension_available).with(@start_time, 10)
+          @bootstrap_azure_instance.wait_until_extension_available_mocked(@start_time, 10)
+        end
+      end
+
+      context 'deployment available' do
+        context 'given role not available' do
+          before do
+            @start_time = Time.now
+            deployment = Nokogiri::XML readFile('extension_deployment_xml.xml')
+            allow(@bootstrap_azure_instance).to receive(:fetch_deployment).and_return(deployment)
+          end
+
+          it 'goes to sleep and then re-invokes the wait_until_extension_available method recursively' do
+            mock_recursive_call
+            expect(@bootstrap_azure_instance).to receive(:print).exactly(1).times
+            expect(@bootstrap_azure_instance).to receive(:sleep).with(30)
+            expect(@bootstrap_azure_instance).to receive(
+              :wait_until_extension_available).with(@start_time, 10)
+            @bootstrap_azure_instance.wait_until_extension_available_mocked(@start_time, 10)
+          end
+        end
+
+        context 'given role available' do
+          context 'GuestAgent not ready' do
+            before do
+              @bootstrap_azure_instance.name_args = [ 'vm05' ]
+              @start_time = Time.now
+              deployment = Nokogiri::XML readFile('extension_deployment_xml.xml')
+              allow(@bootstrap_azure_instance).to receive(:fetch_deployment).and_return(deployment)
+            end
+
+            it 'goes to sleep and then re-invokes the wait_until_extension_available method recursively' do
+              mock_recursive_call
+              expect(@bootstrap_azure_instance).to receive(:print).exactly(1).times
+              expect(@bootstrap_azure_instance).to receive(:sleep).with(30)
+              expect(@bootstrap_azure_instance).to receive(
+                :wait_until_extension_available).with(@start_time, 10)
+              @bootstrap_azure_instance.wait_until_extension_available_mocked(@start_time, 10)
+            end
+          end
+
+          context 'GuestAgent ready' do
+            context 'none of the extension status available' do
+              before do
+                @bootstrap_azure_instance.name_args = [ 'vm06' ]
+                @start_time = Time.now
+                deployment = Nokogiri::XML readFile('extension_deployment_xml.xml')
+                allow(@bootstrap_azure_instance).to receive(:fetch_deployment).and_return(deployment)
+              end
+
+              it 'goes to sleep and then re-invokes the wait_until_extension_available method recursively' do
+                mock_recursive_call
+                expect(@bootstrap_azure_instance).to receive(:print).exactly(1).times
+                expect(@bootstrap_azure_instance).to receive(:sleep).with(30)
+                expect(@bootstrap_azure_instance).to receive(
+                  :wait_until_extension_available).with(@start_time, 10)
+                @bootstrap_azure_instance.wait_until_extension_available_mocked(@start_time, 10)
+              end
+            end
+
+            context 'extension status(es) available apart from extension status for Chef Extension' do
+              context 'example-1' do
+                before do
+                  @bootstrap_azure_instance.name_args = [ 'vm01' ]
+                  @start_time = Time.now
+                  deployment = Nokogiri::XML readFile('extension_deployment_xml.xml')
+                  allow(@bootstrap_azure_instance).to receive(:fetch_deployment).and_return(deployment)
+                end
+
+                it 'goes to sleep and then re-invokes the wait_until_extension_available method recursively' do
+                  mock_recursive_call
+                  expect(@bootstrap_azure_instance).to receive(:print).exactly(1).times
+                  expect(@bootstrap_azure_instance).to receive(:sleep).with(30)
+                  expect(@bootstrap_azure_instance).to receive(
+                    :wait_until_extension_available).with(@start_time, 10)
+                  @bootstrap_azure_instance.wait_until_extension_available_mocked(@start_time, 10)
+                end
+              end
+
+              context 'example-2' do
+                before do
+                  @bootstrap_azure_instance.name_args = [ 'vm07' ]
+                  @start_time = Time.now
+                  deployment = Nokogiri::XML readFile('extension_deployment_xml.xml')
+                  allow(@bootstrap_azure_instance).to receive(:fetch_deployment).and_return(deployment)
+                end
+
+                it 'goes to sleep and then re-invokes the wait_until_extension_available method recursively' do
+                  mock_recursive_call
+                  expect(@bootstrap_azure_instance).to receive(:print).exactly(1).times
+                  expect(@bootstrap_azure_instance).to receive(:sleep).with(30)
+                  expect(@bootstrap_azure_instance).to receive(
+                    :wait_until_extension_available).with(@start_time, 10)
+                  @bootstrap_azure_instance.wait_until_extension_available_mocked(@start_time, 10)
+                end
+              end
+            end
+
+            context 'extension status(es) available including extension status for Chef Extension' do
+              context 'example-1' do
+                before do
+                  @bootstrap_azure_instance.name_args = [ 'vm02' ]
+                  @start_time = Time.now
+                  deployment = Nokogiri::XML readFile('extension_deployment_xml.xml')
+                  allow(@bootstrap_azure_instance).to receive(:fetch_deployment).and_return(deployment)
+                end
+
+                it 'does not go to sleep and does not re-invoke the wait_until_extension_available method recursively' do
+                  mock_recursive_call
+                  expect(@bootstrap_azure_instance).to_not receive(:print)
+                  expect(@bootstrap_azure_instance).to_not receive(:sleep).with(30)
+                  expect(@bootstrap_azure_instance).to_not receive(
+                    :wait_until_extension_available).with(@start_time, 10)
+                  @bootstrap_azure_instance.wait_until_extension_available_mocked(@start_time, 10)
+                end
+              end
+
+              context 'example-2' do
+                before do
+                  @bootstrap_azure_instance.name_args = [ 'vm03' ]
+                  @start_time = Time.now
+                  deployment = Nokogiri::XML readFile('extension_deployment_xml.xml')
+                  allow(@bootstrap_azure_instance).to receive(:fetch_deployment).and_return(deployment)
+                end
+
+                it 'does not go to sleep and does not re-invoke the wait_until_extension_available method recursively' do
+                  mock_recursive_call
+                  expect(@bootstrap_azure_instance).to_not receive(:print)
+                  expect(@bootstrap_azure_instance).to_not receive(:sleep).with(30)
+                  expect(@bootstrap_azure_instance).to_not receive(
+                    :wait_until_extension_available).with(@start_time, 10)
+                  @bootstrap_azure_instance.wait_until_extension_available_mocked(@start_time, 10)
+                end
+              end
+
+              context 'example-3' do
+                before do
+                  @bootstrap_azure_instance.name_args = [ 'vm08' ]
+                  @start_time = Time.now
+                  deployment = Nokogiri::XML readFile('extension_deployment_xml.xml')
+                  allow(@bootstrap_azure_instance).to receive(:fetch_deployment).and_return(deployment)
+                end
+
+                it 'does not go to sleep and does not re-invoke the wait_until_extension_available method recursively' do
+                  mock_recursive_call
+                  expect(@bootstrap_azure_instance).to_not receive(:print)
+                  expect(@bootstrap_azure_instance).to_not receive(:sleep).with(30)
+                  expect(@bootstrap_azure_instance).to_not receive(
+                    :wait_until_extension_available).with(@start_time, 10)
+                  @bootstrap_azure_instance.wait_until_extension_available_mocked(@start_time, 10)
+                end
+              end
+            end
+          end
+        end
+      end
+    end
+  end
+
+  describe 'fetch_deployment' do
+    before do
+      allow(@bootstrap_azure_instance.service).to receive(
+        :deployment_name).and_return('deploymentExtension')
+      deployment = Nokogiri::XML readFile('extension_deployment_xml.xml')
+      allow(@bootstrap_azure_instance.service).to receive(
+        :deployment).and_return(deployment)
+    end
+
+    it 'returns the deployment' do
+      response = @bootstrap_azure_instance.fetch_deployment
+      expect(response).to_not be nil
+      expect(response.at_css('Deployment Name').text).to be == 'deploymentExtension'
+      expect(response.css('RoleInstanceList RoleInstance RoleName').class).to be == Nokogiri::XML::NodeSet
+      expect(response.css('RoleInstanceList RoleInstance RoleName').children.count).to be == 8
+    end
+  end
+
+  def mock_recursive_call
+    @bootstrap_azure_instance.instance_eval do
+      class << self
+        alias_method :wait_until_extension_available_mocked, :wait_until_extension_available
       end
     end
   end

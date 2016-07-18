@@ -97,7 +97,7 @@ class Chef
               :description => "Optional. It shows chef convergence logs in detail."
 
           end
-  	end
+        end
       end
     end
   end
