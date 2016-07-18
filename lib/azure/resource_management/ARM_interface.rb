@@ -225,6 +225,22 @@ module Azure
         end
       end
 
+      def security_group_exist?(resource_group_name, security_group_name)
+        begin
+          network_resource_client.network_security_groups.get(resource_group_name, security_group_name)
+          return true
+        rescue MsRestAzure::AzureOperationError => error
+          if error.body
+            err_json = JSON.parse(error.response.body)
+            if err_json['error']['code'] == "ResourceNotFound"
+              return false
+            else
+              raise error
+            end
+          end
+        end
+      end
+
       def resource_group_exist?(resource_group_name)
         resource_management_client.resource_groups.check_existence(resource_group_name)
       end
@@ -328,6 +344,20 @@ module Azure
             params[:azure_vnet_name],
             params[:azure_vnet_subnet_name]
           )
+          if params[:tcp_endpoints]
+            if @platform == 'Windows'
+              params[:tcp_endpoints] = params[:tcp_endpoints] + ",3389"
+            else
+              params[:tcp_endpoints] = params[:tcp_endpoints] + ",22,16001"
+            end
+            random_no = rand(100..1000)
+            params[:azure_sec_group_name] = params[:azure_vm_name] + '_sec_grp_' + random_no.to_s
+            if security_group_exist?(params[:azure_resource_group_name], params[:azure_sec_group_name])
+              random_no = rand(100..1000)
+              params[:azure_sec_group_name] = params[:azure_vm_name] + '_sec_grp_' + random_no.to_s
+            end
+          end
+
           ui.log("Creating Virtual Machine....")
           deployment = create_virtual_machine_using_template(params)
           ui.log("Virtual Machine creation successfull.") unless deployment.nil?
@@ -400,68 +430,6 @@ module Azure
 
         deployment = resource_management_client.deployments.create_or_update(params[:azure_resource_group_name], "#{params[:azure_vm_name]}_deploy", deploy_params).value!.body
         deployment
-      end
-
-      def create_network_security_group(resource_group_name, vm_name, service_location)
-        network_security_group_prop_format = NetworkSecurityGroupPropertiesFormat.new
-        network_security_group = NetworkSecurityGroup.new
-        network_security_group.name = vm_name
-        network_security_group.location = service_location
-        network_security_group.properties = network_security_group_prop_format
-
-        begin
-          nsg = network_resource_client.network_security_groups.create_or_update(
-            resource_group_name,
-            network_security_group.name,
-            network_security_group
-          ).value!.body
-        rescue Exception => e
-          Chef::Log.error("Failed to create the Network Security Group -- exception being rescued: #{e.to_s}")
-          backtrace_message = "#{e.class}: #{e}\n#{e.backtrace.join("\n")}"
-          Chef::Log.debug("#{backtrace_message}")
-        end
-
-        security_rules = []
-        if @platform == 'Windows'
-          security_rules << add_security_rule('3389', "RDP", 1000, resource_group_name, vm_name, network_security_group)
-        else
-          security_rules << add_security_rule("22", "SSH", 1000, resource_group_name, vm_name, network_security_group)
-        end
-        network_security_group_prop_format.default_security_rules = security_rules
-
-        nsg
-      end
-
-      def add_security_rule(port, description, priority, resource_group_name, vm_name, network_security_group)
-        security_rule_props = SecurityRulePropertiesFormat.new
-        security_rule_props.description = description
-        security_rule_props.destination_port_range = port
-        security_rule_props.protocol = "Tcp"
-        security_rule_props.source_port_range = "*"
-        security_rule_props.source_address_prefix = "*"
-        security_rule_props.destination_address_prefix = "*"
-        security_rule_props.access = "Allow"
-        security_rule_props.priority = priority
-        security_rule_props.direction = "Inbound"
-
-        security_rule = SecurityRule.new
-        security_rule.name = vm_name
-        security_rule.properties = security_rule_props
-
-        begin
-          security_rule = network_resource_client.security_rules.create_or_update(
-            resource_group_name,
-            network_security_group.name,
-            security_rule.name,
-            security_rule
-          ).value!.body
-        rescue Exception => e
-          Chef::Log.error("Failed to create the Security Rule -- exception being rescued: #{e.to_s}")
-          backtrace_message = "#{e.class}: #{e}\n#{e.backtrace.join("\n")}"
-          Chef::Log.debug("#{backtrace_message}")
-        end
-
-        security_rule
       end
 
       def create_vm_extension(params)

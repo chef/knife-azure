@@ -140,7 +140,7 @@ module QueryAzureMock
     end
   end
 
-  def stub_network_resource_client(platform = nil, resource_group_name = nil, vnet_name = nil)
+  def stub_network_resource_client(platform = nil, resource_group_name = nil, vnet_name = nil, security_group_name = nil)
     network_resource_client = double("NetworkResourceClient",
       :public_ipaddresses => double,
       :network_security_groups => double,
@@ -154,6 +154,8 @@ module QueryAzureMock
       :body => nil,
       :properties => nil,
       :ip_address => nil).and_return(stub_vm_public_ip_get_response)
+    allow(network_resource_client.network_security_groups).to receive(
+      :get).and_return("security_group")
     allow(network_resource_client.network_security_groups).to receive_message_chain(
       :get,
       :value!,

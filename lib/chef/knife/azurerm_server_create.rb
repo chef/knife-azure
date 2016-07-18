@@ -163,6 +163,11 @@ class Chef
         :long => "--cert-path PATH",
         :description => "SSL Certificate Path"
 
+      option :tcp_endpoints,
+        :short => "-t PORT_LIST",
+        :long => "--tcp-endpoints PORT_LIST",
+        :description => "Comma-separated list of TCP ports to open e.g. '80,433'"
+
       option :server_count,
         :long => "--server-count COUNT",
         :description => "Number of servers to create with same configuration.
@@ -225,6 +230,10 @@ class Chef
           :server_count => locate_config_value(:server_count)
         }
 
+        if locate_config_value(:tcp_endpoints)
+          server_def[:tcp_endpoints] = locate_config_value(:tcp_endpoints)
+        end
+        
         server_def[:azure_storage_account] = locate_config_value(:azure_vm_name) if server_def[:azure_storage_account].nil?
         server_def[:azure_storage_account] = server_def[:azure_storage_account].gsub(/[!@#$%^&*()_-]/,'')
 

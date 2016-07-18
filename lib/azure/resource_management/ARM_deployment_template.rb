@@ -36,6 +36,45 @@ module Azure::ARM
       hints_json
     end
 
+    def tcp_ports(tcp_ports, vm_name)
+      tcp_ports = tcp_ports.split(",")
+      sec_grp_json = 
+        {
+          "apiVersion" => "[variables('apiVersion')]",
+          "type" => "Microsoft.Network/networkSecurityGroups",
+          "name" => "[variables('secgrpname')]",
+          "location" => "[resourceGroup().location]",
+          "properties" => {
+          "securityRules" => [
+          ]
+        }
+      }
+      #Security Rule priority can be set between 100 and 4096
+      rule_no = 300
+      incremental=0
+      for port in tcp_ports
+        rule_no  = rule_no + 2
+        sec_grp_json["properties"]["securityRules"].push(
+        {
+          "name" => vm_name + '_rule_' + incremental.to_s,
+          "properties"=> {
+          "description" => "Port Provided by user",
+          "protocol" => "Tcp",
+          "sourcePortRange" => "*",
+          "destinationPortRange" => port,
+          "sourceAddressPrefix" => "*",
+          "destinationAddressPrefix" => "*",
+          "access" => "Allow",
+          "priority" => rule_no,
+          "direction" => "Inbound"
+          }
+        }
+        )
+        incremental=incremental+1
+      end
+      sec_grp_json
+    end
+    
     def create_deployment_template(params)
       if params[:chef_extension_public_param][:bootstrap_options][:chef_node_name]
         chef_node_name = "[concat(parameters('chef_node_name'),copyIndex())]"
@@ -62,6 +101,7 @@ module Azure::ARM
         # Extension Variables
         extName = "[concat(variables('vmName'),copyIndex(),'/', variables('vmExtensionName'))]"
         depExt = "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'), copyIndex())]"
+
       else
         # publicIPAddresses Resource Variables
         publicIPAddressName = "[variables('publicIPAddressName')]"
@@ -84,6 +124,11 @@ module Azure::ARM
         extName = "[concat(variables('vmName'),'/', variables('vmExtensionName'))]"
         depExt = "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
       end
+
+      # NetworkSecurityGroups Resource Variables 
+      sec_grp_name = "[variables('secgrpname')]"
+      sec_grp = "[concat('Microsoft.Network/networkSecurityGroups/', variables('secgrpname'))]"
+      sec_grp_id = "[resourceId('Microsoft.Network/networkSecurityGroups/', variables('secgrpname'))]"
 
       resource_ids = {}
       hint_names = params[:chef_extension_public_param][:hints]
@@ -260,6 +305,7 @@ module Azure::ARM
           "vmName"=> "#{params[:azure_vm_name]}",
           "vmSize"=> "#{params[:vm_size]}",
           "virtualNetworkName"=> "#{params[:vnet_config][:virtualNetworkName]}",
+          "secgrpname" => "#{params[:azure_sec_group_name]}",
           "vnetID"=> "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
           "subnetRef"=> "[concat(variables('vnetID'),'/subnets/',variables('subnetName'))]",
           "apiVersion"=> "2015-06-15",
@@ -438,6 +484,20 @@ module Azure::ARM
           }
         ]
       }
+
+      if params[:tcp_endpoints]
+        sec_grp_json = tcp_ports(params[:tcp_endpoints], params[:azure_vm_name])
+        template['resources'].insert(1,sec_grp_json)
+        length = template['resources'].length.to_i - 1
+        for i in 0..length do
+          if template['resources'][i]['type'] == "Microsoft.Network/virtualNetworks"
+            template['resources'][i] = template['resources'][i].merge({"dependsOn" => [sec_grp]})
+          end
+          if template['resources'][i]['type'] == "Microsoft.Network/networkInterfaces"
+            template['resources'][i]['properties'] = template['resources'][i]['properties'].merge({"networkSecurityGroup" => {"id" => sec_grp_id}})
+          end
+        end
+      end
 
       if params[:chef_extension_public_param][:extendedLogs] == "true"
         template['resources'].each do |resource|

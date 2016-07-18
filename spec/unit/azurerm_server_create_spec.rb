@@ -374,8 +374,85 @@ describe Chef::Knife::AzurermServerCreate do
             :set_default_image_reference!)
     end
 
+    describe 'security_group_exist' do
+      module Azure
+        module ARM
+          class DummyClass < Azure::ResourceManagement::ARMInterface
+          end
+        end
+      end
+
+      before do
+        @dummy_class = Azure::ARM::DummyClass.new
+      end
+
+      context 'given security group exist under the given resource group' do
+        before do
+          @resource_group_name = 'rgrp-2'
+          @vnet_name = 'vnet-2'
+          @sec_grp_name = 'sec_grp_2'
+          allow(@dummy_class).to receive(:network_resource_client).and_return(
+            stub_network_resource_client(nil, @resource_group_name, @vnet_name, @sec_grp_name))
+        end
+
+        it 'returns true' do
+          response = @dummy_class.security_group_exist?(@resource_group_name, @sec_grp_name)
+          expect(response).to be == true
+        end
+      end
+
+      context 'given security group does not exist under the given resource group' do
+        before do
+          @resource_group_name = 'rgrp-2'
+          @sec_grp_name = 'sec_grp_2'
+          request = {}
+          response = OpenStruct.new({
+            'body'=>'{"error": {"code": "ResourceNotFound"}}'
+          })
+          body = 'MsRestAzure::AzureOperationError'
+          error = MsRestAzure::AzureOperationError.new(request, response, body)
+          network_resource_client = double("NetworkResourceClient",
+            :network_security_groups => double)
+          allow(network_resource_client.network_security_groups).to receive(
+            :get).and_raise(error)
+          allow(@dummy_class).to receive(:network_resource_client).and_return(
+            network_resource_client)
+        end
+
+        it 'returns false' do
+          response = @dummy_class.security_group_exist?(@resource_group_name, @sec_grp_name)
+          expect(response).to be == false
+        end
+      end
+
+      context 'security group get api call raises some unknown exception' do
+        before do
+          @resource_group_name = 'rgrp-2'
+          @sec_grp_name = 'sec_grp_2'
+          request = {}
+          response = OpenStruct.new({
+            'body'=>'{"error": {"code": "SomeProblemOccurred"}}'
+          })
+          body = 'MsRestAzure::AzureOperationError'
+          @error = MsRestAzure::AzureOperationError.new(request, response, body)
+          network_resource_client = double("NetworkResourceClient",
+            :network_security_groups => double)
+          allow(network_resource_client.network_security_groups).to receive(
+            :get).and_raise(@error)
+          allow(@dummy_class).to receive(:network_resource_client).and_return(
+            network_resource_client)
+        end
+
+        it 'raises error' do
+          expect { @dummy_class.security_group_exist?(@resource_group_name, @sec_grp_name)
+            }.to raise_error(@error)
+        end
+      end
+    end
+
     describe "resource group" do
       before do
+        allow(@service).to receive(:security_group_exist?).and_return(true)
         allow(@service).to receive(:virtual_machine_exist?).and_return(true)
       end
 
@@ -421,6 +498,7 @@ describe Chef::Knife::AzurermServerCreate do
         end
 
         it "create virtual machine when it does not exist already and does not show chef-client run logs when extended_logs is false" do
+          allow(@service).to receive(:security_group_exist?).and_return(true)
           expect(@service).to receive(:virtual_machine_exist?).and_return(false)
           expect(@service).to receive(:create_vnet_config)
           expect(@service).to receive(:create_virtual_machine_using_template).exactly(1).and_return(stub_deployments_create_response)
@@ -433,6 +511,7 @@ describe Chef::Knife::AzurermServerCreate do
 
         it "create virtual machine when it does not exist already and also shows chef-client run logs when extended_logs is true" do
           @arm_server_instance.config[:extended_logs] = true
+          allow(@service).to receive(:security_group_exist?).and_return(true)
           expect(@service).to receive(:virtual_machine_exist?).and_return(false)
           expect(@service).to receive(:create_vnet_config)
           expect(@service).to receive(:create_virtual_machine_using_template).exactly(1).and_return(stub_deployments_create_response)
@@ -446,6 +525,7 @@ describe Chef::Knife::AzurermServerCreate do
         it "skip virtual machine creation when it does exist already" do
           expect(@service).to receive(:virtual_machine_exist?).and_return(true)
           expect(@service).to_not receive(:create_vnet_config)
+          expect(@service).to_not receive(:security_group_exist?)
           expect(@service).to_not receive(:create_virtual_machine_using_template)
           expect(@service).to_not receive(:show_server)
           @arm_server_instance.run
@@ -477,6 +557,7 @@ describe Chef::Knife::AzurermServerCreate do
         it "skip virtual machine creation when it does exist already" do
           expect(@service).to receive(:virtual_machine_exist?).and_return(true)
           expect(@service).to_not receive(:create_vnet_config)
+          expect(@service).to_not receive(:security_group_exist?)
           expect(@service).to_not receive(:create_virtual_machine_using_template)
           expect(@service).to_not receive(:show_server)
           @arm_server_instance.run
@@ -497,6 +578,7 @@ describe Chef::Knife::AzurermServerCreate do
             :create_resource_group).and_return(
               stub_resource_group_create_response)
 
+          allow(@service).to receive(:security_group_exist?).and_return(false)
           allow(@service).to receive(:virtual_machine_exist?).and_return(false)
         end
 
@@ -606,89 +688,6 @@ describe Chef::Knife::AzurermServerCreate do
           expect(@service).to receive(:network_resource_client).and_return(stub_network_resource_client(@platform))
           response = @service.vm_default_port(@params)
           expect(response).to be == '3389'
-        end
-      end
-    end
-
-    describe "create_network_security_group" do
-      it "successfully creates network security group" do
-        @platform = 'NA'
-        expect(@service).to receive(:network_resource_client).and_return(stub_network_resource_client('NA'))
-        expect(@service).to receive(
-          :add_security_rule).and_return(
-            stub_default_security_rule_add_response('NA'))
-        response = @service.create_network_security_group(
-          @params[:azure_resource_group_name],
-          @params[:azure_vm_name],
-          @params[:azure_service_location])
-        expect(response.name).to_not be nil
-        expect(response.id).to_not be nil
-        expect(response.location).to_not be nil
-        expect(response.properties).to_not be nil
-        expect(response.properties.default_security_rules).to be_a(Array)
-        expect(response.properties.default_security_rules).to be == ['nsg_default_security_rules']
-        expect(response.properties.security_rules).to be nil
-      end
-    end
-
-    describe "add_security_rule" do
-      context "for Linux" do
-        before do
-          @platform = 'Linux'
-        end
-
-        it "successfully adds default security rule" do
-          expect(@service).to receive(:network_resource_client).and_return(stub_network_resource_client(@platform))
-          response = @service.add_security_rule(
-            @params[:ssh_port],
-            "Port desc",
-            "1000",
-            @params[:azure_resource_group_name],
-            @params[:azure_vm_name],
-            stub_network_security_group_create_response)
-          expect(response.name).to_not be nil
-          expect(response.id).to_not be nil
-          expect(response.location).to_not be nil
-          expect(response.properties).to_not be nil
-          expect(response.properties.description).to be == 'Linux port.'
-          expect(response.properties.destination_port_range).to be == '22'
-          expect(response.properties.protocol).to be == 'Tcp'
-          expect(response.properties.source_port_range).to be == '*'
-          expect(response.properties.source_address_prefix).to be == '*'
-          expect(response.properties.destination_address_prefix).to be == '*'
-          expect(response.properties.access).to be == 'Allow'
-          expect(response.properties.priority).to be == 1000
-          expect(response.properties.direction).to be == 'Inbound'
-        end
-      end
-
-      context "for Windows" do
-        before do
-          @platform = 'Windows'
-        end
-
-        it "successfully adds default security rule" do
-          expect(@service).to receive(:network_resource_client).and_return(stub_network_resource_client(@platform))
-          response = @service.add_security_rule(
-            @params[:rdp_port],
-            "Port desc",
-            "1000",
-            @params[:azure_resource_group_name],
-            @params[:azure_vm_name],
-            stub_network_security_group_create_response)
-            expect(response.name).to_not be nil
-            expect(response.id).to_not be nil
-            expect(response.location).to_not be nil
-            expect(response.properties).to_not be nil
-            expect(response.properties.description).to be == 'Windows port.'
-            expect(response.properties.destination_port_range).to be == '3389'
-            expect(response.properties.protocol).to be == 'Tcp'
-            expect(response.properties.source_port_range).to be == '*'
-            expect(response.properties.source_address_prefix).to be == '*'
-            expect(response.properties.destination_address_prefix).to be == '*'
-            expect(response.properties.access).to be == 'Allow'
-            expect(response.properties.priority).to be == 1000
-            expect(response.properties.direction).to be == 'Inbound'
         end
       end
     end
