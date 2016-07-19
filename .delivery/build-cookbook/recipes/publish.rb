@@ -16,4 +16,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-include_recipe 'delivery-truck::publish'
+
+execute 'gem build knife-azure.gemspec' do
+  cwd "#{node['delivery']['workspace']['repo']}"
+  command "gem build knife-azure.gemspec -V"
+end

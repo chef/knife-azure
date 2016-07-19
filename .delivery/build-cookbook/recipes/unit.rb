@@ -16,4 +16,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-include_recipe 'delivery-truck::unit'
+execute 'bundle install' do
+  cwd "#{node['delivery']['workspace']['repo']}"
+  command 'bundle install --path .bundle'
+  notifies :run, 'execute[unit_test]', :immediately
+end
+
+execute 'unit_test' do
+  cwd "#{node['delivery']['workspace']['repo']}"
+  command 'bundle exec rspec spec/unit'
+  action :nothing
+end
