@@ -84,11 +84,11 @@ class Chef
             option :encrypted_data_bag_secret,
               :short => "-s SECRET",
               :long  => "--secret ",
-              :description => "The secret key to use to encrypt data bag item values.  Can also be defaulted in your config with the key 'secret'"
+              :description => "The secret key to use to encrypt data bag item values. Will be rendered on the node at c:/chef/encrypted_data_bag_secret and set in the rendered client config."
 
             option :encrypted_data_bag_secret_file,
               :long => "--secret-file SECRET_FILE",
-              :description => "A file containing the secret key to use to encrypt data bag item values.  Can also be defaulted in your config with the key 'secret_file'"
+              :description => "A file containing the secret key to use to encrypt data bag item values. Will be rendered on the node at c:/chef/encrypted_data_bag_secret and set in the rendered client config."
 
             option :extended_logs,
               :long => "--extended-logs",
