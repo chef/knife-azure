@@ -841,14 +841,14 @@ describe Chef::Knife::AzurermServerCreate do
       context "get_chef_extension_public_params" do
         it "sets bootstrapVersion variable in public_config" do
           @arm_server_instance.config[:bootstrap_version] = '12.4.2'
-          public_config = {:client_rb=>"chef_server_url \t \"https://localhost:443\"\nvalidation_client_name\t\"chef-validator\"", :runlist=>"\"getting-started\"", extendedLogs: "false", :custom_json_attr=>{}, :hints=>["vm_name", "public_fqdn", "platform"], :bootstrap_options=>{:chef_server_url=>"https://localhost:443", :validation_client_name=>"chef-validator", :bootstrap_version=>"12.4.2"}}
+          public_config = {:client_rb=>"chef_server_url \t \"https://localhost:443\"\nvalidation_client_name\t\"chef-validator\"", :runlist=>"\"getting-started\"", extendedLogs: "false", :custom_json_attr=>{}, :hints=>["vm_name", "public_fqdn", "platform"], :bootstrap_options=>{:encrypted_data_bag_secret => nil,:chef_server_url=>"https://localhost:443", :validation_client_name=>"chef-validator", :bootstrap_version=>"12.4.2"}}
 
           response = @arm_server_instance.get_chef_extension_public_params
           expect(response).to be == public_config
         end
 
         it "sets encrypted_databag_secret in public config" do
-          @arm_server_instance.config[:secret] = "secrettext"
+          @arm_server_instance.config[:encrypted_data_bag_secret] = "secrettext"
           public_config = {:client_rb=>"chef_server_url \t \"https://localhost:443\"\nvalidation_client_name\t\"chef-validator\"", :runlist=>"\"getting-started\"", extendedLogs: "false", :custom_json_attr=>{}, :hints=>["vm_name", "public_fqdn", "platform"], :bootstrap_options=>{:encrypted_data_bag_secret=>"secrettext", :chef_server_url=>"https://localhost:443", :validation_client_name=>"chef-validator"}}
 
           response = @arm_server_instance.get_chef_extension_public_params
@@ -856,7 +856,7 @@ describe Chef::Knife::AzurermServerCreate do
         end
 
         it "sets encrypted_databag_secret_file in public config" do
-          @arm_server_instance.config[:secret_file] = File.dirname(__FILE__) + "/assets/secret_file"
+          @arm_server_instance.config[:encrypted_data_bag_secret_file] = File.dirname(__FILE__) + "/assets/secret_file"
           public_config = {:client_rb=>"chef_server_url \t \"https://localhost:443\"\nvalidation_client_name\t\"chef-validator\"", :runlist=>"\"getting-started\"", extendedLogs: "false", :custom_json_attr=>{}, :hints=>["vm_name", "public_fqdn", "platform"], :bootstrap_options=>{:encrypted_data_bag_secret=>"PgIxStCmMDsuIw3ygRhmdMtStpc9EMiWisQXoP", :chef_server_url=>"https://localhost:443", :validation_client_name=>"chef-validator"}}
           response = @arm_server_instance.get_chef_extension_public_params
           expect(response).to be == public_config
@@ -864,7 +864,7 @@ describe Chef::Knife::AzurermServerCreate do
 
         it "should set extendedLogs flag to true" do
           @arm_server_instance.config[:extended_logs] = true
-          public_config = {client_rb: "chef_server_url \t \"https://localhost:443\"\nvalidation_client_name\t\"chef-validator\"", runlist: "\"getting-started\"", extendedLogs: "true", custom_json_attr: {}, :hints=>["vm_name", "public_fqdn", "platform"], bootstrap_options: { chef_server_url: "https://localhost:443", validation_client_name: "chef-validator"}}
+          public_config = {client_rb: "chef_server_url \t \"https://localhost:443\"\nvalidation_client_name\t\"chef-validator\"", runlist: "\"getting-started\"", extendedLogs: "true", custom_json_attr: {}, :hints=>["vm_name", "public_fqdn", "platform"], bootstrap_options: {:encrypted_data_bag_secret => nil, chef_server_url: "https://localhost:443", validation_client_name: "chef-validator"}}
           response = @arm_server_instance.get_chef_extension_public_params
           expect(response).to be == public_config
         end

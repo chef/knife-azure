@@ -786,21 +786,21 @@ describe Chef::Knife::AzureServerCreate do
 
         it "sets secret parameter" do
           expect(@bootstrap).to receive(:run)
-          Chef::Config[:knife][:secret] = 'test_secret'
+          Chef::Config[:knife][:encrypted_data_bag_secret] = 'test_secret'
           @server_instance.run
           expect(@bootstrap.config[:secret]).to be == 'test_secret'
         end
 
         it "sets secret file parameter" do
           expect(@bootstrap).to receive(:run)
-          Chef::Config[:knife][:secret_file] = 'test_secret_file'
+          Chef::Config[:knife][:encrypted_data_bag_secret_file] = 'test_secret_file'
           @server_instance.run
           expect(@bootstrap.config[:secret_file]).to be == 'test_secret_file'
         end
 
         it "sets secret file parameter" do
           expect(@bootstrap).to receive(:run)
-          Chef::Config[:knife][:secret_file] = 'test_secret_file'
+          Chef::Config[:knife][:encrypted_data_bag_secret_file] = 'test_secret_file'
           @server_instance.run
           expect(@bootstrap.config[:secret_file]).to be == 'test_secret_file'
         end
@@ -1251,6 +1251,161 @@ describe Chef::Knife::AzureServerCreate do
             expect(response.at_css('Message').text).to eq 'MyChefClientRunLogs'
           end
         end
+      end
+    end
+  end
+
+  describe '#load_correct_secret' do
+    context 'when encrypted_data_bag_secret_file is passed in knife.rb' do
+      it 'returns the encrypted_data_bag_secret_file passed from the knife.rb' do
+        Chef::Config[:knife][:encrypted_data_bag_secret_file] = 'knife/path'
+        allow(Chef::EncryptedDataBagItem).to receive(:load_secret).with(Chef::Config[:knife][:encrypted_data_bag_secret_file]).and_return(Chef::Config[:knife][:encrypted_data_bag_secret_file])
+        secret = @server_instance.load_correct_secret
+        expect(secret).to be == Chef::Config[:knife][:encrypted_data_bag_secret_file]
+      end
+    end
+
+    context 'when encrypted_data_bag_secret is passed in knife.rb' do
+      it 'returns the encrypted_data_bag_secret passed from the knife.rb' do
+        Chef::Config[:knife][:encrypted_data_bag_secret] = 'knife_secret'
+        secret = @server_instance.load_correct_secret
+        expect(secret).to be == Chef::Config[:knife][:encrypted_data_bag_secret]
+      end
+    end
+
+    context 'when both encrypted_data_bag_secret_file and encrypted_data_bag_secret are passed in knife.rb' do
+      it 'returns the encrypted_data_bag_secret_file passed from the knife.rb' do
+        Chef::Config[:knife][:encrypted_data_bag_secret_file] = 'knife/path'
+        Chef::Config[:knife][:encrypted_data_bag_secret] = 'knife_secret'
+        allow(Chef::EncryptedDataBagItem).to receive(:load_secret).with(Chef::Config[:knife][:encrypted_data_bag_secret_file]).and_return(Chef::Config[:knife][:encrypted_data_bag_secret_file])
+        secret = @server_instance.load_correct_secret
+        expect(secret).to be == Chef::Config[:knife][:encrypted_data_bag_secret_file]
+      end
+    end
+
+    context 'when encrypted_data_bag_secret_file is passed from CLI' do
+      it 'returns the encrypted_data_bag_secret_file passed from the CLI' do
+        @server_instance.config[:encrypted_data_bag_secret_file] = 'cli/path'
+        allow(Chef::EncryptedDataBagItem).to receive(:load_secret).with(@server_instance.config[:encrypted_data_bag_secret_file]).and_return(@server_instance.config[:encrypted_data_bag_secret_file])
+        secret = @server_instance.load_correct_secret
+        expect(secret).to be == @server_instance.config[:encrypted_data_bag_secret_file]
+      end
+    end
+
+    context 'when encrypted_data_bag_secret is passed from CLI' do
+      it 'returns the encrypted_data_bag_secret passed from the CLI' do
+        @server_instance.config[:encrypted_data_bag_secret] = 'cli_secret'
+        secret = @server_instance.load_correct_secret
+        expect(secret).to be == @server_instance.config[:encrypted_data_bag_secret]
+      end
+    end
+
+    context 'when both encrypted_data_bag_secret_file and encrypted_data_bag_secret are passed from CLI' do
+      it 'returns the encrypted_data_bag_secret_file passed from CLI' do
+        @server_instance.config[:encrypted_data_bag_secret_file] = 'cli/path'
+        @server_instance.config[:encrypted_data_bag_secret] = 'cli_secret'
+        allow(Chef::EncryptedDataBagItem).to receive(:load_secret).with(@server_instance.config[:encrypted_data_bag_secret_file]).and_return(@server_instance.config[:encrypted_data_bag_secret_file])
+        secret = @server_instance.load_correct_secret
+        expect(secret).to be == @server_instance.config[:encrypted_data_bag_secret_file]
+      end
+    end
+
+    context 'when encrypted_data_bag_secret_file and encrypted_data_bag_secret are passed from both knife.rb file and CLI' do
+      it 'returns the encrypted_data_bag_secret_file passed from the CLI' do
+        Chef::Config[:knife][:encrypted_data_bag_secret_file] = 'knife/path'
+        Chef::Config[:knife][:encrypted_data_bag_secret] = 'knife_secret'
+        @server_instance.config[:encrypted_data_bag_secret_file] = 'cli/path'
+        @server_instance.config[:encrypted_data_bag_secret] = 'cli_secret'
+        allow(Chef::EncryptedDataBagItem).to receive(:load_secret).with(@server_instance.config[:encrypted_data_bag_secret_file]).and_return(@server_instance.config[:encrypted_data_bag_secret_file])
+        allow(Chef::EncryptedDataBagItem).to receive(:load_secret).with(Chef::Config[:knife][:encrypted_data_bag_secret_file]).and_return(Chef::Config[:knife][:encrypted_data_bag_secret_file])
+        secret = @server_instance.load_correct_secret
+        expect(secret).to be == @server_instance.config[:encrypted_data_bag_secret_file]
+      end
+    end
+
+    context 'when encrypted_data_bag_secret_file is passed from both knife.rb file and CLI' do
+      it 'returns the encrypted_data_bag_secret_file passed from the CLI' do
+        Chef::Config[:knife][:encrypted_data_bag_secret_file] = 'knife/path'
+        @server_instance.config[:encrypted_data_bag_secret_file] = 'cli/path'
+        allow(Chef::EncryptedDataBagItem).to receive(:load_secret).with(@server_instance.config[:encrypted_data_bag_secret_file]).and_return(@server_instance.config[:encrypted_data_bag_secret_file])
+        allow(Chef::EncryptedDataBagItem).to receive(:load_secret).with(Chef::Config[:knife][:encrypted_data_bag_secret_file]).and_return(Chef::Config[:knife][:encrypted_data_bag_secret_file])
+        secret = @server_instance.load_correct_secret
+        expect(secret).to be == @server_instance.config[:encrypted_data_bag_secret_file]
+      end
+    end
+
+    context 'when encrypted_data_bag_secret is passed from both knife.rb file and CLI' do
+      it 'returns the encrypted_data_bag_secret passed from the CLI' do
+        Chef::Config[:knife][:encrypted_data_bag_secret] = 'knife_secret'
+        @server_instance.config[:encrypted_data_bag_secret] = 'cli_secret'
+        secret = @server_instance.load_correct_secret
+        expect(secret).to be == @server_instance.config[:encrypted_data_bag_secret]
+      end
+    end
+
+    context 'when encrypted_data_bag_secret_file is passed in knife.rb and encrypted_data_bag_secret is passed from CLI' do
+      it 'returns the encrypted_data_bag_secret passed from the CLI' do
+        Chef::Config[:knife][:encrypted_data_bag_secret_file] = 'knife/path'
+        @server_instance.config[:encrypted_data_bag_secret] = 'cli_secret'
+        allow(Chef::EncryptedDataBagItem).to receive(:load_secret).with(Chef::Config[:knife][:encrypted_data_bag_secret_file]).and_return(Chef::Config[:knife][:encrypted_data_bag_secret_file])
+        secret = @server_instance.load_correct_secret
+        expect(secret).to be == @server_instance.config[:encrypted_data_bag_secret]
+      end
+    end
+
+    context 'when encrypted_data_bag_secret is passed in knife.rb and encrypted_data_bag_secret_file is passed from CLI' do
+      it 'returns the encrypted_data_bag_secret_file passed from the CLI' do
+        Chef::Config[:knife][:encrypted_data_bag_secret] = 'knife_secret'
+        @server_instance.config[:encrypted_data_bag_secret_file] = 'cli/path'
+        allow(Chef::EncryptedDataBagItem).to receive(:load_secret).with(@server_instance.config[:encrypted_data_bag_secret_file]).and_return(@server_instance.config[:encrypted_data_bag_secret_file])
+        secret = @server_instance.load_correct_secret
+        expect(secret).to be == @server_instance.config[:encrypted_data_bag_secret_file]
+      end
+    end
+
+    context 'when encrypted_data_bag_secret_file is passed in knife.rb and encrypted_data_bag_secret_file, encrypted_data_bag_secret are passed from CLI' do
+      it 'returns the encrypted_data_bag_secret_file passed from the CLI' do
+        Chef::Config[:knife][:encrypted_data_bag_secret_file] = 'knife/path'
+        @server_instance.config[:encrypted_data_bag_secret_file] = 'cli/path'
+        @server_instance.config[:encrypted_data_bag_secret] = 'cli_secret'
+        allow(Chef::EncryptedDataBagItem).to receive(:load_secret).with(@server_instance.config[:encrypted_data_bag_secret_file]).and_return(@server_instance.config[:encrypted_data_bag_secret_file])
+        allow(Chef::EncryptedDataBagItem).to receive(:load_secret).with(Chef::Config[:knife][:encrypted_data_bag_secret_file]).and_return(Chef::Config[:knife][:encrypted_data_bag_secret_file])
+        secret = @server_instance.load_correct_secret
+        expect(secret).to be == @server_instance.config[:encrypted_data_bag_secret_file]
+      end
+    end
+
+    context 'when encrypted_data_bag_secret is passed in knife.rb and encrypted_data_bag_secret_file, encrypted_data_bag_secret are passed from CLI' do
+      it 'returns the encrypted_data_bag_secret_file passed from the CLI' do
+        Chef::Config[:knife][:encrypted_data_bag_secret] = 'knife_secret'
+        @server_instance.config[:encrypted_data_bag_secret_file] = 'cli/path'
+        @server_instance.config[:encrypted_data_bag_secret] = 'cli_secret'
+        allow(Chef::EncryptedDataBagItem).to receive(:load_secret).with(@server_instance.config[:encrypted_data_bag_secret_file]).and_return(@server_instance.config[:encrypted_data_bag_secret_file])
+        secret = @server_instance.load_correct_secret
+        expect(secret).to be == @server_instance.config[:encrypted_data_bag_secret_file]
+      end
+    end
+
+    context 'when encrypted_data_bag_secret_file and encrypted_data_bag_secret are passed in knife.rb and encrypted_data_bag_secret_file is passed from CLI' do
+      it 'returns the encrypted_data_bag_secret_file passed from the CLI' do
+        Chef::Config[:knife][:encrypted_data_bag_secret] = 'knife_secret'
+        Chef::Config[:knife][:encrypted_data_bag_secret_file] = 'knife/path'
+        @server_instance.config[:encrypted_data_bag_secret_file] = 'cli/path'
+        allow(Chef::EncryptedDataBagItem).to receive(:load_secret).with(@server_instance.config[:encrypted_data_bag_secret_file]).and_return(@server_instance.config[:encrypted_data_bag_secret_file])
+        allow(Chef::EncryptedDataBagItem).to receive(:load_secret).with(Chef::Config[:knife][:encrypted_data_bag_secret_file]).and_return(Chef::Config[:knife][:encrypted_data_bag_secret_file])
+        secret = @server_instance.load_correct_secret
+        expect(secret).to be == @server_instance.config[:encrypted_data_bag_secret_file]
+      end
+    end
+
+    context 'when encrypted_data_bag_secret_file and encrypted_data_bag_secret are passed in knife.rb and encrypted_data_bag_secret is passed from CLI' do
+      it 'returns the encrypted_data_bag_secret passed from the CLI' do
+        Chef::Config[:knife][:encrypted_data_bag_secret] = 'knife_secret'
+        Chef::Config[:knife][:encrypted_data_bag_secret_file] = 'knife/path'
+        @server_instance.config[:encrypted_data_bag_secret] = 'cli_secret'
+        allow(Chef::EncryptedDataBagItem).to receive(:load_secret).with(Chef::Config[:knife][:encrypted_data_bag_secret_file]).and_return(Chef::Config[:knife][:encrypted_data_bag_secret_file])
+        secret = @server_instance.load_correct_secret
+        expect(secret).to be == @server_instance.config[:encrypted_data_bag_secret]
       end
     end
   end

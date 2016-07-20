@@ -217,8 +217,8 @@ class Chef
           bootstrap.config[:host_key_verify] = config[:host_key_verify]
           Chef::Config[:knife][:secret] = config[:encrypted_data_bag_secret] if config[:encrypted_data_bag_secret]
           Chef::Config[:knife][:secret_file] = config[:encrypted_data_bag_secret_file] if config[:encrypted_data_bag_secret_file]
-          bootstrap.config[:secret] = locate_config_value(:secret) || locate_config_value(:encrypted_data_bag_secret)
-          bootstrap.config[:secret_file] = locate_config_value(:secret_file) || locate_config_value(:encrypted_data_bag_secret_file)
+          bootstrap.config[:secret] = locate_config_value(:encrypted_data_bag_secret)
+          bootstrap.config[:secret_file] = locate_config_value(:encrypted_data_bag_secret_file)
           bootstrap.config[:bootstrap_install_command] = locate_config_value(:bootstrap_install_command)
           bootstrap.config[:bootstrap_wget_options] = locate_config_value(:bootstrap_wget_options)
           bootstrap.config[:bootstrap_curl_options] = locate_config_value(:bootstrap_curl_options)
@@ -289,13 +289,7 @@ class Chef
           pub_config[:bootstrap_options] = {}
           pub_config[:bootstrap_options][:environment] = locate_config_value(:environment) if locate_config_value(:environment)
           pub_config[:bootstrap_options][:chef_node_name] = locate_config_value(:chef_node_name) if locate_config_value(:chef_node_name)
-
-          if ( locate_config_value(:secret_file) || locate_config_value(:encrypted_data_bag_secret_file) ) && ( !locate_config_value(:secret) || !locate_config_value(:encrypted_data_bag_secret) )
-            pub_config[:bootstrap_options][:encrypted_data_bag_secret] = Chef::EncryptedDataBagItem.load_secret(config[:secret_file])
-          elsif locate_config_value(:encrypted_data_bag_secret) || locate_config_value(:secret)
-            pub_config[:bootstrap_options][:encrypted_data_bag_secret] = locate_config_value(:encrypted_data_bag_secret) || locate_config_value(:secret)
-          end
-
+          pub_config[:bootstrap_options][:encrypted_data_bag_secret] = load_correct_secret
           pub_config[:bootstrap_options][:chef_server_url] = Chef::Config[:chef_server_url] if Chef::Config[:chef_server_url]
           pub_config[:bootstrap_options][:validation_client_name] = Chef::Config[:validation_client_name] if Chef::Config[:validation_client_name]
           pub_config[:bootstrap_options][:node_verify_api_cert] = locate_config_value(:node_verify_api_cert) ? "true" : "false" if config.key?(:node_verify_api_cert)
@@ -304,6 +298,23 @@ class Chef
           pub_config[:bootstrap_options][:bootstrap_proxy] = locate_config_value(:bootstrap_proxy) if locate_config_value(:bootstrap_proxy)
 
           pub_config
+        end
+
+        def load_correct_secret
+          knife_secret_file = Chef::Config[:knife][:encrypted_data_bag_secret_file]
+          knife_secret = Chef::Config[:knife][:encrypted_data_bag_secret]
+          cli_secret_file = config[:encrypted_data_bag_secret_file]
+          cli_secret = config[:encrypted_data_bag_secret]
+
+          #The value set in knife.rb gets set in config object too
+          #That's why setting cli objects to nil if the values are specified in knife.rb
+          cli_secret_file = nil if cli_secret_file == knife_secret_file
+          cli_secret = nil if cli_secret == knife_secret
+
+          cli_secret_file = Chef::EncryptedDataBagItem.load_secret(cli_secret_file) if cli_secret_file != nil
+          knife_secret_file = Chef::EncryptedDataBagItem.load_secret(knife_secret_file) if knife_secret_file != nil
+
+          cli_secret_file || cli_secret || knife_secret_file || knife_secret
         end
 
         def get_chef_extension_private_params

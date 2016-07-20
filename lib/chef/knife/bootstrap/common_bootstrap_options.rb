@@ -81,12 +81,12 @@ class Chef
               :long => "--azure-extension-client-config CLIENT_PATH",
               :description => "Optional. Path to a client.rb file for use by the bootstrapped node."
 
-            option :secret,
+            option :encrypted_data_bag_secret,
               :short => "-s SECRET",
               :long  => "--secret ",
               :description => "The secret key to use to encrypt data bag item values.  Can also be defaulted in your config with the key 'secret'"
 
-            option :secret_file,
+            option :encrypted_data_bag_secret_file,
               :long => "--secret-file SECRET_FILE",
               :description => "A file containing the secret key to use to encrypt data bag item values.  Can also be defaulted in your config with the key 'secret_file'"
 
