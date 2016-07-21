@@ -33,9 +33,7 @@ module Azure::ARM
         end
       end
 
-      if @platform == 'Windows'
-        hints_json['public_winrm_port'] = 5985
-      else
+      if @platform == 'Linux'
         hints_json['public_ssh_port'] = 22
       end
       hints_json
