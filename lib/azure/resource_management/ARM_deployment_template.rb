@@ -33,6 +33,9 @@ module Azure::ARM
         end
       end
 
+      if @platform == 'Linux'
+        hints_json['public_ssh_port'] = 22
+      end
       hints_json
     end
 

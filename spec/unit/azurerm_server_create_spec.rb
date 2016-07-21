@@ -1141,71 +1141,134 @@ describe Chef::Knife::AzurermServerCreate do
         :bootstrap_options => bootstrap_options,
         :extendedLogs => 'true'
       }
-      {
-        :azure_image_reference_publisher => 'OpenLogic',
-        :azure_image_reference_offer => 'CentOS',
-        :azure_image_reference_sku => '6.5',
-        :azure_image_reference_version => 'latest',
-        :ssh_user => 'ssh_user',
-        :server_count => 3,
-        :vm_size => "Standard_A1"
-      }.each do |key, value|
-          @params[key] = value
+    end
+    context 'For Linux' do
+      before do 
+        {
+          :azure_image_reference_publisher => 'OpenLogic',
+          :azure_image_reference_offer => 'CentOS',
+          :azure_image_reference_sku => '6.5',
+          :azure_image_reference_version => 'latest',
+          :ssh_user => 'ssh_user',
+          :server_count => 3,
+          :vm_size => "Standard_A1"
+        }.each do |key, value|
+            @params[key] = value
+          end
+        @service.instance_variable_set(:@platform, 'Linux')
+        @hints_json = { "vm_name" => "[reference(resourceId('Microsoft.Compute/virtualMachines', concat(variables('vmName'),copyIndex()))).osProfile.computerName]",
+        "public_fqdn" => "[reference(resourceId('Microsoft.Network/publicIPAddresses',concat(variables('publicIPAddressName'),copyIndex()))).dnsSettings.fqdn]",
+        "platform" => "[concat(reference(resourceId('Microsoft.Compute/virtualMachines', concat(variables('vmName'),copyIndex()))).storageProfile.imageReference.offer, concat(' ', reference(resourceId('Microsoft.Compute/virtualMachines', concat(variables('vmName'),copyIndex()))).storageProfile.imageReference.sku))]",
+        "public_ssh_port" => 22
+        }
+      end
+
+      it "sets the parameters which are passed in the template" do
+        template = @service.create_deployment_template(@params)
+
+        expect(template["variables"]["imagePublisher"]).to be == "OpenLogic"
+        expect(template["variables"]["imageOffer"]).to be == "CentOS"
+        expect(template["variables"]["OSDiskName"]).to be == "azureosdiskname"
+        expect(template["variables"]["nicName"]).to be == "test-vm"
+        expect(template["variables"]["subnetName"]).to be == "azure_subnet_name"
+        expect(template["variables"]["storageAccountType"]).to be == "azure_storage_account_type"
+        expect(template["variables"]["publicIPAddressName"]).to be == "test-vm"
+        expect(template["variables"]["vmStorageAccountContainerName"]).to be == "test-vm"
+        expect(template["variables"]["vmName"]).to be == "test-vm"
+        expect(template["variables"]["vmSize"]).to be == "Standard_A1"
+        expect(template["variables"]["virtualNetworkName"]).to be == "vnet1"
+        expect(template["variables"]["vmExtensionName"]).to be == "chef_extension"
+
+        extension = ""
+        template["resources"].each do |resource|
+          extension = resource if resource["type"] == "Microsoft.Compute/virtualMachines/extensions"
+        end
+        expect(extension["name"]).to be == "[concat(variables('vmName'),copyIndex(),'/', variables('vmExtensionName'))]"
+        expect(extension["properties"]["publisher"]).to be == "chef_extension_publisher"
+        expect(extension["properties"]["type"]).to be == "chef_extension"
+        expect(extension["properties"]["typeHandlerVersion"]).to be == "11.10.1"
+        expect(extension["properties"]["settings"]["bootstrap_options"]["chef_node_name"]).to be(nil)
+        expect(extension["properties"]["settings"]["bootstrap_options"]["chef_server_url"]).to be == "[parameters('chef_server_url')]"
+        expect(extension["properties"]["settings"]["bootstrap_options"]["validation_client_name"]).to be == "[parameters('validation_client_name')]"
+        expect(extension["properties"]["settings"]["runlist"]).to be == "[parameters('runlist')]"
+        expect(extension["properties"]["settings"]["hints"]).to be == @hints_json
+        expect(extension["properties"]["settings"]["bootstrap_options"]["bootstrap_version"]).to be == "[parameters('bootstrap_version')]"
+        expect(extension["properties"]["settings"]["bootstrap_options"]["encrypted_data_bag_secret"]).to be == "[parameters('encrypted_data_bag_secret')]"
+        expect(extension["properties"]["settings"]["bootstrap_options"]["bootstrap_proxy"]).to be == "[parameters('bootstrap_proxy')]"
+        expect(extension["properties"]["settings"]["bootstrap_options"]["node_ssl_verify_mode"]).to be == "[parameters('node_ssl_verify_mode')]"
+        expect(extension["properties"]["settings"]["bootstrap_options"]["node_verify_api_cert"]).to be == "[parameters('node_verify_api_cert')]"
+        expect(extension["properties"]["settings"]["extendedLogs"]).to be == 'true'
+      end
+
+      it "does not set extendedLogs parameter under extension config in the template" do
+        @params[:chef_extension_public_param][:extendedLogs] = 'false'
+        template = @service.create_deployment_template(@params)
+
+        extension = ""
+        template["resources"].each do |resource|
+          extension = resource if resource["type"] == "Microsoft.Compute/virtualMachines/extensions"
         end
 
-      @hints_json = { "vm_name" => "[reference(resourceId('Microsoft.Compute/virtualMachines', concat(variables('vmName'),copyIndex()))).osProfile.computerName]",
-        "public_fqdn" => "[reference(resourceId('Microsoft.Network/publicIPAddresses',concat(variables('publicIPAddressName'),copyIndex()))).dnsSettings.fqdn]",
-        "platform" => "[concat(reference(resourceId('Microsoft.Compute/virtualMachines', concat(variables('vmName'),copyIndex()))).storageProfile.imageReference.offer, concat(' ', reference(resourceId('Microsoft.Compute/virtualMachines', concat(variables('vmName'),copyIndex()))).storageProfile.imageReference.sku))]"
-      }
+        expect(extension["properties"]["settings"].has_key? 'extendedLogs').to be == false
+      end
     end
 
-    it "sets the parameters which are passed in the template" do
-      template = @service.create_deployment_template(@params)
-
-      expect(template["variables"]["imagePublisher"]).to be == "OpenLogic"
-      expect(template["variables"]["imageOffer"]).to be == "CentOS"
-      expect(template["variables"]["OSDiskName"]).to be == "azureosdiskname"
-      expect(template["variables"]["nicName"]).to be == "test-vm"
-      expect(template["variables"]["subnetName"]).to be == "azure_subnet_name"
-      expect(template["variables"]["storageAccountType"]).to be == "azure_storage_account_type"
-      expect(template["variables"]["publicIPAddressName"]).to be == "test-vm"
-      expect(template["variables"]["vmStorageAccountContainerName"]).to be == "test-vm"
-      expect(template["variables"]["vmName"]).to be == "test-vm"
-      expect(template["variables"]["vmSize"]).to be == "Standard_A1"
-      expect(template["variables"]["virtualNetworkName"]).to be == "vnet1"
-      expect(template["variables"]["vmExtensionName"]).to be == "chef_extension"
-
-      extension = ""
-      template["resources"].each do |resource|
-        extension = resource if resource["type"] == "Microsoft.Compute/virtualMachines/extensions"
-      end
-      expect(extension["name"]).to be == "[concat(variables('vmName'),copyIndex(),'/', variables('vmExtensionName'))]"
-      expect(extension["properties"]["publisher"]).to be == "chef_extension_publisher"
-      expect(extension["properties"]["type"]).to be == "chef_extension"
-      expect(extension["properties"]["typeHandlerVersion"]).to be == "11.10.1"
-      expect(extension["properties"]["settings"]["bootstrap_options"]["chef_node_name"]).to be(nil)
-      expect(extension["properties"]["settings"]["bootstrap_options"]["chef_server_url"]).to be == "[parameters('chef_server_url')]"
-      expect(extension["properties"]["settings"]["bootstrap_options"]["validation_client_name"]).to be == "[parameters('validation_client_name')]"
-      expect(extension["properties"]["settings"]["runlist"]).to be == "[parameters('runlist')]"
-      expect(extension["properties"]["settings"]["hints"]).to be == @hints_json
-      expect(extension["properties"]["settings"]["bootstrap_options"]["bootstrap_version"]).to be == "[parameters('bootstrap_version')]"
-      expect(extension["properties"]["settings"]["bootstrap_options"]["encrypted_data_bag_secret"]).to be == "[parameters('encrypted_data_bag_secret')]"
-      expect(extension["properties"]["settings"]["bootstrap_options"]["bootstrap_proxy"]).to be == "[parameters('bootstrap_proxy')]"
-      expect(extension["properties"]["settings"]["bootstrap_options"]["node_ssl_verify_mode"]).to be == "[parameters('node_ssl_verify_mode')]"
-      expect(extension["properties"]["settings"]["bootstrap_options"]["node_verify_api_cert"]).to be == "[parameters('node_verify_api_cert')]"
-      expect(extension["properties"]["settings"]["extendedLogs"]).to be == 'true'
-    end
-
-    it "does not set extendedLogs parameter under extension config in the template" do
-      @params[:chef_extension_public_param][:extendedLogs] = 'false'
-      template = @service.create_deployment_template(@params)
-
-      extension = ""
-      template["resources"].each do |resource|
-        extension = resource if resource["type"] == "Microsoft.Compute/virtualMachines/extensions"
+    context 'For windows' do
+      before do
+        {
+          :azure_image_reference_publisher => 'MicrosoftWindowsServer',
+          :azure_image_reference_offer => 'WindowsServer',
+          :azure_image_reference_sku => '2012-R2-Datacenter',
+          :azure_image_reference_version => 'latest',
+          :winrm_user => 'winrm_user',
+          :server_count => 3,
+          :vm_size => "Standard_A1"
+        }.each do |key, value|
+            @params[key] = value
+          end
+        @service.instance_variable_set(:@platform, 'Windows')
+        @hints_json = { "vm_name" => "[reference(resourceId('Microsoft.Compute/virtualMachines', concat(variables('vmName'),copyIndex()))).osProfile.computerName]",
+          "public_fqdn" => "[reference(resourceId('Microsoft.Network/publicIPAddresses',concat(variables('publicIPAddressName'),copyIndex()))).dnsSettings.fqdn]",
+          "platform" => "[concat(reference(resourceId('Microsoft.Compute/virtualMachines', concat(variables('vmName'),copyIndex()))).storageProfile.imageReference.offer, concat(' ', reference(resourceId('Microsoft.Compute/virtualMachines', concat(variables('vmName'),copyIndex()))).storageProfile.imageReference.sku))]"
+        }
       end
 
-      expect(extension["properties"]["settings"].has_key? 'extendedLogs').to be == false
+      it "sets the parameters which are passed in the template" do
+        template = @service.create_deployment_template(@params)
+
+        expect(template["variables"]["imagePublisher"]).to be == "MicrosoftWindowsServer"
+        expect(template["variables"]["imageOffer"]).to be == "WindowsServer"
+        expect(template["variables"]["OSDiskName"]).to be == "azureosdiskname"
+        expect(template["variables"]["nicName"]).to be == "test-vm"
+        expect(template["variables"]["subnetName"]).to be == "azure_subnet_name"
+        expect(template["variables"]["storageAccountType"]).to be == "azure_storage_account_type"
+        expect(template["variables"]["publicIPAddressName"]).to be == "test-vm"
+        expect(template["variables"]["vmStorageAccountContainerName"]).to be == "test-vm"
+        expect(template["variables"]["vmName"]).to be == "test-vm"
+        expect(template["variables"]["vmSize"]).to be == "Standard_A1"
+        expect(template["variables"]["virtualNetworkName"]).to be == "vnet1"
+        expect(template["variables"]["vmExtensionName"]).to be == "chef_extension"
+
+        extension = ""
+        template["resources"].each do |resource|
+          extension = resource if resource["type"] == "Microsoft.Compute/virtualMachines/extensions"
+        end
+        expect(extension["name"]).to be == "[concat(variables('vmName'),copyIndex(),'/', variables('vmExtensionName'))]"
+        expect(extension["properties"]["publisher"]).to be == "chef_extension_publisher"
+        expect(extension["properties"]["type"]).to be == "chef_extension"
+        expect(extension["properties"]["typeHandlerVersion"]).to be == "11.10.1"
+        expect(extension["properties"]["settings"]["bootstrap_options"]["chef_node_name"]).to be(nil)
+        expect(extension["properties"]["settings"]["bootstrap_options"]["chef_server_url"]).to be == "[parameters('chef_server_url')]"
+        expect(extension["properties"]["settings"]["bootstrap_options"]["validation_client_name"]).to be == "[parameters('validation_client_name')]"
+        expect(extension["properties"]["settings"]["runlist"]).to be == "[parameters('runlist')]"
+        expect(extension["properties"]["settings"]["hints"]).to be == @hints_json
+        expect(extension["properties"]["settings"]["bootstrap_options"]["bootstrap_version"]).to be == "[parameters('bootstrap_version')]"
+        expect(extension["properties"]["settings"]["bootstrap_options"]["encrypted_data_bag_secret"]).to be == "[parameters('encrypted_data_bag_secret')]"
+        expect(extension["properties"]["settings"]["bootstrap_options"]["bootstrap_proxy"]).to be == "[parameters('bootstrap_proxy')]"
+        expect(extension["properties"]["settings"]["bootstrap_options"]["node_ssl_verify_mode"]).to be == "[parameters('node_ssl_verify_mode')]"
+        expect(extension["properties"]["settings"]["bootstrap_options"]["node_verify_api_cert"]).to be == "[parameters('node_verify_api_cert')]"
+        expect(extension["properties"]["settings"]["extendedLogs"]).to be == 'true'
+      end
     end
 
     after do
