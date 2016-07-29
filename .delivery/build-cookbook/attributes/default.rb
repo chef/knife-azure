@@ -1,12 +1,13 @@
-default['delivery']['knife']['node_name'] = 'vasundharaj'
-default['delivery']['knife']['chef_server_url'] = 'https://api.opscode.com/organizations/vasuj'
-default['delivery']['knife']['client_key_path'] = '/tmp/client.pem'
-default['delivery']['knife']['client_key'] = "-----BEGIN RSA PRIVATE KEY-----\nMIIEowIBAAKCAQEAmxD766qIosXCMfWTgVK0zZKBOIZawp9zWoK5u41KdgMmIs5F\nEn+kHPVKcKCqMu1kfseBug/MjW6IOXJa81lX0ch0JWfNJOAdgIa8SJZBpycIeUnC\ntR2ftK6eQN+1EX2cU19EA7rxU4FXWx+htFUpOWbb99ftMmtnobwI7tQJ+mmSpq6B\n2/Ty4saljllVT+mZczRDuwPncs+q3qUjn1k7NMAUL7kx7FMGWHXrxqhKWMB6K2U9\ntSIqNHxXniIx/jBS7K9kGMeYpbf2r629rf/nK1/zN3P6Xo2hQAhm6M9UGxvwuGO9\nDvs3qq4EpI7X1tbJhcV1aUpOpyUCxH7yK2oPCwIDAQABAoIBAF8376nH3v0suFGb\nPcd0tOdi5gyCm+rUpK3Yhhp/6VBMILfQt6NjU7Agg2Rjk/+PvF0JP0S0fOQAEpBM\nA0NZAk8kawWpFtRk9li845MjCQ+OLWrk+zXiCfaWH0Ew3WvvGPYtEoPD4Hppeu3O\nn6ovfQ/tdHddVR7XyxwKbeXRuIrWImkyIVGQ6ZWkCd7R9b94HFIHpigUZAmekjNd\nUW8slK9mZ0IYU1GZy4aFlrC8/UuP8NcKeZb/juOXSI5tJZU2lLGZm0GKMbCk++Fu\nu0VFg6Jd21cgzwD6yoxniBSwDkrdnpSOE2RmVAU5qOORv2dgWsA62fsDt5NT610A\nlXCkKXECgYEAynWfwTGKxr9EDtm/YKeGtLDikaxMX32IQ1tUJJCJ1fu0fXasNrZx\nb0v64EVkFy/9FOVI7FE0zC3ILpv5a9fvKJRd+1SeebJCwIkcgqh1pzfXN4t+jGUH\ndKKQHEuATN+hyyq0WdVRaoLiCMQgKl0RHIlYUJoCXh+i+q5hIgZOyxMCgYEAxBLg\nPC+gW4O6Xj/VXFubC+5vcKbaAkYxBRcp6DYKX1a1LAOqanOzO+n51o6r/DGQ3WOb\nMO6Dxp//owCB2HynR0m6wRLapVEKtNWaOja29UAsLwDP1um3qyqqf6DtbRWgrLFm\nYpEnHG1Y+EmU29E+CcGePulDQPzKAYP/GP5mcykCgYA9iaMVRcm4v0ogeW8CIel/\n4oP7YzOTksRoNMpOkuBSej9SI1AVET9JZP7MTEswARYb09VmfwhdR00hXadicC/x\nVad7TS0eMGC5xPM1g56/ROnVqEC+y7aIbSEAeLJ2q0KyTjijVYN5rG6n23Uraz5Y\nPibp2OX/Vf5j070SanhooQKBgGwPlyO0f+VP4SvGdHmVRws5WpO0cVxlgOi0TnVb\nKzZGHE1oq8hFgdeYaQg101WHn7ZUChjaqyeR0JruUaGVeb/RQ6rbEEOiOYtWWcyR\nkR3zQyaYhPOGFaKxPgxfDdtb2xSyJKJYKz0AitM0AmVvmYhY/DTh7B3p9A8Hx1To\nCGCZAoGBALw27ghy60uo5mJZW2YIEMTzvTvVAHMpwhRueUQE0Xjlw/U7DglNhvjj\npWZhu0ZeCUuwWhiHgo1lwQ09dQTsT8os4oMM91cdgjoaP3EVygI1Khe3zgJFQugl\nwFlTLgFQYi2oneNYP54vtjtciIOyWLB+mXTjzzjuMOso4fr32W1R\n-----END RSA PRIVATE KEY-----"
-default['delivery']['azure']['linux_vmname'] = 'linux-vm-test1'
-default['delivery']['azurerm']['azure_subscription_id'] = 'e00d2b3f-3b94-4dfc-ae8e-ca34c8ba1a99'
-default['delivery']['azurerm']['azure_tenant_id'] = "abeb039a-5e53-40ee-b48f-0c99bdc99d15"
-default['delivery']['azurerm']['azure_client_id'] = "5490e902-6689-425f-8056-e9f11d7f88a1"
-default['delivery']['azurerm']['azure_client_secret'] = "azure@123"
-default['delivery']['azurerm']['linux_vmname'] = 'armlinux-vm-test1'
-default['delivery']['azure']['windows_vmname'] = 'win-vm-test1'
-default['delivery']['azurerm']['windows_vmname'] = 'armwin-vm-test1'
+
+default['delivery']['knife']['node_name'] = '<node-name>'
+default['delivery']['knife']['chef_server_url'] = '<chef_server_url>'
+default['delivery']['knife']['client_key_path'] = '<client_key_path>'
+default['delivery']['knife']['client_key'] = "<client_key>"
+default['delivery']['azure']['linux_vmname'] = '<linux-vm-name>'
+default['delivery']['azurerm']['azure_subscription_id'] = '<azure_subscription_id>'
+default['delivery']['azurerm']['azure_tenant_id'] = "<azure_tenant_id"
+default['delivery']['azurerm']['azure_client_id'] = "<azure_client_id"
+default['delivery']['azurerm']['azure_client_secret'] = "<azure_client_secret"
+default['delivery']['azurerm']['linux_vmname'] = '<arm-linux-vm-name>'
+default['delivery']['azure']['windows_vmname'] = '<win-vm-name>'
+default['delivery']['azurerm']['windows_vmname'] = '<arm-win-vm-name>'
