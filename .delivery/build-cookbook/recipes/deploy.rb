@@ -22,19 +22,16 @@ cookbook_file '/tmp/azure-credentials.publishsettings' do
   source 'azure-credentials.publishsettings'
   mode '0777'
   action :create
-  notifies :create, 'template[/tmp/knife.rb]', :immediately
 end
 
 template "/tmp/knife.rb" do
   source "knife.erb"
   mode '0777'
-  notifies :create, 'template[/tmp/client.pem]', :immediately
 end
 
 template '/tmp/client.pem' do
   source "client.erb"
   mode '0777'
-  notifies :run, 'execute[gem_install_knife_azure]', :immediately
 end
 
 execute "gem_install_knife_azure" do
