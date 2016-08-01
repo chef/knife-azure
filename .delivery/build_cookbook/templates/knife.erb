@@ -1,0 +1,8 @@
+node_name "<%= node['delivery']['knife']['node_name'] %>"
+client_key  "<%= node['delivery']['knife']['client_key_path'] %>"
+chef_server_url "<%= node['delivery']['knife']['chef_server_url'] %>"
+
+knife[:azure_tenant_id] = "<%= node['delivery']['azurerm']['azure_tenant_id'] %>"
+knife[:azure_client_id] = "<%= node['delivery']['azurerm']['azure_client_id'] %>"
+knife[:azure_client_secret] = "<%= node['delivery']['azurerm']['azure_client_secret'] %>"
+knife[:azure_subscription_id] = "<%= node['delivery']['azurerm']['azure_subscription_id'] %>"
