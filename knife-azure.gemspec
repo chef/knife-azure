@@ -17,6 +17,7 @@ Gem::Specification.new do |s|
   s.files = %w(LICENSE README.md) + Dir.glob("lib/**/*")
   s.homepage = "https://github.com/chef/knife-azure"
   s.require_paths = ["lib"]
+  s.required_ruby_version = ">= 2.2.2"
 
   s.add_dependency "nokogiri", ">= 1.5.5"
   s.add_dependency "knife-windows", "~> 1.0"
