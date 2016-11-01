@@ -284,12 +284,12 @@ class Chef
           pub_config[:custom_json_attr] = locate_config_value(:json_attributes) || {}
           pub_config[:extendedLogs] = locate_config_value(:extended_logs) ? "true" : "false"
           pub_config[:hints] = ohai_hints if @service.instance_of?(Azure::ResourceManagement::ARMInterface) && !locate_config_value(:ohai_hints).nil?
+          pub_config[:chef_service_interval] = locate_config_value(:chef_service_interval) if locate_config_value(:chef_service_interval)
 
           # bootstrap attributes
           pub_config[:bootstrap_options] = {}
           pub_config[:bootstrap_options][:environment] = locate_config_value(:environment) if locate_config_value(:environment)
           pub_config[:bootstrap_options][:chef_node_name] = locate_config_value(:chef_node_name) if locate_config_value(:chef_node_name)
-          pub_config[:bootstrap_options][:encrypted_data_bag_secret] = load_correct_secret
           pub_config[:bootstrap_options][:chef_server_url] = Chef::Config[:chef_server_url] if Chef::Config[:chef_server_url]
           pub_config[:bootstrap_options][:validation_client_name] = Chef::Config[:validation_client_name] if Chef::Config[:validation_client_name]
           pub_config[:bootstrap_options][:node_verify_api_cert] = locate_config_value(:node_verify_api_cert) ? "true" : "false" if config.key?(:node_verify_api_cert)
@@ -350,6 +350,9 @@ class Chef
               exit 1
             end
           end
+
+          # encrypted_data_bag_secret key for encrypting/decrypting the data bags
+          pri_config[:encrypted_data_bag_secret] = load_correct_secret
 
           pri_config
         end
