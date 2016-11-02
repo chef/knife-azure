@@ -466,7 +466,6 @@ module Azure::ARM
                   "bootstrap_version" => "[parameters('bootstrap_version')]",
                   "node_ssl_verify_mode" => "[parameters('node_ssl_verify_mode')]",
                   "node_verify_api_cert" => "[parameters('node_verify_api_cert')]",
-                  "encrypted_data_bag_secret" => "[parameters('encrypted_data_bag_secret')]",
                   "bootstrap_proxy" => "[parameters('bootstrap_proxy')]"
                 },
                 "runlist" => "[parameters('runlist')]",
@@ -478,7 +477,8 @@ module Azure::ARM
               "protectedSettings" => {
                 "validation_key" => "[parameters('validation_key')]",
                 "client_pem" => "[parameters('client_pem')]",
-                "chef_server_crt" => "[parameters('chef_server_crt')]"
+                "chef_server_crt" => "[parameters('chef_server_crt')]",
+                "encrypted_data_bag_secret" => "[parameters('encrypted_data_bag_secret')]"
               }
             }
           }
@@ -503,6 +503,14 @@ module Azure::ARM
         template['resources'].each do |resource|
           if resource['type'] == 'Microsoft.Compute/virtualMachines/extensions'
             resource['properties']['settings']['extendedLogs'] = params[:chef_extension_public_param][:extendedLogs]
+          end
+        end
+      end
+
+      if params[:chef_extension_public_param][:chef_service_interval]
+        template['resources'].each do |resource|
+          if resource['type'] == 'Microsoft.Compute/virtualMachines/extensions'
+            resource['properties']['settings']['chef_service_interval'] = params[:chef_extension_public_param][:chef_service_interval]
           end
         end
       end
@@ -544,6 +552,9 @@ module Azure::ARM
         "chef_server_crt" => {
           "value" => "#{params[:chef_extension_private_param][:chef_server_crt]}"
         },
+        "encrypted_data_bag_secret" => {
+          "value" => "#{params[:chef_extension_private_param][:encrypted_data_bag_secret]}"
+        },
         "chef_server_url"=> {
           "value" => "#{params[:chef_extension_public_param][:bootstrap_options][:chef_server_url]}"
         },
@@ -555,9 +566,6 @@ module Azure::ARM
         },
         "node_verify_api_cert" => {
           "value" => "#{params[:chef_extension_public_param][:bootstrap_options][:node_verify_api_cert]}"
-        },
-        "encrypted_data_bag_secret" => {
-          "value" => "#{params[:chef_extension_public_param][:bootstrap_options][:encrypted_data_bag_secret]}"
         },
         "bootstrap_proxy" => {
           "value" => "#{params[:chef_extension_public_param][:bootstrap_options][:bootstrap_proxy]}"

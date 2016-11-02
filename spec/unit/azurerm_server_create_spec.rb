@@ -1146,7 +1146,6 @@ describe Chef::Knife::AzurermServerCreate do
     before do
       bootstrap_options = { :chef_server_url => "url",
         :validation_client_name => "client_name",
-        :encrypted_data_bag_secret => "rihrfwe739085928592nehrweirwefjsndwe",
         :bootstrap_proxy => "http://test.com",
         :node_ssl_verify_mode => 'true',
         :node_verify_api_cert  => 'hfyreiur374294nehfdishf' }
@@ -1170,6 +1169,9 @@ describe Chef::Knife::AzurermServerCreate do
       @hints_json = { "vm_name" => "[reference(resourceId('Microsoft.Compute/virtualMachines', concat(variables('vmName'),copyIndex()))).osProfile.computerName]",
         "public_fqdn" => "[reference(resourceId('Microsoft.Network/publicIPAddresses',concat(variables('publicIPAddressName'),copyIndex()))).dnsSettings.fqdn]",
         "platform" => "[concat(reference(resourceId('Microsoft.Compute/virtualMachines', concat(variables('vmName'),copyIndex()))).storageProfile.imageReference.offer, concat(' ', reference(resourceId('Microsoft.Compute/virtualMachines', concat(variables('vmName'),copyIndex()))).storageProfile.imageReference.sku))]"
+      }
+      @params[:chef_extension_private_param] = {
+        :encrypted_data_bag_secret => 'rihrfwe739085928592nehrweirwefjsndwe'
       }
     end
 
@@ -1203,11 +1205,12 @@ describe Chef::Knife::AzurermServerCreate do
       expect(extension["properties"]["settings"]["runlist"]).to be == "[parameters('runlist')]"
       expect(extension["properties"]["settings"]["hints"]).to be == @hints_json
       expect(extension["properties"]["settings"]["bootstrap_options"]["bootstrap_version"]).to be == "[parameters('bootstrap_version')]"
-      expect(extension["properties"]["settings"]["bootstrap_options"]["encrypted_data_bag_secret"]).to be == "[parameters('encrypted_data_bag_secret')]"
       expect(extension["properties"]["settings"]["bootstrap_options"]["bootstrap_proxy"]).to be == "[parameters('bootstrap_proxy')]"
       expect(extension["properties"]["settings"]["bootstrap_options"]["node_ssl_verify_mode"]).to be == "[parameters('node_ssl_verify_mode')]"
       expect(extension["properties"]["settings"]["bootstrap_options"]["node_verify_api_cert"]).to be == "[parameters('node_verify_api_cert')]"
       expect(extension["properties"]["settings"]["extendedLogs"]).to be == 'true'
+
+      expect(extension["properties"]["protectedSettings"]["encrypted_data_bag_secret"]).to be == "[parameters('encrypted_data_bag_secret')]"
     end
 
     it "does not set extendedLogs parameter under extension config in the template" do
@@ -1222,6 +1225,43 @@ describe Chef::Knife::AzurermServerCreate do
       expect(extension["properties"]["settings"].has_key? 'extendedLogs').to be == false
     end
 
+    context "chef_service_interval option" do
+      context "is passed by the user" do
+        before do
+          @params[:chef_extension_public_param][:chef_service_interval] = "19"
+        end
+
+        it "sets the chef_service_interval parameter under extension config in the template" do
+          template = @service.create_deployment_template(@params)
+
+          extension = ""
+          template["resources"].each do |resource|
+            extension = resource if resource["type"] == "Microsoft.Compute/virtualMachines/extensions"
+          end
+
+          expect(extension["properties"]["settings"].has_key? 'chef_service_interval').to be == true
+          expect(extension["properties"]["settings"]['chef_service_interval']).to be == "19"
+        end
+      end
+
+      context "is not passed by the user" do
+        before do
+          @params[:chef_extension_public_param][:chef_service_interval] = nil
+        end
+
+        it "does not set the chef_service_interval parameter under extension config in the template" do
+          template = @service.create_deployment_template(@params)
+
+          extension = ""
+          template["resources"].each do |resource|
+            extension = resource if resource["type"] == "Microsoft.Compute/virtualMachines/extensions"
+          end
+
+          expect(extension["properties"]["settings"].has_key? 'chef_service_interval').to be == false
+        end
+      end
+    end
+
     after do
       @params.delete(:server_count)
     end
@@ -1231,13 +1271,15 @@ describe Chef::Knife::AzurermServerCreate do
     before do
       bootstrap_options = {:chef_server_url => "url",
         :validation_client_name => "client_name",
-        :encrypted_data_bag_secret => "rihrfwe739085928592nehrweirwefjsndwe",
         :bootstrap_proxy => "http://test.com",
         :node_ssl_verify_mode => 'true',
         :node_verify_api_cert  => 'hfyreiur374294nehfdishf',
         :chef_node_name => 'test-vm'}
       @params[:chef_extension_public_param] = { :bootstrap_options => bootstrap_options }
-      @params[:chef_extension_private_param] = {:validation_key => "validation_key"}
+      @params[:chef_extension_private_param] = {
+        :validation_key => "validation_key",
+        :encrypted_data_bag_secret => 'rihrfwe739085928592nehrweirwefjsndwe'
+      }
       {
         :azure_image_reference_publisher => 'OpenLogic',
         :azure_image_reference_offer => 'CentOS',
