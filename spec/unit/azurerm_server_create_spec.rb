@@ -1234,7 +1234,7 @@ describe Chef::Knife::AzurermServerCreate do
         it "sets the chef_service_interval parameter under extension config in the template" do
           template = @service.create_deployment_template(@params)
 
-          extension = ""
+          extension = nil
           template["resources"].each do |resource|
             extension = resource if resource["type"] == "Microsoft.Compute/virtualMachines/extensions"
           end
@@ -1252,7 +1252,7 @@ describe Chef::Knife::AzurermServerCreate do
         it "does not set the chef_service_interval parameter under extension config in the template" do
           template = @service.create_deployment_template(@params)
 
-          extension = ""
+          extension = nil
           template["resources"].each do |resource|
             extension = resource if resource["type"] == "Microsoft.Compute/virtualMachines/extensions"
           end

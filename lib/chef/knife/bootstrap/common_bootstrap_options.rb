@@ -16,6 +16,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+#
+# Bootstrap options listed here are supported only for cloud-api protocol.
+#
 
 class Chef
   class Knife
