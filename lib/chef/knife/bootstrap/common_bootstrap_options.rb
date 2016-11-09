@@ -16,6 +16,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+#
+# Bootstrap options listed here are supported only for cloud-api protocol.
+#
 
 class Chef
   class Knife
@@ -95,6 +98,11 @@ class Chef
               :boolean => true,
               :default => false,
               :description => "Optional. It shows chef convergence logs in detail."
+
+            option :chef_service_interval,
+              :long => "--chef-service-interval INTERVAL",
+              :description => "Optional. It specifies the frequency (in minutes) at which the chef-service runs.
+                                Pass 0 if you don't want the chef-service to be installed on the target machine."
 
           end
         end

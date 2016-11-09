@@ -841,30 +841,15 @@ describe Chef::Knife::AzurermServerCreate do
       context "get_chef_extension_public_params" do
         it "sets bootstrapVersion variable in public_config" do
           @arm_server_instance.config[:bootstrap_version] = '12.4.2'
-          public_config = {:client_rb=>"chef_server_url \t \"https://localhost:443\"\nvalidation_client_name\t\"chef-validator\"", :runlist=>"\"getting-started\"", extendedLogs: "false", :custom_json_attr=>{}, :hints=>["vm_name", "public_fqdn", "platform"], :bootstrap_options=>{:encrypted_data_bag_secret => nil,:chef_server_url=>"https://localhost:443", :validation_client_name=>"chef-validator", :bootstrap_version=>"12.4.2"}}
+          public_config = {:client_rb=>"chef_server_url \t \"https://localhost:443\"\nvalidation_client_name\t\"chef-validator\"", :runlist=>"\"getting-started\"", extendedLogs: "false", :custom_json_attr=>{}, :hints=>["vm_name", "public_fqdn", "platform"], :bootstrap_options=>{:chef_server_url=>"https://localhost:443", :validation_client_name=>"chef-validator", :bootstrap_version=>"12.4.2"}}
 
-          response = @arm_server_instance.get_chef_extension_public_params
-          expect(response).to be == public_config
-        end
-
-        it "sets encrypted_databag_secret in public config" do
-          @arm_server_instance.config[:encrypted_data_bag_secret] = "secrettext"
-          public_config = {:client_rb=>"chef_server_url \t \"https://localhost:443\"\nvalidation_client_name\t\"chef-validator\"", :runlist=>"\"getting-started\"", extendedLogs: "false", :custom_json_attr=>{}, :hints=>["vm_name", "public_fqdn", "platform"], :bootstrap_options=>{:encrypted_data_bag_secret=>"secrettext", :chef_server_url=>"https://localhost:443", :validation_client_name=>"chef-validator"}}
-
-          response = @arm_server_instance.get_chef_extension_public_params
-          expect(response).to be == public_config
-        end
-
-        it "sets encrypted_databag_secret_file in public config" do
-          @arm_server_instance.config[:encrypted_data_bag_secret_file] = File.dirname(__FILE__) + "/assets/secret_file"
-          public_config = {:client_rb=>"chef_server_url \t \"https://localhost:443\"\nvalidation_client_name\t\"chef-validator\"", :runlist=>"\"getting-started\"", extendedLogs: "false", :custom_json_attr=>{}, :hints=>["vm_name", "public_fqdn", "platform"], :bootstrap_options=>{:encrypted_data_bag_secret=>"PgIxStCmMDsuIw3ygRhmdMtStpc9EMiWisQXoP", :chef_server_url=>"https://localhost:443", :validation_client_name=>"chef-validator"}}
           response = @arm_server_instance.get_chef_extension_public_params
           expect(response).to be == public_config
         end
 
         it "should set extendedLogs flag to true" do
           @arm_server_instance.config[:extended_logs] = true
-          public_config = {client_rb: "chef_server_url \t \"https://localhost:443\"\nvalidation_client_name\t\"chef-validator\"", runlist: "\"getting-started\"", extendedLogs: "true", custom_json_attr: {}, :hints=>["vm_name", "public_fqdn", "platform"], bootstrap_options: {:encrypted_data_bag_secret => nil, chef_server_url: "https://localhost:443", validation_client_name: "chef-validator"}}
+          public_config = {client_rb: "chef_server_url \t \"https://localhost:443\"\nvalidation_client_name\t\"chef-validator\"", runlist: "\"getting-started\"", extendedLogs: "true", custom_json_attr: {}, :hints=>["vm_name", "public_fqdn", "platform"], bootstrap_options: {chef_server_url: "https://localhost:443", validation_client_name: "chef-validator"}}
           response = @arm_server_instance.get_chef_extension_public_params
           expect(response).to be == public_config
         end
@@ -886,21 +871,50 @@ describe Chef::Knife::AzurermServerCreate do
             @arm_server_instance.get_chef_extension_public_params
           end
         end
+
+        it "sets chefServiceInterval variable in public_config" do
+          @arm_server_instance.config[:chef_service_interval] = '0'
+          public_config = {:client_rb=>"chef_server_url \t \"https://localhost:443\"\nvalidation_client_name\t\"chef-validator\"", :runlist=>"\"getting-started\"", extendedLogs: "false", :custom_json_attr=>{}, :hints=>["vm_name", "public_fqdn", "platform"], :chef_service_interval=>'0', :bootstrap_options=>{:chef_server_url=>"https://localhost:443", :validation_client_name=>"chef-validator"}}
+
+          response = @arm_server_instance.get_chef_extension_public_params
+          expect(response).to be == public_config
+        end
+      end
+
+      shared_context 'private config contents' do
+        before do
+          allow(File).to receive(:read).and_return('my_validation_key')
+        end
+
+        it 'calls get chef extension private params and sets private config properly' do
+          response = @arm_server_instance.get_chef_extension_private_params
+          expect(response).to be == private_config
+        end
       end
 
       context 'when validation key is not present', :chef_gte_12_only do
-        before do
-          allow(File).to receive(:exist?).and_return(false)
-          Chef::Config[:knife] = { chef_node_name: 'foo.example.com' }
+        context 'when encrypted_data_bag_secret option is passed' do
+          let(:private_config) { {:validation_key=>'my_validation_key',
+            :encrypted_data_bag_secret=>'my_encrypted_data_bag_secret'
+          } }
+
+          before do
+            @arm_server_instance.config[:encrypted_data_bag_secret] = 'my_encrypted_data_bag_secret'
+          end
+
+          include_context 'private config contents'
         end
 
-        it 'calls get chef extension private params and adds client pem in json object' do
-          allow_any_instance_of(Chef::Knife::Bootstrap::ClientBuilder).to receive(:run)
-          allow_any_instance_of(Chef::Knife::Bootstrap::ClientBuilder).to receive(:client_path)
-          allow(File).to receive(:read).and_return('foo')
-          pri_config = { client_pem: 'foo' }
-          response = @arm_server_instance.get_chef_extension_private_params
-          expect(response).to be == pri_config
+        context 'when encrypted_data_bag_secret_file option is passed' do
+          let(:private_config) { {:validation_key=>'my_validation_key',
+            :encrypted_data_bag_secret=>'PgIxStCmMDsuIw3ygRhmdMtStpc9EMiWisQXoP'
+          } }
+
+          before do
+            @arm_server_instance.config[:encrypted_data_bag_secret_file] = File.dirname(__FILE__) + "/assets/secret_file"
+          end
+
+          include_context 'private config contents'
         end
       end
 
@@ -929,7 +943,7 @@ describe Chef::Knife::AzurermServerCreate do
         end
 
         it "copies SSL certificate contents into chef_server_crt attribute of extension's private params" do
-          pri_config = { validation_key: 'foo', chef_server_crt: 'foo' }
+          pri_config = { validation_key: 'foo', chef_server_crt: 'foo', encrypted_data_bag_secret: nil}
           response = @arm_server_instance.get_chef_extension_private_params
           expect(response).to be == pri_config
         end
@@ -1132,7 +1146,6 @@ describe Chef::Knife::AzurermServerCreate do
     before do
       bootstrap_options = { :chef_server_url => "url",
         :validation_client_name => "client_name",
-        :encrypted_data_bag_secret => "rihrfwe739085928592nehrweirwefjsndwe",
         :bootstrap_proxy => "http://test.com",
         :node_ssl_verify_mode => 'true',
         :node_verify_api_cert  => 'hfyreiur374294nehfdishf' }
@@ -1156,6 +1169,9 @@ describe Chef::Knife::AzurermServerCreate do
       @hints_json = { "vm_name" => "[reference(resourceId('Microsoft.Compute/virtualMachines', concat(variables('vmName'),copyIndex()))).osProfile.computerName]",
         "public_fqdn" => "[reference(resourceId('Microsoft.Network/publicIPAddresses',concat(variables('publicIPAddressName'),copyIndex()))).dnsSettings.fqdn]",
         "platform" => "[concat(reference(resourceId('Microsoft.Compute/virtualMachines', concat(variables('vmName'),copyIndex()))).storageProfile.imageReference.offer, concat(' ', reference(resourceId('Microsoft.Compute/virtualMachines', concat(variables('vmName'),copyIndex()))).storageProfile.imageReference.sku))]"
+      }
+      @params[:chef_extension_private_param] = {
+        :encrypted_data_bag_secret => 'rihrfwe739085928592nehrweirwefjsndwe'
       }
     end
 
@@ -1189,11 +1205,12 @@ describe Chef::Knife::AzurermServerCreate do
       expect(extension["properties"]["settings"]["runlist"]).to be == "[parameters('runlist')]"
       expect(extension["properties"]["settings"]["hints"]).to be == @hints_json
       expect(extension["properties"]["settings"]["bootstrap_options"]["bootstrap_version"]).to be == "[parameters('bootstrap_version')]"
-      expect(extension["properties"]["settings"]["bootstrap_options"]["encrypted_data_bag_secret"]).to be == "[parameters('encrypted_data_bag_secret')]"
       expect(extension["properties"]["settings"]["bootstrap_options"]["bootstrap_proxy"]).to be == "[parameters('bootstrap_proxy')]"
       expect(extension["properties"]["settings"]["bootstrap_options"]["node_ssl_verify_mode"]).to be == "[parameters('node_ssl_verify_mode')]"
       expect(extension["properties"]["settings"]["bootstrap_options"]["node_verify_api_cert"]).to be == "[parameters('node_verify_api_cert')]"
       expect(extension["properties"]["settings"]["extendedLogs"]).to be == 'true'
+
+      expect(extension["properties"]["protectedSettings"]["encrypted_data_bag_secret"]).to be == "[parameters('encrypted_data_bag_secret')]"
     end
 
     it "does not set extendedLogs parameter under extension config in the template" do
@@ -1208,6 +1225,43 @@ describe Chef::Knife::AzurermServerCreate do
       expect(extension["properties"]["settings"].has_key? 'extendedLogs').to be == false
     end
 
+    context "chef_service_interval option" do
+      context "is passed by the user" do
+        before do
+          @params[:chef_extension_public_param][:chef_service_interval] = "19"
+        end
+
+        it "sets the chef_service_interval parameter under extension config in the template" do
+          template = @service.create_deployment_template(@params)
+
+          extension = nil
+          template["resources"].each do |resource|
+            extension = resource if resource["type"] == "Microsoft.Compute/virtualMachines/extensions"
+          end
+
+          expect(extension["properties"]["settings"].has_key? 'chef_service_interval').to be == true
+          expect(extension["properties"]["settings"]['chef_service_interval']).to be == "19"
+        end
+      end
+
+      context "is not passed by the user" do
+        before do
+          @params[:chef_extension_public_param][:chef_service_interval] = nil
+        end
+
+        it "does not set the chef_service_interval parameter under extension config in the template" do
+          template = @service.create_deployment_template(@params)
+
+          extension = nil
+          template["resources"].each do |resource|
+            extension = resource if resource["type"] == "Microsoft.Compute/virtualMachines/extensions"
+          end
+
+          expect(extension["properties"]["settings"].has_key? 'chef_service_interval').to be == false
+        end
+      end
+    end
+
     after do
       @params.delete(:server_count)
     end
@@ -1217,13 +1271,15 @@ describe Chef::Knife::AzurermServerCreate do
     before do
       bootstrap_options = {:chef_server_url => "url",
         :validation_client_name => "client_name",
-        :encrypted_data_bag_secret => "rihrfwe739085928592nehrweirwefjsndwe",
         :bootstrap_proxy => "http://test.com",
         :node_ssl_verify_mode => 'true',
         :node_verify_api_cert  => 'hfyreiur374294nehfdishf',
         :chef_node_name => 'test-vm'}
       @params[:chef_extension_public_param] = { :bootstrap_options => bootstrap_options }
-      @params[:chef_extension_private_param] = {:validation_key => "validation_key"}
+      @params[:chef_extension_private_param] = {
+        :validation_key => "validation_key",
+        :encrypted_data_bag_secret => 'rihrfwe739085928592nehrweirwefjsndwe'
+      }
       {
         :azure_image_reference_publisher => 'OpenLogic',
         :azure_image_reference_offer => 'CentOS',

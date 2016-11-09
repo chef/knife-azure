@@ -16,6 +16,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+#
+# Bootstrap options listed here are in accordance with the options supported by
+# Chef's bootstrap which bootstraps the target system through protocols like ssh
+# or winrm. In addition it contains additional options which gives the users a
+# choice to bootstrap the target system through cloud-api protocol.
+#
 
 require 'chef/knife/winrm_base'
 require 'chef/knife/bootstrap_windows_base'
@@ -77,6 +83,12 @@ class Chef
               :boolean => true,
               :default => false,
               :description => "Optional. Provide this option when --bootstrap-protocol is set to 'cloud-api'. It shows chef converge logs in detail."
+
+            option :chef_service_interval,
+              :long => "--chef-service-interval INTERVAL",
+              :description => "Optional. Provide this option when --bootstrap-protocol is set to 'cloud-api'.
+                                  It specifies the frequency (in minutes) at which the chef-service runs.
+                                  Pass 0 if you don't want the chef-service to be installed on the target machine."
 
   	  	  end
   	  	end

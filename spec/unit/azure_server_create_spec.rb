@@ -838,17 +838,31 @@ describe Chef::Knife::AzureServerCreate do
     end
 
     context "get_chef_extension_public_params" do
-      it "should set public config properly" do
+      before do
         @server_instance.config[:bootstrap_version] = '12.4.2'
         @server_instance.config[:extended_logs] = true
-        public_config = "{\"client_rb\":\"chef_server_url \\t \\\"https://localhost:443\\\"\\nvalidation_client_name\\t\\\"chef-validator\\\"\",\"runlist\":\"\\\"getting-started\\\"\",\"extendedLogs\":\"true\",\"custom_json_attr\":{},\"bootstrap_options\":{\"chef_server_url\":\"https://localhost:443\",\"validation_client_name\":\"chef-validator\",\"bootstrap_version\":\"12.4.2\"}}"
+        @server_instance.config[:chef_service_interval] = '16'
+      end
 
-        expect(@server_instance).to receive(:get_chef_extension_name).and_return("LinuxChefClient")
-        expect(@server_instance).to receive(:get_chef_extension_publisher).and_return("Chef.Bootstrap.WindowsAzure")
-        allow(@server_instance).to receive(:get_chef_extension_version)
-        allow(@server_instance).to receive(:get_chef_extension_private_params)
-        expect(@server_instance).to receive(:get_chef_extension_public_params).and_return(public_config)
-        @server_instance.create_server_def
+      let(:public_config) { {
+        :client_rb=>"chef_server_url \t \"https://localhost:443\"\nvalidation_client_name\t\"chef-validator\"",
+        :runlist=>"\"getting-started\"",
+        :extendedLogs=>"true",
+        :custom_json_attr=>{},
+        :chef_service_interval=>"16",
+        :bootstrap_options=>{:chef_server_url=>"https://localhost:443",
+          :validation_client_name=>"chef-validator",
+          :bootstrap_version=>"12.4.2"
+        }
+      } }
+
+      it "should set public config properly" do
+        expect(@server_instance).to receive(:get_chef_extension_name)
+        expect(@server_instance).to receive(:get_chef_extension_publisher)
+        expect(@server_instance).to receive(:get_chef_extension_version)
+        expect(@server_instance).to receive(:get_chef_extension_private_params)
+        response = @server_instance.create_server_def
+        expect(response[:chef_extension_public_param]).to be == public_config
       end
     end
 
@@ -930,17 +944,42 @@ describe Chef::Knife::AzureServerCreate do
       end
     end
 
-    context 'when validation key is not present', :chef_gte_12_only do
+    shared_context "private config contents" do
       before do
-        allow(File).to receive(:exist?).and_return(false)
-        Chef::Config[:knife] = { chef_node_name: 'foo.example.com' }
+        allow(File).to receive(:read).and_return('my_client_pem')
       end
 
-      it 'uses Chef ClientBuilder to generate client_pem' do
+      it 'uses Chef ClientBuilder to generate client_pem and sets private config properly' do
         expect_any_instance_of(Chef::Knife::Bootstrap::ClientBuilder).to receive(:run)
         expect_any_instance_of(Chef::Knife::Bootstrap::ClientBuilder).to receive(:client_path)
-        expect(File).to receive(:read)
-        @server_instance.get_chef_extension_private_params
+        response = @server_instance.get_chef_extension_private_params
+        expect(response).to be == private_config
+      end
+    end
+
+    context 'when validation key is not present', :chef_gte_12_only do
+      context 'when encrypted_data_bag_secret option is passed' do
+        let(:private_config) { {:client_pem=>'my_client_pem',
+          :encrypted_data_bag_secret=>'my_encrypted_data_bag_secret'
+        } }
+
+        before do
+          @server_instance.config[:encrypted_data_bag_secret] = 'my_encrypted_data_bag_secret'
+        end
+
+        include_context 'private config contents'
+      end
+
+      context 'when encrypted_data_bag_secret_file option is passed' do
+        let(:private_config) { {:client_pem=>'my_client_pem',
+          :encrypted_data_bag_secret=>'PgIxStCmMDsuIw3ygRhmdMtStpc9EMiWisQXoP'
+        } }
+
+        before do
+          @server_instance.config[:encrypted_data_bag_secret_file] = File.dirname(__FILE__) + "/assets/secret_file"
+        end
+
+        include_context 'private config contents'
       end
     end
 
