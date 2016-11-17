@@ -135,8 +135,16 @@ module Azure::ARM
         xplat_creds_cmd = Mixlib::ShellOut.new('cmdkey /list | findstr AzureXplatCli | findstr \--0- | findstr -v common')
         result = xplat_creds_cmd.run_command
         target_names = []
+
         if result.stdout.empty?
-          raise "Azure Credentials not found. Please run xplat's 'azure login' command"
+          xplat_creds_cmd = Mixlib::ShellOut.new('cmdkey /list | findstr AzureXplatCli | findstr -v common')
+          result = xplat_creds_cmd.run_command
+
+          if result.stdout.empty?
+            raise "Azure Credentials not found. Please run xplat's 'azure login' command"
+          else
+            target_names = result.stdout.split("\n")
+          end
         else
           target_names = result.stdout.split("\n")
         end
