@@ -101,11 +101,11 @@ module Azure
       end
       # Windows Azure API call
       @connection.query_azure("hostedservices/#{dns_name}/certificates", "post", builder.to_xml)
-      
+
       # Check if certificate is available else raise error
       for attempt in 0..4
         Chef::Log.info "Waiting to get certificate ..."
-        break if ! @connection.query_azure("hostedservices/#{params[:azure_dns_name]}/certificates/sha1-#{@fingerprint}", "get").search("Certificate").empty?
+        break if !@connection.query_azure("hostedservices/#{dns_name}/certificates/sha1-#{@fingerprint}", "get").search("Certificate").empty?
         if attempt == 4
           raise "The certificate with thumbprint #{fingerprint} was not found."
         else
