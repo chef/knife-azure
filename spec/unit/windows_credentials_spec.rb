@@ -78,6 +78,15 @@ describe Chef::Knife::AzurermBase, :windows_only do
       target_name = @windows_credentials.target_name
       expect(target_name).to be == latest_target
     end
+
+    it "fetches any credential if --0- pattern is not found in the available credentials" do
+      targets = "    Target: AzureXplatCli:target=_authority:https\\://login.microsoftonline.com/subscription_id::_clientId:abc123::expiresIn:3599::expiresOn:2016-06-09T13\\:53\\:07.510Z::identityProvider:live.com::isMRRT:true::resource:https\\://management.core.windows.net/::tokenType:Bearer::userId:abc@opscode.com\n"
+      cmdkey_output = double(:stdout => targets)
+      allow_any_instance_of(Mixlib::ShellOut).to receive(:run_command).and_return(cmdkey_output)
+      latest_target = "AzureXplatCli:target=_authority:https\\://login.microsoftonline.com/subscription_id::_clientId:abc123::expiresIn:3599::expiresOn:2016-06-09T13\\:53\\:07.510Z::identityProvider:live.com::isMRRT:true::resource:https\\://management.core.windows.net/::tokenType:Bearer::userId:abc@opscode.com"
+      target_name = @windows_credentials.target_name
+      expect(target_name).to be == latest_target
+    end
   end
 
   context "latest_credential_target" do
