@@ -404,6 +404,10 @@ module QueryAzureMock
         elsif name =~ /storageservices\/[-\w]*$/
           service_name = /storageservices\/([-\w]*)/.match(name)[1]
           retval = lookup_resource_in_test_xml(service_name, 'ServiceName', 'StorageServices StorageService', 'list_storageaccounts.xml')
+        elsif name == 'hostedservices/unknown_yet/certificates/sha1-9dbcac68f670a27cf5d9a4e6c4a8d097bff645e2'
+          retval = Nokogiri::XML readFile('get_service_certificate_error.xml')
+        elsif /\b([a-f0-9]{40})\b/.match(name)
+          retval = Nokogiri::XML readFile('get_service_certificate.xml')
         else
           Chef::Log.warn 'unknown get value:' + name
         end

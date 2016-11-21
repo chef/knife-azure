@@ -37,7 +37,12 @@ module Azure
                       azure_dns_name: azure_dns_name }
       certificate = Certificate.new(@connection)
       thumbprint = certificate.create_ssl_certificate(cert_params)
-     end
+    end
+
+    def get_certificate(dns_name, fingerprint)
+      certificate = Certificate.new(@connection)
+      certificate.get_certificate(dns_name, fingerprint)
+    end
   end
 end
 
@@ -105,7 +110,8 @@ module Azure
       # Check if certificate is available else raise error
       for attempt in 0..4
         Chef::Log.info "Waiting to get certificate ..."
-        break if !@connection.query_azure("hostedservices/#{dns_name}/certificates/sha1-#{@fingerprint}", "get").search("Certificate").empty?
+        res = get_certificate(dns_name, @fingerprint)
+        break if !res.empty?
         if attempt == 4
           raise "The certificate with thumbprint #{fingerprint} was not found."
         else
@@ -113,8 +119,12 @@ module Azure
         end
       end
     end
-    ########   SSL certificate generation for knife-azure ssl bootstrap ######
 
+    def get_certificate(dns_name, fingerprint)
+      @connection.query_azure("hostedservices/#{dns_name}/certificates/sha1-#{fingerprint}", "get").search("Certificate")
+    end
+
+    ########   SSL certificate generation for knife-azure ssl bootstrap ######
     def create_ssl_certificate cert_params
       file_path = cert_params[:output_file].sub(/\.(\w+)$/,'')
       path = prompt_for_file_path
