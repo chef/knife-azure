@@ -21,10 +21,12 @@ module Azure
     def initialize(connection)
       @connection=connection
     end
+
     def create(params)
       certificate = Certificate.new(@connection)
       certificate.create(params)
     end
+
     def add(certificate_data, certificate_password, certificate_format, dns_name)
       certificate = Certificate.new(@connection)
       certificate.add_certificate certificate_data, certificate_password, certificate_format, dns_name
@@ -35,7 +37,12 @@ module Azure
                       azure_dns_name: azure_dns_name }
       certificate = Certificate.new(@connection)
       thumbprint = certificate.create_ssl_certificate(cert_params)
-     end
+    end
+
+    def get_certificate(dns_name, fingerprint)
+      certificate = Certificate.new(@connection)
+      certificate.get_certificate(dns_name, fingerprint)
+    end
   end
 end
 
@@ -47,12 +54,14 @@ module Azure
       @connection = connection
       @certificate_version = 2 # cf. RFC 5280 - to make it a "v3" certificate
     end
+
     def create(params)
       # If RSA private key has been specified, then generate an x 509 certificate from the
       # public part of the key
       @cert_data = generate_public_key_certificate_data({:ssh_key => params[:identity_file],
                                              :ssh_key_passphrase => params[:identity_file_passphrase]})
       add_certificate @cert_data, 'knifeazure', 'pfx', params[:azure_dns_name]
+
       # Return the fingerprint to be used while adding role
       @fingerprint
     end
@@ -86,21 +95,36 @@ module Azure
     end
 
     def add_certificate certificate_data, certificate_password, certificate_format, dns_name
-       # Generate XML to call the API
-       # Add certificate to the hosted service
-       builder = Nokogiri::XML::Builder.new do |xml|
-         xml.CertificateFile('xmlns'=>'http://schemas.microsoft.com/windowsazure') {
-         xml.Data certificate_data
-         xml.CertificateFormat certificate_format
-         xml.Password certificate_password
-         }
-       end
-       # Windows Azure API call
-       @connection.query_azure("hostedservices/#{dns_name}/certificates", "post", builder.to_xml)
+      # Generate XML to call the API
+      # Add certificate to the hosted service
+      builder = Nokogiri::XML::Builder.new do |xml|
+       xml.CertificateFile('xmlns'=>'http://schemas.microsoft.com/windowsazure') {
+       xml.Data certificate_data
+       xml.CertificateFormat certificate_format
+       xml.Password certificate_password
+       }
+      end
+      # Windows Azure API call
+      @connection.query_azure("hostedservices/#{dns_name}/certificates", "post", builder.to_xml)
+
+      # Check if certificate is available else raise error
+      for attempt in 0..4
+        Chef::Log.info "Waiting to get certificate ..."
+        res = get_certificate(dns_name, @fingerprint)
+        break if !res.empty?
+        if attempt == 4
+          raise "The certificate with thumbprint #{fingerprint} was not found."
+        else
+          sleep 5
+        end
+      end
+    end
+
+    def get_certificate(dns_name, fingerprint)
+      @connection.query_azure("hostedservices/#{dns_name}/certificates/sha1-#{fingerprint}", "get").search("Certificate")
     end
 
     ########   SSL certificate generation for knife-azure ssl bootstrap ######
-
     def create_ssl_certificate cert_params
       file_path = cert_params[:output_file].sub(/\.(\w+)$/,'')
       path = prompt_for_file_path
