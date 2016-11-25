@@ -221,7 +221,7 @@ Sample knife.rb for bootstrapping Windows Node with basic authentication
     knife[:azure_source_image]='windows-2012-image-id'
 
 #### `cloud-api` bootstrap feature
-By specifying the value `cloud-api` for the `bootstrap_protocol` option of `knife azure server create` instead of `winrm` or `ssh`, Microsoft Azure will install Chef Client using its own internal mirror of Chef Client (it does not download it from Chef's Internet facing URL's as in the conventional winrm / ssh bootstrap). The process as a whole is asynchronous, so once the `knife azure server create` command has create the VM, full provisioning and Chef bootstrap will continue to occur even if the `knife` command is terminated before it completes.
+By specifying the value `cloud-api` for the `bootstrap_protocol` option of `knife azure server create` instead of `winrm` or `ssh`, Microsoft Azure will install Chef Client using the `azure-chef-extension`. The process as a whole is asynchronous, so once the `knife azure server create` command has create the VM, full provisioning and Chef bootstrap will continue to occur even if the `knife` command is terminated before it completes.
 
 In general, systems bootstrapped via `cloud-api` do not require incoming or outgoing Internet access.
 
@@ -248,6 +248,8 @@ It's possible to pass bootstrap options to the extension which get specified in 
     --bootstrap-version
     --node-ssl-verify-mode
     --bootstrap-proxy
+    --chef-service-interval
+    --extended-logs
 
 
 #### Azure Server Create with Domain Join

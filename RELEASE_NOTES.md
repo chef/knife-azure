@@ -7,14 +7,13 @@ Example Note:
 Details about the thing that changed that needs to get included in the Release Notes in markdown.
 -->
 
-# knife-azure 1.6.0.rc.0 release notes:
-This release of knife-azure improves node bootstrap configuration
-support for the `cloud-api` bootstrap protocol option. Improvements include configuration of SSL
-communication options and SSL certificates on the node. This brings
-`cloud-api` bootstrap, in which chef-client installation is performed
-without a network connection between the `knife-azure` workstation and
-the node, closer to functional parity with the older
-network-based bootstrap techniques that use protocols like `ssh` and `WinRM`.
+# knife-azure 1.7.0 release notes:
+In this release, few options have been removed since their support has been removed from the azure-chef-extension. The options are: `--auto-update-client`, `--uninstall-chef-client` and `--delete-chef-extension-config`. They were earlier supported with `cloud-api` bootstrap protocol which uses azure-chef-extension for installing chef-client.
+
+New options introduced:
+`--chef-service-interval`, which lets the user specify the frequency at which chef-client service should run. This option is available for both ASM and ARM commands. For ASM, it's supported with `cloud-api` bootstrap protocol.
+
+`--extended-logs` shows chef convergence logs in detail. This option is available for both ASM and ARM commands. For ASM, it's supported with `cloud-api` bootstrap protocol.
 
 Please file bugs or feature requests against the [KNIFE_AZURE](https://github.com/chef/knife-azure/issues) repository.
 More information on the contribution process for Chef projects can be found in the [Chef Contributions document](https://docs.chef.io/community_contributions.html).
@@ -23,22 +22,35 @@ More information on the contribution process for Chef projects can be found in t
 https://rubygems.org/gems/knife-azure
 https://github.com/chef/knife-azure
 
-## Issues fixed in this release:
+## Features added in this release:
 
-See the [1.6.0.rc.0 CHANGELOG](https://github.com/chef/knife-azure/blob/1.6.0.rc.0/CHANGELOG.md)
-for the complete list of issues fixed in these releases.
+See the [1.7.0 CHANGELOG](https://github.com/chef/knife-azure/blob/1.7.0/CHANGELOG.md)
+for the complete list of features added in this release.
 
 Here is a partial list:
 
-* [knife-azure #249](https://github.com/chef/knife-azure/issues/249) params[:port] doesn't default correctly to 22 when bootstrapping over ssh, causing an xml error
-* [knife-azure #261](https://github.com/chef/knife-azure/pull/261) Added SSL certificate bootstrap support for cloud-api
-* [knife-azure #254](https://github.com/chef/knife-azure/issues/254) Unable to join servers to Active Directory due to username parsing ambiguity on command-line
-* [knife-azure #253](https://github.com/chef/knife-azure/pull/253) Configure node\_ssl\_verify\_mode during cloud-api extension bootstrap
-* [knife-azure #246](https://github.com/chef/knife-azure/pull/246) Support for chef-client version specification during cloud-api bootstrap
-* [knife-azure #255](https://github.com/chef/knife-azure/pull/246) Support for specifying a custom client.rb during cloud-api bootstrap
-* [knife-azure #247](https://github.com/chef/knife-azure/pull/246) README: recommend installing chef-dk rather than chef-client to use knife-azure
-* [knife-azure #244](https://github.com/chef/knife-azure/pull/244) Correctly configure subnet for vnet in server create
-* [knife-azure #245](https://github.com/chef/knife-azure/pull/244) README: Document CentOS support for cloud-api extension bootstrap
+* Added chef_service_interval option and moved encrypted_data_bag_secret option from public_config to private_config for chef_extension: [\#408](https://github.com/chef/knife-azure/pull/408) ([Aliasgar16](https://github.com/Aliasgar16))
+* Added support to show extended logs in ASM bootstrap command: [\#400](https://github.com/chef/knife-azure/pull/400) ([Aliasgar16](https://github.com/Aliasgar16))
+* Added support for extended logs to knife arm bootstrap command: [\#398](https://github.com/chef/knife-azure/pull/398) ([Aliasgar16](https://github.com/Aliasgar16))
+* Add support passing of tcp port option in ARM: [\#394](https://github.com/chef/knife-azure/pull/394) ([dheerajd-msys](https://github.com/dheerajd-msys))
+* Added support for running Xplat command in case of token expiry: [\#378](https://github.com/chef/knife-azure/pull/378) ([dheerajd-msys](https://github.com/dheerajd-msys))
+* Added support for extended_logs to show chef-client run logs to user in ARM server_create command: [\#372](https://github.com/chef/knife-azure/pull/372) ([Aliasgar16](https://github.com/Aliasgar16))
+
+## Issues fixed in this release:
+
+See the [1.7.0 CHANGELOG](https://github.com/chef/knife-azure/blob/1.7.0/CHANGELOG.md)
+for the complete list of issues fixed in this release.
+
+Here is a partial list:
+
+* Fix for handing certificate with thumbprint no found error: [\#413](https://github.com/chef/knife-azure/pull/413) ([Vasu1105](https://github.com/Vasu1105))
+* Handling `credential without -0--` pattern: [\#412](https://github.com/chef/knife-azure/pull/412) ([NimishaS](https://github.com/NimishaS))
+* Allow using relative path for config files: [\#392](https://github.com/chef/knife-azure/pull/392) ([Vasu1105](https://github.com/Vasu1105))
+* Added support to handle existing vnet and subnet resources in resource group while server creation: [\#383](https://github.com/chef/knife-azure/pull/383) ([Aliasgar16](https://github.com/Aliasgar16))
+* azurerm bootstrap fails if the version of chef extension is not given in knife.rb file: [\#379](https://github.com/chef/knife-azure/pull/379) ([Aliasgar16](https://github.com/Aliasgar16))
+* Showing text error message instead of json: [\#376](https://github.com/chef/knife-azure/pull/376) ([NimishaS](https://github.com/NimishaS))
+* Fixed eval failure on some ruby versions and specs failure: [\#375](https://github.com/chef/knife-azure/pull/375) ([dheerajd-msys](https://github.com/dheerajd-msys))
+
 
 
 

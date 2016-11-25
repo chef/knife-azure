@@ -1,5 +1,60 @@
 # Change Log
 
+## [v1.7.0](https://github.com/chef/knife-azure/tree/v1.7.0) (2016-MM-DD)
+
+[Full Changelog](https://github.com/chef/knife-azure/compare/v1.6.0...v1.7.0)
+
+**Closed issues:**
+
+- Knife azurerm server create (subnet in use)  [\#411](https://github.com/chef/knife-azure/issues/411)
+- Multiple Azure AADs cause incorrect token to be chosen for authorization [\#405](https://github.com/chef/knife-azure/issues/405)
+- Error when creating VM in ARM mode and specifying vnet [\#361](https://github.com/chef/knife-azure/issues/361)
+- Knife-Azure Unable to Create a new VM using my custom vm image [\#342](https://github.com/chef/knife-azure/issues/342)
+- create server does not install azure vm agent [\#316](https://github.com/chef/knife-azure/issues/316)
+- knife-azure create server fails with WinRM::WinRMAuthorizationError [\#315](https://github.com/chef/knife-azure/issues/315)
+- knife azure server create does not respect --secret-file argument for non-Windows hosts [\#313](https://github.com/chef/knife-azure/issues/313)
+- FATAL: The x-ms-version header value '2014-05-01' is not one of the supported version headers [\#286](https://github.com/chef/knife-azure/issues/286)
+- knife azure server create using ARM templates [\#285](https://github.com/chef/knife-azure/issues/285)
+- knife azure server create - intermittent authorized_keys CERT thumbprint error - v.1.4.0-1.6.0.rc.0 [\#273](https://github.com/chef/knife-azure/issues/273)
+- Allow using relative path for config file [\#267](https://github.com/chef/knife-azure/issues/267)
+- (pending validation) Knife server delete is limited to ~5 servers in a list [\#259](https://github.com/chef/knife-azure/issues/259)
+- Wrong xml format and value of Get-Deployment by using knife-azure to create a VM [\#236](https://github.com/chef/knife-azure/issues/236)
+- server create issue: ProvisioningConfigurationSet must be specified [\#235](https://github.com/chef/knife-azure/issues/235)
+- Compatible with Windows Azure Pack? [\#212](https://github.com/chef/knife-azure/issues/212)
+
+**Merged pull requests:**
+
+- Fix for handing certificate with thumbprint no found error: [\#413](https://github.com/chef/knife-azure/pull/413) ([Vasu1105](https://github.com/Vasu1105))
+- Handling `credential without -0--` pattern: [\#412](https://github.com/chef/knife-azure/pull/412) ([NimishaS](https://github.com/NimishaS))
+- Added chef_service_interval option and moved encrypted_data_bag_secret option from public_config to private_config for chef_extension: [\#408](https://github.com/chef/knife-azure/pull/408) ([Aliasgar16](https://github.com/Aliasgar16))
+- Move contributing doc to unified location: [\#407](https://github.com/chef/knife-azure/pull/407) ([tas50](https://github.com/tas50))
+- Require Ruby 2.2.2 and test on 2.2.5/2.3.1: [\#406](https://github.com/chef/knife-azure/pull/406) ([tas50](https://github.com/tas50))
+- Passing the secret key correctly: [\#401](https://github.com/chef/knife-azure/pull/401) ([NimishaS](https://github.com/NimishaS))
+- Added support to show extended logs in ASM bootstrap command: [\#400](https://github.com/chef/knife-azure/pull/400) ([Aliasgar16](https://github.com/Aliasgar16))
+- Update ARM README to add missing options: [\#399](https://github.com/chef/knife-azure/pull/399) ([dheerajd-msys](https://github.com/dheerajd-msys))
+- Added support for extended logs to knife arm bootstrap command: [\#398](https://github.com/chef/knife-azure/pull/398) ([Aliasgar16](https://github.com/Aliasgar16))
+- Added validation if the token in going to expire in 10min: [\#397](https://github.com/chef/knife-azure/pull/397) ([NimishaS](https://github.com/NimishaS))
+- Fixed Issue: All specs are not running: [\#396](https://github.com/chef/knife-azure/pull/396) ([NimishaS](https://github.com/NimishaS))
+- Lock activesupport gem version to fix Travis failure: [\#395](https://github.com/chef/knife-azure/pull/395) ([NimishaS](https://github.com/NimishaS))
+- Add support passing of tcp port option in ARM: [\#394](https://github.com/chef/knife-azure/pull/394) ([dheerajd-msys](https://github.com/dheerajd-msys))
+- Updated code for the latest version of azure-sdk-for-ruby: [\#393](https://github.com/chef/knife-azure/pull/393)
+- Allow using relative path for config files: [\#392](https://github.com/chef/knife-azure/pull/392) ([Vasu1105](https://github.com/Vasu1105))
+- Removed options --auto-update-client --uninstall-chef-client --delete-chef-extension-config: [\#391](https://github.com/chef/knife-azure/pull/391) ([Vasu1105](https://github.com/Vasu1105))
+- Not parsing `error.message` as json because it's sometimes string: [\#387](https://github.com/chef/knife-azure/pull/387) ([NimishaS](https://github.com/NimishaS))
+- Added "RDP Port" column for ASM server list: [\#385](https://github.com/chef/knife-azure/pull/385) ([dheerajd-msys](https://github.com/dheerajd-msys))
+- Removing unused methods: [\#384](https://github.com/chef/knife-azure/pull/384) ([NimishaS](https://github.com/NimishaS))
+- Added support to handle existing vnet and subnet resources in resource group while server creation: [\#383](https://github.com/chef/knife-azure/pull/383) ([Aliasgar16](https://github.com/Aliasgar16))
+- Fixed autoUpgradeMinorVersion misplaced in template: [\#382](https://github.com/chef/knife-azure/pull/382) ([Vasu1105](https://github.com/Vasu1105))
+- Renamed --identity-file to --ssh-public-key: [\#381](https://github.com/chef/knife-azure/pull/381) ([NimishaS](https://github.com/NimishaS))
+- Updated the code to find credentials using --0- string instead of --0-2: [\#380](https://github.com/chef/knife-azure/pull/380) ([Vasu1105](https://github.com/Vasu1105))
+- azurerm bootstrap fails if the version of chef extension is not given in knife.rb file: [\#379](https://github.com/chef/knife-azure/pull/379) ([Aliasgar16](https://github.com/Aliasgar16))
+- Added support for running Xplat command in case of token expiry: [\#378](https://github.com/chef/knife-azure/pull/378) ([dheerajd-msys](https://github.com/dheerajd-msys))
+- Showing text error message instead of json: [\#376](https://github.com/chef/knife-azure/pull/376) ([NimishaS](https://github.com/NimishaS))
+- Fixed eval failure on some ruby versions and specs failure: [\#375](https://github.com/chef/knife-azure/pull/375) ([dheerajd-msys](https://github.com/dheerajd-msys))
+- Rectified help for identity_file option: [\#374](https://github.com/chef/knife-azure/pull/374) ([Aliasgar16](https://github.com/Aliasgar16))
+- Updated FFI datatypes to improve readability: [\#373](https://github.com/chef/knife-azure/pull/373) ([NimishaS](https://github.com/NimishaS))
+- Added support for extended_logs to show chef-client run logs to user in ARM server_create command: [\#372](https://github.com/chef/knife-azure/pull/372) ([Aliasgar16](https://github.com/Aliasgar16))
+
 ## [v1.6.0](https://github.com/chef/knife-azure/tree/v1.6.0) (2016-06-10)
 
 [Full Changelog](https://github.com/chef/knife-azure/compare/1.6.0.rc.0...v1.6.0)

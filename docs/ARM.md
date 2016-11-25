@@ -20,7 +20,7 @@ User can either provide just `--azure-image-os-type` or other image reference pa
 
 Accepted values for `--azure-image-os-type` are `ubuntu`, `centos`, `rhel`, `debian ` and `windows`. It creates the server using standard image parameters for respective OS. Along with `--azure-image-os-type` option, `--azure-image-reference-sku` can also be passed, else default value of `--azure-image-reference-sku` will be used.
 
-However, they can be overridden using `--azure-image-reference-publisher`, `--azure-image-reference-offer`, `--azure-image-reference-sku` and `--azure-image-reference-version` options. 
+However, they can be overridden using `--azure-image-reference-publisher`, `--azure-image-reference-offer`, `--azure-image-reference-sku` and `--azure-image-reference-version` options.
 
 Note: `--azure-image-os-type` option should not be passed with `--azure-image-reference-publisher`, `--azure-image-reference-offer` and `--azure-image-reference-version` option
 
@@ -311,6 +311,24 @@ User can pass `--azure-storage-account` option to set storage account name.
                                       This name is the DNS prefix name and can be used to access blobs, queues
                                       and tables in the storage account.
                                       Default value is `vm name`
+
+Command:
+knife azurerm server create
+--azure-resource-group-name MyResourceGrpName
+--azure-vm-name MyNewVMName
+--azure-service-location 'westus'
+--azure-image-os-type centos
+--azure-vm-size Small
+--azure-storage-account 'teststorage'
+-x myuser -P mypassword
+```
+
+#### --chef-service-interval
+User can pass `--chef-service-interval` option to specify the frequency(in minutes) at which chef-service runs. Default value is `30` minutes. If you don't want chef-service to be installed, set `--chef-service-interval` as 0.
+```
+--chef-service-interval INTERVAL  Optional. It specifies the frequency
+                                  (in minutes) at which the chef-service runs.
+                                  Pass 0 if you don't want the chef-service to be installed on the target machine.
 
 Command:
 knife azurerm server create
