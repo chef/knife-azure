@@ -128,8 +128,7 @@ class Chef
       end
 
       # validates keys
-      def validate!(keys)
-        errors = []
+      def validate!(keys, errors)
         keys.each do |k|
           if locate_config_value(k).nil?
             errors << "You did not provide a valid '#{pretty_key(k)}' value. Please set knife[:#{k}] in your knife.rb or pass as an option."
@@ -142,6 +141,7 @@ class Chef
 
       # validate ASM mandatory keys
       def validate_asm_keys!(*keys)
+        errors = []
         mandatory_keys = [:azure_subscription_id, :azure_mgmt_cert, :azure_api_host_name]
         keys.concat(mandatory_keys)
 
@@ -157,7 +157,7 @@ class Chef
             errors = parse_azure_profile(azureprofile_file, errors)
           end
         end
-        validate!(keys)
+        validate!(keys, errors)
       end
 
       def parse_publish_settings_file(filename)
