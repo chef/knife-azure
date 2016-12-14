@@ -27,6 +27,10 @@ class Chef
   class Knife
     module AzurermBase
 
+      ## azure-xplat-cli versio that introduced deprecation of Windows Credentials
+      ## Manager (WCM) usage for authentication credentials storage purpose ##
+      XPLAT_VERSION_WITH_WCM_DEPRECATED = "0.10.5"
+
       if Chef::Platform.windows?
         require 'azure/resource_management/windows_credentials'
         include Azure::ARM::WindowsCredentials
@@ -98,7 +102,32 @@ class Chef
         token_details
       end
 
+      def xplat_cli_version
+        Mixlib::ShellOut.new("azure -v").run_command
+      end
+
+      def is_WCM_env_var_set?
+        ENV['AZURE_USE_SECURE_TOKEN_STORAGE'].nil? ? false : true
+      end
+
+      def token_details_for_windows
+        current_xplat_version = xplat_cli_version
+        if Gem::Version.new(current_xplat_version) < Gem::Version.new(XPLAT_VERSION_WITH_WCM_DEPRECATED)
+          token_details_from_WCM
+        else
+          if is_WCM_env_var_set?
+            token_details_from_WCM
+          else
+            token_details_from_accessToken_file
+          end
+        end
+      end
+
       def token_details_for_linux
+        token_details_from_accessToken_file
+      end
+
+      def token_details_from_accessToken_file
         home_dir = File.expand_path('~')
         file = File.read(home_dir + '/.azure/accessTokens.json')
         file = JSON.parse(file)
