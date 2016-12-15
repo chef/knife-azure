@@ -29,7 +29,7 @@ class Chef
 
       ## azure-xplat-cli versio that introduced deprecation of Windows Credentials
       ## Manager (WCM) usage for authentication credentials storage purpose ##
-      XPLAT_VERSION_WITH_WCM_DEPRECATED = "0.10.5"
+      XPLAT_VERSION_WITH_WCM_DEPRECATED ||= "0.10.5"
 
       if Chef::Platform.windows?
         require 'azure/resource_management/windows_credentials'
@@ -103,7 +103,7 @@ class Chef
       end
 
       def xplat_cli_version
-        Mixlib::ShellOut.new("azure -v").run_command
+        Mixlib::ShellOut.new("azure -v").run_command.stdout
       end
 
       def is_WCM_env_var_set?
@@ -175,18 +175,18 @@ class Chef
 
       def validate_azure_login
         err_string = "Please run XPLAT's 'azure login' command OR specify azure_tenant_id, azure_subscription_id, azure_client_id, azure_client_secret in your knife.rb"
-        if Chef::Platform.windows?
+        if Chef::Platform.windows? && is_WCM_env_var_set?
           # cmdkey command is used for accessing windows credential manager
           xplat_creds_cmd = Mixlib::ShellOut.new("cmdkey /list | findstr AzureXplatCli")
           result = xplat_creds_cmd.run_command
           if result.stdout.nil? || result.stdout.empty?
             raise err_string
           end
-        else
-          home_dir = File.expand_path('~')
-          if !File.exists?(home_dir + "/.azure/accessTokens.json") || File.size?(home_dir + '/.azure/accessTokens.json') <= 2
-            raise err_string
-          end
+          return
+        end
+        home_dir = File.expand_path('~')
+        if !File.exists?(home_dir + "/.azure/accessTokens.json") || File.size?(home_dir + '/.azure/accessTokens.json') <= 2
+          raise err_string
         end
       end
 
