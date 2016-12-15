@@ -318,6 +318,10 @@ class Chef
           raise ArgumentError, "Maximum allowed value of --server-count is 5."
         end
 
+        if locate_config_value(:daemon) && ! %w{auto service task}.include?(locate_config_value(:daemon))
+          raise ArgumentError, "Invalid value for --daemon option. Use valid daemon values i.e 'auto', 'service', or 'task'."
+        end
+
         config[:ohai_hints] = format_ohai_hints(locate_config_value(:ohai_hints))
         validate_ohai_hints if ! locate_config_value(:ohai_hints).casecmp('default').zero?
       end

@@ -90,6 +90,14 @@ class Chef
                                   It specifies the frequency (in minutes) at which the chef-service runs.
                                   Pass 0 if you don't want the chef-service to be installed on the target machine."
 
+            option :daemon,
+              :long => "--daemon DAEMON",
+              :description => "Optional, Provide this option when --bootstrap-protocol is set to 'cloud-api'. Works only for Windows node.
+                                Options: 'auto' or 'service' or 'task'.
+                                auto - This will not run the chef-client as service or scheduled-task both on node.
+                                service - This will install and run the chef-client as service on node.
+                                task - This will install and run the chef-client as scheduled-task on node."
+
   	  	  end
   	  	end
   	  end

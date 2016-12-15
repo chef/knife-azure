@@ -515,6 +515,14 @@ module Azure::ARM
         end
       end
 
+      if params[:chef_extension_public_param][:daemon]
+        template['resources'].each do |resource|
+          if resource['type'] == 'Microsoft.Compute/virtualMachines/extensions'
+            resource['properties']['settings']['daemon'] = params[:chef_extension_public_param][:daemon]
+          end
+        end
+      end
+
       template
     end
 
