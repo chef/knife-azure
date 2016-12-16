@@ -102,8 +102,12 @@ class Chef
         token_details
       end
 
-      def xplat_cli_version
+      def current_xplat_cli_version
         Mixlib::ShellOut.new("azure -v").run_command.stdout
+      end
+
+      def is_old_xplat?
+        Gem::Version.new(current_xplat_cli_version) < Gem::Version.new(XPLAT_VERSION_WITH_WCM_DEPRECATED)
       end
 
       def is_WCM_env_var_set?
@@ -111,15 +115,10 @@ class Chef
       end
 
       def token_details_for_windows
-        current_xplat_version = xplat_cli_version
-        if Gem::Version.new(current_xplat_version) < Gem::Version.new(XPLAT_VERSION_WITH_WCM_DEPRECATED)
+        if is_old_xplat?
           token_details_from_WCM
         else
-          if is_WCM_env_var_set?
-            token_details_from_WCM
-          else
-            token_details_from_accessToken_file
-          end
+          is_WCM_env_var_set? ? token_details_from_WCM : token_details_from_accessToken_file
         end
       end
 
@@ -175,7 +174,7 @@ class Chef
 
       def validate_azure_login
         err_string = "Please run XPLAT's 'azure login' command OR specify azure_tenant_id, azure_subscription_id, azure_client_id, azure_client_secret in your knife.rb"
-        if Chef::Platform.windows? && is_WCM_env_var_set?
+        if Chef::Platform.windows? && (is_old_xplat? || is_WCM_env_var_set?)
           # cmdkey command is used for accessing windows credential manager
           xplat_creds_cmd = Mixlib::ShellOut.new("cmdkey /list | findstr AzureXplatCli")
           result = xplat_creds_cmd.run_command
