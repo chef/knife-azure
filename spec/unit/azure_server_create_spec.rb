@@ -113,6 +113,14 @@ describe Chef::Knife::AzureServerCreate do
       end
     end
 
+    context "invalid parameters" do
+      it "raises error if invalid value is provided for daemon option" do
+        Chef::Config[:knife][:daemon] = "foo"
+        expect(@server_instance.ui).to receive(:error)
+        expect {@server_instance.run}.to raise_error(SystemExit)
+      end
+    end
+
     context "timeout parameters" do
       it "uses correct values when not specified" do
         expect(@server_instance.options[:azure_vm_startup_timeout][:default].to_i).to eq(10)
@@ -842,6 +850,7 @@ describe Chef::Knife::AzureServerCreate do
         @server_instance.config[:bootstrap_version] = '12.4.2'
         @server_instance.config[:extended_logs] = true
         @server_instance.config[:chef_service_interval] = '16'
+        @server_instance.config[:daemon] = 'service'
       end
 
       let(:public_config) { {
@@ -864,6 +873,18 @@ describe Chef::Knife::AzureServerCreate do
         response = @server_instance.create_server_def
         expect(response[:chef_extension_public_param]).to be == public_config
       end
+
+      it "should add daemon in public config if image windows" do
+        allow(@server_instance).to receive(:is_image_windows?).and_return(true)
+        public_config[:daemon] = "service"
+        expect(@server_instance).to receive(:get_chef_extension_name)
+        expect(@server_instance).to receive(:get_chef_extension_publisher)
+        expect(@server_instance).to receive(:get_chef_extension_version)
+        expect(@server_instance).to receive(:get_chef_extension_private_params)
+        response = @server_instance.create_server_def
+        expect(response[:chef_extension_public_param]).to be == public_config
+      end
+
     end
 
     context "get azure chef extension version" do

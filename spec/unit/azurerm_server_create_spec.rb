@@ -330,6 +330,13 @@ describe Chef::Knife::AzurermServerCreate do
           expect(@server_params[:disablePasswordAuthentication]).to be == "true"
         end
 
+        it "raises error if wrong value is provided for daemon option by user" do
+          Chef::Config[:knife][:daemon] = 'foo'
+          expect { @arm_server_instance.validate_params! }.to raise_error(
+            ArgumentError, "Invalid value for --daemon option. Use valid daemon values i.e 'auto', 'service', or 'task'."
+          )
+        end
+
         after do
           Chef::Config[:knife].delete(:ssh_password)
           Chef::Config[:knife].delete(:azure_storage_account)
@@ -879,6 +886,24 @@ describe Chef::Knife::AzurermServerCreate do
           response = @arm_server_instance.get_chef_extension_public_params
           expect(response).to be == public_config
         end
+
+        it "sets daemon variable in public config" do
+          @arm_server_instance.config[:daemon] = 'service'
+          allow(@arm_server_instance).to receive(:is_image_windows?).and_return(true)
+          public_config = {:client_rb=>"chef_server_url \t \"https://localhost:443\"\nvalidation_client_name\t\"chef-validator\"", :runlist=>"\"getting-started\"", extendedLogs: "false", :custom_json_attr=>{}, :hints=>["vm_name", "public_fqdn", "platform"], :daemon=>'service', :bootstrap_options=>{:chef_server_url=>"https://localhost:443", :validation_client_name=>"chef-validator"}}   
+          response = @arm_server_instance.get_chef_extension_public_params
+          expect(response).to be == public_config
+        end
+
+        it "does not sets daemon variable in public config if its not a windows image" do
+          @arm_server_instance.config[:daemon] = 'service'
+          allow(@arm_server_instance).to receive(:is_image_windows?).and_return(false)
+          public_config = {:client_rb=>"chef_server_url \t \"https://localhost:443\"\nvalidation_client_name\t\"chef-validator\"", :runlist=>"\"getting-started\"", extendedLogs: "false", :custom_json_attr=>{}, :hints=>["vm_name", "public_fqdn", "platform"], :daemon=>'service', :bootstrap_options=>{:chef_server_url=>"https://localhost:443", :validation_client_name=>"chef-validator"}}   
+          response = @arm_server_instance.get_chef_extension_public_params
+          expect(response).not_to be == public_config
+        end
+
+
       end
 
       shared_context 'private config contents' do
@@ -1261,6 +1286,45 @@ describe Chef::Knife::AzurermServerCreate do
         end
       end
     end
+
+    context "daemon option" do
+      context "is passed by the user" do
+        before do
+          @params[:chef_extension_public_param][:daemon] = "service"
+        end
+
+        it "sets the daemon parameter under extension config in the template" do
+          template = @service.create_deployment_template(@params)
+
+          extension = nil
+          template["resources"].each do |resource|
+            extension = resource if resource["type"] == "Microsoft.Compute/virtualMachines/extensions"
+          end
+
+          expect(extension["properties"]["settings"].has_key? 'daemon').to be == true
+          expect(extension["properties"]["settings"]['daemon']).to be == "service"
+        end
+      end
+
+      context "is not passed by the user" do
+        before do
+          @params[:chef_extension_public_param][:daemon] = nil
+        end
+
+        it "does not set the daemon parameter under extension config in the template" do
+          template = @service.create_deployment_template(@params)
+
+          extension = nil
+          template["resources"].each do |resource|
+            extension = resource if resource["type"] == "Microsoft.Compute/virtualMachines/extensions"
+          end
+
+          expect(extension["properties"]["settings"].has_key? 'daemon').to be == false
+        end
+      end
+    end
+
+
 
     after do
       @params.delete(:server_count)
