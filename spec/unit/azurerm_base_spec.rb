@@ -85,33 +85,117 @@ describe Chef::Knife::AzurermBase do
 
   describe "Token related test cases" do
     context 'Xplat Azure login validation' do
-      it 'Accesstoken file doesnt exist for Linux' do
-        allow(Chef::Platform).to receive(:windows?).and_return(false)
-        allow(File).to receive(:exists?).and_return(false)
-        expect { @arm_server_instance.validate_azure_login }.to raise_error("Please run XPLAT's 'azure login' command OR specify azure_tenant_id, azure_subscription_id, azure_client_id, azure_client_secret in your knife.rb")
+      context "Platform is Linux" do
+        before(:each) do
+          allow(Chef::Platform).to receive(:windows?).and_return(false)
+        end
+
+        it 'Accesstoken file doesnt exist for Linux' do
+          allow(File).to receive(:exists?).and_return(false)
+          expect { @arm_server_instance.validate_azure_login }.to raise_error("Please run XPLAT's 'azure login' command OR specify azure_tenant_id, azure_subscription_id, azure_client_id, azure_client_secret in your knife.rb")
+        end
+
+        it 'Accesstoken file exist for Linux' do
+          allow(File).to receive(:exists?).and_return(true)
+          allow(File).to receive(:size?).and_return(4)
+          expect { @arm_server_instance.validate_azure_login }.not_to raise_error
+        end
+
+        it 'Accesstoken file contain [] value upon running azure logout command for Linux' do
+          allow(File).to receive(:size?).and_return(2)
+          expect { @arm_server_instance.validate_azure_login }.to raise_error("Please run XPLAT's 'azure login' command OR specify azure_tenant_id, azure_subscription_id, azure_client_id, azure_client_secret in your knife.rb")
+        end
       end
 
-      it 'Accesstoken file exist for Linux' do
-        allow(Chef::Platform).to receive(:windows?).and_return(false)
-        allow(File).to receive(:exists?).and_return(true)
-        allow(File).to receive(:size?).and_return(4)
-        expect { @arm_server_instance.validate_azure_login }.not_to raise_error
-      end
+      context "Platform is Windows" do
+        let(:xplat_creds_cmd) { double(:run_command => double) }
 
-      it 'Accesstoken file contain [] value upon running azure logout command for Linux' do
-        allow(Chef::Platform).to receive(:windows?).and_return(false)
-        allow(File).to receive(:size?).and_return(2)
-        expect { @arm_server_instance.validate_azure_login }.to raise_error("Please run XPLAT's 'azure login' command OR specify azure_tenant_id, azure_subscription_id, azure_client_id, azure_client_secret in your knife.rb")
-      end
+        before(:each) do
+          allow(Chef::Platform).to receive(:windows?).and_return(true)
+        end
 
-      it 'Token Object not present in windows credential manager' do
-        @xplat_creds_cmd = double(:run_command => double)
-        @result = double(:stdout => "")
-        allow(Chef::Platform).to receive(:windows?).and_return(true)
-        allow(Mixlib::ShellOut).to receive(:new).and_return(@xplat_creds_cmd)
-        allow(@xplat_creds_cmd).to receive(:run_command).and_return(@result)
-        allow(@result).to receive(:stdout).and_return("")
-        expect { @arm_server_instance.validate_azure_login }.to raise_error("Please run XPLAT's 'azure login' command OR specify azure_tenant_id, azure_subscription_id, azure_client_id, azure_client_secret in your knife.rb")
+        context "old xplat_cli version is installed" do
+          before do
+            allow(@arm_server_instance).to receive(:is_old_xplat?).and_return(true)
+          end
+
+          it "validates azure login status by checking in WCM through cmdkey system command" do
+            expect(Mixlib::ShellOut).to receive(:new).with(
+              "cmdkey /list | findstr AzureXplatCli").and_return(xplat_creds_cmd)
+            allow(xplat_creds_cmd.run_command).to receive(
+              :stdout).and_return("azure_cli_logged_in")
+            expect { @arm_server_instance.validate_azure_login }.to_not raise_error
+          end
+        end
+
+        context "new xplat_cli version is installed" do
+          before(:each) do
+            allow(@arm_server_instance).to receive(:is_old_xplat?).and_return(false)
+          end
+
+          context "WCM is used for token storage" do
+            before do
+              allow(@arm_server_instance).to receive(:is_WCM_env_var_set?).and_return(true)
+            end
+
+            context "token is not present in WCM" do
+              before do
+                allow(xplat_creds_cmd.run_command).to receive(:stdout).and_return("")
+              end
+
+              it "raises error" do
+                expect(Mixlib::ShellOut).to receive(:new).with(
+                  "cmdkey /list | findstr AzureXplatCli").and_return(xplat_creds_cmd)
+                expect { @arm_server_instance.validate_azure_login }.to raise_error("Please run XPLAT's 'azure login' command OR specify azure_tenant_id, azure_subscription_id, azure_client_id, azure_client_secret in your knife.rb")
+              end
+            end
+
+            context "token is present in WCM" do
+              before do
+                allow(xplat_creds_cmd.run_command).to receive(
+                  :stdout).and_return("azure_cli_logged_in")
+              end
+
+              it "does not raise error" do
+                expect(Mixlib::ShellOut).to receive(:new).with(
+                  "cmdkey /list | findstr AzureXplatCli").and_return(xplat_creds_cmd)
+                expect { @arm_server_instance.validate_azure_login }.to_not raise_error
+              end
+            end
+          end
+
+          context "accessTokens.json file is used for token storage" do
+            before do
+              allow(@arm_server_instance).to receive(:is_WCM_env_var_set?).and_return(false)
+            end
+
+            context "token not present in accessTokens.json file" do
+              before do
+                allow(File).to receive(:exists?).and_return(true)
+                allow(File).to receive(:size?).and_return(2)
+              end
+
+              it "raises error" do
+                expect(Mixlib::ShellOut).to_not receive(:new)
+                expect(File).to receive(:expand_path).and_return('user_home_path')
+                expect { @arm_server_instance.validate_azure_login }.to raise_error("Please run XPLAT's 'azure login' command OR specify azure_tenant_id, azure_subscription_id, azure_client_id, azure_client_secret in your knife.rb")
+              end
+            end
+
+            context "token present in accessTokens.json file" do
+              before do
+                allow(File).to receive(:exists?).and_return(true)
+                allow(File).to receive(:size?).and_return(4)
+              end
+
+              it "does not raise error" do
+                expect(Mixlib::ShellOut).to_not receive(:new)
+                expect(File).to receive(:expand_path).and_return('user_home_path')
+                expect { @arm_server_instance.validate_azure_login }.to_not raise_error
+              end
+            end
+          end
+        end
       end
     end
 
@@ -242,6 +326,112 @@ describe Chef::Knife::AzurermBase do
         file_path = get_publish_settings_file_path("azureValid.publishsettings")
         Chef::Config[:knife][:azure_publish_settings_file] = file_path
         expect(@dummy.find_file(Chef::Config[:knife][:azure_publish_settings_file])).to eq file_path
+      end
+    end
+  end
+
+  describe "current_xplat_cli_version" do
+    let(:mixlib_object) { double('MixlibObject', :run_command => double) }
+
+    before do
+      allow(mixlib_object.run_command).to receive(:stdout).and_return('0.10.4')
+    end
+
+    it "returns the version of xplat_cli" do
+      allow(Mixlib::ShellOut).to receive(:new).and_return(mixlib_object)
+      response = @arm_server_instance.current_xplat_cli_version
+      expect(response).to be == '0.10.4'
+    end
+  end
+
+  describe "is_old_xplat?" do
+    context "old version of xplat_cli is installed" do
+      before do
+        allow(@arm_server_instance).to receive(
+          :current_xplat_cli_version).and_return('0.10.3')
+      end
+
+      it "returns true" do
+        response = @arm_server_instance.is_old_xplat?
+        expect(response).to be == true
+      end
+    end
+
+    context "new version of xplat_cli is installed" do
+      before do
+        allow(@arm_server_instance).to receive(
+          :current_xplat_cli_version).and_return('0.10.6')
+      end
+
+      it "returns false" do
+        response = @arm_server_instance.is_old_xplat?
+        expect(response).to be == false
+      end
+    end
+  end
+
+  describe "is_WCM_env_var_set?" do
+    context "environment variable is not set" do
+      it "returns false" do
+        response = @arm_server_instance.is_WCM_env_var_set?
+        expect(response).to be == false
+      end
+    end
+
+    context "environment variable is set" do
+      before do
+        allow(ENV).to receive(:[]).with(
+          'AZURE_USE_SECURE_TOKEN_STORAGE').and_return('true')
+      end
+
+      it "returns true" do
+        response = @arm_server_instance.is_WCM_env_var_set?
+        expect(response).to be == true
+      end
+    end
+  end
+
+  describe "token_details_for_windows" do
+    context "old version of xplat_cli is installed" do
+      before do
+        allow(@arm_server_instance).to receive(:is_old_xplat?).and_return(true)
+      end
+
+      it "invokes appropriate method to fetch token details from WCM" do
+        expect(@arm_server_instance).to receive(:token_details_from_WCM)
+        expect(@arm_server_instance).to_not receive(:is_WCM_env_var_set?)
+        expect(@arm_server_instance).to_not receive(:token_details_from_accessToken_file)
+        @arm_server_instance.token_details_for_windows
+      end
+    end
+
+    context "new version of xplat_cli is installed" do
+      before(:each) do
+        allow(@arm_server_instance).to receive(:is_old_xplat?).and_return(false)
+      end
+
+      context "WCM is used for token storage" do
+        before do
+          allow(@arm_server_instance).to receive(:is_WCM_env_var_set?).and_return(true)
+        end
+
+        it "invokes appropriate method to fetch token details from WCM" do
+          expect(@arm_server_instance).to receive(:token_details_from_WCM)
+          expect(@arm_server_instance).to_not receive(:token_details_from_accessToken_file)
+          @arm_server_instance.token_details_for_windows
+        end
+      end
+
+      context "accessTokens.json file is used for token storage" do
+        before do
+          allow(@arm_server_instance).to receive(:is_WCM_env_var_set?).and_return(false)
+        end
+
+        it "invokes appropriate method to fetch token details from accessTokens.json file" do
+          expect(@arm_server_instance).to_not receive(:token_details_from_WCM)
+          expect(@arm_server_instance).to receive(:token_details_from_accessToken_file)
+          @arm_server_instance.token_details_for_windows
+        end
       end
     end
   end
