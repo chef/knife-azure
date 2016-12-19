@@ -481,7 +481,7 @@ class Chef
             exit 1
           end
 
-          if ! %w{auto service task}.include?(locate_config_value(:daemon))
+          if ! %w{auto service}.include?(locate_config_value(:daemon))
             ui.error("Invalid value for --daemon option. Use valid daemon values i.e 'auto', 'service', or 'task'.")
             exit 1
           end

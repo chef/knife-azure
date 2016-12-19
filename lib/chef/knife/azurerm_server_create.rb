@@ -318,7 +318,7 @@ class Chef
           raise ArgumentError, "Maximum allowed value of --server-count is 5."
         end
 
-        if locate_config_value(:daemon) && ! %w{auto service task}.include?(locate_config_value(:daemon))
+        if locate_config_value(:daemon) && ! %w{auto service}.include?(locate_config_value(:daemon))
           raise ArgumentError, "Invalid value for --daemon option. Use valid daemon values i.e 'auto', 'service', or 'task'."
         end
 
