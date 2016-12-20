@@ -20,12 +20,14 @@
 require 'chef/knife'
 require 'azure/resource_management/ARM_interface'
 require 'mixlib/shellout'
+require 'chef/mixin/shell_out'
 require 'time'
 require 'json'
 
 class Chef
   class Knife
     module AzurermBase
+      include Chef::Mixin::ShellOut
 
       ## azure-xplat-cli versio that introduced deprecation of Windows Credentials
       ## Manager (WCM) usage for authentication credentials storage purpose ##
@@ -103,7 +105,7 @@ class Chef
       end
 
       def current_xplat_cli_version
-        Mixlib::ShellOut.new("azure -v").run_command.stdout
+        shell_out!("azure -v", { returns: [0] }).stdout
       end
 
       def is_old_xplat?

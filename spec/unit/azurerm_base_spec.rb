@@ -331,14 +331,10 @@ describe Chef::Knife::AzurermBase do
   end
 
   describe "current_xplat_cli_version" do
-    let(:mixlib_object) { double('MixlibObject', :run_command => double) }
-
-    before do
-      allow(mixlib_object.run_command).to receive(:stdout).and_return('0.10.4')
-    end
+    let(:mixlib_object) { double('MixlibObject', :stdout => '0.10.4') }
 
     it "returns the version of xplat_cli" do
-      allow(Mixlib::ShellOut).to receive(:new).and_return(mixlib_object)
+      expect(@arm_server_instance).to receive(:shell_out!).and_return(mixlib_object)
       response = @arm_server_instance.current_xplat_cli_version
       expect(response).to be == '0.10.4'
     end
