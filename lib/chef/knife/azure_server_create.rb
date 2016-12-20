@@ -374,7 +374,7 @@ class Chef
                   extension_status[:status] = :extension_status_not_detected
                 end
               # This fix is for linux waagent issue: api unable to deserialize the waagent status.
-              elsif role.at_css('GuestAgentStatus Status').text == 'NotReady' && waagent_status_msg == lnx_waagent_fail_msg
+              elsif (role.at_css('GuestAgentStatus Status').text == 'NotReady') && (waagent_status_msg == lnx_waagent_fail_msg)
                 extension_status[:status] = :extension_ready
               else
                 extension_status[:status] = :wagent_provisioning
@@ -476,14 +476,16 @@ class Chef
         end
 
         if locate_config_value(:daemon)
-          if locate_config_value(:bootstrap_protocol) != 'cloud-api'
-            ui.error("--daemon option works with --bootstrap-protocol cloud-api")
-            exit 1
+          unless is_image_windows?
+            raise ArgumentError, "The daemon option is only support for Windows nodes."
           end
 
-          if ! %w{auto service}.include?(locate_config_value(:daemon))
-            ui.error("Invalid value for --daemon option. Use valid daemon values i.e 'auto', 'service', or 'task'.")
-            exit 1
+          unless  locate_config_value(:bootstrap_protocol) == 'cloud-api'
+            raise ArgumentError, "--daemon option works with --bootstrap-protocol cloud-api"
+          end
+
+          unless %w{auto service}.include?(locate_config_value(:daemon))
+            raise ArgumentError, "Invalid value for --daemon option. Use valid daemon values i.e 'auto', 'service'."
           end
         end
       end

@@ -285,7 +285,8 @@ class Chef
           pub_config[:extendedLogs] = locate_config_value(:extended_logs) ? "true" : "false"
           pub_config[:hints] = ohai_hints if @service.instance_of?(Azure::ResourceManagement::ARMInterface) && !locate_config_value(:ohai_hints).nil?
           pub_config[:chef_service_interval] = locate_config_value(:chef_service_interval) if locate_config_value(:chef_service_interval)
-          pub_config[:daemon] = locate_config_value(:daemon) if locate_config_value(:daemon) && is_image_windows?
+          pub_config[:daemon] = locate_config_value(:daemon) if locate_config_value(:daemon)
+
           # bootstrap attributes
           pub_config[:bootstrap_options] = {}
           pub_config[:bootstrap_options][:environment] = locate_config_value(:environment) if locate_config_value(:environment)

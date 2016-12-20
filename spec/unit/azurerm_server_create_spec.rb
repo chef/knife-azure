@@ -332,8 +332,16 @@ describe Chef::Knife::AzurermServerCreate do
 
         it "raises error if wrong value is provided for daemon option by user" do
           Chef::Config[:knife][:daemon] = 'foo'
+          allow(@arm_server_instance).to receive(:is_image_windows?).and_return(true)
           expect { @arm_server_instance.validate_params! }.to raise_error(
-            ArgumentError, "Invalid value for --daemon option. Use valid daemon values i.e 'auto', 'service', or 'task'."
+            ArgumentError, "Invalid value for --daemon option. Use valid daemon values i.e 'auto', 'service'."
+          )
+        end
+
+        it "raises error if daemon opiton is provided for other than windows node by user" do
+          Chef::Config[:knife][:daemon] = 'service'
+          expect { @arm_server_instance.validate_params! }.to raise_error(
+            ArgumentError, "The daemon option is only support for Windows nodes."
           )
         end
 
@@ -894,16 +902,6 @@ describe Chef::Knife::AzurermServerCreate do
           response = @arm_server_instance.get_chef_extension_public_params
           expect(response).to be == public_config
         end
-
-        it "does not sets daemon variable in public config if its not a windows image" do
-          @arm_server_instance.config[:daemon] = 'service'
-          allow(@arm_server_instance).to receive(:is_image_windows?).and_return(false)
-          public_config = {:client_rb=>"chef_server_url \t \"https://localhost:443\"\nvalidation_client_name\t\"chef-validator\"", :runlist=>"\"getting-started\"", extendedLogs: "false", :custom_json_attr=>{}, :hints=>["vm_name", "public_fqdn", "platform"], :daemon=>'service', :bootstrap_options=>{:chef_server_url=>"https://localhost:443", :validation_client_name=>"chef-validator"}}   
-          response = @arm_server_instance.get_chef_extension_public_params
-          expect(response).not_to be == public_config
-        end
-
-
       end
 
       shared_context 'private config contents' do

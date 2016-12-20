@@ -318,8 +318,14 @@ class Chef
           raise ArgumentError, "Maximum allowed value of --server-count is 5."
         end
 
-        if locate_config_value(:daemon) && ! %w{auto service}.include?(locate_config_value(:daemon))
-          raise ArgumentError, "Invalid value for --daemon option. Use valid daemon values i.e 'auto', 'service', or 'task'."
+        if locate_config_value(:daemon)
+          unless is_image_windows?
+            raise ArgumentError, "The daemon option is only support for Windows nodes."
+          end
+
+          unless %w{auto service}.include?(locate_config_value(:daemon))
+            raise ArgumentError, "Invalid value for --daemon option. Use valid daemon values i.e 'auto', 'service'."
+          end
         end
 
         config[:ohai_hints] = format_ohai_hints(locate_config_value(:ohai_hints))

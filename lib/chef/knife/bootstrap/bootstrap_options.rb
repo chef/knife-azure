@@ -92,11 +92,10 @@ class Chef
 
             option :daemon,
               :long => "--daemon DAEMON",
-              :description => "Optional, Provide this option when --bootstrap-protocol is set to 'cloud-api'. Works only for Windows node.
+              :description => "Optional. Configures the chef-client service for unattended execution. Requires --bootstrap-protocol to be 'cloud-api' and the node platform to be Windows.
                                 Options: 'auto' or 'service'.
-                                auto - Provide when you don't want to run the chef-client as service.
-                                service - Provide when you want to run chef-client as service"
-
+                                auto - Uses the default behavior. Currently prevents the chef-client service from being configured as a service.
+                                service - Configures the chef-client to run automatically in the background as a service."
   	  	  end
   	  	end
   	  end
