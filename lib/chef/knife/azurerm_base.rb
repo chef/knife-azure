@@ -176,6 +176,11 @@ class Chef
 
       def validate_azure_login
         err_string = "Please run XPLAT's 'azure login' command OR specify azure_tenant_id, azure_subscription_id, azure_client_id, azure_client_secret in your knife.rb"
+
+        ## Older versions of the Azure CLI on Windows stored credentials in a unique way
+        ## in Windows Credentails Manager (WCM).
+        ## Newer versions use the same pattern across platforms where credentials gets
+        ## stored in ~/.azure/accessTokens.json file.
         if Chef::Platform.windows? && (is_old_xplat? || is_WCM_env_var_set?)
           # cmdkey command is used for accessing windows credential manager
           xplat_creds_cmd = Mixlib::ShellOut.new("cmdkey /list | findstr AzureXplatCli")
@@ -183,11 +188,11 @@ class Chef
           if result.stdout.nil? || result.stdout.empty?
             raise err_string
           end
-          return
-        end
-        home_dir = File.expand_path('~')
-        if !File.exists?(home_dir + "/.azure/accessTokens.json") || File.size?(home_dir + '/.azure/accessTokens.json') <= 2
-          raise err_string
+        else
+          home_dir = File.expand_path('~')
+          if !File.exists?(home_dir + "/.azure/accessTokens.json") || File.size?(home_dir + '/.azure/accessTokens.json') <= 2
+            raise err_string
+          end
         end
       end
 
