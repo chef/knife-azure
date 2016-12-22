@@ -334,7 +334,7 @@ describe Chef::Knife::AzurermServerCreate do
           Chef::Config[:knife][:daemon] = 'foo'
           allow(@arm_server_instance).to receive(:is_image_windows?).and_return(true)
           expect { @arm_server_instance.validate_params! }.to raise_error(
-            ArgumentError, "Invalid value for --daemon option. Use valid daemon values i.e 'auto', 'service'."
+            ArgumentError, "Invalid value for --daemon option. Use valid daemon values i.e 'none', 'service'."
           )
         end
 
@@ -342,6 +342,22 @@ describe Chef::Knife::AzurermServerCreate do
           Chef::Config[:knife][:daemon] = 'service'
           expect { @arm_server_instance.validate_params! }.to raise_error(
             ArgumentError, "The daemon option is only support for Windows nodes."
+          )
+        end
+
+        it "deos not raise any error if daemon option value is 'service'" do
+          Chef::Config[:knife][:daemon] = 'service'
+          allow(@arm_server_instance).to receive(:is_image_windows?).and_return(true)
+          expect { @arm_server_instance.validate_params! }.not_to raise_error(
+            ArgumentError, "Invalid value for --daemon option. Use valid daemon values i.e 'none', 'service'."
+          )
+        end
+
+        it "does not raise any error if daemon option value is 'none'" do
+          Chef::Config[:knife][:daemon] = 'none'
+          allow(@arm_server_instance).to receive(:is_image_windows?).and_return(true)
+          expect { @arm_server_instance.validate_params! }.not_to raise_error(
+            ArgumentError, "Invalid value for --daemon option. Use valid daemon values i.e 'none', 'service'."
           )
         end
 

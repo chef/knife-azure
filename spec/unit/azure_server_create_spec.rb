@@ -113,16 +113,46 @@ describe Chef::Knife::AzureServerCreate do
       end
     end
 
-    context "invalid parameters" do
-      it "raise error if daemon option is provided for windows node" do
-        allow(@server_instance).to receive(:is_image_windows?).and_return(false)
+    context "validate parameters" do
+      it "raise error if daemon option is not provided for windows node" do
         Chef::Config[:knife][:daemon] = "service"
-        expect {@server_instance.run}.to raise_error(ArgumentError)
+        expect {@server_instance.run}.to raise_error(
+          ArgumentError, "The daemon option is only support for Windows nodes.")
       end
 
       it "raises error if invalid value is provided for daemon option" do
+        allow(@server_instance).to receive(:is_image_windows?).and_return(true)
         Chef::Config[:knife][:daemon] = "foo"
-        expect {@server_instance.run}.to raise_error(ArgumentError)
+        Chef::Config[:knife][:bootstrap_protocol] = "cloud-api"
+        expect {@server_instance.run}.to raise_error(
+          ArgumentError, "Invalid value for --daemon option. Use valid daemon values i.e 'none', 'service'."
+          )
+      end
+
+      it "raises error if bootstrap_protocol is not cloud-api for daemon option" do
+        allow(@server_instance).to receive(:is_image_windows?).and_return(true)
+        Chef::Config[:knife][:daemon] = "service"
+        expect {@server_instance.run}.to raise_error(
+          ArgumentError, "--daemon option works with --bootstrap-protocol cloud-api"
+        )
+      end
+
+      it "does not raise error if daemon option value is 'service'" do
+        allow(@server_instance).to receive(:is_image_windows?).and_return(true)
+        Chef::Config[:knife][:daemon] = "service"
+        Chef::Config[:knife][:bootstrap_protocol] = "cloud-api"
+        expect {@server_instance.run}.not_to raise_error(
+          ArgumentError, "Invalid value for --daemon option. Use valid daemon values i.e 'none', 'service'."
+        )
+      end
+
+      it "does not raise error if daemon option value is 'none'" do
+        allow(@server_instance).to receive(:is_image_windows?).and_return(true)
+        Chef::Config[:knife][:daemon] = "none"
+        Chef::Config[:knife][:bootstrap_protocol] = "cloud-api"
+        expect {@server_instance.run}.not_to raise_error(
+          ArgumentError, "Invalid value for --daemon option. Use valid daemon values i.e 'none', 'service'."
+        )
       end
     end
 
