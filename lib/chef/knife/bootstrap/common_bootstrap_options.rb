@@ -17,7 +17,7 @@
 # limitations under the License.
 #
 #
-# Bootstrap options listed here are supported only for cloud-api protocol.
+# Bootstrap options listed here are supported only for cloud-api protocol ARM mode.
 #
 
 class Chef
@@ -103,6 +103,13 @@ class Chef
               :long => "--chef-service-interval INTERVAL",
               :description => "Optional. It specifies the frequency (in minutes) at which the chef-service runs.
                                 Pass 0 if you don't want the chef-service to be installed on the target machine."
+
+            option :daemon,
+              :long => "--daemon DAEMON",
+              :description => "Optional. Configures the chef-client service for unattended execution. Requires --bootstrap-protocol to be 'cloud-api' and the node platform to be Windows.
+                                Options: 'none' or 'service'.
+                                none - Currently prevents the chef-client service from being configured as a service.
+                                service - Configures the chef-client to run automatically in the background as a service."
 
           end
         end

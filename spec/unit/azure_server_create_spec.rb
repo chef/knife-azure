@@ -113,6 +113,49 @@ describe Chef::Knife::AzureServerCreate do
       end
     end
 
+    context "validate parameters" do
+      it "raise error if daemon option is not provided for windows node" do
+        Chef::Config[:knife][:daemon] = "service"
+        expect {@server_instance.run}.to raise_error(
+          ArgumentError, "The daemon option is only support for Windows nodes.")
+      end
+
+      it "raises error if invalid value is provided for daemon option" do
+        allow(@server_instance).to receive(:is_image_windows?).and_return(true)
+        Chef::Config[:knife][:daemon] = "foo"
+        Chef::Config[:knife][:bootstrap_protocol] = "cloud-api"
+        expect {@server_instance.run}.to raise_error(
+          ArgumentError, "Invalid value for --daemon option. Use valid daemon values i.e 'none', 'service'."
+          )
+      end
+
+      it "raises error if bootstrap_protocol is not cloud-api for daemon option" do
+        allow(@server_instance).to receive(:is_image_windows?).and_return(true)
+        Chef::Config[:knife][:daemon] = "service"
+        expect {@server_instance.run}.to raise_error(
+          ArgumentError, "--daemon option works with --bootstrap-protocol cloud-api"
+        )
+      end
+
+      it "does not raise error if daemon option value is 'service'" do
+        allow(@server_instance).to receive(:is_image_windows?).and_return(true)
+        Chef::Config[:knife][:daemon] = "service"
+        Chef::Config[:knife][:bootstrap_protocol] = "cloud-api"
+        expect {@server_instance.run}.not_to raise_error(
+          ArgumentError, "Invalid value for --daemon option. Use valid daemon values i.e 'none', 'service'."
+        )
+      end
+
+      it "does not raise error if daemon option value is 'none'" do
+        allow(@server_instance).to receive(:is_image_windows?).and_return(true)
+        Chef::Config[:knife][:daemon] = "none"
+        Chef::Config[:knife][:bootstrap_protocol] = "cloud-api"
+        expect {@server_instance.run}.not_to raise_error(
+          ArgumentError, "Invalid value for --daemon option. Use valid daemon values i.e 'none', 'service'."
+        )
+      end
+    end
+
     context "timeout parameters" do
       it "uses correct values when not specified" do
         expect(@server_instance.options[:azure_vm_startup_timeout][:default].to_i).to eq(10)
@@ -864,6 +907,18 @@ describe Chef::Knife::AzureServerCreate do
         response = @server_instance.create_server_def
         expect(response[:chef_extension_public_param]).to be == public_config
       end
+
+      it "should add daemon in public config if daemon options is given" do
+        @server_instance.config[:daemon] = 'service'
+        public_config[:daemon] = 'service'
+        expect(@server_instance).to receive(:get_chef_extension_name)
+        expect(@server_instance).to receive(:get_chef_extension_publisher)
+        expect(@server_instance).to receive(:get_chef_extension_version)
+        expect(@server_instance).to receive(:get_chef_extension_private_params)
+        response = @server_instance.create_server_def
+        expect(response[:chef_extension_public_param]).to be == public_config
+      end
+
     end
 
     context "get azure chef extension version" do

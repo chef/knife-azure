@@ -374,7 +374,7 @@ class Chef
                   extension_status[:status] = :extension_status_not_detected
                 end
               # This fix is for linux waagent issue: api unable to deserialize the waagent status.
-              elsif role.at_css('GuestAgentStatus Status').text == 'NotReady' and waagent_status_msg == lnx_waagent_fail_msg
+              elsif (role.at_css('GuestAgentStatus Status').text == 'NotReady') && (waagent_status_msg == lnx_waagent_fail_msg)
                 extension_status[:status] = :extension_ready
               else
                 extension_status[:status] = :wagent_provisioning
@@ -424,12 +424,12 @@ class Chef
       end
 
       def validate_params!
-        if locate_config_value(:winrm_password) and (locate_config_value(:winrm_password).length <= 6 and locate_config_value(:winrm_password).length >= 72)
+        if locate_config_value(:winrm_password) && (locate_config_value(:winrm_password).length <= 6 && locate_config_value(:winrm_password).length >= 72)
           ui.error("The supplied password must be 6-72 characters long and meet password complexity requirements")
           exit 1
         end
 
-        if locate_config_value(:ssh_password) and (locate_config_value(:ssh_password).length <= 6 and locate_config_value(:ssh_password).length >= 72)
+        if locate_config_value(:ssh_password) && (locate_config_value(:ssh_password).length <= 6 && locate_config_value(:ssh_password).length >= 72)
           ui.error("The supplied password must be 6-72 characters long and meet password complexity requirements")
           exit 1
         end
@@ -458,8 +458,8 @@ class Chef
         end
 
         # Validate join domain requirements.
-        if locate_config_value(:azure_domain_name) or locate_config_value(:azure_domain_user)
-          if locate_config_value(:azure_domain_user).nil? or locate_config_value(:azure_domain_passwd).nil?
+        if locate_config_value(:azure_domain_name) || locate_config_value(:azure_domain_user)
+          if locate_config_value(:azure_domain_user).nil? || locate_config_value(:azure_domain_passwd).nil?
             ui.error("Must specify both --azure-domain-user and --azure-domain-passwd.")
             exit 1
           end
@@ -473,6 +473,20 @@ class Chef
         if locate_config_value(:extended_logs) && locate_config_value(:bootstrap_protocol) != 'cloud-api'
           ui.error("--extended-logs option works with --bootstrap-protocol cloud-api")
           exit 1
+        end
+
+        if locate_config_value(:daemon)
+          unless is_image_windows?
+            raise ArgumentError, "The daemon option is only support for Windows nodes."
+          end
+
+          unless  locate_config_value(:bootstrap_protocol) == 'cloud-api'
+            raise ArgumentError, "--daemon option works with --bootstrap-protocol cloud-api"
+          end
+
+          unless %w{none service}.include?(locate_config_value(:daemon))
+            raise ArgumentError, "Invalid value for --daemon option. Use valid daemon values i.e 'none', 'service'."
+          end
         end
       end
 
