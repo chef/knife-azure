@@ -20,12 +20,18 @@
 require 'chef/knife'
 require 'azure/resource_management/ARM_interface'
 require 'mixlib/shellout'
+require 'chef/mixin/shell_out'
 require 'time'
 require 'json'
 
 class Chef
   class Knife
     module AzurermBase
+      include Chef::Mixin::ShellOut
+
+      ## azure-xplat-cli versio that introduced deprecation of Windows Credentials
+      ## Manager (WCM) usage for authentication credentials storage purpose ##
+      XPLAT_VERSION_WITH_WCM_DEPRECATED ||= "0.10.5"
 
       if Chef::Platform.windows?
         require 'azure/resource_management/windows_credentials'
@@ -98,7 +104,31 @@ class Chef
         token_details
       end
 
+      def current_xplat_cli_version
+        shell_out!("azure -v", { returns: [0] }).stdout
+      end
+
+      def is_old_xplat?
+        Gem::Version.new(current_xplat_cli_version) < Gem::Version.new(XPLAT_VERSION_WITH_WCM_DEPRECATED)
+      end
+
+      def is_WCM_env_var_set?
+        ENV['AZURE_USE_SECURE_TOKEN_STORAGE'].nil? ? false : true
+      end
+
+      def token_details_for_windows
+        if is_old_xplat?
+          token_details_from_WCM
+        else
+          is_WCM_env_var_set? ? token_details_from_WCM : token_details_from_accessToken_file
+        end
+      end
+
       def token_details_for_linux
+        token_details_from_accessToken_file
+      end
+
+      def token_details_from_accessToken_file
         home_dir = File.expand_path('~')
         file = File.read(home_dir + '/.azure/accessTokens.json')
         file = JSON.parse(file)
@@ -146,7 +176,12 @@ class Chef
 
       def validate_azure_login
         err_string = "Please run XPLAT's 'azure login' command OR specify azure_tenant_id, azure_subscription_id, azure_client_id, azure_client_secret in your knife.rb"
-        if Chef::Platform.windows?
+
+        ## Older versions of the Azure CLI on Windows stored credentials in a unique way
+        ## in Windows Credentails Manager (WCM).
+        ## Newer versions use the same pattern across platforms where credentials gets
+        ## stored in ~/.azure/accessTokens.json file.
+        if Chef::Platform.windows? && (is_old_xplat? || is_WCM_env_var_set?)
           # cmdkey command is used for accessing windows credential manager
           xplat_creds_cmd = Mixlib::ShellOut.new("cmdkey /list | findstr AzureXplatCli")
           result = xplat_creds_cmd.run_command

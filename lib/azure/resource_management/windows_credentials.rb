@@ -77,7 +77,7 @@ module Azure::ARM
       include Chef::Mixin::WideString
       include ReadCred
 
-      def token_details_for_windows
+      def token_details_from_WCM
         begin
           target = target_name
 
