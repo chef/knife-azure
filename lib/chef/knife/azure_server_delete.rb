@@ -89,7 +89,7 @@ class Chef
           object.destroy
           ui.warn("Deleted #{type_name} #{name}")
         rescue Net::HTTPServerException
-          ui.warn("Could not find a #{type_name} named #{name} to delete!")
+          ui.warn("Could not find a #{type_name} named #{name} to delete. Please provide --node-name option and it's value")
         end
       end
 
