@@ -337,11 +337,11 @@ describe Chef::Knife::AzurermServerCreate do
           Chef::Config[:knife][:daemon] = 'foo'
           allow(@arm_server_instance).to receive(:is_image_windows?).and_return(true)
           expect { @arm_server_instance.validate_params! }.to raise_error(
-            ArgumentError, "Invalid value for --daemon option. Use valid daemon values i.e 'none', 'service'."
+            ArgumentError, "Invalid value for --daemon option. Use valid daemon values i.e 'none', 'service' and 'task'."
           )
         end
 
-        it "raises error if daemon opiton is provided for other than windows node by user" do
+        it "raises error if daemon option is provided for other than windows node by user" do
           Chef::Config[:knife][:daemon] = 'service'
           expect { @arm_server_instance.validate_params! }.to raise_error(
             ArgumentError, "The daemon option is only support for Windows nodes."
@@ -352,7 +352,7 @@ describe Chef::Knife::AzurermServerCreate do
           Chef::Config[:knife][:daemon] = 'service'
           allow(@arm_server_instance).to receive(:is_image_windows?).and_return(true)
           expect { @arm_server_instance.validate_params! }.not_to raise_error(
-            ArgumentError, "Invalid value for --daemon option. Use valid daemon values i.e 'none', 'service'."
+            ArgumentError, "Invalid value for --daemon option. Use valid daemon values i.e 'none', 'service' and 'task'."
           )
         end
 
@@ -360,7 +360,15 @@ describe Chef::Knife::AzurermServerCreate do
           Chef::Config[:knife][:daemon] = 'none'
           allow(@arm_server_instance).to receive(:is_image_windows?).and_return(true)
           expect { @arm_server_instance.validate_params! }.not_to raise_error(
-            ArgumentError, "Invalid value for --daemon option. Use valid daemon values i.e 'none', 'service'."
+            ArgumentError, "Invalid value for --daemon option. Use valid daemon values i.e 'none', 'service' and 'task'."
+          )
+        end
+
+        it "does not raise any error if daemon option value is 'task'" do
+          Chef::Config[:knife][:daemon] = 'task'
+          allow(@arm_server_instance).to receive(:is_image_windows?).and_return(true)
+          expect { @arm_server_instance.validate_params! }.not_to raise_error(
+            ArgumentError, "Invalid value for --daemon option. Use valid daemon values i.e 'none', 'service' and 'task'."
           )
         end
 

@@ -323,8 +323,8 @@ class Chef
             raise ArgumentError, "The daemon option is only support for Windows nodes."
           end
 
-          unless %w{none service}.include?(locate_config_value(:daemon))
-            raise ArgumentError, "Invalid value for --daemon option. Use valid daemon values i.e 'none', 'service'."
+          unless %w{none service task}.include?(locate_config_value(:daemon))
+            raise ArgumentError, "Invalid value for --daemon option. Use valid daemon values i.e 'none', 'service' and 'task'."
           end
         end
 

@@ -125,7 +125,7 @@ describe Chef::Knife::AzureServerCreate do
         Chef::Config[:knife][:daemon] = "foo"
         Chef::Config[:knife][:bootstrap_protocol] = "cloud-api"
         expect {@server_instance.run}.to raise_error(
-          ArgumentError, "Invalid value for --daemon option. Use valid daemon values i.e 'none', 'service'."
+          ArgumentError, "Invalid value for --daemon option. Use valid daemon values i.e 'none', 'service' and 'task'."
           )
       end
 
@@ -142,7 +142,7 @@ describe Chef::Knife::AzureServerCreate do
         Chef::Config[:knife][:daemon] = "service"
         Chef::Config[:knife][:bootstrap_protocol] = "cloud-api"
         expect {@server_instance.run}.not_to raise_error(
-          ArgumentError, "Invalid value for --daemon option. Use valid daemon values i.e 'none', 'service'."
+          ArgumentError, "Invalid value for --daemon option. Use valid daemon values i.e 'none', 'service' and 'task'."
         )
       end
 
@@ -151,7 +151,16 @@ describe Chef::Knife::AzureServerCreate do
         Chef::Config[:knife][:daemon] = "none"
         Chef::Config[:knife][:bootstrap_protocol] = "cloud-api"
         expect {@server_instance.run}.not_to raise_error(
-          ArgumentError, "Invalid value for --daemon option. Use valid daemon values i.e 'none', 'service'."
+          ArgumentError, "Invalid value for --daemon option. Use valid daemon values i.e 'none', 'service' and 'task'."
+        )
+      end
+
+      it "does not raise error if daemon option value is 'task'" do
+        allow(@server_instance).to receive(:is_image_windows?).and_return(true)
+        Chef::Config[:knife][:daemon] = "task"
+        Chef::Config[:knife][:bootstrap_protocol] = "cloud-api"
+        expect {@server_instance.run}.not_to raise_error(
+          ArgumentError, "Invalid value for --daemon option. Use valid daemon values i.e 'none', 'service' and 'task'."
         )
       end
     end
