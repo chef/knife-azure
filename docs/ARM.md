@@ -367,3 +367,55 @@ Outputs the details of an ARM server.
 ```
 knife azurerm server show MyVMName --azure-resource-group-name MyResourceGrpName -c ~/.chef/knife.rb
 ```
+
+#### `daemon` feature
+
+We have added option `daemon` for Windows OS which configures the chef-client as a service or as a scheduled task for unattended execution. Accepted values are `none`, `service` and `task`.
+    none - Currently prevents the chef-client service or scheduled task to be configured.
+    service - Configures the chef-client to run automatically in the background as a service.
+    task - Configures the chef-client to run automatically in the background as a scheduled task. So chef-client runs in a defined interval which is 30 mins by default.
+
+Option `chef_service_interval` can be used for running the chef-client as a service or as a scheduled task in defined interval automatically in the background. Its value is 30 mins by default.
+
+```
+knife azurerm server create
+  --azure-resource-group-name MyResourceGrpName
+  --azure-vm-name MyNewVMName
+  --azure-service-location 'westus'
+  --azure-image-os-type windows
+  -x myuser -P mypassword
+  -r "recipe[cbk1::rec2]"
+  -c ~/.chef/knife.rb
+  --daemon 'task'
+  --chef-service-interval '18'
+```
+OR
+```
+knife azurerm server create
+  --azure-resource-group-name MyResourceGrpName
+  --azure-vm-name MyNewVMName
+  --azure-service-location 'westus'
+  --azure-image-reference-publisher 'MicrosoftWindowsServer'
+  --azure-image-reference-offer 'WindowsServer'
+  --azure-image-reference-sku '2012-R2-Datacenter'
+  --azure-image-reference-version 'latest'
+  -x myuser -P mypassword
+  -r "recipe[cbk1::rec2]"
+  -c ~/.chef/knife.rb
+  --daemon 'task'
+  --chef-service-interval '18'
+```
+
+It's possible to pass bootstrap options to the extension which get specified in `client.rb` file on the VM. Following options can be passed:
+
+    --environment
+    --node-name
+    --secret-file
+    --server
+    --validation-client-name
+    --[no-]node-verify-api-cert
+    --bootstrap-version
+    --node-ssl-verify-mode
+    --bootstrap-proxy
+    --chef-service-interval
+    --extended-logs
