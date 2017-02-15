@@ -225,6 +225,13 @@ By specifying the value `cloud-api` for the `bootstrap_protocol` option of `knif
 
 In general, systems bootstrapped via `cloud-api` do not require incoming or outgoing Internet access.
 
+We have added option `daemon` for Windows OS which configures the chef-client as a service or as a scheduled task for unattended execution. Accepted values are `none`, `service` and `task`.
+    none - Currently prevents the chef-client service or scheduled task to be configured.
+    service - Configures the chef-client to run automatically in the background as a service.
+    task - Configures the chef-client to run automatically in the background as a scheduled task. So chef-client runs in a defined interval which is 30 mins by default.
+
+Option `chef_service_interval` can be used for running the chef-client as a service or as a scheduled task in defined interval automatically in the background. Its value is 30 mins by default.
+
     knife azure server create
                 --azure-publish-settings-file '/path/to/your/cert.publishsettingsfile'
                 --azure-dns-name 'myserverdnsname'
@@ -233,6 +240,8 @@ In general, systems bootstrapped via `cloud-api` do not require incoming or outg
                 --winrm-user 'jetstream'
                 --winrm-password 'jetstream@123'
                 --bootstrap-protocol 'cloud-api'
+                --daemon 'task'
+                --chef-service-interval '18'
 
 We have also added cloud-api support for Centos now, for this you just need to select centos image in above example.
 
