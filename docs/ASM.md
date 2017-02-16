@@ -230,6 +230,7 @@ We have added option `daemon` for Windows OS which configures the chef-client as
 
 Option `chef_service_interval` can be used for running the chef-client as a service or as a scheduled task in defined interval automatically in the background. Its value is 30 mins by default.
 
+
     knife azure server create
                 --azure-publish-settings-file '/path/to/your/cert.publishsettingsfile'
                 --azure-dns-name 'myserverdnsname'

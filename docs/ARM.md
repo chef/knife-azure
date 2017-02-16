@@ -369,7 +369,6 @@ knife azurerm server show MyVMName --azure-resource-group-name MyResourceGrpName
 ```
 
 #### `daemon` feature
-
 We have added option `daemon` for Windows OS which configures the chef-client as a service or as a scheduled task for unattended execution. Accepted values are `none`, `service` and `task`.
     none - Currently prevents the chef-client service or scheduled task to be configured.
     service - Configures the chef-client to run automatically in the background as a service.
