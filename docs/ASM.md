@@ -223,7 +223,13 @@ Sample knife.rb for bootstrapping Windows Node with basic authentication
 #### `cloud-api` bootstrap feature
 By specifying the value `cloud-api` for the `bootstrap_protocol` option of `knife azure server create` instead of `winrm` or `ssh`, Microsoft Azure will install Chef Client using the `azure-chef-extension`. The process as a whole is asynchronous, so once the `knife azure server create` command has create the VM, full provisioning and Chef bootstrap will continue to occur even if the `knife` command is terminated before it completes.
 
-In general, systems bootstrapped via `cloud-api` do not require incoming or outgoing Internet access.
+We have added option `daemon` for Windows OS which configures the chef-client as a service or as a scheduled task for unattended execution. Accepted values are `none`, `service` and `task`.
+    none - Currently prevents the chef-client service or scheduled task to be configured.
+    service - Configures the chef-client to run automatically in the background as a service.
+    task - Configures the chef-client to run automatically in the background as a scheduled task. So chef-client runs in a defined interval which is 30 mins by default.
+
+Option `chef_service_interval` can be used for running the chef-client as a service or as a scheduled task in defined interval automatically in the background. Its value is 30 mins by default.
+
 
     knife azure server create
                 --azure-publish-settings-file '/path/to/your/cert.publishsettingsfile'
@@ -233,8 +239,8 @@ In general, systems bootstrapped via `cloud-api` do not require incoming or outg
                 --winrm-user 'jetstream'
                 --winrm-password 'jetstream@123'
                 --bootstrap-protocol 'cloud-api'
-
-We have also added cloud-api support for Centos now, for this you just need to select centos image in above example.
+                --daemon 'task'
+                --chef-service-interval '18'
 
 
 It's possible to pass bootstrap options to the extension which get specified in `client.rb` file on the VM. Following options can be passed:
