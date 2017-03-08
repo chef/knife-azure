@@ -91,9 +91,9 @@ module Azure
 
       def list_servers(resource_group_name = nil)
         if resource_group_name.nil?
-          servers = compute_management_client.virtual_machines.list_all.value
+          servers = compute_management_client.virtual_machines.list_all
         else
-          servers = compute_management_client.virtual_machines.list(resource_group_name).value
+          servers = compute_management_client.virtual_machines.list(resource_group_name)
         end
 
         cols = ['VM Name', 'Resource Group Name', 'Location', 'Provisioning State', 'OS Type']
@@ -104,7 +104,7 @@ module Azure
           rows << server.id.split('/')[4].downcase
           rows << server.location.to_s
           rows << begin
-                           state = server.properties.provisioning_state.to_s.downcase
+                           state = server.provisioning_state.to_s.downcase
                            case state
                            when 'failed'
                              ui.color(state, :red)
@@ -114,7 +114,7 @@ module Azure
                              ui.color(state, :yellow)
                            end
                          end
-          rows << server.properties.storage_profile.os_disk.os_type.to_s
+          rows << server.storage_profile.os_disk.os_type.to_s
         end
         display_list(ui, cols, rows)
       end
