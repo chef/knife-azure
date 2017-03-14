@@ -91,9 +91,9 @@ module Azure
 
       def list_servers(resource_group_name = nil)
         if resource_group_name.nil?
-          servers = compute_management_client.virtual_machines.list_all.value
+          servers = compute_management_client.virtual_machines.list_all
         else
-          servers = compute_management_client.virtual_machines.list(resource_group_name).value
+          servers = compute_management_client.virtual_machines.list(resource_group_name)
         end
 
         cols = ['VM Name', 'Resource Group Name', 'Location', 'Provisioning State', 'OS Type']
@@ -104,7 +104,7 @@ module Azure
           rows << server.id.split('/')[4].downcase
           rows << server.location.to_s
           rows << begin
-                           state = server.properties.provisioning_state.to_s.downcase
+                           state = server.provisioning_state.to_s.downcase
                            case state
                            when 'failed'
                              ui.color(state, :red)
@@ -114,7 +114,7 @@ module Azure
                              ui.color(state, :yellow)
                            end
                          end
-          rows << server.properties.storage_profile.os_disk.os_type.to_s
+          rows << server.storage_profile.os_disk.os_type.to_s
         end
         display_list(ui, cols, rows)
       end
@@ -149,9 +149,9 @@ module Azure
       def show_server(name, resource_group)
         server = find_server(resource_group, name)
         if server
-          network_interface_name = server.properties.network_profile.network_interfaces[0].id.split('/')[-1]
+          network_interface_name = server.network_profile.network_interfaces[0].id.split('/')[-1]
           network_interface_data = network_resource_client.network_interfaces.get(resource_group, network_interface_name)
-          public_ip_id_data = network_interface_data.properties.ip_configurations[0].properties.public_ipaddress
+          public_ip_id_data = network_interface_data.ip_configurations[0].public_ipaddress
           unless public_ip_id_data.nil?
             public_ip_name = public_ip_id_data.id.split('/')[-1]
             public_ip_data = network_resource_client.public_ipaddresses.get(resource_group, public_ip_name)
@@ -164,39 +164,39 @@ module Azure
           details << server.name
 
           details << ui.color('Size', :bold, :cyan)
-          details << server.properties.hardware_profile.vm_size
+          details << server.hardware_profile.vm_size
 
           details << ui.color('Provisioning State', :bold, :cyan)
-          details << server.properties.provisioning_state
+          details << server.provisioning_state
 
           details << ui.color('Location', :bold, :cyan)
           details << server.location
 
           details << ui.color('Publisher', :bold, :cyan)
-          details << server.properties.storage_profile.image_reference.publisher
+          details << server.storage_profile.image_reference.publisher
 
           details << ui.color('Offer', :bold, :cyan)
-          details << server.properties.storage_profile.image_reference.offer
+          details << server.storage_profile.image_reference.offer
 
           details << ui.color('Sku', :bold, :cyan)
-          details << server.properties.storage_profile.image_reference.sku
+          details << server.storage_profile.image_reference.sku
 
           details << ui.color('Version', :bold, :cyan)
-          details << server.properties.storage_profile.image_reference.version
+          details << server.storage_profile.image_reference.version
 
           details << ui.color('OS Type', :bold, :cyan)
-          details << server.properties.storage_profile.os_disk.os_type
+          details << server.storage_profile.os_disk.os_type
 
           details << ui.color('Public IP address', :bold, :cyan)
           unless public_ip_data.nil?
-            details << public_ip_data.properties.ip_address
+            details << public_ip_data.ip_address
           else
             details << ' -- '
           end
 
           details << ui.color('FQDN', :bold, :cyan)
-          unless public_ip_data.nil? or public_ip_data.properties.dns_settings.nil?
-            details << public_ip_data.properties.dns_settings.fqdn
+          unless public_ip_data.nil? or public_ip_data.dns_settings.nil?
+            details << public_ip_data.dns_settings.fqdn
           else
             details << ' -- '
           end
@@ -428,24 +428,20 @@ module Azure
         deploy_params = Deployment.new
         deploy_params.properties = deploy_prop
 
-        deployment = resource_management_client.deployments.create_or_update(params[:azure_resource_group_name], "#{params[:azure_vm_name]}_deploy", deploy_params).value!.body
+        deployment = resource_management_client.deployments.create_or_update(params[:azure_resource_group_name], "#{params[:azure_vm_name]}_deploy", deploy_params)
         deployment
       end
 
       def create_vm_extension(params)
-        vm_ext_props = VirtualMachineExtensionProperties.new
-        vm_ext_props.publisher = params[:chef_extension_publisher]
-        vm_ext_props.type = params[:chef_extension]
-        vm_ext_props.type_handler_version = params[:chef_extension_version].nil? ? get_latest_chef_extension_version(params) : params[:chef_extension_version]
-        vm_ext_props.auto_upgrade_minor_version = false
-        vm_ext_props.settings = params[:chef_extension_public_param]
-        vm_ext_props.protected_settings = params[:chef_extension_private_param]
-
         vm_ext = VirtualMachineExtension.new
         vm_ext.name = params[:chef_extension]
         vm_ext.location = params[:azure_service_location]
-        vm_ext.properties = vm_ext_props
-
+        vm_ext.publisher = params[:chef_extension_publisher]
+        vm_ext.type = params[:chef_extension]
+        vm_ext.type_handler_version = params[:chef_extension_version].nil? ? get_latest_chef_extension_version(params) : params[:chef_extension_version]
+        vm_ext.auto_upgrade_minor_version = false
+        vm_ext.settings = params[:chef_extension_public_param]
+        vm_ext.protected_settings = params[:chef_extension_private_param]
         begin
           vm_extension = compute_management_client.virtual_machine_extensions.create_or_update(
             params[:azure_resource_group_name],
