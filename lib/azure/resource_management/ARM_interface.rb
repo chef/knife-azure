@@ -124,8 +124,8 @@ module Azure
         if server && server.name == vm_name
           puts "\n\n"
           msg_pair(ui, 'VM Name', server.name)
-          msg_pair(ui, 'VM Size', server.properties.hardware_profile.vm_size)
-          msg_pair(ui, 'VM OS', server.properties.storage_profile.os_disk.os_type)
+          msg_pair(ui, 'VM Size', server.hardware_profile.vm_size)
+          msg_pair(ui, 'VM OS', server.storage_profile.os_disk.os_type)
           puts "\n"
 
           begin
@@ -139,7 +139,7 @@ module Azure
 
           begin
             server_detail = compute_management_client.virtual_machines.delete(resource_group_name, vm_name)
-          end until server_detail.value!.body.nil?
+          end until server_detail.nil?
 
           puts "\n"
           ui.warn "Deleted server #{vm_name}"
