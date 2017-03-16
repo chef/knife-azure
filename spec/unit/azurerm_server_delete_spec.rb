@@ -16,15 +16,15 @@ describe Chef::Knife::AzurermServerDelete do
       Chef::Config[:knife][:azure_resource_group_name] = 'test-rg-group'
       @arm_server_instance.name_args = ['VM001']
 
-      @server_detail = double('server', :name => "VM001", :properties => double)
-      allow(@server_detail.properties).to receive_message_chain(:hardware_profile, :vm_size).and_return("10")
-      allow(@server_detail.properties).to receive_message_chain(:storage_profile, :os_disk, :os_type).and_return("Linux")
+      @server_detail = double('server', :name => "VM001", :hardware_profile => double, :storage_profile => double(:os_disk => double))
+      allow(@server_detail.hardware_profile).to receive(:vm_size).and_return("10")
+      allow(@server_detail.storage_profile.os_disk).to receive(:os_type).and_return("Linux")
     end
 
     it "deletes server" do
       server = double('server')
       delete_server = double('delete')
-      allow(delete_server).to receive_message_chain(:value!, :body)
+      allow(delete_server).to receive(:nil?).and_return("false")
 
       expect(@arm_server_instance).to receive(:validate_arm_keys!).with(:azure_resource_group_name)
       allow(@arm_server_instance.service).to receive(:compute_management_client).and_return(@compute_client)
