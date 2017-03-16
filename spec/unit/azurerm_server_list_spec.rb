@@ -11,21 +11,21 @@ describe Chef::Knife::AzurermServerList do
 
     @compute_client = double("ComputeManagementClient")
 
-    @server1 = double("server1", :name => "MyVM1", :id => double, :location => "west-us")#, :properties => double)
+    @server1 = double("server1", :name => "MyVM1", :id => double, :location => "west-us")
     allow(@server1.id).to receive(:split).and_return(['','subscriptions','subscription_id','resourcegroups','myresourcegroup1','Microsoft.compute','virtualmachines','MyVM1'])
     allow(@server1.id.split[4]).to receive(:downcase).and_return('myresourcegroup1')
     allow(@server1).to receive(:provisioning_state).and_return("running")
     allow(@server1).to receive_message_chain(
       :storage_profile, :os_disk, :os_type).and_return("linux")
 
-    @server2 = double("server2", :name => "MyVM2", :id => double, :location => "west-us")#, :properties => double)
+    @server2 = double("server2", :name => "MyVM2", :id => double, :location => "west-us")
     allow(@server2.id).to receive(:split).and_return(['','subscriptions','subscription_id','resourcegroups','myresourcegroup2','Microsoft.compute','virtualmachines','MyVM2'])
     allow(@server2.id.split[4]).to receive(:downcase).and_return('myresourcegroup2')
     allow(@server2).to receive(:provisioning_state).and_return("running")
     allow(@server2).to receive_message_chain(
       :storage_profile, :os_disk, :os_type).and_return("linux")
 
-    @server3 = double("server3", :name => "MyVM3", :id => double, :location => "west-us")#, :properties => double)
+    @server3 = double("server3", :name => "MyVM3", :id => double, :location => "west-us")
     allow(@server3.id).to receive(:split).and_return(['','subscriptions','subscription_id','resourcegroups','myresourcegroup1','Microsoft.compute','virtualmachines','MyVM3'])
     allow(@server3.id.split[4]).to receive(:downcase).and_return('myresourcegroup1')
     allow(@server3).to receive(:provisioning_state).and_return("running")
