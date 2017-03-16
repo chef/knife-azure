@@ -695,8 +695,7 @@ describe Chef::Knife::AzurermServerCreate do
         expect(@service).to receive(:resource_management_client).and_return(
           stub_resource_management_client)
         response = @service.create_virtual_machine_using_template(@params)
-        expect(response.name).to_not be nil
-        expect(response.id).to_not be nil
+        expect(response).to_not be nil
       end
     end
 
@@ -1183,7 +1182,7 @@ describe Chef::Knife::AzurermServerCreate do
       expect(@service).to receive(:create_deployment_template).with(@params)
       expect(@service).to receive(:create_deployment_parameters)
       allow(@resource_client).to receive_message_chain(
-          :deployments, :create_or_update, :value!, :body).and_raise(Exception)
+          :deployments, :create_or_update).and_raise(Exception)
       expect{ @service.create_virtual_machine_using_template(@params) }.to raise_error(Exception)
     end
 
