@@ -99,8 +99,8 @@ class Chef
               :default => false,
               :description => "Optional. It shows chef convergence logs in detail."
 
-            option :chef_service_interval,
-              :long => "--chef-service-interval INTERVAL",
+            option :chef_daemon_interval,
+              :long => "--chef-daemon-interval INTERVAL",
               :description => "Optional. It specifies the frequency (in minutes) at which the chef-service runs.
                                 Pass 0 if you don't want the chef-service to be installed on the target machine."
 

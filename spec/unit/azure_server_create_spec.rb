@@ -893,7 +893,7 @@ describe Chef::Knife::AzureServerCreate do
       before do
         @server_instance.config[:bootstrap_version] = '12.4.2'
         @server_instance.config[:extended_logs] = true
-        @server_instance.config[:chef_service_interval] = '16'
+        @server_instance.config[:chef_daemon_interval] = '16'
       end
 
       let(:public_config) { {
@@ -901,7 +901,7 @@ describe Chef::Knife::AzureServerCreate do
         :runlist=>"\"getting-started\"",
         :extendedLogs=>"true",
         :custom_json_attr=>{},
-        :chef_service_interval=>"16",
+        :chef_daemon_interval=>"16",
         :bootstrap_options=>{:chef_server_url=>"https://localhost:443",
           :validation_client_name=>"chef-validator",
           :bootstrap_version=>"12.4.2"
