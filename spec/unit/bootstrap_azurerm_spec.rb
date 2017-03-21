@@ -88,7 +88,7 @@ describe Chef::Knife::BootstrapAzurerm do
       @server = double("server")
       allow(@service).to receive(:find_server).and_return(@server)
       allow(@service).to receive(:extension_already_installed?).and_return(false)
-      allow(@server).to receive_message_chain(:properties, :storage_profile, :os_disk, :os_type).and_return("windows")
+      allow(@server).to receive_message_chain(:storage_profile, :os_disk, :os_type).and_return("windows")
       allow(@bootstrap_azurerm_instance).to receive(:get_chef_extension_version).and_return("1210.*")
       allow(@bootstrap_azurerm_instance).to receive(:get_chef_extension_public_params).and_return("public_params")
       allow(@bootstrap_azurerm_instance).to receive(:get_chef_extension_private_params).and_return("private_params")
@@ -107,8 +107,8 @@ describe Chef::Knife::BootstrapAzurerm do
       @server = double("server")
       allow(@service).to receive(:find_server).and_return(@server)
       allow(@service).to receive(:extension_already_installed?).and_return(false)
-      allow(@server).to receive_message_chain(:properties, :storage_profile, :os_disk, :os_type).and_return("linux")
-      allow(@server).to receive_message_chain(:properties, :storage_profile, :image_reference, :offer).and_return("ubuntu")
+      allow(@server).to receive_message_chain(:storage_profile, :os_disk, :os_type).and_return("linux")
+      allow(@server).to receive_message_chain(:storage_profile, :image_reference, :offer).and_return("ubuntu")
       allow(@bootstrap_azurerm_instance).to receive(:get_chef_extension_version).and_return("1210.*")
       allow(@bootstrap_azurerm_instance).to receive(:get_chef_extension_public_params).and_return("public_params")
       allow(@bootstrap_azurerm_instance).to receive(:get_chef_extension_private_params).and_return("private_params")
@@ -127,8 +127,8 @@ describe Chef::Knife::BootstrapAzurerm do
       @server = double("server")
       allow(@service).to receive(:find_server).and_return(@server)
       allow(@service).to receive(:extension_already_installed?).and_return(false)
-      allow(@server).to receive_message_chain(:properties, :storage_profile, :os_disk, :os_type).and_return("linux")
-      allow(@server).to receive_message_chain(:properties, :storage_profile, :image_reference, :offer).and_return("abc")
+      allow(@server).to receive_message_chain(:storage_profile, :os_disk, :os_type).and_return("linux")
+      allow(@server).to receive_message_chain(:storage_profile, :image_reference, :offer).and_return("abc")
       expect(@bootstrap_azurerm_instance.ui).to receive(:log).twice
       expect(@bootstrap_azurerm_instance.ui).to receive(:error).twice
       expect(Chef::Log).to receive(:debug)
@@ -143,8 +143,8 @@ describe Chef::Knife::BootstrapAzurerm do
       public_params = {:extendedLogs => "false"}
       allow(@service).to receive(:find_server).and_return(@server)
       allow(@service).to receive(:extension_already_installed?).and_return(false)
-      allow(@server).to receive_message_chain(:properties, :storage_profile, :os_disk, :os_type).and_return("linux")
-      allow(@server).to receive_message_chain(:properties, :storage_profile, :image_reference, :offer).and_return("ubuntu")
+      allow(@server).to receive_message_chain(:storage_profile, :os_disk, :os_type).and_return("linux")
+      allow(@server).to receive_message_chain(:storage_profile, :image_reference, :offer).and_return("ubuntu")
       allow(@bootstrap_azurerm_instance.ui).to receive(:log)
       allow(@bootstrap_azurerm_instance).to receive(:get_chef_extension_version).and_return("1210.*")
       allow(@bootstrap_azurerm_instance).to receive(:get_chef_extension_public_params).and_return(public_params)
@@ -160,8 +160,8 @@ describe Chef::Knife::BootstrapAzurerm do
       public_params = {:extendedLogs => "true"}
       allow(@service).to receive(:find_server).and_return(@server)
       allow(@service).to receive(:extension_already_installed?).and_return(false)
-      allow(@server).to receive_message_chain(:properties, :storage_profile, :os_disk, :os_type).and_return("linux")
-      allow(@server).to receive_message_chain(:properties, :storage_profile, :image_reference, :offer).and_return("ubuntu")
+      allow(@server).to receive_message_chain(:storage_profile, :os_disk, :os_type).and_return("linux")
+      allow(@server).to receive_message_chain(:storage_profile, :image_reference, :offer).and_return("ubuntu")
       allow(@bootstrap_azurerm_instance.ui).to receive(:log)
       allow(@bootstrap_azurerm_instance).to receive(:get_chef_extension_version).and_return("1210.*")
       allow(@bootstrap_azurerm_instance).to receive(:get_chef_extension_public_params).and_return(public_params)
@@ -183,21 +183,21 @@ describe Chef::Knife::BootstrapAzurerm do
 
   context "extension_already_installed?" do
     it "returns true if the VM has ChefClient extension installed" do
-      extension = double("extension", :properties => double(:type => "ChefClient"))
+      extension = double(:virtual_machine_extension_type => "ChefClient")
       @server = double("server", :resources => [extension])
       extension_installed = @service.extension_already_installed?(@server)
       expect(extension_installed).to be(true)
     end
 
     it "returns true if the VM has LinuxChefClient extension installed" do
-      extension = double("extension", :properties => double(:type => "LinuxChefClient"))
+      extension = double(:virtual_machine_extension_type => "LinuxChefClient")
       @server = double("server", :resources => [extension])
       extension_installed = @service.extension_already_installed?(@server)
       expect(extension_installed).to be(true)
     end
 
     it "returns false if the VM doesn't have chef extension installed" do
-      extension = double("extension", :properties => double(:type => "some_type"))
+      extension = double(:virtual_machine_extension_type => "some_type")
       @server = double("server", :resources => [extension])
       extension_installed = @service.extension_already_installed?(@server)
       expect(extension_installed).to be(false)
