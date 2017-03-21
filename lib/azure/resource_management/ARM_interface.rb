@@ -266,7 +266,7 @@ module Azure
           virtual_machine_name,
           chef_extension_name,
           'instanceView'
-        ).properties.instance_view.substatuses
+        ).instance_view.substatuses
 
         return nil if substatuses.nil?
 
@@ -437,7 +437,7 @@ module Azure
         vm_ext.name = params[:chef_extension]
         vm_ext.location = params[:azure_service_location]
         vm_ext.publisher = params[:chef_extension_publisher]
-        vm_ext.type = params[:chef_extension]
+        vm_ext.virtual_machine_extension_type = params[:chef_extension]
         vm_ext.type_handler_version = params[:chef_extension_version].nil? ? get_latest_chef_extension_version(params) : params[:chef_extension_version]
         vm_ext.auto_upgrade_minor_version = false
         vm_ext.settings = params[:chef_extension_public_param]
@@ -448,7 +448,7 @@ module Azure
             params[:azure_vm_name],
             vm_ext.name,
             vm_ext
-          ).value!.body
+          )
         rescue Exception => error
           Chef::Log.error("Failed to create the Virtual Machine Extension -- exception being rescued.")
           common_arm_rescue_block(error)
@@ -459,7 +459,7 @@ module Azure
 
       def extension_already_installed?(server)
         server.resources.each do |extension|
-          return true if (extension.properties.type == "ChefClient" || extension.properties.type == "LinuxChefClient")
+          return true if (extension.virtual_machine_extension_type == "ChefClient" || extension.virtual_machine_extension_type == "LinuxChefClient")
         end if server.resources
         false
       end

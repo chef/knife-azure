@@ -73,17 +73,17 @@ class Chef
             raise "Virtual machine #{server.name} already has Chef extension installed on it."
           else
             ext_params = Hash.new
-            case server.properties.storage_profile.os_disk.os_type.downcase
+            case server.storage_profile.os_disk.os_type.downcase
             when 'windows'
               ext_params[:chef_extension] = 'ChefClient'
             when 'linux'
-              if ['ubuntu', 'debian', 'rhel', 'centos'].any? { |platform| server.properties.storage_profile.image_reference.offer.downcase.include? platform }
+              if ['ubuntu', 'debian', 'rhel', 'centos'].any? { |platform| server.storage_profile.image_reference.offer.downcase.include? platform }
                 ext_params[:chef_extension] = 'LinuxChefClient'
               else
-                raise "Offer #{server.properties.storage_profile.image_reference.offer} is not supported in the extension."
+                raise "Offer #{server.storage_profile.image_reference.offer} is not supported in the extension."
               end
             else
-              raise "OS type #{server.properties.storage_profile.os_disk.os_type} is not supported."
+              raise "OS type #{server.storage_profile.os_disk.os_type} is not supported."
             end
 
             ext_params[:azure_resource_group_name] = locate_config_value(:azure_resource_group_name)
