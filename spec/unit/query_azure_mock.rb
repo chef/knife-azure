@@ -74,9 +74,7 @@ module QueryAzureMock
       :virtual_machine_extensions => double,
       :virtual_machine_extension_images => double)
     allow(compute_management_client.virtual_machine_extensions).to receive_message_chain(
-      :create_or_update => 'create_or_update',
-      :value! => nil,
-      :body => nil
+      :create_or_update => 'create_or_update'
     ).and_return(stub_vm_extension_create_response(user_supplied_value))
     allow(compute_management_client.virtual_machine_extension_images).to receive_message_chain(
       :list_versions,
@@ -86,7 +84,6 @@ module QueryAzureMock
 
     allow(compute_management_client.virtual_machine_extensions).to receive_message_chain(
       :get,
-      :properties,
       :instance_view,
       :substatuses).and_return(stub_substatuses(user_supplied_value))
 
