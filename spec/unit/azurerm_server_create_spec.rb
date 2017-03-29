@@ -914,8 +914,8 @@ describe Chef::Knife::AzurermServerCreate do
         end
 
         it "sets chefServiceInterval variable in public_config" do
-          @arm_server_instance.config[:chef_service_interval] = '0'
-          public_config = {:client_rb=>"chef_server_url \t \"https://localhost:443\"\nvalidation_client_name\t\"chef-validator\"", :runlist=>"\"getting-started\"", extendedLogs: "false", :custom_json_attr=>{}, :hints=>["vm_name", "public_fqdn", "platform"], :chef_service_interval=>'0', :bootstrap_options=>{:chef_server_url=>"https://localhost:443", :validation_client_name=>"chef-validator"}}
+          @arm_server_instance.config[:chef_daemon_interval] = '0'
+          public_config = {:client_rb=>"chef_server_url \t \"https://localhost:443\"\nvalidation_client_name\t\"chef-validator\"", :runlist=>"\"getting-started\"", extendedLogs: "false", :custom_json_attr=>{}, :hints=>["vm_name", "public_fqdn", "platform"], :chef_daemon_interval=>'0', :bootstrap_options=>{:chef_server_url=>"https://localhost:443", :validation_client_name=>"chef-validator"}}
 
           response = @arm_server_instance.get_chef_extension_public_params
           expect(response).to be == public_config
@@ -1274,13 +1274,13 @@ describe Chef::Knife::AzurermServerCreate do
       expect(extension["properties"]["settings"].has_key? 'extendedLogs').to be == false
     end
 
-    context "chef_service_interval option" do
+    context "chef_daemon_interval option" do
       context "is passed by the user" do
         before do
-          @params[:chef_extension_public_param][:chef_service_interval] = "19"
+          @params[:chef_extension_public_param][:chef_daemon_interval] = "19"
         end
 
-        it "sets the chef_service_interval parameter under extension config in the template" do
+        it "sets the chef_daemon_interval parameter under extension config in the template" do
           template = @service.create_deployment_template(@params)
 
           extension = nil
@@ -1288,17 +1288,17 @@ describe Chef::Knife::AzurermServerCreate do
             extension = resource if resource["type"] == "Microsoft.Compute/virtualMachines/extensions"
           end
 
-          expect(extension["properties"]["settings"].has_key? 'chef_service_interval').to be == true
-          expect(extension["properties"]["settings"]['chef_service_interval']).to be == "19"
+          expect(extension["properties"]["settings"].has_key? 'chef_daemon_interval').to be == true
+          expect(extension["properties"]["settings"]['chef_daemon_interval']).to be == "19"
         end
       end
 
       context "is not passed by the user" do
         before do
-          @params[:chef_extension_public_param][:chef_service_interval] = nil
+          @params[:chef_extension_public_param][:chef_daemon_interval] = nil
         end
 
-        it "does not set the chef_service_interval parameter under extension config in the template" do
+        it "does not set the chef_daemon_interval parameter under extension config in the template" do
           template = @service.create_deployment_template(@params)
 
           extension = nil
@@ -1306,7 +1306,7 @@ describe Chef::Knife::AzurermServerCreate do
             extension = resource if resource["type"] == "Microsoft.Compute/virtualMachines/extensions"
           end
 
-          expect(extension["properties"]["settings"].has_key? 'chef_service_interval').to be == false
+          expect(extension["properties"]["settings"].has_key? 'chef_daemon_interval').to be == false
         end
       end
     end

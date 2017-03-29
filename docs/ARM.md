@@ -323,10 +323,10 @@ knife azurerm server create
 -x myuser -P mypassword
 ```
 
-#### --chef-service-interval
-User can pass `--chef-service-interval` option to specify the frequency(in minutes) at which chef-service runs. Default value is `30` minutes. If you don't want chef-service to be installed, set `--chef-service-interval` as 0.
+#### --chef-daemon-interval
+User can pass `--chef-daemon-interval` option to specify the frequency(in minutes) at which chef-service runs. Default value is `30` minutes. If you don't want chef-service to be installed, set `--chef-daemon-interval` as 0.
 ```
---chef-service-interval INTERVAL  Optional. It specifies the frequency
+--chef-daemon-interval INTERVAL  Optional. It specifies the frequency
                                   (in minutes) at which the chef-service runs.
                                   Pass 0 if you don't want the chef-service to be installed on the target machine.
 
@@ -374,7 +374,7 @@ We have added option `daemon` for Windows OS which configures the chef-client as
     service - Configures the chef-client to run automatically in the background as a service.
     task - Configures the chef-client to run automatically in the background as a scheduled task. So chef-client runs in a defined interval which is 30 mins by default.
 
-Option `chef_service_interval` can be used for running the chef-client as a service or as a scheduled task in defined interval automatically in the background. Its value is 30 mins by default.
+Option `chef_daemon_interval` can be used for running the chef-client as a service or as a scheduled task in defined interval automatically in the background. Its value is 30 mins by default.
 
 ```
 knife azurerm server create
@@ -386,7 +386,7 @@ knife azurerm server create
   -r "recipe[cbk1::rec2]"
   -c ~/.chef/knife.rb
   --daemon 'task'
-  --chef-service-interval '18'
+  --chef-daemon-interval '18'
 ```
 OR
 ```
@@ -402,7 +402,7 @@ knife azurerm server create
   -r "recipe[cbk1::rec2]"
   -c ~/.chef/knife.rb
   --daemon 'task'
-  --chef-service-interval '18'
+  --chef-daemon-interval '18'
 ```
 
 It's possible to pass bootstrap options to the extension which get specified in `client.rb` file on the VM. Following options can be passed:
@@ -416,5 +416,5 @@ It's possible to pass bootstrap options to the extension which get specified in 
     --bootstrap-version
     --node-ssl-verify-mode
     --bootstrap-proxy
-    --chef-service-interval
+    --chef-daemon-interval
     --extended-logs

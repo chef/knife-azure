@@ -284,7 +284,7 @@ class Chef
           pub_config[:custom_json_attr] = locate_config_value(:json_attributes) || {}
           pub_config[:extendedLogs] = locate_config_value(:extended_logs) ? "true" : "false"
           pub_config[:hints] = ohai_hints if @service.instance_of?(Azure::ResourceManagement::ARMInterface) && !locate_config_value(:ohai_hints).nil?
-          pub_config[:chef_service_interval] = locate_config_value(:chef_service_interval) if locate_config_value(:chef_service_interval)
+          pub_config[:chef_daemon_interval] = locate_config_value(:chef_daemon_interval) if locate_config_value(:chef_daemon_interval)
           pub_config[:daemon] = locate_config_value(:daemon) if locate_config_value(:daemon)
 
           # bootstrap attributes

@@ -507,10 +507,10 @@ module Azure::ARM
         end
       end
 
-      if params[:chef_extension_public_param][:chef_service_interval]
+      if params[:chef_extension_public_param][:chef_daemon_interval]
         template['resources'].each do |resource|
           if resource['type'] == 'Microsoft.Compute/virtualMachines/extensions'
-            resource['properties']['settings']['chef_service_interval'] = params[:chef_extension_public_param][:chef_service_interval]
+            resource['properties']['settings']['chef_daemon_interval'] = params[:chef_extension_public_param][:chef_daemon_interval]
           end
         end
       end
