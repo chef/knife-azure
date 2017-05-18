@@ -230,9 +230,10 @@ class Chef
           :server_count => locate_config_value(:server_count)
         }
 
-        if locate_config_value(:tcp_endpoints)
-          server_def[:tcp_endpoints] = locate_config_value(:tcp_endpoints)
-        end
+        server_def[:tcp_endpoints] = locate_config_value(:tcp_endpoints) if locate_config_value(:tcp_endpoints)
+
+        # We assign azure_vm_name to chef_node_name If node name is nill because storage account name is combination of hash value and node name.
+        config[:chef_node_name] ||= locate_config_value(:azure_vm_name)
         
         server_def[:azure_storage_account] = locate_config_value(:azure_vm_name) if server_def[:azure_storage_account].nil?
         server_def[:azure_storage_account] = server_def[:azure_storage_account].gsub(/[!@#$%^&*()_-]/,'')
