@@ -291,6 +291,51 @@ class Chef
         end
         puts "\n"
       end
+
+      def validate_params!
+        if locate_config_value(:azure_vnet_subnet_name) && !locate_config_value(:azure_vnet_name)
+          raise ArgumentError, "When --azure-vnet-subnet-name is specified, the --azure-vnet-name must also be specified."
+        end
+
+        if locate_config_value(:azure_vnet_subnet_name) == 'GatewaySubnet'
+          raise ArgumentError, 'GatewaySubnet cannot be used as the name for --azure-vnet-subnet-name option. GatewaySubnet can only be used for virtual network gateways.'
+        end
+
+        if locate_config_value(:node_ssl_verify_mode) && !["none", "peer"].include?(locate_config_value(:node_ssl_verify_mode))
+          raise ArgumentError, "Invalid value '#{locate_config_value(:node_ssl_verify_mode)}' for --node-ssl-verify-mode. Use Valid values i.e 'none', 'peer'."
+        end
+
+        if is_image_windows?
+          if locate_config_value(:winrm_user).nil? ||  locate_config_value(:winrm_password).nil?
+            raise ArgumentError, "Please provide --winrm-user and --winrm-password options for Windows option."
+          end
+        end
+
+        if !is_image_windows?
+          if (locate_config_value(:azure_vm_name).match /^(?=.*[a-zA-Z-])([a-zA-z0-9-]{1,64})$/).nil?
+            raise ArgumentError, "VM name can only contain alphanumeric and hyphen(-) characters and maximun length cannot exceed 64 charachters."
+          end
+        elsif (locate_config_value(:azure_vm_name).match /^(?=.*[a-zA-Z-])([a-zA-z0-9-]{1,15})$/).nil?
+          raise ArgumentError, "VM name can only contain alphanumeric and hyphen(-) characters and maximun length cannot exceed 15 charachters."
+        end
+
+        if locate_config_value(:server_count).to_i > 5
+          raise ArgumentError, "Maximum allowed value of --server-count is 5."
+        end
+
+        if locate_config_value(:daemon)
+          unless is_image_windows?
+            raise ArgumentError, "The daemon option is only support for Windows nodes."
+          end
+
+          unless %w{none service task}.include?(locate_config_value(:daemon))
+            raise ArgumentError, "Invalid value for --daemon option. Use valid daemon values i.e 'none', 'service' and 'task'."
+          end
+        end
+
+        config[:ohai_hints] = format_ohai_hints(locate_config_value(:ohai_hints))
+        validate_ohai_hints if ! locate_config_value(:ohai_hints).casecmp('default').zero?
+      end
     end
   end
 end
