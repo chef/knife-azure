@@ -111,7 +111,7 @@ describe Chef::Knife::AzurermServerCreate do
         expect{@arm_server_instance.validate_params!}.to raise_error(ArgumentError)
       end
 
-     it "vm name validation failure for name containing more than 64 characters for Linux" do
+      it "vm name validation failure for name containing more than 64 characters for Linux" do
         Chef::Config[:knife][:azure_vm_name] = 'testvm123123123123123123123123123123123123123123123123123123123123123123123123123123123123123'
         allow(@arm_server_instance).to receive(:is_image_windows?).and_return(false)
         expect{@arm_server_instance.validate_params!}.to raise_error(ArgumentError)
@@ -302,6 +302,18 @@ describe Chef::Knife::AzurermServerCreate do
           it "raises error" do
             expect { @arm_server_instance.validate_params! }.to raise_error(
               ArgumentError, 'When --azure-vnet-subnet-name is specified, the --azure-vnet-name must also be specified.'
+            )
+          end
+        end
+
+        context 'raise node_ssl_verify_mode error for wrong value' do
+          before do
+            Chef::Config[:knife][:node_ssl_verify_mode] = 'MyValue'
+          end
+
+          it "raises error" do
+            expect { @arm_server_instance.validate_params! }.to raise_error(
+              ArgumentError, "Invalid value '#{Chef::Config[:knife][:node_ssl_verify_mode]}' for --node-ssl-verify-mode. Use Valid values i.e 'none', 'peer'."
             )
           end
         end
