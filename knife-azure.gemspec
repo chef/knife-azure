@@ -28,7 +28,7 @@ Gem::Specification.new do |s|
   s.add_dependency "listen", "3.0.6"
   s.add_dependency "ipaddress"
   s.add_dependency "ffi"
-  s.add_development_dependency 'chef',  '~> 12.0', '>= 12.2.1'
+  s.add_development_dependency 'chef',  '>= 12.2.1'
   s.add_development_dependency 'github_changelog_generator'
   s.add_development_dependency "mixlib-config", "~> 2.0"
   s.add_development_dependency "equivalent-xml", "~> 0.2.9"
