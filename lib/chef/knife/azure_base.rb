@@ -194,6 +194,7 @@ class Chef
       def parse_azure_profile(filename, errors)
         require 'openssl'
         require 'uri'
+        errors = [] if errors.nil?
         azure_profile = File.read(File.expand_path(filename))
         azure_profile = JSON.parse(azure_profile)
         default_subscription = get_default_subscription(azure_profile)

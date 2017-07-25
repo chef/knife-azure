@@ -9,6 +9,5 @@ group :development do
   gem 'rake'
   gem 'mixlib-shellout'
   gem 'activesupport', '4.2.6'
-  gem 'byebug', '~> 6.0.2'
   gem 'rb-readline'
 end
