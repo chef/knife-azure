@@ -322,8 +322,7 @@ class Chef
 
           # validator less bootstrap support for bootstrap protocol cloud-api
           if (Chef::Config[:validation_key] && !File.exist?(File.expand_path(Chef::Config[:validation_key])))
-
-            if Chef::VERSION.split('.').first.to_i == 11
+            if Chef::VERSION.split('.').first.to_i == 11 || config[:server_count].to_i > 1
               ui.error('Unable to find validation key. Please verify your configuration file for validation_key config value.')
               exit 1
             end
