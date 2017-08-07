@@ -78,7 +78,7 @@ module Azure::ARM
     def create_deployment_template(params)
       if params[:chef_extension_public_param][:bootstrap_options][:chef_node_name]
         chef_node_name = "[concat(parameters('chef_node_name'),copyIndex())]"
-        chef_node_name = "[parameters('chef_node_name')]" if( params[:server_count].to_i==1)
+        chef_node_name = "[parameters('chef_node_name')]" if params[:server_count].to_i==1
       end
 
       if(params[:server_count].to_i > 1)
