@@ -78,6 +78,7 @@ module Azure::ARM
     def create_deployment_template(params)
       if params[:chef_extension_public_param][:bootstrap_options][:chef_node_name]
         chef_node_name = "[concat(parameters('chef_node_name'),copyIndex())]"
+        chef_node_name = "[parameters('chef_node_name')]" if params[:server_count].to_i==1
       end
 
       if(params[:server_count].to_i > 1)
@@ -192,12 +193,7 @@ module Azure::ARM
               "description"=> "JSON Escaped Validation Key"
             }
           },
-          "client_pem" => {
-            "type"=> "string",
-            "metadata"=> {
-              "description"=> "Required for validtorless bootstrap."
-            }
-          },
+          
           "chef_server_crt" => {
              "type"=> "string",
             "metadata"=> {
@@ -476,7 +472,6 @@ module Azure::ARM
               },
               "protectedSettings" => {
                 "validation_key" => "[parameters('validation_key')]",
-                "client_pem" => "[parameters('client_pem')]",
                 "chef_server_crt" => "[parameters('chef_server_crt')]",
                 "encrypted_data_bag_secret" => "[parameters('encrypted_data_bag_secret')]"
               }
@@ -522,7 +517,25 @@ module Azure::ARM
           end
         end
       end
-
+      if params[:server_count].to_i > 1 && params[:chef_extension_private_param][:validation_key].nil?
+        template["resources"].last["properties"]["protectedSettings"]["client_pem"] = "[parameters(concat('client_pem',copyIndex()))]"
+        0.upto (params[:server_count].to_i-1) do |count|
+          template["parameters"]["client_pem" + count.to_s] = {
+              "type"=> "string",
+              "metadata"=> {
+                "description"=> "Required for validtorless bootstrap."
+              }
+            }
+        end
+      else
+        template["resources"].last["properties"]["protectedSettings"]["client_pem"] = "[parameters('client_pem')]"
+        template["parameters"]["client_pem"] = {
+            "type"=> "string",
+            "metadata"=> {
+              "description"=> "Required for validtorless bootstrap."
+            }
+          }
+      end
       template
     end
 
@@ -554,9 +567,7 @@ module Azure::ARM
         "validation_key"=> {
           "value"=> "#{params[:chef_extension_private_param][:validation_key]}"
         },
-        "client_pem" => {
-          "value" => "#{params[:chef_extension_private_param][:client_pem]}"
-        },
+        
         "chef_server_crt" => {
           "value" => "#{params[:chef_extension_private_param][:chef_server_crt]}"
         },
@@ -600,7 +611,18 @@ module Azure::ARM
           "value" => "#{params[:disablePasswordAuthentication]}"
         }
       }
+      if params[:server_count].to_i > 1 && params[:chef_extension_private_param][:validation_key].nil?
+        0.upto (params[:server_count].to_i-1) do |count|
+          parameters["client_pem#{count.to_s}"] = {
+              "value" => "#{params[:chef_extension_private_param][("client_pem" + count.to_s).to_sym]}"
+            }
+        end
+      else
+        parameters["client_pem"] = {
+            "value" => "#{params[:chef_extension_private_param][:client_pem]}"
+          }
+      end
+      parameters
     end
-
   end
 end

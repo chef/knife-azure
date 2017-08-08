@@ -317,26 +317,37 @@ class Chef
           cli_secret_file || cli_secret || knife_secret_file || knife_secret
         end
 
+        def create_node_and_client_pem
+          client_builder = Chef::Knife::Bootstrap::ClientBuilder.new(
+            chef_config: Chef::Config,
+            knife_config: config,
+            ui: ui,
+          )
+          client_builder.run
+          client_builder.client_path
+        end
+
         def get_chef_extension_private_params
           pri_config = Hash.new
 
           # validator less bootstrap support for bootstrap protocol cloud-api
           if (Chef::Config[:validation_key] && !File.exist?(File.expand_path(Chef::Config[:validation_key])))
-
             if Chef::VERSION.split('.').first.to_i == 11
               ui.error('Unable to find validation key. Please verify your configuration file for validation_key config value.')
               exit 1
             end
-
-            client_builder = Chef::Knife::Bootstrap::ClientBuilder.new(
-              chef_config: Chef::Config,
-              knife_config: config,
-              ui: ui,
-            )
-
-            client_builder.run
-            key_path = client_builder.client_path
-            pri_config[:client_pem] = File.read(key_path)
+            if config[:server_count].to_i > 1
+              node_name = config[:chef_node_name]
+              0.upto (config[:server_count].to_i-1) do |count|
+                config[:chef_node_name] = node_name + count.to_s
+                key_path = create_node_and_client_pem
+                pri_config[("client_pem" + count.to_s).to_sym] = File.read(key_path)
+              end
+              config[:chef_node_name] = node_name
+            else
+              key_path = create_node_and_client_pem
+              pri_config[:client_pem] = File.read(key_path)
+            end
           else
             pri_config[:validation_key] = File.read(Chef::Config[:validation_key])
           end
