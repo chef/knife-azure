@@ -161,6 +161,15 @@ module Azure::ARM
               "description"=> "Password for the Virtual Machine."
             }
           },
+          "availabilitySetName" => {
+            "type" => "string"
+          },
+          "availabilitySetPlatformFaultDomainCount" => {
+              "type" => "string"
+          },
+          "availabilitySetPlatformUpdateDomainCount" => {
+              "type" => "string"
+          },
           "numberOfInstances" => {
             "type" => "int",
             "defaultValue" => 1,
@@ -480,6 +489,28 @@ module Azure::ARM
         ]
       }
 
+      if params[:azure_availability_set]
+        set_val = {
+            "name" => "[parameters('availabilitySetName')]",
+            "type" => "Microsoft.Compute/availabilitySets",
+            "apiVersion" => "[variables('apiVersion')]",
+            "location" => "[resourceGroup().location]",
+            "properties" => {
+              "platformFaultDomainCount" => "[parameters('availabilitySetPlatformFaultDomainCount')]",
+              "platformUpdateDomainCount" => "[parameters('availabilitySetPlatformUpdateDomainCount')]"
+            }
+          }
+
+        length = template['resources'].length.to_i - 1
+        for i in 0..length do
+          if template['resources'][i]['type'] == "Microsoft.Compute/virtualMachines"
+            template['resources'][i]['dependsOn'] << "[concat('Microsoft.Compute/availabilitySets/', parameters('availabilitySetName'))]"
+            template['resources'][i]['properties'].merge!({"availabilitySet" => { "id" => "[resourceId('Microsoft.Compute/availabilitySets', parameters('availabilitySetName'))]"}})
+          end
+        end
+        template['resources'].insert(length, set_val)
+      end
+
       if params[:tcp_endpoints]
         sec_grp_json = tcp_ports(params[:tcp_endpoints], params[:azure_vm_name])
         template['resources'].insert(1,sec_grp_json)
@@ -554,6 +585,15 @@ module Azure::ARM
         },
         "adminPassword"=> {
           "value"=> "#{admin_password}"
+        },
+        "availabilitySetName" => {
+            "value" => "#{params[:azure_availability_set]}"
+        },
+        "availabilitySetPlatformFaultDomainCount" => {
+            "value" => "2"
+        },
+        "availabilitySetPlatformUpdateDomainCount" => {
+            "value" => "5"
         },
         "dnsLabelPrefix"=> {
           "value"=> "#{params[:azure_vm_name]}"

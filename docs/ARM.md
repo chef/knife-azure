@@ -341,6 +341,23 @@ knife azurerm server create
 -x myuser -P mypassword
 ```
 
+#### --azure-availability-set
+User can pass `--azure-availability-set` name option to add virtual machine into that. Availability set limit 2-5.
+```
+--azure-availability-set NAME   Optional. Name of availability set to add virtual machine into.
+
+Command:
+knife azurerm server create
+--azure-resource-group-name MyResourceGrpName
+--azure-vm-name MyNewVMName
+--azure-availability-set MyAvailabilitySetName
+--azure-service-location 'eastus'
+--azure-image-os-type windows
+--node-ssl-verify-mode none
+-x myuser -P mypassword
+-c ~/.chef/knife.rb
+```
+
 ### Azure Server Delete Subcommand
 Deletes an existing ARM server in the currently configured Azure account. By default, this does not delete the associated resource-group, associated node and client objects from the Chef server.
 For deleting associated resource-group along with server use --delete-resource-group flag.

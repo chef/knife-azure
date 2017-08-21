@@ -134,6 +134,10 @@ class Chef
         :default => 'Small',
         :proc => Proc.new { |si| Chef::Config[:knife][:azure_vm_size] = si }
 
+      option :azure_availability_set,
+             :long => "--azure-availability-set NAME",
+             :description => "Optional. Name of availability set to add virtual machine into."
+
       option :azure_vnet_name,
         :long => "--azure-vnet-name VNET_NAME",
         :description => "Optional. Specifies the virtual network name.
@@ -225,6 +229,7 @@ class Chef
           :azure_image_reference_sku => locate_config_value(:azure_image_reference_sku),
           :azure_image_reference_version => locate_config_value(:azure_image_reference_version),
           :winrm_user => locate_config_value(:winrm_user),
+          :azure_availability_set => locate_config_value(:azure_availability_set),
           :azure_vnet_name => locate_config_value(:azure_vnet_name),
           :azure_vnet_subnet_name => locate_config_value(:azure_vnet_subnet_name),
           :ssl_cert_fingerprint => locate_config_value(:thumbprint),
