@@ -63,6 +63,7 @@ knife azurerm server create
   --azure-image-os-type centos
   --azure-image-reference-sku '6.5'
   --azure-vm-size Small
+  --ssh-user myuser --ssh-password mypassword
   -r "recipe[cbk1::rec1]"
   -c ~/.chef/knife.rb
 ```
