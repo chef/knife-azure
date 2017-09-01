@@ -6,7 +6,7 @@
 
 A [knife] (<http://docs.chef.io/knife.html>) plugin to create, delete, and enumerate [Microsoft Azure] (<https://azure.microsoft.com>) resources to be managed by Chef.
 
-NOTE: You may also want to consider using the [azure-xplat-cli](https://github.com/Azure/azure-xplat-cli), this application is written by the Azure team and has many other integrations with Azure. If click [here](https://github.com/chef-partners/azure-chef-extension/blob/master/examples/azure-xplat-cli-examples.md) you'll see deeper examples of using the Chef extension and Azure.
+NOTE: You may also want to consider using the [Azure CLI](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli), this application is written by the Azure team and has many other integrations with Azure. If click [here](https://github.com/chef-partners/azure-chef-extension/blob/master/examples/azure-xplat-cli-examples.md) you'll see deeper examples of using the Chef extension and Azure.
 
 ## Installation
 
@@ -26,31 +26,29 @@ Depending on your system's configuration, you may need to run this command with 
 
 ## Modes
 
-`knife-azure 1.6.0` onwards, we are adding support for Azure Resource Manager. You can easily switch between the
+`knife-azure 1.6.0` onwards supports Azure Resource Manager (preferred). You can easily switch between:
 
-- Service management: commands using the Azure service management API
 - Resource manager: commands using the Azure Resource Manager API
+- Service management: commands using the Azure service management API
 
-They are not designed to work together. Commands starting with `knife azure` use ASM mode, while commands starting with `knife azurerm` use ARM mode.
-
-PLEASE NOTE that `Azuererm` subcommands are experimental and of alpha quality. Not suitable for production use. Please use ASM subcommands for production.
+They are not designed to work together. Commands starting with `knife azurerm` use ARM mode, while commands starting with `knife azure` use ASM mode.
 
 ## Configuration
 
+1. [ARM Configuration] (docs/configuration.md#arm-mode)
 1. [ASM Configuration] (docs/configuration.md#asm-mode)
-2. [ARM Configuration] (docs/configuration.md#arm-mode)
 
 ## Detailed Usage
 
+1. [ARM Mode] (docs/ARM.md)
 1. [ASM Mode] (docs/ASM.md)
-2. [ARM Mode] (docs/ARM.md)
 
-## Bootstrap existing VM to install the chef-client using chef-extension :
+## Bootstrap existing VM to install the chef-client using chef-extension
 
-We have added a utility in ASM and ARM to bootstrap existing VM. This will install the chef-client using chef extension on your VM.
+We have added a utility in ARM and ASM to bootstrap existing VM. This will install the chef-client using chef extension on your VM.
 
+1. [Bootstrap Doc for ARM Mode] (docs/bootstrap.md#arm-mode)
 1. [Bootstrap Doc for ASM Mode] (docs/bootstrap.md#asm-mode)
-2. [Bootstrap Doc for ARM Mode] (docs/bootstrap.md#arm-mode)
 
 ## Contributing
 
