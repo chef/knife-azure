@@ -31,7 +31,7 @@ For Windows:
 ```
 knife azurerm server create
   --azure-resource-group-name MyResourceGrpName
-  --azure-vm-name MyNewVMName
+  --azure-vm-name my-new-vm-name
   --azure-service-location 'westus'
   --azure-image-os-type windows
   -x myuser -P mypassword
@@ -42,7 +42,7 @@ OR
 ```
 knife azurerm server create
   --azure-resource-group-name MyResourceGrpName
-  --azure-vm-name MyNewVMName
+  --azure-vm-name my-new-vm-name
   --azure-service-location 'westus'
   --azure-image-reference-publisher 'MicrosoftWindowsServer'
   --azure-image-reference-offer 'WindowsServer'
@@ -58,7 +58,7 @@ For Centos:
 ```
 knife azurerm server create
   --azure-resource-group-name MyResourceGrpName
-  --azure-vm-name MyNewVMName
+  --azure-vm-name my-new-vm-name
   --azure-service-location 'westus'
   --azure-image-os-type centos
   --azure-image-reference-sku '6.5'
@@ -70,7 +70,7 @@ OR
 ```
 knife azurerm server create
   --azure-resource-group-name MyResourceGrpName
-  --azure-vm-name MyNewVMName
+  --azure-vm-name my-new-vm-name
   --azure-service-location 'westus'
   --azure-image-reference-publisher 'OpenLogic'
   --azure-image-reference-offer 'CentOS'
@@ -87,7 +87,7 @@ For Ubuntu:
 ```
 knife azurerm server create
   --azure-resource-group-name MyResourceGrpName
-  --azure-vm-name MyNewVMName
+  --azure-vm-name my-new-vm-name
   --azure-service-location 'westus'
   --azure-image-os-type ubuntu
   --azure-image-reference-sku '14.04.2-LTS'
@@ -100,7 +100,7 @@ OR
 ```
 knife azurerm server create
   --azure-resource-group-name MyResourceGrpName
-  --azure-vm-name MyNewVMName
+  --azure-vm-name my-new-vm-name
   --azure-service-location 'westus'
   --azure-image-reference-publisher 'Canonical'
   --azure-image-reference-offer 'UbuntuServer'
@@ -117,7 +117,7 @@ For Rhel:
 ```
 knife azurerm server create
   --azure-resource-group-name MyResourceGrpName
-  --azure-vm-name MyNewVMName
+  --azure-vm-name my-new-vm-name
   --azure-service-location 'westus'
   --azure-image-os-type rhel
   --ssh-user myuser --ssh-password mypassword
@@ -129,7 +129,7 @@ OR
 ```
 knife azurerm server create
   --azure-resource-group-name MyResourceGrpName
-  --azure-vm-name MyNewVMName
+  --azure-vm-name my-new-vm-name
   --azure-service-location 'westus'
   --azure-image-reference-publisher 'RedHat'
   --azure-image-reference-offer 'RHEL'
@@ -146,7 +146,7 @@ For Debian:
 ```
 knife azurerm server create
   --azure-resource-group-name MyResourceGrpName
-  --azure-vm-name MyNewVMName
+  --azure-vm-name my-new-vm-name
   --azure-service-location 'westus'
   --azure-image-os-type debian
   --ssh-user myuser --ssh-password mypassword
@@ -158,7 +158,7 @@ OR
 ```
 knife azurerm server create
   --azure-resource-group-name MyResourceGrpName
-  --azure-vm-name MyNewVMName
+  --azure-vm-name my-new-vm-name
   --azure-service-location 'westus'
   --azure-image-reference-publisher 'credativ'
   --azure-image-reference-offer 'Debian'
@@ -198,7 +198,7 @@ User can also pass names for virtual network and subnet while server create by p
 ```
 knife azurerm server create
   --azure-resource-group-name MyResourceGrpName
-  --azure-vm-name MyNewVMName
+  --azure-vm-name my-new-vm-name
   --azure-service-location 'westus'
   --azure-image-os-type ubuntu
   --ssh-user myuser --ssh-password mypassword
@@ -210,7 +210,7 @@ OR
 ```
 knife azurerm server create
   --azure-resource-group-name MyResourceGrpName
-  --azure-vm-name MyNewVMName
+  --azure-vm-name my-new-vm-name
   --azure-service-location 'westus'
   --azure-image-os-type ubuntu
   --ssh-user myuser --ssh-password mypassword
@@ -224,7 +224,7 @@ OR
 ```
 knife azurerm server create
   --azure-resource-group-name MyResourceGrpName
-  --azure-vm-name MyNewVMName
+  --azure-vm-name my-new-vm-name
   --azure-service-location 'westus'
   --azure-image-os-type ubuntu
   --ssh-user myuser --ssh-password mypassword
@@ -242,14 +242,14 @@ User can pass `--server-count` option to specify the number of servers to be cre
 Command:
 knife azurerm server create
 --azure-resource-group-name MyResourceGrpName
---azure-vm-name MyNewVMName
+--azure-vm-name my-new-vm-name
 --azure-service-location 'westus'
 --azure-image-os-type centos
 --azure-vm-size Small
 --server-count 3
 -x myuser -P mypassword
 ```
-This will create 3 VMs with names: `MyNewVMName0`, `MyNewVMName1` and `MyNewVMName2`
+This will create 3 VMs with names: `my-new-vm-name0`, `my-new-vm-name1` and `my-new-vm-name2`
 
 #### --extended-logs option
 User can pass `--extended-logs` option to show detailed chef convergence logs.
@@ -258,7 +258,7 @@ User can pass `--extended-logs` option to show detailed chef convergence logs.
 Command:
 knife azurerm server create
 --azure-resource-group-name MyResourceGrpName
---azure-vm-name MyNewVMName
+--azure-vm-name my-new-vm-name
 --azure-service-location 'westus'
 --azure-image-os-type centos
 --azure-vm-size Small
@@ -273,7 +273,7 @@ User can pass `--tcp-endpoints` option to open the comma seperated ports passed 
 Command:
 knife azurerm server create
 --azure-resource-group-name MyResourceGrpName
---azure-vm-name MyNewVMName
+--azure-vm-name my-new-vm-name
 --azure-service-location 'westus'
 --azure-image-os-type centos
 --azure-vm-size Small
@@ -293,7 +293,7 @@ User can pass `--ohai-hints` option to set the hints passed in the ohai configur
 Command:
 knife azurerm server create
 --azure-resource-group-name MyResourceGrpName
---azure-vm-name MyNewVMName
+--azure-vm-name my-new-vm-name
 --azure-service-location 'westus'
 --azure-image-os-type centos
 --azure-vm-size Small
@@ -315,7 +315,7 @@ User can pass `--azure-storage-account` option to set storage account name.
 Command:
 knife azurerm server create
 --azure-resource-group-name MyResourceGrpName
---azure-vm-name MyNewVMName
+--azure-vm-name my-new-vm-name
 --azure-service-location 'westus'
 --azure-image-os-type centos
 --azure-vm-size Small
@@ -333,7 +333,7 @@ User can pass `--chef-daemon-interval` option to specify the frequency(in minute
 Command:
 knife azurerm server create
 --azure-resource-group-name MyResourceGrpName
---azure-vm-name MyNewVMName
+--azure-vm-name my-new-vm-name
 --azure-service-location 'westus'
 --azure-image-os-type centos
 --azure-vm-size Small
@@ -349,7 +349,7 @@ User can pass `--azure-availability-set` name option to add virtual machine into
 Command:
 knife azurerm server create
 --azure-resource-group-name MyResourceGrpName
---azure-vm-name MyNewVMName
+--azure-vm-name my-new-vm-name
 --azure-availability-set MyAvailabilitySetName
 --azure-service-location 'eastus'
 --azure-image-os-type windows
@@ -396,7 +396,7 @@ Option `chef_daemon_interval` can be used for running the chef-client as a servi
 ```
 knife azurerm server create
   --azure-resource-group-name MyResourceGrpName
-  --azure-vm-name MyNewVMName
+  --azure-vm-name my-new-vm-name
   --azure-service-location 'westus'
   --azure-image-os-type windows
   -x myuser -P mypassword
@@ -409,7 +409,7 @@ OR
 ```
 knife azurerm server create
   --azure-resource-group-name MyResourceGrpName
-  --azure-vm-name MyNewVMName
+  --azure-vm-name my-new-vm-name
   --azure-service-location 'westus'
   --azure-image-reference-publisher 'MicrosoftWindowsServer'
   --azure-image-reference-offer 'WindowsServer'
