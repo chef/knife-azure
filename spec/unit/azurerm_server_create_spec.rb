@@ -1209,7 +1209,8 @@ describe Chef::Knife::AzurermServerCreate do
         :validation_client_name => "client_name",
         :bootstrap_proxy => "http://test.com",
         :node_ssl_verify_mode => 'true',
-        :node_verify_api_cert  => 'hfyreiur374294nehfdishf' }
+        :node_verify_api_cert  => 'hfyreiur374294nehfdishf',
+        :environment => "development" }
       @params[:chef_extension_public_param] = { :hints =>
         ['vm_name', 'public_fqdn', 'platform'],
         :bootstrap_options => bootstrap_options,
@@ -1270,6 +1271,7 @@ describe Chef::Knife::AzurermServerCreate do
       expect(extension["properties"]["settings"]["bootstrap_options"]["node_ssl_verify_mode"]).to be == "[parameters('node_ssl_verify_mode')]"
       expect(extension["properties"]["settings"]["bootstrap_options"]["node_verify_api_cert"]).to be == "[parameters('node_verify_api_cert')]"
       expect(extension["properties"]["settings"]["extendedLogs"]).to be == 'true'
+      expect(extension["properties"]["settings"]["bootstrap_options"]["environment"]).to be == "[parameters('environment')]"
 
       expect(extension["properties"]["protectedSettings"]["encrypted_data_bag_secret"]).to be == "[parameters('encrypted_data_bag_secret')]"
     end
@@ -1374,7 +1376,8 @@ describe Chef::Knife::AzurermServerCreate do
         :bootstrap_proxy => "http://test.com",
         :node_ssl_verify_mode => 'true',
         :node_verify_api_cert  => 'hfyreiur374294nehfdishf',
-        :chef_node_name => 'test-vm'}
+        :chef_node_name => 'test-vm',
+        :environment => "development"}
       @params[:chef_extension_public_param] = { :bootstrap_options => bootstrap_options }
       @params[:chef_extension_private_param] = {
         :validation_key => "validation_key",
@@ -1411,6 +1414,7 @@ describe Chef::Knife::AzurermServerCreate do
       expect(parameters["node_ssl_verify_mode"]["value"]).to be == "true"
       expect(parameters["node_verify_api_cert"]["value"]).to be == 'hfyreiur374294nehfdishf'
       expect(parameters["chef_node_name"]["value"]).to be == 'test-vm'
+      expect(parameters["environment"]["value"]).to be == "development"
     end
 
     context "--ssh-public-key option is provided " do

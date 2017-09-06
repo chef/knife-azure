@@ -227,6 +227,12 @@ module Azure::ARM
               "description"=> "Optional Run List to Execute"
             }
           },
+          "environment"=> {
+           "type"=> "string",
+            "metadata"=> {
+              "description"=> "Chef environment for the node (VM) in the Chef Organization"
+            }
+          },
            "chef_node_name" => {
             "type" => "string",
             "metadata" => {
@@ -471,7 +477,8 @@ module Azure::ARM
                   "bootstrap_version" => "[parameters('bootstrap_version')]",
                   "node_ssl_verify_mode" => "[parameters('node_ssl_verify_mode')]",
                   "node_verify_api_cert" => "[parameters('node_verify_api_cert')]",
-                  "bootstrap_proxy" => "[parameters('bootstrap_proxy')]"
+                  "bootstrap_proxy" => "[parameters('bootstrap_proxy')]",
+                  "environment" => "[parameters('environment')]"
                 },
                 "runlist" => "[parameters('runlist')]",
                 "validation_key_format" => "[parameters('validation_key_format')]",
@@ -631,6 +638,9 @@ module Azure::ARM
         },
         "runlist" => {
           "value" => "#{params[:chef_extension_public_param][:runlist]}"
+        },
+        "environment" => {
+          "value" => "#{params[:chef_extension_public_param][:bootstrap_options][:environment]}"
         },
         "chef_node_name" => {
           "value"=> "#{params[:chef_extension_public_param][:bootstrap_options][:chef_node_name]}"
