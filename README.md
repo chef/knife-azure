@@ -35,20 +35,20 @@ They are not designed to work together. Commands starting with `knife azurerm` u
 
 ## Configuration
 
-1. [ARM Configuration] (docs/configuration.md#arm-mode)
-1. [ASM Configuration] (docs/configuration.md#asm-mode)
+1. [ARM Configuration](docs/configuration.md#arm-mode)
+1. [ASM Configuration](docs/configuration.md#asm-mode)
 
 ## Detailed Usage
 
-1. [ARM Mode] (docs/ARM.md)
-1. [ASM Mode] (docs/ASM.md)
+1. [ARM Mode](docs/ARM.md)
+1. [ASM Mode](docs/ASM.md)
 
 ## Bootstrap existing VM to install the chef-client using chef-extension
 
 We have added a utility in ARM and ASM to bootstrap existing VM. This will install the chef-client using chef extension on your VM.
 
-1. [Bootstrap Doc for ARM Mode] (docs/bootstrap.md#arm-mode)
-1. [Bootstrap Doc for ASM Mode] (docs/bootstrap.md#asm-mode)
+1. [Bootstrap Doc for ARM Mode](docs/bootstrap.md#arm-mode)
+1. [Bootstrap Doc for ASM Mode](docs/bootstrap.md#asm-mode)
 
 ## Contributing
 
