@@ -479,7 +479,7 @@ module Azure
         
         begin
           server = resource_management_client.resource_groups.delete(resource_group_name)
-        end until server.value!.body.nil?
+        end until server.nil?
         puts "\n"
       end
 

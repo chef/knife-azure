@@ -78,7 +78,7 @@ describe Chef::Knife::AzurermServerDelete do
 
     it "destroys the corresponding resource group if --delete-resource-group option is given" do
       server = double('server')
-      allow(server).to receive_message_chain(:value!, :body).and_return(nil)
+      allow(server).to receive(:nil?).and_return("false")
       Chef::Config[:knife][:delete_resource_group] = true
       allow(@arm_server_instance.service.ui).to receive(:confirm).and_return (true)
 
