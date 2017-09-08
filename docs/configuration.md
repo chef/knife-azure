@@ -2,8 +2,8 @@
 
 ## ARM mode
 
-ARM mode requires setting up service principal for authentication and permissioning. For setting up a service principal from the command line please refer
-[Create service principal with PowerShell / Azure CLI 2.0](http://aka.ms/cli-service-principal) or
+ARM mode requires setting up a service principal for authentication and permissioning. For setting up a service principal from the command line please refer
+[Create service principal with PowerShell / Azure CLI 2.0](http://aka.ms/cli-service-principal) (preferred approach) or
 [Unattended Authentication](http://aka.ms/auth-unattended). For detailed explanation of authentication in Azure,
 see [Developer’s guide to auth with Azure Resource Manager API](http://aka.ms/arm-auth-dev-guide).
 
@@ -20,6 +20,8 @@ knife[:azure_subscription_id] # found via: <subscriptionId>
 knife[:azure_client_id] # appId=$(azure ad app show --search <principleappcreated> --json | jq -r '.[0].appId')
 knife[:azure_client_secret] # password you set at initally
 ```
+
+*Microsoft Azure encourages the use of Azure CLI 2.0. If you are still using [azure-xplat-cli](https://github.com/Azure/azure-xplat-cli) then you may simply run ```azure login``` and skip creating the service principal entirely.*
 
 ## ASM mode
 

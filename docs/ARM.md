@@ -11,7 +11,7 @@ The following options are required for all azurerm subcommands:
     option :azure_client_id                  Your Active Directory Application id
     option :azure_client_secret              Your Active Directory Application's password
 
-Note: The options mentioned above can be obtained from this [step](docs/configuration.md#arm-mode) OR Use ```azure login``` command from [azure-xplat-cli](https://github.com/Azure/azure-xplat-cli)
+Note: The options mentioned above can be obtained from this [step](docs/configuration.md#arm-mode).
 
 ### Azure Server Create Subcommand
 This subcommand provisions a new server in Azure and then performs a Chef bootstrap.
