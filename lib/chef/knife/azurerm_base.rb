@@ -71,7 +71,6 @@ class Chef
 
       # validates ARM mandatory keys
       def validate_arm_keys!(*keys)
-        Chef::Log.warn('Azurerm subcommands are experimental and of alpha quality. Not suitable for production use. Please use ASM subcommands for production.')
         parse_publish_settings_file(locate_config_value(:azure_publish_settings_file)) if(locate_config_value(:azure_publish_settings_file) != nil)
         keys.push(:azure_subscription_id)
 
