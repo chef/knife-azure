@@ -27,7 +27,7 @@ module Azure::ARM
       list = []
       address_space = IPAddress(address_prefix)
       subnets_list.each do |sbn|
-        subnet_address_prefix = IPAddress(sbn.properties.address_prefix)
+        subnet_address_prefix = IPAddress(sbn.address_prefix)
 
         ## check if the subnet belongs to this address space or not ##
         list << sbn if address_space.include? subnet_address_prefix
@@ -53,7 +53,7 @@ module Azure::ARM
 
     ## lists all subnets under a virtual network or lists subnets of only a particular address space ##
     def subnets_list(resource_group_name, vnet_name, address_prefix = nil)
-      list = network_resource_client.subnets.list(resource_group_name, vnet_name).value
+      list = network_resource_client.subnets.list(resource_group_name, vnet_name)
       !address_prefix.nil? && !list.empty? ? subnets_list_for_specific_address_space(address_prefix, list) : list
     end
 
@@ -69,12 +69,12 @@ module Azure::ARM
 
     ## return all the address prefixes under a virtual network ##
     def vnet_address_spaces(vnet)
-      vnet.properties.address_space.address_prefixes
+      vnet.address_space.address_prefixes
     end
 
     ## return address prefix of a subnet ##
     def subnet_address_prefix(subnet)
-      subnet.properties.address_prefix
+      subnet.address_prefix
     end
 
     ## sort available networks pool in ascending order based on the network's
@@ -87,14 +87,14 @@ module Azure::ARM
     ## sort existing subnets in ascending order based on their cidr prefix or
     ## netmask to have subnets with larger networks on the top ##
     def sort_subnets_by_cidr_prefix(subnets)
-      subnets.sort_by { |sbn| [ subnet_address_prefix(sbn).split('/')[1] ].map(&:to_i) }
+      subnets.sort_by.with_index { |sbn, i| [subnet_address_prefix(sbn).split("/")[1].to_i, i] }
     end
 
     ## sort used networks pool in descending order based on the number of hosts
     ## it contains, this helps to keep larger networks on top thereby eliminating
     ## more number of entries in available_networks_pool at a faster pace ##
     def sort_used_networks_by_hosts_size(used_network)
-      used_network.sort_by { |nwrk| -nwrk.hosts.size }
+      used_network.sort_by.with_index { |nwrk, i| [-nwrk.hosts.size, i] }
     end
 
     ## return the cidr prefix or netmask of the given subnet ##

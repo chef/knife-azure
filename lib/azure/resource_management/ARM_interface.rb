@@ -489,7 +489,11 @@ module Azure
           err_details = err_json["error"]["details"] if err_json["error"]
           if err_details
             err_details.each do |err|
-              ui.error(JSON.parse(err["message"])["error"]["message"])
+              begin
+                ui.error(JSON.parse(err["message"])["error"]["message"])
+              rescue JSON::ParserError => e
+                ui.error(err["message"])
+              end
             end
           else
             ui.error(err_json["error"]["message"])

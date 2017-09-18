@@ -189,8 +189,8 @@ module QueryAzureMock
         :value).and_return(nil)
     else
       allow(network_resource_client.subnets).to receive_message_chain(
-        :list,
-        :value).and_return(stub_subnets_list_response(resource_group_name, vnet_name))
+        :list
+        ).and_return(stub_subnets_list_response(resource_group_name, vnet_name))
     end
 
     network_resource_client
@@ -218,7 +218,7 @@ module QueryAzureMock
   def stub_subnets_list_response(resource_group_name, vnet_name)
     rgrp_index, vnet_index = locate_resource_group_and_vnet(resource_group_name, vnet_name)
 
-    @resource_groups[rgrp_index][resource_group_name]['vnets'][vnet_index][vnet_name]['properties']['subnets']
+    @resource_groups[rgrp_index][resource_group_name]['vnets'][vnet_index][vnet_name]['subnets']
   end
 
   def stub_vnet_get_response(resource_group_name, vnet_name)
@@ -466,160 +466,109 @@ module QueryAzureMock
     @resource_groups = [{'rgrp-1' => {
       'vnets' => [{'vnet-1' => OpenStruct.new({
         'location' => 'westus',
-        'properties' => OpenStruct.new({
-          'address_space' => OpenStruct.new({
-            'address_prefixes' => [ '10.1.0.0/16' ]
-          }),
-          'subnets' => [OpenStruct.new({'name'=> 'sbn1',
-            'properties'=> OpenStruct.new({
-              'address_prefix'=> '10.1.0.0/24'
-            })
-          }),
-          OpenStruct.new({'name'=> 'sbn2',
-            'properties'=> OpenStruct.new({
-              'address_prefix'=> '10.1.48.0/20'
-            })
-          })]
-        })
+        'address_space' => OpenStruct.new({
+          'address_prefixes' => [ '10.1.0.0/16' ]
+        }),
+        'subnets' => [OpenStruct.new({'name'=> 'sbn1',
+          
+            'address_prefix'=> '10.1.0.0/24'
+        }),
+        OpenStruct.new({'name'=> 'sbn2',
+            'address_prefix'=> '10.1.48.0/20'
+        })]
       })}]
     }},
     {'rgrp-2' => {
       'vnets' => [{'vnet-2' => OpenStruct.new({
         'location' => 'westus',
-        'properties' => OpenStruct.new({
-          'address_space' => OpenStruct.new({
-            'address_prefixes' => [ '10.2.0.0/16', '192.168.172.0/24', '16.2.0.0/24' ]
-          }),
-          'subnets' => [OpenStruct.new({'name'=> 'sbn3',
-            'properties'=> OpenStruct.new({
-              'address_prefix'=> '10.2.0.0/20'
-            })
-          }),
-          OpenStruct.new({'name'=> 'sbn4',
-            'properties'=> OpenStruct.new({
-              'address_prefix'=> '192.168.172.0/25'
-            })
-          }),
-          OpenStruct.new({'name'=> 'sbn5',
-            'properties'=> OpenStruct.new({
-              'address_prefix'=> '10.2.16.0/28'
-            })
-          })]
-        })
+        'address_space' => OpenStruct.new({
+          'address_prefixes' => [ '10.2.0.0/16', '192.168.172.0/24', '16.2.0.0/24' ]
+        }),
+        'subnets' => [OpenStruct.new({'name'=> 'sbn3',
+            'address_prefix'=> '10.2.0.0/20'
+        }),
+        OpenStruct.new({'name'=> 'sbn4',
+            'address_prefix'=> '192.168.172.0/25'
+        }),
+        OpenStruct.new({'name'=> 'sbn5',
+            'address_prefix'=> '10.2.16.0/28'
+        })]
       })},
       {'vnet-3' => OpenStruct.new({
         'location' => 'westus',
-        'properties' => OpenStruct.new({
-          'address_space' => OpenStruct.new({
-            'address_prefixes' => [ '25.3.16.0/20', '141.154.163.0/26']
-          }),
-          'subnets' => [OpenStruct.new({'name'=> 'sbn6',
-            'properties'=> OpenStruct.new({
-              'address_prefix'=> '25.3.29.0/25'
-            })
-          }),
-          OpenStruct.new({'name'=> 'sbn7',
-            'properties'=> OpenStruct.new({
-              'address_prefix'=> '25.3.29.128/25'
-            })
+        'address_space' => OpenStruct.new({
+          'address_prefixes' => [ '25.3.16.0/20', '141.154.163.0/26']
+        }),
+        'subnets' => [OpenStruct.new({'name'=> 'sbn6',
+            'address_prefix'=> '25.3.29.0/25'
+        }),
+        OpenStruct.new({'name'=> 'sbn7',
+            'address_prefix'=> '25.3.29.128/25'
           })]
-        })
       })}]
     }},
     {'rgrp-3' => {
       'vnets' => [{'vnet-4' => OpenStruct.new({
         'location' => 'westus',
-        'properties' => OpenStruct.new({
           'address_space' => OpenStruct.new({
             'address_prefixes' => [ '10.15.0.0/20', '40.23.19.0/29' ]
           }),
           'subnets' => [OpenStruct.new({'name'=> 'sbn8',
-            'properties'=> OpenStruct.new({
               'address_prefix'=> '40.23.19.0/29'
-            })
           })]
-        })
       })},
       {'vnet-5' => OpenStruct.new({
         'location' => 'westus',
-        'properties' => OpenStruct.new({
           'address_space' => OpenStruct.new({
             'address_prefixes' => [ '69.182.8.0/21', '12.3.19.0/24' ]
           }),
           'subnets' => [OpenStruct.new({'name'=> 'sbn9',
-            'properties'=> OpenStruct.new({
               'address_prefix'=> '69.182.9.0/24'
-            })
           }),
           OpenStruct.new({'name'=> 'sbn10',
-            'properties'=> OpenStruct.new({
               'address_prefix'=> '69.182.11.0/24'
-            })
           }),
           OpenStruct.new({'name'=> 'sbn11',
-            'properties'=> OpenStruct.new({
               'address_prefix'=> '12.3.19.0/25'
-            })
           }),
           OpenStruct.new({'name'=> 'sbn12',
-            'properties'=> OpenStruct.new({
               'address_prefix'=> '69.182.14.0/24'
-            })
           }),
           OpenStruct.new({'name'=> 'sbn13',
-            'properties'=> OpenStruct.new({
               'address_prefix'=> '12.3.19.128/25'
-            })
           })]
-        })
       })}]
     }},
     {'rgrp-4' => {
       'vnets' => [{'vnet-6' => OpenStruct.new({
         'location' => 'westus',
-        'properties' => OpenStruct.new({
           'address_space' => OpenStruct.new({
             'address_prefixes' => [ '130.88.9.0/24', '112.90.2.0/24' ]
           }),
           'subnets' => [OpenStruct.new({'name'=> 'sbn14',
-            'properties'=> OpenStruct.new({
               'address_prefix'=> '112.90.2.128/25'
-            })
           }),
           OpenStruct.new({'name'=> 'sbn15',
-            'properties'=> OpenStruct.new({
               'address_prefix'=> '130.88.9.0/24'
-            })
           }),
           OpenStruct.new({'name'=> 'sbn16',
-            'properties'=> OpenStruct.new({
               'address_prefix'=> '112.90.2.0/25'
-            })
           })]
-        })
       })},
       {'vnet-7' => OpenStruct.new({
         'location' => 'westus',
-        'properties' => OpenStruct.new({
           'address_space' => OpenStruct.new({
             'address_prefixes' => [ '10.3.0.0/16', '160.10.2.0/24' ]
           }),
           'subnets' => [OpenStruct.new({'name'=> 'sbn15',
-            'properties'=> OpenStruct.new({
               'address_prefix'=> '160.10.2.192/26'
-            })
           }),
           OpenStruct.new({'name'=> 'GatewaySubnet',
-            'properties'=> OpenStruct.new({
               'address_prefix'=> '10.3.1.0/24'
-            })
           }),
           OpenStruct.new({'name'=> 'sbn16',
-            'properties'=> OpenStruct.new({
               'address_prefix'=> '160.10.2.0/25'
-            })
           })]
-        })
       })}]
     }}]
   end
