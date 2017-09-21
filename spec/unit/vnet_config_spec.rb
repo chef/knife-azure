@@ -30,7 +30,7 @@ describe Azure::ARM::VnetConfig do
   def used_networks(subnets)
     used_networks_pool = Array.new
     subnets.each do |subnet|
-      used_networks_pool.push(IPAddress(subnet.properties.address_prefix))
+      used_networks_pool.push(IPAddress(subnet.address_prefix))
     end
 
     used_networks_pool
@@ -116,9 +116,9 @@ describe Azure::ARM::VnetConfig do
 
       it 'returns vnet object' do
         response = @dummy_class.get_vnet(@resource_group_name, @vnet_name)
-        expect(response.properties.address_space.address_prefixes).to be == [ '10.2.0.0/16', '192.168.172.0/24', '16.2.0.0/24' ]
-        expect(response.properties.subnets.class).to be == Array
-        expect(response.properties.subnets.length).to be == 3
+        expect(response.address_space.address_prefixes).to be == [ '10.2.0.0/16', '192.168.172.0/24', '16.2.0.0/24' ]
+        expect(response.subnets.class).to be == Array
+        expect(response.subnets.length).to be == 3
       end
     end
 
@@ -384,11 +384,11 @@ describe Azure::ARM::VnetConfig do
 
       it 'returns the sorted list of subnets in ascending order of their cidr prefix' do
         response = @dummy_class.sort_subnets_by_cidr_prefix(@subnets)
-        expect(response[0].properties.address_prefix).to be == '10.2.0.0/20'
-        expect(response[1].properties.address_prefix).to be == '10.1.48.0/20'
-        expect(response[2].properties.address_prefix).to be == '10.1.0.0/24'
-        expect(response[3].properties.address_prefix).to be == '192.168.172.0/25'
-        expect(response[4].properties.address_prefix).to be == '10.2.16.0/28'
+        expect(response[0].address_prefix).to be == '10.2.0.0/20'
+        expect(response[1].address_prefix).to be == '10.1.48.0/20'
+        expect(response[2].address_prefix).to be == '10.1.0.0/24'
+        expect(response[3].address_prefix).to be == '192.168.172.0/25'
+        expect(response[4].address_prefix).to be == '10.2.16.0/28'
       end
     end
 
@@ -401,11 +401,11 @@ describe Azure::ARM::VnetConfig do
 
       it 'returns the sorted list of subnets in ascending order of their cidr prefix' do
         response = @dummy_class.sort_subnets_by_cidr_prefix(@subnets)
-        expect(response[0].properties.address_prefix).to be == '69.182.9.0/24'
-        expect(response[1].properties.address_prefix).to be == '69.182.11.0/24'
-        expect(response[2].properties.address_prefix).to be == '69.182.14.0/24'
-        expect(response[3].properties.address_prefix).to be == '12.3.19.0/25'
-        expect(response[4].properties.address_prefix).to be == '12.3.19.128/25'
+        expect(response[0].address_prefix).to be == '69.182.9.0/24'
+        expect(response[1].address_prefix).to be == '69.182.11.0/24'
+        expect(response[2].address_prefix).to be == '69.182.14.0/24'
+        expect(response[3].address_prefix).to be == '12.3.19.0/25'
+        expect(response[4].address_prefix).to be == '12.3.19.128/25'
       end
     end
   end
@@ -786,9 +786,7 @@ describe Azure::ARM::VnetConfig do
           before do
             @vnet_address_prefix = '62.12.3.128/25'
             @subnets = [OpenStruct.new({'name'=> 'sbn17',
-              'properties'=> OpenStruct.new({
                 'address_prefix'=> '62.12.3.128/25'
-              })
             })]
           end
 
@@ -831,19 +829,13 @@ describe Azure::ARM::VnetConfig do
             :subnets => Array.new
           }
           @subnets = [OpenStruct.new({'name'=> 'sbn19',
-            'properties'=> OpenStruct.new({
               'address_prefix'=> '10.10.11.0/25'
-            })
           }),
           OpenStruct.new({'name'=> 'sbn20',
-            'properties'=> OpenStruct.new({
               'address_prefix'=> '10.10.11.128/26'
-            })
           }),
           OpenStruct.new({'name'=> 'sbn21',
-            'properties'=> OpenStruct.new({
               'address_prefix'=> '10.10.11.192/26'
-            })
           })]
         end
 
@@ -1061,29 +1053,21 @@ describe Azure::ARM::VnetConfig do
               @subnet_name = 'sbn60'
 
               subnets = [OpenStruct.new({'name'=> 'sbn19',
-                'properties'=> OpenStruct.new({
                   'address_prefix'=> '10.10.11.0/25'
-                })
               }),
               OpenStruct.new({'name'=> 'sbn20',
-                'properties'=> OpenStruct.new({
                   'address_prefix'=> '10.10.11.128/26'
-                })
               }),
               OpenStruct.new({'name'=> 'sbn21',
-                'properties'=> OpenStruct.new({
                   'address_prefix'=> '10.10.11.192/26'
-                })
               })]
 
               vnet = OpenStruct.new({
                 'location' => 'westus',
-                'properties' => OpenStruct.new({
                   'address_space' => OpenStruct.new({
                     'address_prefixes' => [ '10.10.11.0/24' ]
                   }),
                   'subnets' => subnets
-                })
               })
 
               allow(@dummy_class).to receive(:get_vnet).and_return(vnet)
@@ -1160,39 +1144,27 @@ describe Azure::ARM::VnetConfig do
               new_subnet_prefix = '133.72.16.128/25'
 
               subnets = [OpenStruct.new({'name'=> 'sbn19',
-                'properties'=> OpenStruct.new({
                   'address_prefix'=> '10.10.11.0/25'
-                })
               }),
               OpenStruct.new({'name'=> 'sbn20',
-                'properties'=> OpenStruct.new({
                   'address_prefix'=> '10.10.11.128/26'
-                })
               }),
               OpenStruct.new({'name'=> 'sbn21',
-                'properties'=> OpenStruct.new({
                   'address_prefix'=> '10.10.11.192/26'
-                })
               }),
               OpenStruct.new({'name'=> 'sbn22',
-                'properties'=> OpenStruct.new({
                   'address_prefix'=> '192.168.172.0/24'
-                })
               }),
               OpenStruct.new({'name'=> 'sbn23',
-                'properties'=> OpenStruct.new({
                   'address_prefix'=> '133.72.16.0/25'
-                })
               })]
 
               vnet = OpenStruct.new({
                 'location' => 'westus',
-                'properties' => OpenStruct.new({
                   'address_space' => OpenStruct.new({
                     'address_prefixes' => [ '10.10.11.0/24', '192.168.172.0/24', '133.72.16.0/24' ]
                   }),
                   'subnets' => subnets
-                })
               })
 
               allow(@dummy_class).to receive(:get_vnet).and_return(vnet)
