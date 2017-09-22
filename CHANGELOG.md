@@ -1,5 +1,45 @@
 # Change Log
 
+## [v1.8.0](https://github.com/chef/knife-azure/tree/v1.8.0) (2017-mm-dd)
+
+[Full Changelog](https://github.com/chef/knife-azure/compare/v1.7.0...v1.8.0)
+
+**Closed issues:**
+- `--delete-resource-group` works, but exits as failed [\#458](https://github.com/chef/knife-azure/issues/458)
+- Master is broken for any azurerm server create operations that involve virtual networks [\#455](https://github.com/chef/knife-azure/issues/455)
+- Running `azurerm server create` with Chef Environment argument does not correctly assign environment to the created node [\#454](https://github.com/chef/knife-azure/issues/454)
+- Can not create vms in required availability set (ARM) [\#446](https://github.com/chef/knife-azure/issues/446)
+- Bootstrapping in Azurerm is not happenning fully. [\#449](https://github.com/chef/knife-azure/issues/449)
+- knife-azure does not work with latest Chefdk [\#440](https://github.com/chef/knife-azure/issues/440)
+- Auto-Generated Storage Account Name can produce an Exception [\#434](https://github.com/chef/knife-azure/issues/434)
+- node_name in client.rb always has a '0' appended resulting in auth error [\#439](https://github.com/chef/knife-azure/issues/439)
+- Knife Azure does not work with berkshelf [\#423](https://github.com/chef/knife-azure/issues/423)
+- --node-ssl-verify-mode none' does not write appropriate value to resulting client.rb [\#435](https://github.com/chef/knife-azure/issues/435)
+- knife azure server delete doesn't delete servers joined to a domain [\#258](https://github.com/chef/knife-azure/issues/258)
+
+**Merged pull requests:**
+
+- Update missing function for V0.9.0 [\#460](https://github.com/chef/knife-azure/pull/460)
+- Updated code to delete server with resource group [\#459](https://github.com/chef/knife-azure/pull/459)
+- Switches ARM > ASM language in documentation. Removes warning from ARM mode [\#457](https://github.com/chef/knife-azure/pull/457)
+- Updated code to set chef environment [\#456](https://github.com/chef/knife-azure/pull/456)
+- Added Feature availability_set for knife azure ARM [\#453](https://github.com/chef/knife-azure/pull/453)
+- Remove copy Index if server count is 1 [\#447](https://github.com/chef/knife-azure/pull/447)
+- Removed listen gem conflict [\#445](https://github.com/chef/knife-azure/pull/445)
+- Test on the latest rubies and allow for Chef > 12 [\#444](https://github.com/chef/knife-azure/pull/444)
+- Fixed '--node-ssl-verify-mode' value in client.rb [\#437](https://github.com/chef/knife-azure/pull/437)
+- Fixed Auto-Generated Storage Account Name issue. [\#436](https://github.com/chef/knife-azure/pull/436)
+- Updated code for azurerm bootstrap for new sdk gem. [\#430](https://github.com/chef/knife-azure/pull/430)
+- Renamed chef-service-interval option name to chef-daemon-interval [\#429](https://github.com/chef/knife-azure/pull/429)
+- Updated arm server delete command to use the latest azure-sdk gems. [\#428](https://github.com/chef/knife-azure/pull/428)
+- Updated ARM Server Create and Show method for new sdk gem. [\#427](https://github.com/chef/knife-azure/pull/427)
+- Updated code for arm commands to use the latest azure-sdk gems [\#425](https://github.com/chef/knife-azure/pull/425)
+- Added support for daemon as task [\#420](https://github.com/chef/knife-azure/pull/420)
+- Added warning for --purge [\#418](https://github.com/chef/knife-azure/pull/418)
+- Added --daemon option for chef extension. [\#417](https://github.com/chef/knife-azure/pull/417)
+- Modified Windows behavior to fetch token details in ARM model as per the changes done in the 0.10.5 version of azure-xplat-cli [\#416](https://github.com/chef/knife-azure/pull/416)
+
+
 ## [v1.7.0](https://github.com/chef/knife-azure/tree/v1.7.0) (2016-11-25)
 
 [Full Changelog](https://github.com/chef/knife-azure/compare/v1.6.0...v1.7.0)
