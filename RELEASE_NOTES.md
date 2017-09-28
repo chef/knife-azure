@@ -7,51 +7,46 @@ Example Note:
 Details about the thing that changed that needs to get included in the Release Notes in markdown.
 -->
 
-# knife-azure 1.7.0 release notes:
-In this release, few options have been removed since their support has been removed from the azure-chef-extension. The options are: `--auto-update-client`, `--uninstall-chef-client` and `--delete-chef-extension-config`. They were earlier supported with `cloud-api` bootstrap protocol which uses azure-chef-extension for installing chef-client.
+# knife-azure 1.8.0 release notes:
+In this release, The --chef-service-interval option has been renamed to --chef-daemon-interval.
+
+Now supports the latest azure-sdk gem, version 0.9.0.
 
 New options introduced:
-`--chef-service-interval`, which lets the user specify the frequency at which chef-client service should run. This option is available for both ASM and ARM commands. For ASM, it's supported with `cloud-api` bootstrap protocol.
 
-`--extended-logs` shows chef convergence logs in detail. This option is available for both ASM and ARM commands. For ASM, it's supported with `cloud-api` bootstrap protocol.
+`--azure_availability_set`, which allows the user to create virtual machines in specified availability set.
+
+`--daemon`, which allows the user to configure the chef-client to run as a daemon by specifying `none`, `service`, or `task`. This option is only supported on Windows and requires the `--bootstrap-protocol` option to be set to `cloud-api`.
 
 Please file bugs or feature requests against the [KNIFE_AZURE](https://github.com/chef/knife-azure/issues) repository.
 More information on the contribution process for Chef projects can be found in the [Chef Contributions document](https://docs.chef.io/community_contributions.html).
 
 ## knife-azure on RubyGems and Github
 https://rubygems.org/gems/knife-azure
+
 https://github.com/chef/knife-azure
 
 ## Features added in this release:
 
-See the [1.7.0 CHANGELOG](https://github.com/chef/knife-azure/blob/1.7.0/CHANGELOG.md)
-for the complete list of features added in this release.
+See the [1.8.0 CHANGELOG](https://github.com/chef/knife-azure/blob/1.8.0/CHANGELOG.md) for the complete list of features added in this release.
 
 Here is a partial list:
 
-* Added chef_service_interval option and moved encrypted_data_bag_secret option from public_config to private_config for chef_extension: [\#408](https://github.com/chef/knife-azure/pull/408) ([Aliasgar16](https://github.com/Aliasgar16))
-* Added support to show extended logs in ASM bootstrap command: [\#400](https://github.com/chef/knife-azure/pull/400) ([Aliasgar16](https://github.com/Aliasgar16))
-* Added support for extended logs to knife arm bootstrap command: [\#398](https://github.com/chef/knife-azure/pull/398) ([Aliasgar16](https://github.com/Aliasgar16))
-* Add support passing of tcp port option in ARM: [\#394](https://github.com/chef/knife-azure/pull/394) ([dheerajd-msys](https://github.com/dheerajd-msys))
-* Added support for running Xplat command in case of token expiry: [\#378](https://github.com/chef/knife-azure/pull/378) ([dheerajd-msys](https://github.com/dheerajd-msys))
-* Added support for extended_logs to show chef-client run logs to user in ARM server_create command: [\#372](https://github.com/chef/knife-azure/pull/372) ([Aliasgar16](https://github.com/Aliasgar16))
+* Added `--azure_availability_set` option which allows the user to create virtual machine in specified availability set. [\#453](https://github.com/chef/knife-azure/pull/453) ([piyushawasthi](https://github.com/piyushawasthi))
+
+* Added `--daemon` option for chef extension. [\#417](https://github.com/chef/knife-azure/pull/417) ([Vasu1105](https://github.com/Vasu1105))
 
 ## Issues fixed in this release:
 
-See the [1.7.0 CHANGELOG](https://github.com/chef/knife-azure/blob/1.7.0/CHANGELOG.md)
-for the complete list of issues fixed in this release.
+See the [1.8.0 CHANGELOG](https://github.com/chef/knife-azure/blob/1.8.0/CHANGELOG.md) for the complete list of issues fixed in this release.
 
 Here is a partial list:
 
-* Fix for handing certificate with thumbprint no found error: [\#413](https://github.com/chef/knife-azure/pull/413) ([Vasu1105](https://github.com/Vasu1105))
-* Handling `credential without -0--` pattern: [\#412](https://github.com/chef/knife-azure/pull/412) ([NimishaS](https://github.com/NimishaS))
-* Allow using relative path for config files: [\#392](https://github.com/chef/knife-azure/pull/392) ([Vasu1105](https://github.com/Vasu1105))
-* Added support to handle existing vnet and subnet resources in resource group while server creation: [\#383](https://github.com/chef/knife-azure/pull/383) ([Aliasgar16](https://github.com/Aliasgar16))
-* azurerm bootstrap fails if the version of chef extension is not given in knife.rb file: [\#379](https://github.com/chef/knife-azure/pull/379) ([Aliasgar16](https://github.com/Aliasgar16))
-* Showing text error message instead of json: [\#376](https://github.com/chef/knife-azure/pull/376) ([NimishaS](https://github.com/NimishaS))
-* Fixed eval failure on some ruby versions and specs failure: [\#375](https://github.com/chef/knife-azure/pull/375) ([dheerajd-msys](https://github.com/dheerajd-msys))
-
-
-
-
-
+* Master is broken for any azurerm server create operations that involve virtual networks [\#460](https://github.com/chef/knife-azure/pull/460) ([harikesh-kolekar](https://github.com/harikesh-kolekar))
+* Running `azurerm server create` with Chef Environment argument does not correctly assign environment to the created node [\#456](https://github.com/chef/knife-azure/pull/456) ([dheerajd-msys](https://github.com/dheerajd-msys))
+* Fix for `--delete-resource-group` works, but exits as failed [\#459](https://github.com/chef/knife-azure/pull/459) ([dheerajd-msys](https://github.com/dheerajd-msys))
+* Can not create vms in required availability set (ARM) [\#453](https://github.com/chef/knife-azure/pull/453) ([piyushawasthi](https://github.com/piyushawasthi))
+* Fix for azurerm command bootstrap was not happening fully [\#447](https://github.com/chef/knife-azure/pull/447) ([harikesh-kolekar](https://github.com/harikesh-kolekar))
+* knife-azure does not work with latest Chefdk [\#445](https://github.com/chef/knife-azure/pull/445) ([harikesh-kolekar](https://github.com/harikesh-kolekar))
+* Fix for `--node-ssl-verify-mode none` does not write appropriate value to resulting client.rb [\#437](https://github.com/chef/knife-azure/pull/437) ([piyushawasthi](https://github.com/piyushawasthi))
+* Updated code to work with latest azure-sdk gems. [\#425](https://github.com/chef/knife-azure/pull/425)([dheerajd-msys](https://github.com/dheerajd-msys))
