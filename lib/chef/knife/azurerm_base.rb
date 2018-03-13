@@ -103,12 +103,17 @@ class Chef
         token_details
       end
 
-      def current_xplat_cli_version
-        shell_out!("azure -v", { returns: [0] }).stdout
+      def get_azure_cli_version
+        if @azure_version  != ""
+          get_version = shell_out!("azure -v || az -v | grep azure-cli", { returns: [0] }).stdout
+          @azure_version = get_version.gsub(/[^0-9.]/, '')
+        end
+        @azure_prefix = @azure_version.to_i < 2 ? "azure" : "az"
+        @azure_version
       end
 
       def is_old_xplat?
-        Gem::Version.new(current_xplat_cli_version) < Gem::Version.new(XPLAT_VERSION_WITH_WCM_DEPRECATED)
+        Gem::Version.new(@azure_version) < Gem::Version.new(XPLAT_VERSION_WITH_WCM_DEPRECATED)
       end
 
       def is_WCM_env_var_set?
@@ -141,7 +146,7 @@ class Chef
           return false
         elsif time_difference <= 600 # 600sec = 10min
           # This is required otherwise a long running command may fail inbetween if the token gets expired.
-          raise "Token will expire within 10 minutes. Please run 'azure login' command"
+          raise "Token will expire within 10 minutes. Please run '#{@azure_prefix} login' command"
         else
           return true
         end
@@ -150,10 +155,10 @@ class Chef
       def refresh_token
         begin
           ui.log("Authenticating...")
-          Mixlib::ShellOut.new("azure vm show 'knifetest@resourcegroup' testvm", :timeout => 30).run_command
+          Mixlib::ShellOut.new("#{@azure_prefix} vm show 'knifetest@resourcegroup' testvm", :timeout => 30).run_command
         rescue Mixlib::ShellOut::CommandTimeout
         rescue Exception
-          raise "Token has expired. Please run 'azure login' command"
+          raise "Token has expired. Please run '#{@azure_prefix} login' command"
         end
         if Chef::Platform.windows?
           token_details = token_details_for_windows()
@@ -167,15 +172,14 @@ class Chef
         if !is_token_valid?(token_details)
           token_details = refresh_token()
           if !is_token_valid?(token_details)
-            raise "Token has expired. Please run 'azure login' command"
+            raise "Token has expired. Please run '#{@azure_prefix} login' command"
           end
         end
         token_details
       end
 
       def validate_azure_login
-        err_string = "Please run XPLAT's 'azure login' command OR specify azure_tenant_id, azure_subscription_id, azure_client_id, azure_client_secret in your knife.rb"
-
+        err_string = "Please run XPLAT's '#{@azure_prefix} login' command OR specify azure_tenant_id, azure_subscription_id, azure_client_id, azure_client_secret in your knife.rb"
         ## Older versions of the Azure CLI on Windows stored credentials in a unique way
         ## in Windows Credentails Manager (WCM).
         ## Newer versions use the same pattern across platforms where credentials gets

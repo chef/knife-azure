@@ -192,7 +192,8 @@ class Chef
 
       def run
         $stdout.sync = true
-
+        # check azure cli version due to azure changed `azure` to `az` in azure-cli2.0
+        get_azure_cli_version
         validate_arm_keys!(
           :azure_resource_group_name,
           :azure_vm_name,
@@ -201,11 +202,8 @@ class Chef
 
         begin
           validate_params!
-
           set_default_image_reference!
-
           ssh_override_winrm if !is_image_windows?
-
           vm_details = service.create_server(create_server_def)
         rescue => error
           service.common_arm_rescue_block(error)
