@@ -2,7 +2,7 @@
 # Author:: Barry Davis (barryd@jetstreamsoftware.com)
 # Author:: Adam Jacob (<adam@opscode.com>)
 # Author:: Seth Chisamore (<schisamo@opscode.com>)
-# Copyright:: Copyright (c) 2009-2011 Opscode, Inc.
+# Copyright:: Copyright 2009-2018, Chef Software Inc.
 # License:: Apache License, Version 2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -69,42 +69,50 @@ class Chef
       def run
         begin
           $stdout.sync = true
+          # check azure cli version due to azure changed `azure` to `az` in azure-cli2.0
+          get_azure_cli_version
           validate_arm_keys!(:azure_resource_group_name)
-
-          vm_name = @name_args[0]
-          resource_group_name = locate_config_value(:azure_resource_group_name)
+          @vm_name = @name_args[0]
 
           if locate_config_value(:delete_resource_group)
-            ui.warn "Deleting resource group will delete all the virtual_machines inside it."
-            begin
-              ui.confirm('Do you really want to delete resource group')
-            rescue SystemExit   # Need to handle this as confirming with N/n raises SystemExit exception
-              server = nil      # Cleanup is implicitly performed in other cloud plugins
-              ui.warn "Resource group not deleted. Proceeding for server delete ..."
-              service.delete_server(locate_config_value(:azure_resource_group_name), vm_name)
-              exit
-            end
-
-            ui.info 'Deleting Resource Group '+resource_group_name+' and Virtual Machine '+vm_name+' ..'
-            service.delete_resource_group(locate_config_value(:azure_resource_group_name))
-            ui.warn "Deleted resource_group_name #{resource_group_name} and #{vm_name}"
+            delete_resource_group
           else
-            service.delete_server(locate_config_value(:azure_resource_group_name), vm_name)
+            service.delete_server(locate_config_value(:azure_resource_group_name), @vm_name)
           end
 
           if config[:purge]
-            node_to_delete = config[:chef_node_name] || vm_name
-            if node_to_delete
-              destroy_item(Chef::Node, node_to_delete, 'node')
-              destroy_item(Chef::ApiClient, node_to_delete, 'client')
-            else
-              ui.warn("Node name to purge not provided. Corresponding client node will remain on Chef Server.")
-            end
+            purge_node
           else
-            ui.warn("Corresponding node and client for the #{vm_name} server were not deleted and remain registered with the Chef Server")
+            ui.warn("Corresponding node and client for the #{@vm_name} server were not deleted and remain registered with the Chef Server")
           end
         rescue => error
           service.common_arm_rescue_block(error)
+        end
+      end
+
+      def delete_resource_group
+        resource_group_name = locate_config_value(:azure_resource_group_name)
+        ui.warn "Deleting resource group will delete all the virtual_machines inside it."
+        begin
+          ui.confirm('Do you really want to delete resource group')
+        rescue SystemExit   # Need to handle this as confirming with N/n raises SystemExit exception
+          server = nil      # Cleanup is implicitly performed in other cloud plugins
+          ui.warn "Resource group not deleted. Proceeding for server delete ..."
+          service.delete_server(locate_config_value(:azure_resource_group_name), @vm_name)
+          exit
+        end
+        ui.info 'Deleting Resource Group '+resource_group_name+' and Virtual Machine '+@vm_name+' ..'
+        service.delete_resource_group(locate_config_value(:azure_resource_group_name))
+        ui.warn "Deleted resource_group_name #{resource_group_name} and #{@vm_name}"
+      end
+
+      def purge_node
+        node_to_delete = config[:chef_node_name] || @vm_name
+        if node_to_delete
+          destroy_item(Chef::Node, node_to_delete, 'node')
+          destroy_item(Chef::ApiClient, node_to_delete, 'client')
+        else
+          ui.warn("Node name to purge not provided. Corresponding client node will remain on Chef Server.")
         end
       end
     end

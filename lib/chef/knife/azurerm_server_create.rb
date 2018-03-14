@@ -1,7 +1,7 @@
 #
 # Author:: Aliasgar Batterywala (aliasgar.batterywala@clogeny.com)
 #
-# Copyright:: Copyright (c) 2016 Opscode, Inc.
+# Copyright:: Copyright 2009-2018, Chef Software Inc.
 # License:: Apache License, Version 2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -317,60 +317,55 @@ class Chef
       def set_default_image_reference!
         begin
           if locate_config_value(:azure_image_os_type)
-            if (locate_config_value(:azure_image_reference_publisher) || locate_config_value(:azure_image_reference_offer))
-              # if azure_image_os_type is given and any of the other image reference parameters like publisher or offer are also given,
-              # raise error
-              raise ArgumentError, 'Please specify either --azure-image-os-type OR --azure-image-os-type with --azure-image-reference-sku or 4 image reference parameters i.e.
-                --azure-image-reference-publisher, --azure-image-reference-offer, --azure-image-reference-sku, --azure-image-reference-version."'
+            validate_publisher_and_offer
+            ## if azure_image_os_type is given (with or without azure-image-reference-sku) and other image reference parameters are not given,
+            # set default image reference parameters
+            case locate_config_value(:azure_image_os_type)
+            when "ubuntu"
+              set_os_image("Canonical", "UbuntuServer", "14.04.2-LTS")
+            when "centos"
+              set_os_image("OpenLogic", "CentOS", "7.1")
+            when "rhel"
+              set_os_image("RedHat", "RHEL", "7.2")
+            when "debian"
+              set_os_image("credativ", "Debian", "7")
+            when "windows"
+              set_os_image("MicrosoftWindowsServer", "WindowsServer", "2012-R2-Datacenter")
             else
-              ## if azure_image_os_type is given (with or without azure-image-reference-sku) and other image reference parameters are not given,
-              # set default image reference parameters
-              case locate_config_value(:azure_image_os_type)
-              when "ubuntu"
-                config[:azure_image_reference_publisher] = "Canonical"
-                config[:azure_image_reference_offer] = "UbuntuServer"
-                config[:azure_image_reference_sku] = locate_config_value(:azure_image_reference_sku) ? locate_config_value(:azure_image_reference_sku) : "14.04.2-LTS"
-              when "centos"
-                config[:azure_image_reference_publisher] = "OpenLogic"
-                config[:azure_image_reference_offer] = "CentOS"
-                config[:azure_image_reference_sku] = locate_config_value(:azure_image_reference_sku) ? locate_config_value(:azure_image_reference_sku) : "7.1"
-              when "rhel"
-                config[:azure_image_reference_publisher] = "RedHat"
-                config[:azure_image_reference_offer] = "RHEL"
-                config[:azure_image_reference_sku] = locate_config_value(:azure_image_reference_sku) ? locate_config_value(:azure_image_reference_sku) : "7.2"
-              when "debian"
-                config[:azure_image_reference_publisher] = "credativ"
-                config[:azure_image_reference_offer] = "Debian"
-                config[:azure_image_reference_sku] = locate_config_value(:azure_image_reference_sku) ? locate_config_value(:azure_image_reference_sku) : "7"
-              when "windows"
-                config[:azure_image_reference_publisher] = "MicrosoftWindowsServer"
-                config[:azure_image_reference_offer] = "WindowsServer"
-                config[:azure_image_reference_sku] = locate_config_value(:azure_image_reference_sku) ? locate_config_value(:azure_image_reference_sku) : "2012-R2-Datacenter"
-              else
-                raise ArgumentError, 'Invalid value of --azure-image-os-type. Accepted values ubuntu|centos|windows'
-              end
+              raise ArgumentError, 'Invalid value of --azure-image-os-type. Accepted values ubuntu|centos|windows'
             end
           else
-            if (locate_config_value(:azure_image_reference_publisher) && locate_config_value(:azure_image_reference_offer) && locate_config_value(:azure_image_reference_sku) && locate_config_value(:azure_image_reference_version))
-              # if azure_image_os_type is not given and other image reference parameters are given,
-              # do nothing
-            else
-              # if azure_image_os_type is not given and other image reference parameters are also not given,
-              # throw error for azure_image_os_type
-              validate_arm_keys!(:azure_image_os_type)
-            end
+            validate_arm_keys!(:azure_image_os_type) unless is_image_os_type?
           end
         rescue => error
           ui.error("#{error.message}")
           Chef::Log.debug("#{error.backtrace.join("\n")}")
           exit
         end
-
         # final verification for image reference parameters
         validate_arm_keys!(:azure_image_reference_publisher,
             :azure_image_reference_offer,
             :azure_image_reference_sku,
             :azure_image_reference_version)
+      end
+
+      def set_os_image(publisher, img_offer, default_os_version)
+        config[:azure_image_reference_publisher] = publisher
+        config[:azure_image_reference_offer] = img_offer
+        config[:azure_image_reference_sku] = locate_config_value(:azure_image_reference_sku) ? locate_config_value(:azure_image_reference_sku) : default_os_version
+      end
+
+      def is_image_os_type?
+        locate_config_value(:azure_image_reference_publisher) && locate_config_value(:azure_image_reference_offer) && locate_config_value(:azure_image_reference_sku) && locate_config_value(:azure_image_reference_version)
+      end
+
+      def validate_publisher_and_offer
+        if (locate_config_value(:azure_image_reference_publisher) || locate_config_value(:azure_image_reference_offer))
+          # if azure_image_os_type is given and any of the other image reference parameters like publisher or offer are also given,
+          # raise error
+          raise ArgumentError, 'Please specify either --azure-image-os-type OR --azure-image-os-type with --azure-image-reference-sku or 4 image reference parameters i.e.
+            --azure-image-reference-publisher, --azure-image-reference-offer, --azure-image-reference-sku, --azure-image-reference-version."'
+        end
       end
     end
   end

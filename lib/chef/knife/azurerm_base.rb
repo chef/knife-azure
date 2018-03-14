@@ -1,7 +1,7 @@
 
 # Author:: Aliasgar Batterywala (aliasgar.batterywala@clogeny.com)
 #
-# Copyright:: Copyright (c) 2016 Opscode, Inc.
+# Copyright:: Copyright 2009-2018, Chef Software Inc.
 # License:: Apache License, Version 2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -40,7 +40,6 @@ class Chef
 
       def self.included(includer)
         includer.class_eval do
-
           deps do
             require 'readline'
             require 'chef/json_compat'
@@ -50,7 +49,6 @@ class Chef
             :short => "-r RESOURCE_GROUP_NAME",
             :long => "--azure-resource-group-name RESOURCE_GROUP_NAME",
             :description => "The Resource Group name."
-
         end
       end
 
@@ -71,13 +69,13 @@ class Chef
 
       # validates ARM mandatory keys
       def validate_arm_keys!(*keys)
-        parse_publish_settings_file(locate_config_value(:azure_publish_settings_file)) if(locate_config_value(:azure_publish_settings_file) != nil)
+        parse_publish_settings_file(locate_config_value(:azure_publish_settings_file)) unless locate_config_value(:azure_publish_settings_file).nil?
         keys.push(:azure_subscription_id)
 
-        if(locate_config_value(:azure_tenant_id).nil? || locate_config_value(:azure_client_id).nil? || locate_config_value(:azure_client_secret).nil?)
+        if azure_cred?
           validate_azure_login
         else
-           keys.concat([:azure_tenant_id, :azure_client_id, :azure_client_secret])
+          keys.concat([:azure_tenant_id, :azure_client_id, :azure_client_secret])
         end
 
         errors = []
@@ -92,7 +90,7 @@ class Chef
       end
 
       def authentication_details
-        if(locate_config_value(:azure_tenant_id) && locate_config_value(:azure_client_id) && locate_config_value(:azure_client_secret))
+        if is_azure_cred?
           return {:azure_tenant_id => locate_config_value(:azure_tenant_id), :azure_client_id => locate_config_value(:azure_client_id), :azure_client_secret => locate_config_value(:azure_client_secret)}
         elsif Chef::Platform.windows?
           token_details = token_details_for_windows()
@@ -110,14 +108,6 @@ class Chef
         end
         @azure_prefix = @azure_version.to_i < 2 ? "azure" : "az"
         @azure_version
-      end
-
-      def is_old_xplat?
-        Gem::Version.new(@azure_version) < Gem::Version.new(XPLAT_VERSION_WITH_WCM_DEPRECATED)
-      end
-
-      def is_WCM_env_var_set?
-        ENV['AZURE_USE_SECURE_TOKEN_STORAGE'].nil? ? false : true
       end
 
       def token_details_for_windows
@@ -153,48 +143,42 @@ class Chef
       end
 
       def refresh_token
+        azure_authentication
+        token_details = Chef::Platform.windows? ? token_details_for_windows() : token_details_for_linux()
+      end
+
+      def azure_authentication
         begin
           ui.log("Authenticating...")
           Mixlib::ShellOut.new("#{@azure_prefix} vm show 'knifetest@resourcegroup' testvm", :timeout => 30).run_command
         rescue Mixlib::ShellOut::CommandTimeout
         rescue Exception
-          raise "Token has expired. Please run '#{@azure_prefix} login' command"
+          raise_azure_status
         end
-        if Chef::Platform.windows?
-          token_details = token_details_for_windows()
-        else
-          token_details = token_details_for_linux()
-        end
-        token_details
       end
 
       def check_token_validity(token_details)
-        if !is_token_valid?(token_details)
-          token_details = refresh_token()
-          if !is_token_valid?(token_details)
-            raise "Token has expired. Please run '#{@azure_prefix} login' command"
+        unless is_token_valid?(token_details)
+          token_details = refresh_token
+          unless is_token_valid?(token_details)
+            raise_azure_status
           end
         end
         token_details
       end
 
       def validate_azure_login
-        err_string = "Please run XPLAT's '#{@azure_prefix} login' command OR specify azure_tenant_id, azure_subscription_id, azure_client_id, azure_client_secret in your knife.rb"
-        ## Older versions of the Azure CLI on Windows stored credentials in a unique way
-        ## in Windows Credentails Manager (WCM).
-        ## Newer versions use the same pattern across platforms where credentials gets
-        ## stored in ~/.azure/accessTokens.json file.
         if Chef::Platform.windows? && (is_old_xplat? || is_WCM_env_var_set?)
           # cmdkey command is used for accessing windows credential manager
           xplat_creds_cmd = Mixlib::ShellOut.new("cmdkey /list | findstr AzureXplatCli")
           result = xplat_creds_cmd.run_command
           if result.stdout.nil? || result.stdout.empty?
-            raise err_string
+            raise login_message
           end
         else
           home_dir = File.expand_path('~')
           if !File.exists?(home_dir + "/.azure/accessTokens.json") || File.size?(home_dir + '/.azure/accessTokens.json') <= 2
-            raise err_string
+            raise login_message
           end
         end
       end
@@ -240,20 +224,6 @@ class Chef
           exit 1
         end
         file
-      end
-
-      def pretty_key(key)
-        key.to_s.gsub(/_/, ' ').gsub(/\w+/){ |w| (w =~ /(ssh)|(aws)/i) ? w.upcase  : w.capitalize }
-      end
-
-      def is_image_windows?
-        locate_config_value(:azure_image_reference_offer) =~ /WindowsServer.*/
-      end
-
-      def msg_pair(label, value, color=:cyan)
-        if value && !value.to_s.empty?
-          puts "#{ui.color(label, color)}: #{value}"
-        end
       end
 
       def msg_server_summary(server)
@@ -338,6 +308,50 @@ class Chef
 
         config[:ohai_hints] = format_ohai_hints(locate_config_value(:ohai_hints))
         validate_ohai_hints if ! locate_config_value(:ohai_hints).casecmp('default').zero?
+      end
+
+  private
+
+      def msg_pair(label, value, color=:cyan)
+        if value && !value.to_s.empty?
+          puts "#{ui.color(label, color)}: #{value}"
+        end
+      end
+
+      def pretty_key(key)
+        key.to_s.gsub(/_/, ' ').gsub(/\w+/){ |w| (w =~ /(ssh)|(aws)/i) ? w.upcase  : w.capitalize }
+      end
+
+      def is_image_windows?
+        locate_config_value(:azure_image_reference_offer) =~ /WindowsServer.*/
+      end
+
+      def is_azure_cred?
+        locate_config_value(:azure_tenant_id) && locate_config_value(:azure_client_id) && locate_config_value(:azure_client_secret)
+      end
+
+      def azure_cred?
+        locate_config_value(:azure_tenant_id).nil? || locate_config_value(:azure_client_id).nil? || locate_config_value(:azure_client_secret).nil?
+      end
+
+      def is_old_xplat?
+        Gem::Version.new(@azure_version) < Gem::Version.new(XPLAT_VERSION_WITH_WCM_DEPRECATED)
+      end
+
+      def is_WCM_env_var_set?
+        ENV['AZURE_USE_SECURE_TOKEN_STORAGE'].nil? ? false : true
+      end
+
+      def raise_azure_status
+        raise "Token has expired. Please run '#{@azure_prefix} login' command"
+      end
+
+      def login_message
+        ## Older versions of the Azure CLI on Windows stored credentials in a unique way
+        ## in Windows Credentails Manager (WCM).
+        ## Newer versions use the same pattern across platforms where credentials gets
+        ## stored in ~/.azure/accessTokens.json file.
+        "Please run XPLAT's '#{@azure_prefix} login' command OR specify azure_tenant_id, azure_subscription_id, azure_client_id, azure_client_secret in your knife.rb"
       end
     end
   end

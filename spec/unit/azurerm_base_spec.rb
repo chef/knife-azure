@@ -1,6 +1,7 @@
 #
 # Author:: Dheeraj Dubey (<dheeraj.dubey@msystechnologies.com>)
-# Copyright:: Copyright (c) 2013 Opscode, Inc.#
+# Copyright:: Copyright 2008-2018, Chef Software Inc.
+#
 
 require File.expand_path(File.dirname(__FILE__) + '/../spec_helper')
 require File.expand_path(File.dirname(__FILE__) + '/../unit/query_azure_mock')
@@ -24,6 +25,7 @@ describe Chef::Knife::AzurermBase do
     @arm_server_instance = create_arm_instance(Chef::Knife::AzurermServerList)
     @service = @arm_server_instance.service
     @compute_client = double("ComputeManagementClient")
+    @arm_server_instance.instance_variable_set(:@azure_prefix, "azure")
   end
 
   describe "azurerm base tests - " do
@@ -86,10 +88,10 @@ describe Chef::Knife::AzurermBase do
   describe "Token related test cases" do
     context 'Xplat Azure login validation' do
       context "Platform is Linux" do
+        let (:azure_prefix) {  @dummy.instance_variable_get(:@azure_prefix) }
         before(:each) do
           allow(Chef::Platform).to receive(:windows?).and_return(false)
         end
-
         it 'Accesstoken file doesnt exist for Linux' do
           allow(File).to receive(:exists?).and_return(false)
           expect { @arm_server_instance.validate_azure_login }.to raise_error("Please run XPLAT's 'azure login' command OR specify azure_tenant_id, azure_subscription_id, azure_client_id, azure_client_secret in your knife.rb")
@@ -335,7 +337,7 @@ describe Chef::Knife::AzurermBase do
 
     it "returns the version of xplat_cli" do
       expect(@arm_server_instance).to receive(:shell_out!).and_return(mixlib_object)
-      response = @arm_server_instance.current_xplat_cli_version
+      response = @arm_server_instance.get_azure_cli_version
       expect(response).to be == '0.10.4'
     end
   end
@@ -348,20 +350,19 @@ describe Chef::Knife::AzurermBase do
       end
 
       it "returns true" do
-        response = @arm_server_instance.is_old_xplat?
+        response = @arm_server_instance.send(:is_old_xplat?)
         expect(response).to be == true
       end
     end
 
     context "new version of xplat_cli is installed" do
       before do
-        allow(@arm_server_instance).to receive(
-          :current_xplat_cli_version).and_return('0.10.6')
+        allow(@arm_server_instance).to receive(:get_azure_cli_version).and_return('2.0.0')
       end
 
-      it "returns false" do
-        response = @arm_server_instance.is_old_xplat?
-        expect(response).to be == false
+      it "returns true" do
+        response = @arm_server_instance.send(:is_old_xplat?)
+        expect(response).to be == true
       end
     end
   end
@@ -369,7 +370,7 @@ describe Chef::Knife::AzurermBase do
   describe "is_WCM_env_var_set?" do
     context "environment variable is not set" do
       it "returns false" do
-        response = @arm_server_instance.is_WCM_env_var_set?
+        response = @arm_server_instance.send(:is_WCM_env_var_set?)
         expect(response).to be == false
       end
     end
@@ -381,7 +382,7 @@ describe Chef::Knife::AzurermBase do
       end
 
       it "returns true" do
-        response = @arm_server_instance.is_WCM_env_var_set?
+        response = @arm_server_instance.send(:is_WCM_env_var_set?)
         expect(response).to be == true
       end
     end
@@ -431,4 +432,66 @@ describe Chef::Knife::AzurermBase do
       end
     end
   end
+
+  context "Token Validation test cases for Azure CLI 2.0" do
+      before do
+        @arm_server_instance.instance_variable_set(:@azure_prefix, "az")
+        allow(Mixlib::ShellOut).to receive_message_chain(:new,:run_command)
+      end
+
+      it "raises exception if token is expired for Linux" do
+        token_details = {:tokentype => "Bearer", :user => "xxx@outlook.com", :token => "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1iIxLjAifQ.hZjHXXjbSdMmMs9oSZxGKa62EnNG6jkTY4RSmq8dQMvmwHgDCF4KoT_sOIsrAJTVwXuCdxYa5Jr83sfydFwiO2QWWOaSgyRXGPouex4NXFI_LFdnRzhLBoN0ONwUWHrV12N4LBgHyNLiyfeZQJFCbD0LTcPdjh7qQZ5aVgcoz_CB33PGD_z2L_6ynWrlAoihLEmYD6vbebMDSSFazvzoVg", :expiry_time => "2016-05-31T09:42:15.617Z", :clientid => "dsff-8df-sd45e-34345f7b46", :refreshtoken => "FPbm0gXiszvV_cMwGkgACwMBZ26fWA6fH3ToRLTHYU3wvvTWiU74ukRhMHhv20OJOtZBOtbckh3kTMT7QvzUYfd4uHFzwAYCtsh2SOY-dCAA"}
+        allow(Chef::Platform).to receive(:windows?).and_return(false)
+        allow(@arm_server_instance).to receive(:refresh_token).and_return(token_details)
+        allow(@arm_server_instance).to receive(:token_details_for_linux).and_return(token_details)
+        expect { @arm_server_instance.check_token_validity(token_details) }.to raise_error("Token has expired. Please run 'az login' command")
+      end
+
+      it "raises exception if token is expired for Windows" do
+        token_details = {:tokentype => "Bearer", :user => "xxx@outlook.com", :token => "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1iIxLjAifQ.hZjHXXjbSdMmMs9oSZxGKa62EnNG6jkTY4RSmq8dQMvmwHgDCF4KoT_sOIsrAJTVwXuCdxYa5Jr83sfydFwiO2QWWOaSgyRXGPouex4NXFI_LFdnRzhLBoN0ONwUWHrV12N4LBgHyNLiyfeZQJFCbD0LTcPdjh7qQZ5aVgcoz_CB33PGD_z2L_6ynWrlAoihLEmYD6vbebMDSSFazvzoVg", :expiry_time => "2016-05-31T09:42:15.617Z", :clientid => "dsff-8df-sd45e-34345f7b46", :refreshtoken => "FPbm0gXiszvV_cMwGkgACwMBZ26fWA6fH3ToRLTHYU3wvvTWiU74ukRhMHhv20OJOtZBOtbckh3kTMT7QvzUYfd4uHFzwAYCtsh2SOY-dCAA"}
+        allow(Chef::Platform).to receive(:windows?).and_return(true)
+        allow(@arm_server_instance).to receive(:refresh_token).and_return(token_details)
+        allow(@arm_server_instance).to receive(:token_details_for_windows).and_return(token_details)
+        expect { @arm_server_instance.check_token_validity(token_details) }.to raise_error("Token has expired. Please run 'az login' command")
+      end
+
+      it 'Token is valid, no exception is raised' do
+        token_details = {:tokentype => "Bearer", :user => "xxx@outlook.com", :token => "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1iIxLjAifQ.hZjHXXjbSdMmMs9oSZxGKa62EnNG6jkTY4RSmq8dQMvmwHgDCF4KoT_sOIsrAJTVwXuCdxYa5Jr83sfydFwiO2QWWOaSgyRXGPouex4NXFI_LFdnRzhLBoN0ONwUWHrV12N4LBgHyNLiyfeZQJFCbD0LTcPdjh7qQZ5aVgcoz_CB33PGD_z2L_6ynWrlAoihLEmYD6vbebMDSSFazvzoVg", :expiry_time => "2116-05-31T09:42:15.617Z", :clientid => "dsff-8df-sd45e-34345f7b46", :refreshtoken => "FPbm0gXiszvV_cMwGkgACwMBZ26fWA6fH3ToRLTHYU3wvvTWiU74ukRhMHhv20OJOtZBOtbckh3kTMT7QvzUYfd4uHFzwAYCtsh2SOY-dCAA"}
+        expect { @arm_server_instance.check_token_validity(token_details) }.not_to raise_error
+      end
+
+      it 'New token is got using refresh token for Linux when token has expired' do
+        token_details = {:tokentype => "Bearer", :user => "xxx@outlook.com", :token => "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1iIxLjAifQ.hZjHXXjbSdMmMs9oSZxGKa62EnNG6jkTY4RSmq8dQMvmwHgDCF4KoT_sOIsrAJTVwXuCdxYa5Jr83sfydFwiO2QWWOaSgyRXGPouex4NXFI_LFdnRzhLBoN0ONwUWHrV12N4LBgHyNLiyfeZQJFCbD0LTcPdjh7qQZ5aVgcoz_CB33PGD_z2L_6ynWrlAoihLEmYD6vbebMDSSFazvzoVg", :expiry_time => "2016-05-31T09:42:15.617Z", :clientid => "dsff-8df-sd45e-34345f7b46", :refreshtoken => "FPbm0gXiszvV_cMwGkgACwMBZ26fWA6fH3ToRLTHYU3wvvTWiU74ukRhMHhv20OJOtZBOtbckh3kTMT7QvzUYfd4uHFzwAYCtsh2SOY-dCAA"}
+        token_details1 = {:tokentype => "Bearer", :user => "xxx@outlook.com", :token => "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1iIxLjAifQ.hZjHXXjbSdMmMs9oSZxGKa62EnNG6jkTY4RSmq8dQMvmwHgDCF4KoT_sOIsrAJTVwXuCdxYa5Jr83sfydFwiO2QWWOaSgyRXGPouex4NXFI_LFdnRzhLBoN0ONwUWHrV12N4LBgHyNLiyfeZQJFCbD0LTcPdjh7qQZ5aVgcoz_CB33PGD_z2L_6ynWrlAoihLEmYD6vbebMDSSFazvzoVg", :expiry_time => "2116-05-31T09:42:15.617Z", :clientid => "dsff-8df-sd45e-34345f7b46", :refreshtoken => "FPbm0gXiszvV_cMwGkgACwMBZ26fWA6fH3ToRLTHYU3wvvTWiU74ukRhMHhv20OJOtZBOtbckh3kTMT7QvzUYfd4uHFzwAYCtsh2SOY-dCAA"}
+        allow(Chef::Platform).to receive(:windows?).and_return(false)
+        allow(@arm_server_instance).to receive(:refresh_token).and_return(token_details1)
+        allow(@arm_server_instance).to receive(:token_details_for_linux).and_return(token_details)
+        expect { @arm_server_instance.check_token_validity(token_details) }.not_to raise_error
+      end
+
+      it 'New valid token is got using refresh token for Windows when token has expired' do
+        token_details = {:tokentype => "Bearer", :user => "xxx@outlook.com", :token => "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1iIxLjAifQ.hZjHXXjbSdMmMs9oSZxGKa62EnNG6jkTY4RSmq8dQMvmwHgDCF4KoT_sOIsrAJTVwXuCdxYa5Jr83sfydFwiO2QWWOaSgyRXGPouex4NXFI_LFdnRzhLBoN0ONwUWHrV12N4LBgHyNLiyfeZQJFCbD0LTcPdjh7qQZ5aVgcoz_CB33PGD_z2L_6ynWrlAoihLEmYD6vbebMDSSFazvzoVg", :expiry_time => "2016-05-31T09:42:15.617Z", :clientid => "dsff-8df-sd45e-34345f7b46", :refreshtoken => "FPbm0gXiszvV_cMwGkgACwMBZ26fWA6fH3ToRLTHYU3wvvTWiU74ukRhMHhv20OJOtZBOtbckh3kTMT7QvzUYfd4uHFzwAYCtsh2SOY-dCAA"}
+        token_details1 = {:tokentype => "Bearer", :user => "xxx@outlook.com", :token => "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1iIxLjAifQ.hZjHXXjbSdMmMs9oSZxGKa62EnNG6jkTY4RSmq8dQMvmwHgDCF4KoT_sOIsrAJTVwXuCdxYa5Jr83sfydFwiO2QWWOaSgyRXGPouex4NXFI_LFdnRzhLBoN0ONwUWHrV12N4LBgHyNLiyfeZQJFCbD0LTcPdjh7qQZ5aVgcoz_CB33PGD_z2L_6ynWrlAoihLEmYD6vbebMDSSFazvzoVg", :expiry_time => "2116-05-31T09:42:15.617Z", :clientid => "dsff-8df-sd45e-34345f7b46", :refreshtoken => "FPbm0gXiszvV_cMwGkgACwMBZ26fWA6fH3ToRLTHYU3wvvTWiU74ukRhMHhv20OJOtZBOtbckh3kTMT7QvzUYfd4uHFzwAYCtsh2SOY-dCAA"}
+        allow(Chef::Platform).to receive(:windows?).and_return(true)
+        allow(@arm_server_instance).to receive(:refresh_token).and_return(token_details1)
+        allow(@arm_server_instance).to receive(:token_details_for_windows).and_return(token_details)
+        expect { @arm_server_instance.check_token_validity(token_details) }.not_to raise_error
+      end
+
+      it 'Mixlib shellout command for xplat raises Timeout error' do
+        token_details = {:tokentype => "Bearer", :user => "xxx@outlook.com", :token => "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1iIxLjAifQ.hZjHXXjbSdMmMs9oSZxGKa62EnNG6jkTY4RSmq8dQMvmwHgDCF4KoT_sOIsrAJTVwXuCdxYa5Jr83sfydFwiO2QWWOaSgyRXGPouex4NXFI_LFdnRzhLBoN0ONwUWHrV12N4LBgHyNLiyfeZQJFCbD0LTcPdjh7qQZ5aVgcoz_CB33PGD_z2L_6ynWrlAoihLEmYD6vbebMDSSFazvzoVg", :expiry_time => "2016-05-31T09:42:15.617Z", :clientid => "dsff-8df-sd45e-34345f7b46", :refreshtoken => "FPbm0gXiszvV_cMwGkgACwMBZ26fWA6fH3ToRLTHYU3wvvTWiU74ukRhMHhv20OJOtZBOtbckh3kTMT7QvzUYfd4uHFzwAYCtsh2SOY-dCAA"}
+        allow(Chef::Platform).to receive(:windows?).and_return(true)
+        allow(Mixlib::ShellOut).to receive_message_chain(:new,:run_command).and_raise(Mixlib::ShellOut::CommandTimeout)
+        allow(@arm_server_instance).to receive(:token_details_for_windows).and_return(token_details)
+        expect { @arm_server_instance.check_token_validity(token_details) }.to raise_error("Token has expired. Please run 'az login' command")
+      end
+
+      it 'Mixlib shellout command for xplat raises exception' do
+        token_details = {:tokentype => "Bearer", :user => "xxx@outlook.com", :token => "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1iIxLjAifQ.hZjHXXjbSdMmMs9oSZxGKa62EnNG6jkTY4RSmq8dQMvmwHgDCF4KoT_sOIsrAJTVwXuCdxYa5Jr83sfydFwiO2QWWOaSgyRXGPouex4NXFI_LFdnRzhLBoN0ONwUWHrV12N4LBgHyNLiyfeZQJFCbD0LTcPdjh7qQZ5aVgcoz_CB33PGD_z2L_6ynWrlAoihLEmYD6vbebMDSSFazvzoVg", :expiry_time => "2016-05-31T09:42:15.617Z", :clientid => "dsff-8df-sd45e-34345f7b46", :refreshtoken => "FPbm0gXiszvV_cMwGkgACwMBZ26fWA6fH3ToRLTHYU3wvvTWiU74ukRhMHhv20OJOtZBOtbckh3kTMT7QvzUYfd4uHFzwAYCtsh2SOY-dCAA"}
+        allow(Chef::Platform).to receive(:windows?).and_return(false)
+        allow(Mixlib::ShellOut).to receive_message_chain(:new,:run_command).and_raise(Exception)
+        allow(@arm_server_instance).to receive(:token_details_for_linux).and_return(token_details)
+        expect { @arm_server_instance.check_token_validity(token_details) }.to raise_error("Token has expired. Please run 'az login' command")
+      end
+    end
 end

@@ -1,6 +1,6 @@
 #
 # Author:: Meera Navale (meera.navale@msystechnologies.com)
-# Copyright:: Copyright (c) 2010-2011 Opscode, Inc.
+# Copyright:: Copyright 2010-2018, Chef Software Inc.
 # License:: Apache License, Version 2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,6 +28,8 @@ class Chef
 
       def run
         $stdout.sync = true
+        # check azure cli version due to azure changed `azure` to `az` in azure-cli2.0
+        get_azure_cli_version
         validate_arm_keys!(:azure_resource_group_name)
         begin
           service.show_server(@name_args[0], locate_config_value(:azure_resource_group_name))

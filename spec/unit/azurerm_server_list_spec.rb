@@ -34,6 +34,7 @@ describe Chef::Knife::AzurermServerList do
 
     allow(@arm_server_instance.service).to receive(
       :compute_management_client).and_return(@compute_client)
+    allow_any_instance_of(Chef::Knife::AzurermBase).to receive(:get_azure_cli_version).and_return("1.0.0")
   end
 
   context "resource_group_name is not given" do
