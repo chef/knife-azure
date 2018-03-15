@@ -40,7 +40,7 @@ describe Chef::Knife::AzurermServerCreate do
       :latest_chef_extension_version => '1210.12',
       :chef_extension_public_param => {
         :hints => ['vm_name', 'public_fqdn', 'platform'],
-        :bootstrap_options => { :bootstrap_version => '12.8.1'}
+        :bootstrap_options => { :bootstrap_version => '12.8.1' }
       },
       :vnet_config => {
         :virtualNetworkName => 'vnet1',
@@ -894,7 +894,7 @@ describe Chef::Knife::AzurermServerCreate do
       context "get_chef_extension_public_params" do
         it "sets bootstrapVersion variable in public_config" do
           @arm_server_instance.config[:bootstrap_version] = '12.4.2'
-          public_config = {:client_rb=>"chef_server_url \t \"https://localhost:443\"\nvalidation_client_name\t\"chef-validator\"", :runlist=>"\"getting-started\"", extendedLogs: "false", :custom_json_attr=>{}, :hints=>["vm_name", "public_fqdn", "platform"], :bootstrap_options=>{:chef_server_url=>"https://localhost:443", :validation_client_name=>"chef-validator", :bootstrap_version=>"12.4.2"}}
+          public_config = {:client_rb=>"chef_server_url \t \"https://localhost:443\"\nvalidation_client_name\t\"chef-validator\"", :runlist=>"\"getting-started\"", extendedLogs: "false", :custom_json_attr=>{}, :hints=>["vm_name", "public_fqdn", "platform"], :bootstrap_options=>{:chef_server_url=>"https://localhost:443", :validation_client_name=>"chef-validator", :bootstrap_version=>"12.4.2", :environment=> "_default"}}
 
           response = @arm_server_instance.get_chef_extension_public_params
           expect(response).to be == public_config
@@ -902,7 +902,7 @@ describe Chef::Knife::AzurermServerCreate do
 
         it "should set extendedLogs flag to true" do
           @arm_server_instance.config[:extended_logs] = true
-          public_config = {client_rb: "chef_server_url \t \"https://localhost:443\"\nvalidation_client_name\t\"chef-validator\"", runlist: "\"getting-started\"", extendedLogs: "true", custom_json_attr: {}, :hints=>["vm_name", "public_fqdn", "platform"], bootstrap_options: {chef_server_url: "https://localhost:443", validation_client_name: "chef-validator"}}
+          public_config = {client_rb: "chef_server_url \t \"https://localhost:443\"\nvalidation_client_name\t\"chef-validator\"", runlist: "\"getting-started\"", extendedLogs: "true", custom_json_attr: {}, :hints=>["vm_name", "public_fqdn", "platform"], bootstrap_options: {chef_server_url: "https://localhost:443", validation_client_name: "chef-validator", :environment=> "_default"}}
           response = @arm_server_instance.get_chef_extension_public_params
           expect(response).to be == public_config
         end
@@ -927,7 +927,7 @@ describe Chef::Knife::AzurermServerCreate do
 
         it "sets chefServiceInterval variable in public_config" do
           @arm_server_instance.config[:chef_daemon_interval] = '0'
-          public_config = {:client_rb=>"chef_server_url \t \"https://localhost:443\"\nvalidation_client_name\t\"chef-validator\"", :runlist=>"\"getting-started\"", extendedLogs: "false", :custom_json_attr=>{}, :hints=>["vm_name", "public_fqdn", "platform"], :chef_daemon_interval=>'0', :bootstrap_options=>{:chef_server_url=>"https://localhost:443", :validation_client_name=>"chef-validator"}}
+          public_config = {:client_rb=>"chef_server_url \t \"https://localhost:443\"\nvalidation_client_name\t\"chef-validator\"", :runlist=>"\"getting-started\"", extendedLogs: "false", :custom_json_attr=>{}, :hints=>["vm_name", "public_fqdn", "platform"], :chef_daemon_interval=>'0', :bootstrap_options=>{:chef_server_url=>"https://localhost:443", :validation_client_name=>"chef-validator", :environment=> "_default"}}
 
           response = @arm_server_instance.get_chef_extension_public_params
           expect(response).to be == public_config
@@ -936,7 +936,7 @@ describe Chef::Knife::AzurermServerCreate do
         it "sets daemon variable in public config" do
           @arm_server_instance.config[:daemon] = 'service'
           allow(@arm_server_instance).to receive(:is_image_windows?).and_return(true)
-          public_config = {:client_rb=>"chef_server_url \t \"https://localhost:443\"\nvalidation_client_name\t\"chef-validator\"", :runlist=>"\"getting-started\"", extendedLogs: "false", :custom_json_attr=>{}, :hints=>["vm_name", "public_fqdn", "platform"], :daemon=>'service', :bootstrap_options=>{:chef_server_url=>"https://localhost:443", :validation_client_name=>"chef-validator"}}   
+          public_config = {:client_rb=>"chef_server_url \t \"https://localhost:443\"\nvalidation_client_name\t\"chef-validator\"", :runlist=>"\"getting-started\"", extendedLogs: "false", :custom_json_attr=>{}, :hints=>["vm_name", "public_fqdn", "platform"], :daemon=>'service', :bootstrap_options=>{:chef_server_url=>"https://localhost:443", :validation_client_name=>"chef-validator", :environment=> "_default"}}
           response = @arm_server_instance.get_chef_extension_public_params
           expect(response).to be == public_config
         end

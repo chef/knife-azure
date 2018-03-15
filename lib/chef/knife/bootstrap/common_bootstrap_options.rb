@@ -53,7 +53,7 @@ class Chef
             option :environment,
               :short        => "-E ENVIRONMENT",
               :long         => "--environment ENVIRONMENT",
-              :description  => "Set the Chef Environment on the node",
+              :description  => "Set the Chef environment (except for in searches, where this will be flagrantly ignored)",
               :default      => "_default"
 
             option :json_attributes,
