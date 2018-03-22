@@ -19,6 +19,7 @@ describe Chef::Knife::AzurermServerDelete do
       @server_detail = double('server', :name => "VM001", :hardware_profile => double, :storage_profile => double(:os_disk => double))
       allow(@server_detail.hardware_profile).to receive(:vm_size).and_return("10")
       allow(@server_detail.storage_profile.os_disk).to receive(:os_type).and_return("Linux")
+      allow_any_instance_of(Chef::Knife::AzurermBase).to receive(:get_azure_cli_version).and_return("1.0.0")
     end
 
     it "deletes server" do
@@ -68,6 +69,7 @@ describe Chef::Knife::AzurermServerDelete do
     before do
       @arm_server_instance = create_arm_instance(Chef::Knife::AzurermServerDelete)
       allow(@arm_server_instance.service.ui).to receive(:confirm).and_return (true)
+      allow_any_instance_of(Chef::Knife::AzurermBase).to receive(:get_azure_cli_version).and_return("1.0.0")
       @resource_client = double("ResourceManagementClient")
       @service = @arm_server_instance.service
 
