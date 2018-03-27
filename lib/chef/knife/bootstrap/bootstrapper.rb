@@ -158,6 +158,7 @@ class Chef
           bootstrap.config[:bootstrap_vault_file] = locate_config_value(:bootstrap_vault_file)
           bootstrap.config[:bootstrap_vault_json] = locate_config_value(:bootstrap_vault_json)
           bootstrap.config[:bootstrap_vault_item] = locate_config_value(:bootstrap_vault_item)
+          bootstrap.config[:environment] = locate_config_value(:environment)
 
           load_cloud_attributes_in_hints(server)
           bootstrap
@@ -212,7 +213,6 @@ class Chef
           bootstrap.config[:chef_node_name] = locate_config_value(:chef_node_name) || server.name
           bootstrap.config[:use_sudo] = true unless locate_config_value(:ssh_user) == 'root'
           bootstrap.config[:use_sudo_password] = true if bootstrap.config[:use_sudo]
-          bootstrap.config[:environment] = locate_config_value(:environment)
           # may be needed for vpc_mode
           bootstrap.config[:host_key_verify] = config[:host_key_verify]
           Chef::Config[:knife][:secret] = config[:encrypted_data_bag_secret] if config[:encrypted_data_bag_secret]
