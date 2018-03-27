@@ -907,6 +907,20 @@ describe Chef::Knife::AzurermServerCreate do
           expect(response).to be == public_config
         end
 
+        it "sets environment to _default if not provided by user" do
+          public_config = {:client_rb=>"chef_server_url \t \"https://localhost:443\"\nvalidation_client_name\t\"chef-validator\"", :runlist=>"\"getting-started\"", extendedLogs: "false", :custom_json_attr=>{}, :hints=>["vm_name", "public_fqdn", "platform"], :bootstrap_options=>{:chef_server_url=>"https://localhost:443", :validation_client_name=>"chef-validator", :environment=> "_default"}}
+          response = @arm_server_instance.get_chef_extension_public_params
+          expect(response).to be == public_config
+        end
+
+        it "sets environment variable in public_config" do
+          @arm_server_instance.config[:environment] = 'development'
+          public_config = {:client_rb=>"chef_server_url \t \"https://localhost:443\"\nvalidation_client_name\t\"chef-validator\"", :runlist=>"\"getting-started\"", extendedLogs: "false", :custom_json_attr=>{}, :hints=>["vm_name", "public_fqdn", "platform"], :bootstrap_options=>{:chef_server_url=>"https://localhost:443", :validation_client_name=>"chef-validator", :environment=> "development"}}
+          response = @arm_server_instance.get_chef_extension_public_params
+          expect(response).to be == public_config
+        end
+
+
         context 'service is an instance_of ARM' do
           it 'invokes ohai_hints method' do
             expect(@arm_server_instance).to receive(:ohai_hints)
