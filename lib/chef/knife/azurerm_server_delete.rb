@@ -18,7 +18,7 @@
 # limitations under the License.
 #
 
-require File.expand_path('../azure_base', __FILE__)
+require File.expand_path('../azurerm_base', __FILE__)
 
 # These two are needed for the '--purge' deletion case
 require 'chef/node'
