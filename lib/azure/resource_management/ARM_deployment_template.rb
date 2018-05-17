@@ -470,11 +470,11 @@ module Azure::ARM
               "typeHandlerVersion" => "#{params[:chef_extension_version]}",
               "autoUpgradeMinorVersion" => "#{params[:auto_upgrade_minor_version]}",
               "settings" => {
+                "bootstrap_version" => "[parameters('bootstrap_version')]",
                 "bootstrap_options" => {
                   "chef_node_name" => chef_node_name,
                   "chef_server_url" => "[parameters('chef_server_url')]",
                   "validation_client_name" => "[parameters('validation_client_name')]",
-                  "bootstrap_version" => "[parameters('bootstrap_version')]",
                   "node_ssl_verify_mode" => "[parameters('node_ssl_verify_mode')]",
                   "node_verify_api_cert" => "[parameters('node_verify_api_cert')]",
                   "bootstrap_proxy" => "[parameters('bootstrap_proxy')]",

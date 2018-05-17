@@ -47,7 +47,7 @@ RSpec.configure do |c|
     #Create an empty mock certificate file
     @cert_file = tmpFile('AzureLinuxCert.pem')
     FileUtils.touch(@cert_file)
-    Chef::Log.init(tmpFile('debug.log'), 'daily')
+    Chef::Log.init(tmpFile('debug.log'))
     Chef::Log.level=:debug
   end
 
