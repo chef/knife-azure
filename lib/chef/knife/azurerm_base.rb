@@ -335,6 +335,7 @@ class Chef
       end
 
       def is_old_xplat?
+        return true unless @azure_version
         Gem::Version.new(@azure_version) < Gem::Version.new(XPLAT_VERSION_WITH_WCM_DEPRECATED)
       end
 

@@ -95,6 +95,13 @@ describe Chef::Knife::AzureServerCreate do
         expect {@server_instance.run}.to raise_error(SystemExit)
       end
 
+      it "raises an error if neither --azure-dns-name or --azure-vm-name are provided" do
+        Chef::Config[:knife].delete(:azure_dns_name)
+        Chef::Config[:knife].delete(:azure_vm_name)
+        expect(@server_instance.ui).to receive(:error)
+        expect {@server_instance.run}.to raise_error(SystemExit)
+      end
+
       context "when winrm authentication protocol invalid" do
         it "raise error" do
           Chef::Config[:knife][:winrm_authentication_protocol] = "invalide"
@@ -117,7 +124,7 @@ describe Chef::Knife::AzureServerCreate do
       it "raise error if daemon option is not provided for windows node" do
         Chef::Config[:knife][:daemon] = "service"
         expect {@server_instance.run}.to raise_error(
-          ArgumentError, "The daemon option is only support for Windows nodes.")
+          ArgumentError, "The daemon option is only supported for Windows nodes.")
       end
 
       it "raises error if invalid value is provided for daemon option" do
@@ -125,7 +132,7 @@ describe Chef::Knife::AzureServerCreate do
         Chef::Config[:knife][:daemon] = "foo"
         Chef::Config[:knife][:bootstrap_protocol] = "cloud-api"
         expect {@server_instance.run}.to raise_error(
-          ArgumentError, "Invalid value for --daemon option. Use valid daemon values i.e 'none', 'service' and 'task'."
+          ArgumentError, "Invalid value for --daemon option. Valid values are 'none', 'service' and 'task'."
           )
       end
 
@@ -133,7 +140,7 @@ describe Chef::Knife::AzureServerCreate do
         allow(@server_instance).to receive(:is_image_windows?).and_return(true)
         Chef::Config[:knife][:daemon] = "service"
         expect {@server_instance.run}.to raise_error(
-          ArgumentError, "--daemon option works with --bootstrap-protocol cloud-api"
+          ArgumentError, "The --daemon option requires the use of --bootstrap-protocol cloud-api"
         )
       end
 
@@ -183,8 +190,8 @@ describe Chef::Knife::AzureServerCreate do
     context "server create options" do
       before do
         Chef::Config[:knife][:bootstrap_protocol] = 'ssh'
-        Chef::Config[:knife][:ssh_password] = 'ssh_password'
         Chef::Config[:knife][:ssh_user] = 'ssh_user'
+        Chef::Config[:knife][:ssh_password] = 'ssh_password'
         Chef::Config[:knife].delete(:azure_vm_name)
         Chef::Config[:knife].delete(:azure_storage_account)
         @bootstrap = Chef::Knife::Bootstrap.new
@@ -764,16 +771,16 @@ describe Chef::Knife::AzureServerCreate do
 
     context "linux instance" do
       before do
-        Chef::Config[:knife][:ssh_password] = 'ssh_password'
         Chef::Config[:knife][:ssh_user] = 'ssh_user'
+        Chef::Config[:knife][:ssh_password] = 'ssh_password'
       end
 
       it "check if all server params are set correctly" do
         expect(@server_instance).to receive(:is_image_windows?).exactly(3).and_return(false)
         @server_params = @server_instance.create_server_def
         expect(@server_params[:os_type]).to be == 'Linux'
-        expect(@server_params[:ssh_password]).to be == 'ssh_password'
         expect(@server_params[:ssh_user]).to be == 'ssh_user'
+        expect(@server_params[:ssh_password]).to be == 'ssh_password'
         expect(@server_params[:bootstrap_proto]).to be == 'ssh'
         expect(@server_params[:azure_dns_name]).to be == 'service001'
         expect(@server_params[:azure_vm_name]).to be == 'vm002'
