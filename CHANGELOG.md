@@ -1,4 +1,13 @@
-# Change Log
+# knife-azure Change Log
+
+<!-- latest_release -->
+<!-- latest_release -->
+
+<!-- release_rollup -->
+<!-- release_rollup -->
+
+<!-- latest_stable_release -->
+<!-- latest_stable_release -->
 
 ## [v1.8.0](https://github.com/chef/knife-azure/tree/v1.8.0) (2017-09-28)
 
