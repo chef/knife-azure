@@ -1,9 +1,17 @@
 # knife-azure Change Log
 
-<!-- latest_release -->
+<!-- latest_release 1.8.2 -->
+## [v1.8.2](https://github.com/chef/knife-azure/tree/v1.8.2) (2018-07-12)
+
+#### Merged Pull Requests
+- Remove github changelog generator dep [#479](https://github.com/chef/knife-azure/pull/479) ([tas50](https://github.com/tas50))
 <!-- latest_release -->
 
-<!-- release_rollup -->
+<!-- release_rollup since=1.8.0 -->
+### Changes since 1.8.0 release
+
+#### Merged Pull Requests
+- Remove github changelog generator dep [#479](https://github.com/chef/knife-azure/pull/479) ([tas50](https://github.com/tas50)) <!-- 1.8.2 -->
 <!-- release_rollup -->
 
 <!-- latest_stable_release -->
