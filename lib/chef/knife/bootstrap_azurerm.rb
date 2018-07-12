@@ -21,7 +21,6 @@ require 'chef/knife/azurerm_base'
 require 'chef/knife/bootstrap/common_bootstrap_options'
 require 'chef/knife/bootstrap/bootstrapper'
 require 'azure/resource_management/ARM_interface'
-require 'time'
 
 class Chef
   class Knife
@@ -31,6 +30,10 @@ class Chef
       include Knife::Bootstrap::Bootstrapper
 
       banner "knife bootstrap azurerm SERVER (options)"
+
+      deps do
+        require 'time'
+      end
 
       option :azure_service_location,
         :short => "-m LOCATION",
@@ -51,7 +54,7 @@ class Chef
             if vm_extension
               if ext_params[:chef_extension_public_param][:extendedLogs] == 'true'
                 service.fetch_chef_client_logs(ext_params[:azure_resource_group_name], ext_params[:azure_vm_name], ext_params[:chef_extension], Time.now)
-              end 
+              end
               ui.log("VirtualMachineExtension creation successfull.")
               ui.log("Virtual Machine Extension name is: #{vm_extension.name}")
               ui.log("Virtual Machine Extension ID is: #{vm_extension.id}")

@@ -20,10 +20,6 @@
 
 require File.expand_path('../azurerm_base', __FILE__)
 
-# These two are needed for the '--purge' deletion case
-require 'chef/node'
-require 'chef/api_client'
-
 class Chef
   class Knife
     class AzurermServerDelete < Knife
@@ -31,6 +27,12 @@ class Chef
       include Knife::AzurermBase
 
       banner "knife azurerm server delete SERVER [SERVER] (options)"
+
+      deps do
+        # These two are needed for the '--purge' deletion case
+        require 'chef/node'
+        require 'chef/api_client'
+      end
 
       option :purge,
         :short => "-P",

@@ -20,10 +20,6 @@
 
 require File.expand_path('../azure_base', __FILE__)
 
-# These two are needed for the '--purge' deletion case
-require 'chef/node'
-require 'chef/api_client'
-
 class Chef
   class Knife
     class AzureServerDelete < Knife
@@ -31,6 +27,12 @@ class Chef
       include Knife::AzureBase
 
       banner "knife azure server delete SERVER [SERVER] (options)"
+
+      deps do
+        # These two are needed for the '--purge' deletion case
+        require 'chef/node'
+        require 'chef/api_client'
+      end
 
       option :preserve_azure_os_disk,
         :long => "--preserve-azure-os-disk",

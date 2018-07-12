@@ -20,7 +20,6 @@
 
 require 'chef/knife/azure_base'
 require 'chef/knife/winrm_base'
-require 'securerandom'
 require 'chef/knife/bootstrap/bootstrap_options'
 require 'chef/knife/bootstrap/bootstrapper'
 
@@ -34,6 +33,7 @@ class Chef
       include Knife::Bootstrap::Bootstrapper
 
       deps do
+        require 'securerandom'
         require 'readline'
         require 'chef/json_compat'
         require 'chef/knife/bootstrap'
