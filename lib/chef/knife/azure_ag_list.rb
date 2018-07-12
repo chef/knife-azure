@@ -23,8 +23,6 @@ class Chef
     class AzureAgList < Knife
       include Knife::AzureBase
 
-      deps { require 'highline' }
-
       banner 'knife azure ag list (options)'
 
       def run

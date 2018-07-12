@@ -23,8 +23,6 @@ class Chef
     class AzureVnetList < Knife
       include Knife::AzureBase
 
-      deps { require 'highline' }
-
       banner 'knife azure vnet list (options)'
 
       def run
