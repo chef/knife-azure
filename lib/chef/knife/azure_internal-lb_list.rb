@@ -23,8 +23,6 @@ class Chef
     class AzureInternalLbList < Knife
       include Knife::AzureBase
 
-      deps { require 'highline' }
-
       banner 'knife azure internal lb list (options)'
 
       def run
