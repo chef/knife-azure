@@ -29,7 +29,6 @@ Gem::Specification.new do |s|
   s.add_dependency "ipaddress"
   s.add_dependency "ffi"
   s.add_development_dependency 'chef',  '>= 12.2.1'
-  s.add_development_dependency 'github_changelog_generator'
   s.add_development_dependency "mixlib-config", "~> 2.0"
   s.add_development_dependency "equivalent-xml", "~> 0.2.9"
   s.add_development_dependency "knife-cloud", ">= 1.0.0"
