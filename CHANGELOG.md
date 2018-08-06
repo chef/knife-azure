@@ -1,16 +1,17 @@
 # knife-azure Change Log
 
-<!-- latest_release 1.8.4 -->
-## [v1.8.4](https://github.com/chef/knife-azure/tree/v1.8.4) (2018-07-12)
+<!-- latest_release 1.8.5 -->
+## [v1.8.5](https://github.com/chef/knife-azure/tree/v1.8.5) (2018-08-06)
 
 #### Merged Pull Requests
-- Remove require on highline as knife does this [#482](https://github.com/chef/knife-azure/pull/482) ([tas50](https://github.com/tas50))
+- Add github issue/PR templates and a codeowners file [#484](https://github.com/chef/knife-azure/pull/484) ([tas50](https://github.com/tas50))
 <!-- latest_release -->
 
 <!-- release_rollup since=1.8.0 -->
 ### Changes since 1.8.0 release
 
 #### Merged Pull Requests
+- Add github issue/PR templates and a codeowners file [#484](https://github.com/chef/knife-azure/pull/484) ([tas50](https://github.com/tas50)) <!-- 1.8.5 -->
 - Remove require on highline as knife does this [#482](https://github.com/chef/knife-azure/pull/482) ([tas50](https://github.com/tas50)) <!-- 1.8.4 -->
 - Test on modern Ruby releases in Travis [#480](https://github.com/chef/knife-azure/pull/480) ([tas50](https://github.com/tas50)) <!-- 1.8.3 -->
 - Remove github changelog generator dep [#479](https://github.com/chef/knife-azure/pull/479) ([tas50](https://github.com/tas50)) <!-- 1.8.2 -->
