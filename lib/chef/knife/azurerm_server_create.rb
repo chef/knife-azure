@@ -18,7 +18,6 @@
 #
 
 require 'chef/knife/azurerm_base'
-require 'securerandom'
 require 'chef/knife/bootstrap/common_bootstrap_options'
 require 'chef/knife/bootstrap/bootstrapper'
 
@@ -29,6 +28,10 @@ class Chef
       include Knife::AzurermBase
       include Knife::Bootstrap::CommonBootstrapOptions
       include Knife::Bootstrap::Bootstrapper
+
+      deps do
+        require 'securerandom'
+      end
 
       banner "knife azurerm server create (options)"
 
@@ -241,7 +244,7 @@ class Chef
 
         # We assign azure_vm_name to chef_node_name If node name is nill because storage account name is combination of hash value and node name.
         config[:chef_node_name] ||= locate_config_value(:azure_vm_name)
-        
+
         server_def[:azure_storage_account] = locate_config_value(:azure_vm_name) if server_def[:azure_storage_account].nil?
         server_def[:azure_storage_account] = server_def[:azure_storage_account].gsub(/[!@#$%^&*()_-]/,'')
 
