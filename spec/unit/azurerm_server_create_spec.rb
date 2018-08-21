@@ -1616,7 +1616,7 @@ describe Chef::Knife::AzurermServerCreate do
           @params[:chef_extension]
         )
 
-        expect(response).to be.nil?
+        expect(response).to be_nil
       end
     end
 
@@ -1633,7 +1633,7 @@ describe Chef::Knife::AzurermServerCreate do
             @params[:chef_extension]
           )
 
-          expect(response).to be.nil?
+          expect(response).to be_nil
         end
       end
 
@@ -1649,7 +1649,7 @@ describe Chef::Knife::AzurermServerCreate do
             @params[:chef_extension]
           )
 
-          expect(response).to_not be.nil?
+          expect(response).to_not be_nil
           expect(response.code).to be == "ComponentStatus/Chef Client run logs/succeeded"
           expect(response.message).to be == "chef_client_run_logs"
         end
