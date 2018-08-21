@@ -18,7 +18,7 @@
 # limitations under the License.
 #
 
-require File.expand_path('../azure_base', __FILE__)
+require File.expand_path("../azure_base", __FILE__)
 
 class Chef
   class Knife
@@ -26,7 +26,7 @@ class Chef
 
       include Knife::AzureBase
 
-      banner "knife azure server show SERVER [SERVER]"  
+      banner "knife azure server show SERVER [SERVER]"
 
       def run
         $stdout.sync = true

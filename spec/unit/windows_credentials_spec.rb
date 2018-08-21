@@ -2,8 +2,8 @@
 # Author:: Nimisha Sharad (<nimisha.sharad@msystechnologies.com>)
 # Copyright:: Copyright (c) 2013 Opscode, Inc.#
 
-require File.expand_path(File.dirname(__FILE__) + '/../spec_helper')
-require File.expand_path(File.dirname(__FILE__) + '/../unit/query_azure_mock')
+require File.expand_path(File.dirname(__FILE__) + "/../spec_helper")
+require File.expand_path(File.dirname(__FILE__) + "/../unit/query_azure_mock")
 
 describe Chef::Knife::AzurermBase, :windows_only do
   include AzureSpecHelper
@@ -25,27 +25,27 @@ describe Chef::Knife::AzurermBase, :windows_only do
     it "should raise error if target doesn't exist" do
       allow(@windows_credentials).to receive(:target_name)
       allow(@windows_credentials.ui).to receive(:error)
-      expect {@windows_credentials.token_details_from_WCM}.to raise_error(SystemExit)
+      expect { @windows_credentials.token_details_from_WCM }.to raise_error(SystemExit)
     end
 
     it "should raise error if target is not in proper format" do
       # removing expiresOn field from target
       target = "AzureXplatCli:target=_authority:https\\://login.microsoftonline.com/common::_clientId:abc123::expiresIn:3599::identityProvider:live.com::isMRRT:true::resource:https\\://management.core.windows.net/::tokenType:Bearer::userId:abc@outlook.com--0-2"
-      translated_cred = {:TargetName => double(:read_wstring => target),
-        :CredentialBlob => double(:get_bytes => "a:access_token::r:refresh_token")}
+      translated_cred = { :TargetName => double(:read_wstring => target),
+                          :CredentialBlob => double(:get_bytes => "a:access_token::r:refresh_token") }
       allow(@windows_credentials).to receive(:target_name).and_return(target)
       allow(FFI::MemoryPointer).to receive(:new)
       allow(Azure::ARM::ReadCred::CREDENTIAL_OBJECT).to receive(:new).exactly(2).and_return(translated_cred)
       allow(@windows_credentials).to receive(:CredReadW)
       allow_any_instance_of(NilClass).to receive(:read_pointer)
       allow(@windows_credentials.ui).to receive(:error)
-      expect {@windows_credentials.token_details_from_WCM}.to raise_error(SystemExit)
+      expect { @windows_credentials.token_details_from_WCM }.to raise_error(SystemExit)
     end
 
     it "should parse the target and return a hash if target exists" do
       target = "AzureXplatCli:target=_authority:https\\://login.microsoftonline.com/common::_clientId:abc123::expiresIn:3599::expiresOn:2016-06-07T13\\:16\\:34.877Z::identityProvider:live.com::isMRRT:true::resource:https\\://management.core.windows.net/::tokenType:Bearer::userId:abc@outlook.com--0-2"
-      translated_cred = {:TargetName => double(:read_wstring => target),
-        :CredentialBlob => double(:get_bytes => "a:access_token::r:refresh_token")}
+      translated_cred = { :TargetName => double(:read_wstring => target),
+                          :CredentialBlob => double(:get_bytes => "a:access_token::r:refresh_token") }
       allow(@windows_credentials).to receive(:target_name).and_return(target)
       allow(FFI::MemoryPointer).to receive(:new)
       allow(Azure::ARM::ReadCred::CREDENTIAL_OBJECT).to receive(:new).exactly(2).and_return(translated_cred)
@@ -66,7 +66,7 @@ describe Chef::Knife::AzurermBase, :windows_only do
     it "should raise error if Azure credentials are not found" do
       cmdkey_output = double(:stdout => "")
       allow_any_instance_of(Mixlib::ShellOut).to receive(:run_command).and_return(cmdkey_output)
-      expect{@windows_credentials.target_name}.to raise_error("Azure Credentials not found. Please run xplat's 'azure login' command")
+      expect { @windows_credentials.target_name }.to raise_error("Azure Credentials not found. Please run xplat's 'azure login' command")
     end
 
     it "should fetch the credential ending with --0-" do
@@ -92,7 +92,7 @@ describe Chef::Knife::AzurermBase, :windows_only do
   context "latest_credential_target" do
     it "should raise error if no target is passed" do
       targets = []
-      expect {@windows_credentials.latest_credential_target(targets)}.to raise_error("No Target was found for windows credentials")
+      expect { @windows_credentials.latest_credential_target(targets) }.to raise_error("No Target was found for windows credentials")
     end
 
     it "should return the target if a single target is passes" do

@@ -18,11 +18,11 @@
 # limitations under the License.
 #
 
-require 'chef/knife/azure_base'
-require 'chef/knife/winrm_base'
-require 'securerandom'
-require 'chef/knife/bootstrap/bootstrap_options'
-require 'chef/knife/bootstrap/bootstrapper'
+require "chef/knife/azure_base"
+require "chef/knife/winrm_base"
+require "securerandom"
+require "chef/knife/bootstrap/bootstrap_options"
+require "chef/knife/bootstrap/bootstrapper"
 
 class Chef
   class Knife
@@ -34,18 +34,17 @@ class Chef
       include Knife::Bootstrap::Bootstrapper
 
       deps do
-        require 'readline'
-        require 'chef/json_compat'
-        require 'chef/knife/bootstrap'
-        require 'chef/knife/bootstrap_windows_ssh'
-        require 'chef/knife/core/windows_bootstrap_context'
+        require "readline"
+        require "chef/json_compat"
+        require "chef/knife/bootstrap"
+        require "chef/knife/bootstrap_windows_ssh"
+        require "chef/knife/core/windows_bootstrap_context"
         Chef::Knife::Bootstrap.load_deps
       end
 
       banner "knife azure server create (options)"
 
       attr_accessor :initial_sleep_delay
-
 
       option :bootstrap_protocol,
         :long => "--bootstrap-protocol protocol",
@@ -71,7 +70,7 @@ class Chef
         :long        => "--node-ssl-verify-mode [peer|none]",
         :description => "Whether or not to verify the SSL cert for all HTTPS requests.",
         :proc        => Proc.new { |v|
-          valid_values = ["none", "peer"]
+          valid_values = %w{none peer}
           unless valid_values.include?(v)
             raise "Invalid value '#{v}' for --node-ssl-verify-mode. Valid values are: #{valid_values.join(", ")}"
           end
@@ -133,7 +132,7 @@ class Chef
         :long => "--azure-vm-size SIZE",
         :description => "Optional. Size of virtual machine. Default is Standard_A1_v2.
                         Eg: Standard_A1_v2, Standard_F2, Standard_G1 etc.",
-        :default => 'Standard_A1_v2',
+        :default => "Standard_A1_v2",
         :proc => Proc.new { |si| Chef::Config[:knife][:azure_vm_size] = si }
 
       option :azure_availability_set,
@@ -264,14 +263,14 @@ class Chef
             end
           end
         rescue Exception => e
-          Chef::Log.error("#{e.to_s}")
-          raise 'Verify connectivity to Azure and subscription resource limit compliance (e.g. maximum CPU core limits) and try again.'
+          Chef::Log.error("#{e}")
+          raise "Verify connectivity to Azure and subscription resource limit compliance (e.g. maximum CPU core limits) and try again."
         end
       end
 
       def wait_for_virtual_machine_state(vm_status_goal, total_wait_time_in_minutes, retry_interval_in_seconds)
-        vm_status_ordering = {:vm_status_not_detected => 0, :vm_status_provisioning => 1, :vm_status_ready => 2}
-        vm_status_description = {:vm_status_not_detected => 'any', :vm_status_provisioning => 'provisioning', :vm_status_ready => 'ready'}
+        vm_status_ordering = { :vm_status_not_detected => 0, :vm_status_provisioning => 1, :vm_status_ready => 2 }
+        vm_status_description = { :vm_status_not_detected => "any", :vm_status_provisioning => "provisioning", :vm_status_ready => "ready" }
 
         print ui.color("Waiting for virtual machine to reach status '#{vm_status_description[vm_status_goal]}'", :magenta)
 
@@ -284,7 +283,7 @@ class Chef
         begin
           vm_status = get_virtual_machine_status()
           vm_ready = vm_status_ordering[vm_status] >= vm_status_ordering[vm_status_goal]
-          print '.'
+          print "."
           sleep retry_interval_in_seconds if !vm_ready
           polling_attempts += 1
         end until vm_ready || polling_attempts >= max_polling_attempts
@@ -299,10 +298,9 @@ class Chef
       end
 
       def wait_for_resource_extension_state(extension_status_goal, total_wait_time_in_minutes, retry_interval_in_seconds)
+        extension_status_ordering = { :extension_status_not_detected => 0, :wagent_provisioning => 1, :extension_installing => 2, :extension_provisioning => 3, :extension_ready => 4 }
 
-        extension_status_ordering = {:extension_status_not_detected => 0, :wagent_provisioning => 1, :extension_installing => 2, :extension_provisioning => 3, :extension_ready => 4}
-
-        status_description = {:extension_status_not_detected => 'any', :wagent_provisioning => 'wagent provisioning', :extension_installing => "installing", :extension_provisioning => "provisioning", :extension_ready => "ready" }
+        status_description = { :extension_status_not_detected => "any", :wagent_provisioning => "wagent provisioning", :extension_installing => "installing", :extension_provisioning => "provisioning", :extension_ready => "ready" }
 
         print ui.color("Waiting for Resource Extension to reach status '#{status_description[extension_status_goal]}'", :magenta)
 
@@ -314,7 +312,7 @@ class Chef
         begin
           extension_status = get_extension_status()
           extension_ready = extension_status_ordering[extension_status[:status]] >= extension_status_ordering[extension_status_goal]
-          print '.'
+          print "."
           sleep retry_interval_in_seconds if !extension_ready
           polling_attempts += 1
         end until extension_ready || polling_attempts >= max_polling_attempts
@@ -329,11 +327,11 @@ class Chef
         extension_status[:status]
       end
 
-      def get_virtual_machine_status()
+      def get_virtual_machine_status
         role = service.get_role_server(locate_config_value(:azure_dns_name), locate_config_value(:azure_vm_name))
         unless role.nil?
-          Chef::Log.debug("Role status is #{role.status.to_s}")
-          if  "ReadyRole".eql? role.status.to_s
+          Chef::Log.debug("Role status is #{role.status}")
+          if "ReadyRole".eql? role.status.to_s
             return :vm_status_ready
           elsif "Provisioning".eql? role.status.to_s
             return :vm_status_provisioning
@@ -341,16 +339,16 @@ class Chef
             return :vm_status_not_detected
           end
         end
-        return :vm_status_not_detected
+        :vm_status_not_detected
       end
 
-      def get_extension_status()
+      def get_extension_status
         deployment_name = service.deployment_name(locate_config_value(:azure_dns_name))
         deployment = service.deployment("hostedservices/#{locate_config_value(:azure_dns_name)}/deployments/#{deployment_name}")
         extension_status = Hash.new
 
-        if deployment.at_css('Deployment Name') != nil
-          role_list_xml =  deployment.css('RoleInstanceList RoleInstance')
+        if deployment.at_css("Deployment Name") != nil
+          role_list_xml = deployment.css("RoleInstanceList RoleInstance")
           role_list_xml.each do |role|
             if role.at_css("RoleName").text == locate_config_value(:azure_vm_name)
               lnx_waagent_fail_msg = "Failed to deserialize the status reported by the Guest Agent"
@@ -371,7 +369,7 @@ class Chef
                   extension_status[:status] = :extension_status_not_detected
                 end
               # This fix is for linux waagent issue: api unable to deserialize the waagent status.
-              elsif (role.at_css('GuestAgentStatus Status').text == 'NotReady') && (waagent_status_msg == lnx_waagent_fail_msg)
+              elsif (role.at_css("GuestAgentStatus Status").text == "NotReady") && (waagent_status_msg == lnx_waagent_fail_msg)
                 extension_status[:status] = :extension_ready
               else
                 extension_status[:status] = :wagent_provisioning
@@ -384,7 +382,7 @@ class Chef
         else
           extension_status[:status] = :extension_status_not_detected
         end
-        return extension_status
+        extension_status
       end
 
       def run
@@ -400,14 +398,14 @@ class Chef
         config[:chef_node_name] = locate_config_value(:azure_vm_name) unless locate_config_value(:chef_node_name)
         service.create_server(create_server_def)
         wait_until_virtual_machine_ready()
-        if locate_config_value(:bootstrap_protocol) == 'cloud-api' && locate_config_value(:extended_logs)
+        if locate_config_value(:bootstrap_protocol) == "cloud-api" && locate_config_value(:extended_logs)
           print "\n\nWaiting for the first chef-client run"
           fetch_chef_client_logs(Time.now, 30)
         end
         server = service.get_role_server(locate_config_value(:azure_dns_name), locate_config_value(:azure_vm_name))
         msg_server_summary(server)
 
-        bootstrap_exec(server) unless locate_config_value(:bootstrap_protocol) == 'cloud-api'
+        bootstrap_exec(server) unless locate_config_value(:bootstrap_protocol) == "cloud-api"
       end
 
       def create_server_def
@@ -437,7 +435,7 @@ class Chef
           :winrm_max_memoryPerShell => locate_config_value(:winrm_max_memory_per_shell)
         }
 
-        if locate_config_value(:bootstrap_protocol) == 'cloud-api'
+        if locate_config_value(:bootstrap_protocol) == "cloud-api"
           server_def[:chef_extension] = get_chef_extension_name
           server_def[:chef_extension_publisher] = get_chef_extension_publisher
           server_def[:chef_extension_version] = get_chef_extension_version
@@ -445,7 +443,7 @@ class Chef
           server_def[:chef_extension_private_param] = get_chef_extension_private_params
         else
           if is_image_windows?
-            if not locate_config_value(:winrm_password) or not locate_config_value(:bootstrap_protocol)
+            if (not locate_config_value(:winrm_password)) || (not locate_config_value(:bootstrap_protocol))
               ui.error("WinRM Password and Bootstrapping Protocol are compulsory parameters")
               exit 1
             end
@@ -466,7 +464,7 @@ class Chef
               ui.error("SSH User is compulsory parameter")
               exit 1
             end
-            unless locate_config_value(:ssh_password) or locate_config_value(:identity_file)
+            unless locate_config_value(:ssh_password) || locate_config_value(:identity_file)
               ui.error("Specify either SSH Key or SSH Password")
               exit 1
             end
@@ -474,12 +472,12 @@ class Chef
         end
 
         if is_image_windows?
-          server_def[:os_type] = 'Windows'
+          server_def[:os_type] = "Windows"
           server_def[:admin_password] = locate_config_value(:winrm_password)
           server_def[:bootstrap_proto] = locate_config_value(:bootstrap_protocol)
         else
-          server_def[:os_type] = 'Linux'
-          server_def[:bootstrap_proto] = (locate_config_value(:bootstrap_protocol) == 'winrm') ? 'ssh' : locate_config_value(:bootstrap_protocol)
+          server_def[:os_type] = "Linux"
+          server_def[:bootstrap_proto] = (locate_config_value(:bootstrap_protocol) == "winrm") ? "ssh" : locate_config_value(:bootstrap_protocol)
           server_def[:ssh_user] = locate_config_value(:ssh_user)
           server_def[:ssh_password] = locate_config_value(:ssh_password)
           server_def[:identity_file] = locate_config_value(:identity_file)
@@ -487,11 +485,11 @@ class Chef
         end
 
         azure_connect_to_existing_dns = locate_config_value(:azure_connect_to_existing_dns)
-        if is_image_windows? && server_def[:bootstrap_proto] == 'winrm'
-          port = locate_config_value(:winrm_port) || '5985'
+        if is_image_windows? && server_def[:bootstrap_proto] == "winrm"
+          port = locate_config_value(:winrm_port) || "5985"
           port = locate_config_value(:winrm_port) || Random.rand(64000) + 1000 if azure_connect_to_existing_dns
-        elsif server_def[:bootstrap_proto] == 'ssh'
-          port = locate_config_value(:ssh_port) || '22'
+        elsif server_def[:bootstrap_proto] == "ssh"
+          port = locate_config_value(:ssh_port) || "22"
           port = locate_config_value(:ssh_port) || Random.rand(64000) + 1000 if azure_connect_to_existing_dns
         end
 
@@ -503,11 +501,11 @@ class Chef
         if locate_config_value(:azure_domain_user)
           # extract domain name since it should be part of username
           case locate_config_value(:azure_domain_user)
-          when /(\S+)\\(.+)/  # format - fully-qualified-DNS-domain\username
+          when /(\S+)\\(.+)/ # format - fully-qualified-DNS-domain\username
             server_def[:azure_domain_name] = $1 if locate_config_value(:azure_domain_name).nil?
             server_def[:azure_user_domain_name] = $1
             server_def[:azure_domain_user] = $2
-          when /(.+)@(\S+)/  # format - user@fully-qualified-DNS-domain
+          when /(.+)@(\S+)/ # format - user@fully-qualified-DNS-domain
             server_def[:azure_domain_name] = $2 if locate_config_value(:azure_domain_name).nil?
             server_def[:azure_user_domain_name] = $2
             server_def[:azure_domain_user] = $1
@@ -558,7 +556,7 @@ class Chef
       def get_dns_name(azure_dns_name, prefix = "az-")
         return azure_dns_name unless azure_dns_name.nil?
         if locate_config_value(:azure_vm_name).nil?
-          azure_dns_name = prefix + SecureRandom.hex(( MAX_VM_NAME_CHARACTERS - prefix.length)/2)
+          azure_dns_name = prefix + SecureRandom.hex(( MAX_VM_NAME_CHARACTERS - prefix.length) / 2)
         else
           azure_dns_name = locate_config_value(:azure_vm_name)
         end

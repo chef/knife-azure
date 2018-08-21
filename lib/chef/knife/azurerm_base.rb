@@ -17,12 +17,12 @@
 # limitations under the License.
 #
 
-require 'chef/knife'
-require 'azure/resource_management/ARM_interface'
-require 'mixlib/shellout'
-require 'chef/mixin/shell_out'
-require 'time'
-require 'json'
+require "chef/knife"
+require "azure/resource_management/ARM_interface"
+require "mixlib/shellout"
+require "chef/mixin/shell_out"
+require "time"
+require "json"
 
 class Chef
   class Knife
@@ -34,15 +34,15 @@ class Chef
       XPLAT_VERSION_WITH_WCM_DEPRECATED ||= "0.10.5"
 
       if Chef::Platform.windows?
-        require 'azure/resource_management/windows_credentials'
+        require "azure/resource_management/windows_credentials"
         include Azure::ARM::WindowsCredentials
       end
 
       def self.included(includer)
         includer.class_eval do
           deps do
-            require 'readline'
-            require 'chef/json_compat'
+            require "readline"
+            require "chef/json_compat"
           end
 
           option :azure_resource_group_name,
@@ -64,7 +64,7 @@ class Chef
 
       def locate_config_value(key)
         key = key.to_sym
-        config[key] || Chef::Config[:knife][key]  || default_config[key]
+        config[key] || Chef::Config[:knife][key] || default_config[key]
       end
 
       # validates ARM mandatory keys
@@ -84,14 +84,14 @@ class Chef
             errors << "You did not provide a valid '#{pretty_key(k)}' value. Please set knife[:#{k}] in your knife.rb."
           end
         end
-        if errors.each{|e| ui.error(e)}.any?
+        if errors.each { |e| ui.error(e) }.any?
           exit 1
         end
       end
 
       def authentication_details
         if is_azure_cred?
-          return {:azure_tenant_id => locate_config_value(:azure_tenant_id), :azure_client_id => locate_config_value(:azure_client_id), :azure_client_secret => locate_config_value(:azure_client_secret)}
+          return { :azure_tenant_id => locate_config_value(:azure_tenant_id), :azure_client_id => locate_config_value(:azure_client_id), :azure_client_secret => locate_config_value(:azure_client_secret) }
         elsif Chef::Platform.windows?
           token_details = token_details_for_windows()
         else
@@ -102,9 +102,9 @@ class Chef
       end
 
       def get_azure_cli_version
-        if @azure_version  != ""
+        if @azure_version != ""
           get_version = shell_out!("azure -v || az -v | grep azure-cli", { returns: [0] }).stdout
-          @azure_version = get_version.gsub(/[^0-9.]/, '')
+          @azure_version = get_version.gsub(/[^0-9.]/, "")
         end
         @azure_prefix = @azure_version.to_i < 2 ? "azure" : "az"
         @azure_version
@@ -123,10 +123,10 @@ class Chef
       end
 
       def token_details_from_accessToken_file
-        home_dir = File.expand_path('~')
-        file = File.read(home_dir + '/.azure/accessTokens.json')
+        home_dir = File.expand_path("~")
+        file = File.read(home_dir + "/.azure/accessTokens.json")
         file = JSON.parse(file)
-        token_details = {:tokentype => file[-1]["tokenType"], :user => file[-1]["userId"], :token => file[-1]["accessToken"], :clientid => file[-1]["_clientId"], :expiry_time => file[-1]["expiresOn"], :refreshtoken => file[-1]["refreshToken"]}
+        token_details = { :tokentype => file[-1]["tokenType"], :user => file[-1]["userId"], :token => file[-1]["accessToken"], :clientid => file[-1]["_clientId"], :expiry_time => file[-1]["expiresOn"], :refreshtoken => file[-1]["refreshToken"] }
         token_details
       end
 
@@ -148,13 +148,11 @@ class Chef
       end
 
       def azure_authentication
-        begin
-          ui.log("Authenticating...")
-          Mixlib::ShellOut.new("#{@azure_prefix} vm show 'knifetest@resourcegroup' testvm", :timeout => 30).run_command
-        rescue Mixlib::ShellOut::CommandTimeout
-        rescue Exception
-          raise_azure_status
-        end
+        ui.log("Authenticating...")
+        Mixlib::ShellOut.new("#{@azure_prefix} vm show 'knifetest@resourcegroup' testvm", :timeout => 30).run_command
+      rescue Mixlib::ShellOut::CommandTimeout
+      rescue Exception
+        raise_azure_status
       end
 
       def check_token_validity(token_details)
@@ -176,18 +174,18 @@ class Chef
             raise login_message
           end
         else
-          home_dir = File.expand_path('~')
-          if !File.exists?(home_dir + "/.azure/accessTokens.json") || File.size?(home_dir + '/.azure/accessTokens.json') <= 2
+          home_dir = File.expand_path("~")
+          if !File.exist?(home_dir + "/.azure/accessTokens.json") || File.size?(home_dir + "/.azure/accessTokens.json") <= 2
             raise login_message
           end
         end
       end
 
       def parse_publish_settings_file(filename)
-        require 'nokogiri'
-        require 'base64'
-        require 'openssl'
-        require 'uri'
+        require "nokogiri"
+        require "base64"
+        require "openssl"
+        require "uri"
         begin
           doc = Nokogiri::XML(File.open(find_file(filename)))
           profile = doc.at_css("PublishProfile")
@@ -204,7 +202,7 @@ class Chef
           end
           Chef::Config[:knife][:azure_mgmt_cert] = management_cert.certificate.to_pem + management_cert.key.to_pem
           Chef::Config[:knife][:azure_subscription_id] = doc.at_css("Subscription").attribute("Id").value
-        rescue=> error
+        rescue => error
           puts "#{error.class} and #{error.message}"
           exit 1
         end
@@ -217,10 +215,10 @@ class Chef
           file = name
         elsif config_dir && File.exist?(File.join(config_dir, name))
           file = File.join(config_dir, name)
-        elsif File.exist?(File.join(ENV['HOME'], '.chef', name))
-          file = File.join(ENV['HOME'], '.chef', name)
+        elsif File.exist?(File.join(ENV["HOME"], ".chef", name))
+          file = File.join(ENV["HOME"], ".chef", name)
         else
-          ui.error('Unable to find file - ' + name)
+          ui.error("Unable to find file - " + name)
           exit 1
         end
         file
@@ -228,37 +226,37 @@ class Chef
 
       def msg_server_summary(server)
         puts "\n\n"
-        if server.provisioningstate == 'Succeeded'
+        if server.provisioningstate == "Succeeded"
           Chef::Log.info("Server creation went successfull.")
           puts "\nServer Details are:\n"
 
-          msg_pair('Server ID', server.id)
-          msg_pair('Server Name', server.name)
-          msg_pair('Server Public IP Address', server.publicipaddress)
+          msg_pair("Server ID", server.id)
+          msg_pair("Server Name", server.name)
+          msg_pair("Server Public IP Address", server.publicipaddress)
           if is_image_windows?
-            msg_pair('Server RDP Port', server.rdpport)
+            msg_pair("Server RDP Port", server.rdpport)
           else
-            msg_pair('Server SSH Port', server.sshport)
+            msg_pair("Server SSH Port", server.sshport)
           end
-          msg_pair('Server Location', server.locationname)
-          msg_pair('Server OS Type', server.ostype)
-          msg_pair('Server Provisioning State', server.provisioningstate)
+          msg_pair("Server Location", server.locationname)
+          msg_pair("Server OS Type", server.ostype)
+          msg_pair("Server Provisioning State", server.provisioningstate)
         else
           Chef::Log.info("Server Creation Failed.")
         end
 
         puts "\n\n"
 
-        if server.resources.provisioning_state == 'Succeeded'
+        if server.resources.provisioning_state == "Succeeded"
           Chef::Log.info("Server Extension creation went successfull.")
           puts "\nServer Extension Details are:\n"
 
-          msg_pair('Server Extension ID', server.resources.id)
-          msg_pair('Server Extension Name', server.resources.name)
-          msg_pair('Server Extension Publisher', server.resources.publisher)
-          msg_pair('Server Extension Type', server.resources.type)
-          msg_pair('Server Extension Type Handler Version', server.resources.type_handler_version)
-          msg_pair('Server Extension Provisioning State', server.resources.provisioning_state)
+          msg_pair("Server Extension ID", server.resources.id)
+          msg_pair("Server Extension Name", server.resources.name)
+          msg_pair("Server Extension Publisher", server.resources.publisher)
+          msg_pair("Server Extension Type", server.resources.type)
+          msg_pair("Server Extension Type Handler Version", server.resources.type_handler_version)
+          msg_pair("Server Extension Provisioning State", server.resources.provisioning_state)
         else
           Chef::Log.info("Server Extension Creation Failed.")
         end
@@ -270,16 +268,16 @@ class Chef
           raise ArgumentError, "When --azure-vnet-subnet-name is specified, the --azure-vnet-name must also be specified."
         end
 
-        if locate_config_value(:azure_vnet_subnet_name) == 'GatewaySubnet'
-          raise ArgumentError, 'GatewaySubnet cannot be used as the name for --azure-vnet-subnet-name option. GatewaySubnet can only be used for virtual network gateways.'
+        if locate_config_value(:azure_vnet_subnet_name) == "GatewaySubnet"
+          raise ArgumentError, "GatewaySubnet cannot be used as the name for --azure-vnet-subnet-name option. GatewaySubnet can only be used for virtual network gateways."
         end
 
-        if locate_config_value(:node_ssl_verify_mode) && !["none", "peer"].include?(locate_config_value(:node_ssl_verify_mode))
+        if locate_config_value(:node_ssl_verify_mode) && !%w{none peer}.include?(locate_config_value(:node_ssl_verify_mode))
           raise ArgumentError, "Invalid value '#{locate_config_value(:node_ssl_verify_mode)}' for --node-ssl-verify-mode. Use Valid values i.e 'none', 'peer'."
         end
 
         if is_image_windows?
-          if locate_config_value(:winrm_user).nil? ||  locate_config_value(:winrm_password).nil?
+          if locate_config_value(:winrm_user).nil? || locate_config_value(:winrm_password).nil?
             raise ArgumentError, "Please provide --winrm-user and --winrm-password options for Windows option."
           end
         end
@@ -307,19 +305,19 @@ class Chef
         end
 
         config[:ohai_hints] = format_ohai_hints(locate_config_value(:ohai_hints))
-        validate_ohai_hints if ! locate_config_value(:ohai_hints).casecmp('default').zero?
+        validate_ohai_hints if ! locate_config_value(:ohai_hints).casecmp("default").zero?
       end
 
-  private
+      private
 
-      def msg_pair(label, value, color=:cyan)
+      def msg_pair(label, value, color = :cyan)
         if value && !value.to_s.empty?
           puts "#{ui.color(label, color)}: #{value}"
         end
       end
 
       def pretty_key(key)
-        key.to_s.gsub(/_/, ' ').gsub(/\w+/){ |w| (w =~ /(ssh)|(aws)/i) ? w.upcase  : w.capitalize }
+        key.to_s.tr("_", " ").gsub(/\w+/) { |w| (w =~ /(ssh)|(aws)/i) ? w.upcase : w.capitalize }
       end
 
       def is_image_windows?
@@ -340,7 +338,7 @@ class Chef
       end
 
       def is_WCM_env_var_set?
-        ENV['AZURE_USE_SECURE_TOKEN_STORAGE'].nil? ? false : true
+        ENV["AZURE_USE_SECURE_TOKEN_STORAGE"].nil? ? false : true
       end
 
       def raise_azure_status

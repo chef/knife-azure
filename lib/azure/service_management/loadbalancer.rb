@@ -48,27 +48,27 @@ module Azure
     end
 
     def parse(lbXML, hostedservicename)
-      @name = xml_content(lbXML, 'Name')
-      ip_configXML = lbXML.css('FrontendIpConfiguration')
-      @subnet = xml_content(ip_configXML, 'SubnetName')
-      @vip = xml_content(ip_configXML, 'StaticVirtualNetworkIPAddress')
+      @name = xml_content(lbXML, "Name")
+      ip_configXML = lbXML.css("FrontendIpConfiguration")
+      @subnet = xml_content(ip_configXML, "SubnetName")
+      @vip = xml_content(ip_configXML, "StaticVirtualNetworkIPAddress")
       @service = hostedservicename
       self
     end
 
     def create(params)
       if params[:azure_lb_static_vip] && !params[:azure_subnet_name]
-        Chef::Log.fatal 'Unable to create Loadbalancer, :azure_subnet_name needs to be set if :azure_lb_static_vip is set'
+        Chef::Log.fatal "Unable to create Loadbalancer, :azure_subnet_name needs to be set if :azure_lb_static_vip is set"
       end
-      builder = Nokogiri::XML::Builder.new(encoding: 'utf-8') do |xml|
-        xml.LoadBalancer(xmlns: 'http://schemas.microsoft.com/windowsazure') {
+      builder = Nokogiri::XML::Builder.new(encoding: "utf-8") do |xml|
+        xml.LoadBalancer(xmlns: "http://schemas.microsoft.com/windowsazure") do
           xml.Name params[:azure_load_balancer]
-          xml.FrontendIpConfiguration {
-            xml.Type 'Private'
+          xml.FrontendIpConfiguration do
+            xml.Type "Private"
             xml.SubnetName params[:azure_subnet_name] if params[:azure_subnet_name]
             xml.StaticVirtualNetworkIPAddress params[:azure_lb_static_vip] if params[:azure_lb_static_vip]
-          }
-        }
+          end
+        end
       end
       deploy_name = @connection.deploys.get_deploy_name_for_hostedservice(params[:azure_dns_name])
       servicecall = "hostedservices/#{params[:azure_dns_name]}/deployments/#{deploy_name}/loadbalancers"

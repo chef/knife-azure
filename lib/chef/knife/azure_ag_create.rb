@@ -16,36 +16,36 @@
 # limitations under the License.
 #
 
-require File.expand_path('../azure_base', __FILE__)
+require File.expand_path("../azure_base", __FILE__)
 
 class Chef
   class Knife
     class AzureAgCreate < Knife
       include Knife::AzureBase
 
-      banner 'knife azure ag create (options)'
+      banner "knife azure ag create (options)"
 
       option :azure_affinity_group,
-        :short => '-a GROUP',
-        :long => '--azure-affinity-group GROUP',
-        :description => 'Specifies new affinity group name.'
+        :short => "-a GROUP",
+        :long => "--azure-affinity-group GROUP",
+        :description => "Specifies new affinity group name."
 
       option :azure_ag_desc,
-        :long => '--azure-ag-desc DESC',
-        :description => 'Optional. Description for new affinity group.'
+        :long => "--azure-ag-desc DESC",
+        :description => "Optional. Description for new affinity group."
 
       option :azure_service_location,
-        :short => '-m LOCATION',
-        :long => '--azure-service-location LOCATION',
-        :description => 'Specifies the geographic location - the name of '\
-                        'the data center location that is valid for your '\
-                        'subscription. Eg: West US, East US, '\
-                        'East Asia, Southeast Asia, North Europe, West Europe'
+        :short => "-m LOCATION",
+        :long => "--azure-service-location LOCATION",
+        :description => "Specifies the geographic location - the name of "\
+                        "the data center location that is valid for your "\
+                        "subscription. Eg: West US, East US, "\
+                        "East Asia, Southeast Asia, North Europe, West Europe"
 
       def run
         $stdout.sync = true
 
-        Chef::Log.info('validating...')
+        Chef::Log.info("validating...")
         validate_asm_keys!(:azure_affinity_group,
                    :azure_service_location)
 
@@ -57,9 +57,9 @@ class Chef
 
         rsp = service.create_affinity_group(params)
         print "\n"
-        if rsp.at_css('Status').nil?
-          if rsp.at_css('Code').nil? || rsp.at_css('Message').nil?
-            puts 'Unknown Error. try -VV'
+        if rsp.at_css("Status").nil?
+          if rsp.at_css("Code").nil? || rsp.at_css("Message").nil?
+            puts "Unknown Error. try -VV"
           else
             puts "#{rsp.at_css('Code').content}: "\
                  "#{rsp.at_css('Message').content}"

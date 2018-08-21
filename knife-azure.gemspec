@@ -14,7 +14,7 @@ Gem::Specification.new do |s|
   s.extra_rdoc_files = [
     "LICENSE"
   ]
-  s.files = %w{LICENSE README.md} + Dir.glob("lib/**/*")
+  s.files = %w{LICENSE} + Dir.glob("lib/**/*")
   s.homepage = "https://github.com/chef/knife-azure"
   s.require_paths = ["lib"]
   s.required_ruby_version = ">= 2.3"

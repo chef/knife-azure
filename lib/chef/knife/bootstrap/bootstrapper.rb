@@ -23,13 +23,13 @@ class Chef
       module Bootstrapper
 
         def load_winrm_deps
-          require 'winrm'
-          require 'chef/knife/winrm'
-          require 'chef/knife/bootstrap_windows_winrm'
+          require "winrm"
+          require "chef/knife/winrm"
+          require "chef/knife/bootstrap_windows_winrm"
         end
 
         def default_bootstrap_template
-          is_image_windows? ? 'windows-chef-client-msi' : 'chef-full'
+          is_image_windows? ? "windows-chef-client-msi" : "chef-full"
         end
 
         def tcp_test_ssh(fqdn, sshport)
@@ -42,67 +42,67 @@ class Chef
           else
             false
           end
-          rescue SocketError
-            sleep 2
-            false
-          rescue Errno::ETIMEDOUT
-            false
-          rescue Errno::EPERM
-            false
-          rescue Errno::ECONNREFUSED
-            sleep 2
-            false
-          rescue Errno::EHOSTUNREACH
-            sleep 2
-            false
-          ensure
-            tcp_socket && tcp_socket.close
+        rescue SocketError
+          sleep 2
+          false
+        rescue Errno::ETIMEDOUT
+          false
+        rescue Errno::EPERM
+          false
+        rescue Errno::ECONNREFUSED
+          sleep 2
+          false
+        rescue Errno::EHOSTUNREACH
+          sleep 2
+          false
+        ensure
+          tcp_socket && tcp_socket.close
         end
 
         def tcp_test_winrm(ip_addr, port)
           hostname = ip_addr
           socket = TCPSocket.new(hostname, port)
-          return true
-          rescue SocketError
-            sleep 2
-            false
-          rescue Errno::ETIMEDOUT
-            false
-          rescue Errno::EPERM
-            false
-          rescue Errno::ECONNREFUSED
-            sleep 2
-            false
-          rescue Errno::EHOSTUNREACH
-            sleep 2
-            false
-          rescue Errno::ENETUNREACH
-            sleep 2
-            false
+          true
+        rescue SocketError
+          sleep 2
+          false
+        rescue Errno::ETIMEDOUT
+          false
+        rescue Errno::EPERM
+          false
+        rescue Errno::ECONNREFUSED
+          sleep 2
+          false
+        rescue Errno::EHOSTUNREACH
+          sleep 2
+          false
+        rescue Errno::ENETUNREACH
+          sleep 2
+          false
         end
 
         def bootstrap_exec(server)
           fqdn = server.publicipaddress
 
           if is_image_windows?
-            if locate_config_value(:bootstrap_protocol) == 'ssh'
+            if locate_config_value(:bootstrap_protocol) == "ssh"
               port = server.sshport
               print "#{ui.color("Waiting for sshd on #{fqdn}:#{port}", :magenta)}"
 
-              print(".") until tcp_test_ssh(fqdn,port) {
+              print(".") until tcp_test_ssh(fqdn, port) do
                 sleep @initial_sleep_delay ||= 10
                 puts("done")
-              }
+              end
 
-            elsif locate_config_value(:bootstrap_protocol) == 'winrm'
+            elsif locate_config_value(:bootstrap_protocol) == "winrm"
               port = server.winrmport
 
               print "#{ui.color("Waiting for winrm on #{fqdn}:#{port}", :magenta)}"
 
-              print(".") until tcp_test_winrm(fqdn,port) {
+              print(".") until tcp_test_winrm(fqdn, port) do
                 sleep @initial_sleep_delay ||= 10
                 puts("done")
-              }
+              end
             end
 
             puts("\n")
@@ -117,10 +117,10 @@ class Chef
 
             print ui.color("Waiting for sshd on #{fqdn}:#{port}", :magenta)
 
-            print(".") until tcp_test_ssh(fqdn,port) {
+            print(".") until tcp_test_ssh(fqdn, port) do
               sleep @initial_sleep_delay ||= 10
               puts("done")
-            }
+            end
 
             puts("\n")
             bootstrap_for_node(server, fqdn, port).run
@@ -164,16 +164,16 @@ class Chef
         end
 
         def bootstrap_for_windows_node(server, fqdn, port)
-          if locate_config_value(:bootstrap_protocol) == 'winrm'
+          if locate_config_value(:bootstrap_protocol) == "winrm"
 
             load_winrm_deps
             if not Chef::Platform.windows?
-              require 'gssapi'
+              require "gssapi"
             end
 
             bootstrap = Chef::Knife::BootstrapWindowsWinrm.new
 
-            bootstrap.config[:winrm_user] = locate_config_value(:winrm_user) || 'Administrator'
+            bootstrap.config[:winrm_user] = locate_config_value(:winrm_user) || "Administrator"
             bootstrap.config[:winrm_password] = locate_config_value(:winrm_password)
             bootstrap.config[:winrm_transport] = locate_config_value(:winrm_transport)
             bootstrap.config[:winrm_authentication_protocol] = locate_config_value(:winrm_authentication_protocol)
@@ -181,7 +181,7 @@ class Chef
             bootstrap.config[:auth_timeout] = locate_config_value(:auth_timeout)
             # Todo: we should skip cert generate in case when winrm_ssl_verify_mode=verify_none
             bootstrap.config[:winrm_ssl_verify_mode] = locate_config_value(:winrm_ssl_verify_mode)
-          elsif locate_config_value(:bootstrap_protocol) == 'ssh'
+          elsif locate_config_value(:bootstrap_protocol) == "ssh"
             bootstrap = Chef::Knife::BootstrapWindowsSsh.new
             bootstrap.config[:ssh_user] = locate_config_value(:ssh_user)
             bootstrap.config[:ssh_password] = locate_config_value(:ssh_password)
@@ -210,7 +210,7 @@ class Chef
           bootstrap.config[:ssh_port] = port
           bootstrap.config[:identity_file] = locate_config_value(:identity_file)
           bootstrap.config[:chef_node_name] = locate_config_value(:chef_node_name) || server.name
-          bootstrap.config[:use_sudo] = true unless locate_config_value(:ssh_user) == 'root'
+          bootstrap.config[:use_sudo] = true unless locate_config_value(:ssh_user) == "root"
           bootstrap.config[:use_sudo_password] = true if bootstrap.config[:use_sudo]
           bootstrap.config[:environment] = locate_config_value(:environment)
           # may be needed for vpc_mode
@@ -253,20 +253,20 @@ class Chef
         end
 
         def default_hint_options
-          [
-            'vm_name',
-            'public_fqdn',
-            'platform'
-          ]
+          %w{
+            vm_name
+            public_fqdn
+            platform
+          }
         end
 
         def ohai_hints
           hint_values = locate_config_value(:ohai_hints)
 
-          if hint_values.casecmp('default').zero?
+          if hint_values.casecmp("default").zero?
             hints = default_hint_options
           else
-            hints = hint_values.split(',')
+            hints = hint_values.split(",")
           end
 
           hints
@@ -274,7 +274,7 @@ class Chef
 
         def get_chef_extension_public_params
           pub_config = Hash.new
-          if(locate_config_value(:azure_extension_client_config))
+          if locate_config_value(:azure_extension_client_config)
             pub_config[:client_rb] = File.read(File.expand_path(locate_config_value(:azure_extension_client_config)))
           else
             pub_config[:client_rb] = "chef_server_url \t #{Chef::Config[:chef_server_url].to_json}\nvalidation_client_name\t#{Chef::Config[:validation_client_name].to_json}"
@@ -311,8 +311,8 @@ class Chef
           cli_secret_file = nil if cli_secret_file == knife_secret_file
           cli_secret = nil if cli_secret == knife_secret
 
-          cli_secret_file = Chef::EncryptedDataBagItem.load_secret(cli_secret_file) if cli_secret_file != nil
-          knife_secret_file = Chef::EncryptedDataBagItem.load_secret(knife_secret_file) if knife_secret_file != nil
+          cli_secret_file = Chef::EncryptedDataBagItem.load_secret(cli_secret_file) if !cli_secret_file.nil?
+          knife_secret_file = Chef::EncryptedDataBagItem.load_secret(knife_secret_file) if !knife_secret_file.nil?
 
           cli_secret_file || cli_secret || knife_secret_file || knife_secret
         end
@@ -321,7 +321,7 @@ class Chef
           client_builder = Chef::Knife::Bootstrap::ClientBuilder.new(
             chef_config: Chef::Config,
             knife_config: config,
-            ui: ui,
+            ui: ui
           )
           client_builder.run
           client_builder.client_path
@@ -334,13 +334,13 @@ class Chef
           if Chef::Config[:validation_key] && File.exist?(File.expand_path(Chef::Config[:validation_key]))
             pri_config[:validation_key] = File.read(File.expand_path(Chef::Config[:validation_key]))
           else
-            if Chef::VERSION.split('.').first.to_i == 11
-              ui.error('Unable to find validation key. Please verify your configuration file for validation_key config value.')
+            if Chef::VERSION.split(".").first.to_i == 11
+              ui.error("Unable to find validation key. Please verify your configuration file for validation_key config value.")
               exit 1
             end
             if config[:server_count].to_i > 1
               node_name = config[:chef_node_name]
-              0.upto (config[:server_count].to_i-1) do |count|
+              0.upto (config[:server_count].to_i - 1) do |count|
                 config[:chef_node_name] = node_name + count.to_s
                 key_path = create_node_and_client_pem
                 pri_config[("client_pem" + count.to_s).to_sym] = File.read(key_path)
@@ -362,7 +362,7 @@ class Chef
             if File.exist?(File.expand_path(locate_config_value(:cert_path)))
               pri_config[:chef_server_crt] = File.read(File.expand_path(locate_config_value(:cert_path)))
             else
-              ui.error('Specified SSL certificate does not exist.')
+              ui.error("Specified SSL certificate does not exist.")
               exit 1
             end
           end

@@ -1,0 +1,87 @@
+Layout/DefEndAlignment:
+  Exclude:
+    - 'lib/azure/custom_errors.rb'
+    - 'lib/azure/service_management/ASM_interface.rb'
+
+Layout/EndAlignment:
+  Exclude:
+    - 'lib/azure/resource_management/ARM_interface.rb'
+    - 'lib/azure/resource_management/windows_credentials.rb'
+    - 'lib/azure/service_management/role.rb'
+    - 'lib/chef/knife/azure_server_delete.rb'
+    - 'spec/unit/azure_base_spec.rb'
+
+Lint/AmbiguousBlockAssociation:
+  Exclude:
+    - 'lib/azure/service_management/rest.rb'
+
+Lint/AmbiguousRegexpLiteral:
+  Exclude:
+    - 'lib/chef/knife/azurerm_base.rb'
+
+Lint/DuplicateMethods:
+  Exclude:
+    - 'lib/azure/service_management/storageaccount.rb'
+
+Lint/Loop:
+  Exclude:
+    - 'lib/azure/resource_management/ARM_interface.rb'
+    - 'lib/azure/service_management/certificate.rb'
+    - 'lib/chef/knife/azure_server_create.rb'
+
+Lint/ParenthesesAsGroupedExpression:
+  Exclude:
+    - 'lib/azure/resource_management/ARM_deployment_template.rb'
+    - 'lib/azure/service_management/certificate.rb'
+    - 'lib/azure/service_management/deploy.rb'
+    - 'lib/chef/knife/bootstrap/bootstrapper.rb'
+    - 'spec/unit/ags_spec.rb'
+    - 'spec/unit/azure_server_create_spec.rb'
+    - 'spec/unit/azurerm_base_spec.rb'
+    - 'spec/unit/azurerm_server_delete_spec.rb'
+    - 'spec/unit/deploys_list_spec.rb'
+    - 'spec/unit/disks_spec.rb'
+    - 'spec/unit/hosts_spec.rb'
+    - 'spec/unit/roles_create_spec.rb'
+    - 'spec/unit/roles_list_spec.rb'
+    - 'spec/unit/storageaccount_spec.rb'
+    - 'spec/unit/vnet_spec.rb'
+
+Lint/UselessAssignment:
+  Enabled: false
+
+Naming/VariableName:
+  Exclude:
+    - 'lib/azure/resource_management/ARM_deployment_template.rb'
+    - 'lib/azure/service_management/deploy.rb'
+    - 'lib/azure/service_management/host.rb'
+    - 'lib/azure/service_management/loadbalancer.rb'
+    - 'lib/azure/service_management/role.rb'
+    - 'lib/azure/service_management/storageaccount.rb'
+    - 'spec/functional/host_test.rb'
+    - 'spec/unit/images_spec.rb'
+    - 'spec/unit/query_azure_mock.rb'
+
+Performance/RedundantMatch:
+  Exclude:
+    - 'spec/unit/query_azure_mock.rb'
+
+Style/For:
+  Exclude:
+    - 'lib/azure/resource_management/ARM_deployment_template.rb'
+    - 'lib/azure/service_management/certificate.rb'
+    - 'lib/azure/service_management/role.rb'
+
+Style/NonNilCheck:
+  Exclude:
+    - 'lib/azure/service_management/deploy.rb'
+    - 'lib/chef/knife/azure_base.rb'
+    - 'lib/chef/knife/azure_server_create.rb'
+    - 'lib/chef/knife/bootstrap_azure.rb'
+
+Style/NumericPredicate:
+  Exclude:
+    - 'spec/**/*'
+    - 'lib/azure/service_management/role.rb'
+    - 'lib/chef/knife/azurerm_base.rb'
+    - 'lib/chef/knife/bootstrap/bootstrapper.rb'

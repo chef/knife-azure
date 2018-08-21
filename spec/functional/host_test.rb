@@ -1,4 +1,4 @@
-require File.expand_path(File.dirname(__FILE__) + '/../spec_helper')
+require File.expand_path(File.dirname(__FILE__) + "/../spec_helper")
 
 describe "Connection" do
 
@@ -8,8 +8,8 @@ describe "Connection" do
   end
 
   specify { @items.length.should be > 0 }
-  specify { @connection.hosts.exists?('thisServiceShouldNotBeThere').should == false }
-  specify { @connection.hosts.exists?('service002').should == true }
+  specify { @connection.hosts.exists?("thisServiceShouldNotBeThere").should == false }
+  specify { @connection.hosts.exists?("service002").should == true }
   it "looking for a specific host" do
     foundNamedHost = false
     @items.each do |host|
@@ -19,4 +19,3 @@ describe "Connection" do
     foundNamedHost.should == true
   end
 end
-

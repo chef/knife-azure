@@ -16,14 +16,14 @@
 # limitations under the License.
 #
 
-require File.expand_path('../azure_base', __FILE__)
+require File.expand_path("../azure_base", __FILE__)
 
 class Chef
   class Knife
     class AzureInternalLbList < Knife
       include Knife::AzureBase
 
-      banner 'knife azure internal lb list (options)'
+      banner "knife azure internal lb list (options)"
 
       def run
         $stdout.sync = true

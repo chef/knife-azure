@@ -20,7 +20,7 @@ module Azure
   class Hosts
     include AzureUtility
     def initialize(connection)
-      @connection=connection
+      @connection = connection
     end
 
     # force_load should be true when there is something in local cache and we want to reload
@@ -29,8 +29,8 @@ module Azure
       if not @hosted_services || force_load
         @hosted_services = begin
           hosted_services = Hash.new
-          responseXML = @connection.query_azure('hostedservices')
-          servicesXML = responseXML.css('HostedServices HostedService')
+          responseXML = @connection.query_azure("hostedservices")
+          servicesXML = responseXML.css("HostedServices HostedService")
           servicesXML.each do |serviceXML|
             host = Host.new(@connection).parse(serviceXML)
             hosted_services[host.name] = host
@@ -42,13 +42,13 @@ module Azure
     end
 
     def all
-      self.load.values
+      load.values
     end
 
     # first look up local cache if we have already loaded list.
     def exists?(name)
       return @hosted_services.key?(name) if @hosted_services
-      self.exists_on_cloud?(name)
+      exists_on_cloud?(name)
     end
 
     # Look up on cloud and not local cache
@@ -56,7 +56,7 @@ module Azure
       ret_val = @connection.query_azure("hostedservices/#{name}")
       error_code, error_message = error_from_response_xml(ret_val) if ret_val
       if ret_val.nil? || error_code.length > 0
-        Chef::Log.debug('Unable to find hosted(cloud) service:' + error_code + ' : ' + error_message) if ret_val
+        Chef::Log.debug("Unable to find hosted(cloud) service:" + error_code + " : " + error_message) if ret_val
         false
       else
         true
@@ -66,7 +66,7 @@ module Azure
     # first look up local cache if we have already loaded list.
     def find(name)
       return @hosted_services[name] if @hosted_services && @hosted_services.key?(name)
-      self.fetch_from_cloud(name)
+      fetch_from_cloud(name)
     end
 
     # Look up hosted service on cloud and not local cache
@@ -74,7 +74,7 @@ module Azure
       ret_val = @connection.query_azure("hostedservices/#{name}")
       error_code, error_message = error_from_response_xml(ret_val) if ret_val
       if ret_val.nil? || error_code.length > 0
-        Chef::Log.warn('Unable to find hosted(cloud) service:' + error_code + ' : ' + error_message) if ret_val
+        Chef::Log.warn("Unable to find hosted(cloud) service:" + error_code + " : " + error_message) if ret_val
         nil
       else
         Host.new(@connection).parse(ret_val)
@@ -85,10 +85,11 @@ module Azure
       host = Host.new(@connection)
       host.create(params)
     end
+
     def delete(name)
-      if self.exists?(name)
-          servicecall = "hostedservices/" + name
-        @connection.query_azure(servicecall, "delete") 
+      if exists?(name)
+        servicecall = "hostedservices/" + name
+        @connection.query_azure(servicecall, "delete")
       end
     end
   end
@@ -106,35 +107,38 @@ module Azure
       @deploys_loaded = false
       @deploys = Hash.new
     end
+
     def parse(serviceXML)
-      @name = xml_content(serviceXML, 'ServiceName')
-      @url = xml_content(serviceXML, 'Url')
-      @label = xml_content(serviceXML, 'HostedServiceProperties Label')
-      @dateCreated = xml_content(serviceXML, 'HostedServiceProperties DateCreated')
-      @description = xml_content(serviceXML, 'HostedServiceProperties Description')
-      @location = xml_content(serviceXML, 'HostedServiceProperties Location')
-      @dateModified = xml_content(serviceXML, 'HostedServiceProperties DateLastModified')
-      @status = xml_content(serviceXML, 'HostedServiceProperties Status')
+      @name = xml_content(serviceXML, "ServiceName")
+      @url = xml_content(serviceXML, "Url")
+      @label = xml_content(serviceXML, "HostedServiceProperties Label")
+      @dateCreated = xml_content(serviceXML, "HostedServiceProperties DateCreated")
+      @description = xml_content(serviceXML, "HostedServiceProperties Description")
+      @location = xml_content(serviceXML, "HostedServiceProperties Location")
+      @dateModified = xml_content(serviceXML, "HostedServiceProperties DateLastModified")
+      @status = xml_content(serviceXML, "HostedServiceProperties Status")
       self
     end
+
     def create(params)
       builder = Nokogiri::XML::Builder.new do |xml|
-        xml.CreateHostedService('xmlns'=>'http://schemas.microsoft.com/windowsazure') {
+        xml.CreateHostedService("xmlns" => "http://schemas.microsoft.com/windowsazure") do
           xml.ServiceName params[:azure_dns_name]
           xml.Label Base64.encode64(params[:azure_dns_name])
-          xml.Description 'Explicitly created hosted service'
+          xml.Description "Explicitly created hosted service"
           unless params[:azure_service_location].nil?
             xml.Location params[:azure_service_location]
           end
           unless params[:azure_affinity_group].nil?
             xml.AffinityGroup params[:azure_affinity_group]
           end
-        }
+        end
       end
       @connection.query_azure("hostedservices", "post", builder.to_xml)
     end
+
     def details
-      response = @connection.query_azure('hostedservices/' + @name + '?embed-detail=true')
+      response = @connection.query_azure("hostedservices/" + @name + "?embed-detail=true")
     end
 
     # Deployments within this hostedservice

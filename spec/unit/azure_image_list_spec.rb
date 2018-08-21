@@ -1,25 +1,25 @@
-require File.expand_path(File.dirname(__FILE__) + '/../spec_helper')
-require File.expand_path(File.dirname(__FILE__) + '/../unit/query_azure_mock')
-require 'pry'
+require File.expand_path(File.dirname(__FILE__) + "/../spec_helper")
+require File.expand_path(File.dirname(__FILE__) + "/../unit/query_azure_mock")
+require "pry"
 
 describe Chef::Knife::AzureImageList do
   include AzureSpecHelper
   include QueryAzureMock
   before do
     @server_instance = Chef::Knife::AzureImageList.new
-      {
-        :azure_subscription_id => 'azure_subscription_id',
-        :azure_mgmt_cert => @cert_file,
-        :azure_api_host_name => 'preview.core.windows-int.net',
-        :azure_service_location => 'West Europe',
-        :azure_source_image => 'SUSE__SUSE-Linux-Enterprise-Server-11SP2-20120521-en-us-30GB.vhd',
-        :azure_dns_name => 'service001',
-        :azure_vm_name => 'vm01',
-        :azure_storage_account => 'ka001testeurope',
-        :azure_vm_size => 'Small'
-      }.each do |key, value|
-          Chef::Config[:knife][key] = value
-        end
+    {
+      :azure_subscription_id => "azure_subscription_id",
+      :azure_mgmt_cert => @cert_file,
+      :azure_api_host_name => "preview.core.windows-int.net",
+      :azure_service_location => "West Europe",
+      :azure_source_image => "SUSE__SUSE-Linux-Enterprise-Server-11SP2-20120521-en-us-30GB.vhd",
+      :azure_dns_name => "service001",
+      :azure_vm_name => "vm01",
+      :azure_storage_account => "ka001testeurope",
+      :azure_vm_size => "Small"
+    }.each do |key, value|
+      Chef::Config[:knife][key] = value
+    end
     stub_query_azure(@server_instance.service.connection)
     allow(@server_instance).to receive(:items).and_return(:true)
     allow(@server_instance).to receive(:puts)
