@@ -484,7 +484,6 @@ describe Azure::ARM::VnetConfig do
 
       it "returns the cidr prefix of the given subnet" do
         response = @dummy_class.subnet_cidr_prefix(@subnet)
-        expect(response.class).to be == Integer
         expect(response).to be == 29
       end
     end
@@ -498,7 +497,6 @@ describe Azure::ARM::VnetConfig do
 
       it "returns the cidr prefix of the given subnet" do
         response = @dummy_class.subnet_cidr_prefix(@subnet)
-        expect(response.class).to be == Integer
         expect(response).to be == 25
       end
     end
