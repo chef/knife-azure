@@ -1,6 +1,6 @@
 #
 # Author:: Mukta Aphale (<mukta.aphale@clogeny.com>)
-# Copyright:: Copyright (c) 2013 Opscode, Inc.
+# Copyright:: Copyright 2013-2018 Chef Software, Inc.
 #
 
 require File.expand_path(File.dirname(__FILE__) + "/../spec_helper")

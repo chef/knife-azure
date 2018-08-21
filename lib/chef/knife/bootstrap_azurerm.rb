@@ -1,7 +1,7 @@
 #
 # Author:: Nimisha Sharad (nimisha.sharad@clogeny.com)
 #
-# Copyright:: Copyright (c) 2016 Opscode, Inc.
+# Copyright:: Copyright 2016-2018 Chef Software, Inc.
 # License:: Apache License, Version 2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
