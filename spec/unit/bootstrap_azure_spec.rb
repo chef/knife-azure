@@ -118,7 +118,7 @@ describe Chef::Knife::BootstrapAzure do
             :find_server).and_return(@server_role)
           expect { @bootstrap_azure_instance.run }.not_to raise_error
           expect(Chef::Config[:knife][:azure_dns_name]).to be == "test-dns-01"
-          expect(@bootstrap_azure_instance.config[:azure_dns_name]).to be.nil?
+          expect(@bootstrap_azure_instance.config[:azure_dns_name]).to be_nil
         end
       end
 
@@ -146,7 +146,7 @@ describe Chef::Knife::BootstrapAzure do
             :find_server).and_return(@server_role)
           expect { @bootstrap_azure_instance.run }.not_to raise_error
           expect(@bootstrap_azure_instance.config[:azure_dns_name]).to be == "my_new_dns"
-          expect(Chef::Config[:knife][:azure_dns_name]).to be.nil?
+          expect(Chef::Config[:knife][:azure_dns_name]).to be_nil
         end
       end
     end

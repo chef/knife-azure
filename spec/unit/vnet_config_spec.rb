@@ -758,7 +758,7 @@ describe Azure::ARM::VnetConfig do
             response = @dummy_class.new_subnet_address_prefix(
               @vnet_address_prefix, @subnets
             )
-            expect(response).to be.nil?
+            expect(response).to eq nil
           end
         end
 
@@ -779,7 +779,7 @@ describe Azure::ARM::VnetConfig do
             response = @dummy_class.new_subnet_address_prefix(
               @vnet_address_prefix, @subnets
             )
-            expect(response).to be.nil?
+            expect(response).to eq nil
           end
         end
 
@@ -795,7 +795,7 @@ describe Azure::ARM::VnetConfig do
             response = @dummy_class.new_subnet_address_prefix(
               @vnet_address_prefix, @subnets
             )
-            expect(response).to be.nil?
+            expect(response).to eq nil
           end
         end
       end
