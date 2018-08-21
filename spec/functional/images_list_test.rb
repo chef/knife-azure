@@ -1,4 +1,4 @@
-require File.expand_path(File.dirname(__FILE__) + '/../spec_helper')
+require File.expand_path(File.dirname(__FILE__) + "/../spec_helper")
 
 describe "Connection" do
 
@@ -19,7 +19,6 @@ describe "Connection" do
     end
   end
 
-
   #  it "should get services" do
   #    @demo.DemoGet
   #  end
@@ -39,4 +38,3 @@ describe "Connection" do
   #    expect{@demo.DemoGet}.to raise_error(RuntimeError, /ResourceNotFound/)
   #  end
 end
-

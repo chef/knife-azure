@@ -1,5 +1,5 @@
-require File.expand_path(File.dirname(__FILE__) + '/../spec_helper')
-require File.expand_path(File.dirname(__FILE__) + '/../unit/query_azure_mock')
+require File.expand_path(File.dirname(__FILE__) + "/../spec_helper")
+require File.expand_path(File.dirname(__FILE__) + "/../unit/query_azure_mock")
 
 describe Chef::Knife::AzureAgList do
   include AzureSpecHelper
@@ -10,12 +10,12 @@ describe Chef::Knife::AzureAgList do
     allow(@server_instance).to receive(:puts)
   end
 
-  it 'should display Name, Affinity Group, and State columns.' do
+  it "should display Name, Affinity Group, and State columns." do
     expect(@server_instance.ui).to receive(:list).with(
-      ['Name', 'Affinity Group', 'State',
-       'jm-vnet-test', 'jm-affinity-group', 'Created',
-       'vnet-test-2', 'test', 'Created',
-       'vnname', 'agname', 'Created'],
+      ["Name", "Affinity Group", "State",
+       "jm-vnet-test", "jm-affinity-group", "Created",
+       "vnet-test-2", "test", "Created",
+       "vnname", "agname", "Created"],
       :uneven_columns_across,
       3
     )

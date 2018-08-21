@@ -19,29 +19,30 @@
 module Azure
   class Images
     def initialize(connection)
-      @connection=connection
+      @connection = connection
     end
+
     def load
       @images ||= begin
-        osimages = self.get_images("OSImage")   #get OSImages
-        vmimages = self.get_images("VMImage")   #get VMImages
+        osimages = get_images("OSImage")   #get OSImages
+        vmimages = get_images("VMImage")   #get VMImages
 
         all_images = osimages.merge(vmimages)
       end
     end
 
     def all
-      self.load.values
+      load.values
     end
 
     # img_type = OSImages or VMImage
     def get_images(img_type)
       images = Hash.new
 
-      if(img_type == "OSImage")
-        response = @connection.query_azure('images')
-      elsif(img_type == "VMImage")
-        response = @connection.query_azure('vmimages')
+      if img_type == "OSImage"
+        response = @connection.query_azure("images")
+      elsif img_type == "VMImage"
+        response = @connection.query_azure("vmimages")
       end
 
       unless response.to_s.empty?
@@ -57,21 +58,21 @@ module Azure
     end
 
     def is_os_image(image_name)
-      os_images = self.get_images("OSImage").values
-      os_images.detect {|img| img.name == image_name} ? true : false
+      os_images = get_images("OSImage").values
+      os_images.detect { |img| img.name == image_name } ? true : false
     end
 
     def is_vm_image(image_name)
-      vm_images = self.get_images("VMImage").values
-      vm_images.detect {|img| img.name == image_name} ? true : false
+      vm_images = get_images("VMImage").values
+      vm_images.detect { |img| img.name == image_name } ? true : false
     end
 
     def exists?(name)
-      self.all.detect {|img| img.name == name} ? true : false
+      all.detect { |img| img.name == name } ? true : false
     end
 
     def find(name)
-      self.load[name]
+      load[name]
     end
   end
 end
@@ -81,13 +82,13 @@ module Azure
     attr_accessor :category, :label
     attr_accessor :name, :os, :eula, :description, :location
     def initialize(image)
-      @category = image.at_css('Category').content
-      @label = image.at_css('Label').content
-      @name = image.at_css('Name').content
-      @os = image.at_css('OS').content
-      @location = image.at_css('Location').content.gsub(";", ", ") if image.at_css('Location')
-      @eula = image.at_css('Eula').content if image.at_css('Eula')
-      @description = image.at_css('Description').content if image.at_css('Description')
+      @category = image.at_css("Category").content
+      @label = image.at_css("Label").content
+      @name = image.at_css("Name").content
+      @os = image.at_css("OS").content
+      @location = image.at_css("Location").content.gsub(";", ", ") if image.at_css("Location")
+      @eula = image.at_css("Eula").content if image.at_css("Eula")
+      @description = image.at_css("Description").content if image.at_css("Description")
     end
   end
 end

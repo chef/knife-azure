@@ -17,10 +17,10 @@
 # limitations under the License.
 #
 
-require 'chef/knife/azurerm_base'
-require 'securerandom'
-require 'chef/knife/bootstrap/common_bootstrap_options'
-require 'chef/knife/bootstrap/bootstrapper'
+require "chef/knife/azurerm_base"
+require "securerandom"
+require "chef/knife/bootstrap/common_bootstrap_options"
+require "chef/knife/bootstrap/bootstrapper"
 
 class Chef
   class Knife
@@ -83,7 +83,7 @@ class Chef
                                       Standard_GRS (Standard Geo-redundant storage)
                                       Standard_RAGRS (Standard Read access geo-redundant storage)
                                       Premium_LRS (Premium Locally-redundant storage)",
-        :default => 'Standard_GRS'
+        :default => "Standard_GRS"
 
       option :azure_vm_name,
         :long => "--azure-vm-name NAME",
@@ -121,7 +121,7 @@ class Chef
         :long => "--azure-image-reference-version VERSION",
         :description => "Optional. Specifies the version of the image used to create the virtual machine.
                           Default value is 'latest'",
-        :default => 'latest'
+        :default => "latest"
 
       option :azure_image_os_type,
         :long => "--azure-image-os-type OSTYPE",
@@ -131,7 +131,7 @@ class Chef
         :short => "-z SIZE",
         :long => "--azure-vm-size SIZE",
         :description => "Optional. Size of virtual machine (ExtraSmall, Small, Medium, Large, ExtraLarge)",
-        :default => 'Small',
+        :default => "Small",
         :proc => Proc.new { |si| Chef::Config[:knife][:azure_vm_size] = si }
 
       option :azure_availability_set,
@@ -188,7 +188,7 @@ class Chef
                                      Supported values are: vm_name, public_fqdn and platform.
                                      User can pass any comma separated combination of these values like 'vm_name,public_fqdn'.
                                      Default value is 'default' which corresponds to the supported values list mentioned here.",
-        :default => 'default'
+        :default => "default"
 
       def run
         $stdout.sync = true
@@ -241,12 +241,12 @@ class Chef
 
         # We assign azure_vm_name to chef_node_name If node name is nill because storage account name is combination of hash value and node name.
         config[:chef_node_name] ||= locate_config_value(:azure_vm_name)
-        
+
         server_def[:azure_storage_account] = locate_config_value(:azure_vm_name) if server_def[:azure_storage_account].nil?
-        server_def[:azure_storage_account] = server_def[:azure_storage_account].gsub(/[!@#$%^&*()_-]/,'')
+        server_def[:azure_storage_account] = server_def[:azure_storage_account].gsub(/[!@#$%^&*()_-]/, "")
 
         server_def[:azure_os_disk_name] = locate_config_value(:azure_vm_name) if server_def[:azure_os_disk_name].nil?
-        server_def[:azure_os_disk_name] = server_def[:azure_os_disk_name].gsub(/[!@#$%^&*()_-]/,'')
+        server_def[:azure_os_disk_name] = server_def[:azure_os_disk_name].gsub(/[!@#$%^&*()_-]/, "")
 
         server_def[:azure_vnet_name] = locate_config_value(:azure_vm_name) if server_def[:azure_vnet_name].nil?
         server_def[:azure_vnet_subnet_name] = locate_config_value(:azure_vm_name) if locate_config_value(:azure_vnet_subnet_name).nil?
@@ -274,16 +274,16 @@ class Chef
       end
 
       def supported_ohai_hints
-        [
-          'vm_name',
-          'public_fqdn',
-          'platform'
-        ]
+        %w{
+          vm_name
+          public_fqdn
+          platform
+        }
       end
 
       def format_ohai_hints(ohai_hints)
-        ohai_hints = ohai_hints.split(',').each { |hint| hint.strip! }
-        ohai_hints.join(',')
+        ohai_hints = ohai_hints.split(",").each { |hint| hint.strip! }
+        ohai_hints.join(",")
       end
 
       def is_supported_ohai_hint?(hint)
@@ -291,7 +291,7 @@ class Chef
       end
 
       def validate_ohai_hints
-        hint_values = locate_config_value(:ohai_hints).split(',')
+        hint_values = locate_config_value(:ohai_hints).split(",")
         hint_values.each do |hint|
           if ! is_supported_ohai_hint?(hint)
             raise ArgumentError, "Ohai Hint name #{hint} passed is not supported. Please run the command help to see the list of supported values."
@@ -332,7 +332,7 @@ class Chef
             when "windows"
               set_os_image("MicrosoftWindowsServer", "WindowsServer", "2012-R2-Datacenter")
             else
-              raise ArgumentError, 'Invalid value of --azure-image-os-type. Accepted values ubuntu|centos|windows'
+              raise ArgumentError, "Invalid value of --azure-image-os-type. Accepted values ubuntu|centos|windows"
             end
           else
             validate_arm_keys!(:azure_image_os_type) unless is_image_os_type?
@@ -360,7 +360,7 @@ class Chef
       end
 
       def validate_publisher_and_offer
-        if (locate_config_value(:azure_image_reference_publisher) || locate_config_value(:azure_image_reference_offer))
+        if locate_config_value(:azure_image_reference_publisher) || locate_config_value(:azure_image_reference_offer)
           # if azure_image_os_type is given and any of the other image reference parameters like publisher or offer are also given,
           # raise error
           raise ArgumentError, 'Please specify either --azure-image-os-type OR --azure-image-os-type with --azure-image-reference-sku or 4 image reference parameters i.e.

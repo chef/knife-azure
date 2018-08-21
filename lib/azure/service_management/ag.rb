@@ -25,13 +25,13 @@ module Azure
     def load
       @ags ||= begin
         @ags = {}
-        response = @connection.query_azure('affinitygroups',
-                                           'get',
-                                           '',
-                                           '',
+        response = @connection.query_azure("affinitygroups",
+                                           "get",
+                                           "",
+                                           "",
                                            true,
                                            false)
-        response.css('AffinityGroup').each do |ag|
+        response.css("AffinityGroup").each do |ag|
           item = AG.new(@connection).parse(ag)
           @ags[item.name] = item
         end
@@ -67,18 +67,18 @@ module Azure
     end
 
     def parse(image)
-      @name = image.at_css('Name').content
-      @label = image.at_css('Label').content
-      @description = image.at_css('Description').content if
-        image.at_css('Description')
-      @location = image.at_css('Location').content if image.at_css('Location')
+      @name = image.at_css("Name").content
+      @label = image.at_css("Label").content
+      @description = image.at_css("Description").content if
+        image.at_css("Description")
+      @location = image.at_css("Location").content if image.at_css("Location")
       self
     end
 
     def create(params)
-      builder = Nokogiri::XML::Builder.new(encoding: 'utf-8') do |xml|
+      builder = Nokogiri::XML::Builder.new(encoding: "utf-8") do |xml|
         xml.CreateAffinityGroup(
-          xmlns: 'http://schemas.microsoft.com/windowsazure'
+          xmlns: "http://schemas.microsoft.com/windowsazure"
         ) do
           xml.Name params[:azure_ag_name]
           xml.Label Base64.strict_encode64(params[:azure_ag_name])
@@ -88,10 +88,10 @@ module Azure
           xml.Location params[:azure_location]
         end
       end
-      @connection.query_azure('affinitygroups',
-                              'post',
+      @connection.query_azure("affinitygroups",
+                              "post",
                               builder.to_xml,
-                              '',
+                              "",
                               true,
                               false)
     end

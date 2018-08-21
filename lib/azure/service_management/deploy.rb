@@ -20,8 +20,9 @@ module Azure
   class Deploys
     include AzureUtility
     def initialize(connection)
-      @connection=connection
+      @connection = connection
     end
+
     # force_load should be true when there is something in local cache and we want to reload
     # first call is always load.
     def load(force_load = false)
@@ -44,7 +45,7 @@ module Azure
     end
 
     def all
-      self.load
+      load
     end
 
     # TODO - Current knife-azure plug-in seems to have assumption that single hostedservice
@@ -61,14 +62,14 @@ module Azure
     def create(params)
       if params[:azure_connect_to_existing_dns]
         unless @connection.hosts.exists?(params[:azure_dns_name])
-          Chef::Log.fatal 'The specified Azure DNS Name does not exist.'
+          Chef::Log.fatal "The specified Azure DNS Name does not exist."
           exit 1
         end
       else
         ret_val = @connection.hosts.create(params)
         error_code, error_message = error_from_response_xml(ret_val)
         if error_code.length > 0
-          Chef::Log.fatal 'Unable to create DNS:' + error_code + ' : ' + error_message
+          Chef::Log.fatal "Unable to create DNS:" + error_code + " : " + error_message
           exit 1
         end
       end
@@ -80,19 +81,19 @@ module Azure
       end
       if params[:cert_path]
         cert_data = File.read (params[:cert_path])
-        @connection.certificates.add cert_data, params[:cert_password], 'pfx', params[:azure_dns_name]
-      elsif(params[:winrm_transport] == "ssl")
+        @connection.certificates.add cert_data, params[:cert_password], "pfx", params[:azure_dns_name]
+      elsif params[:winrm_transport] == "ssl"
         #TODO: generate certificates for ssl listener
       end
 
-      params['deploy_name'] = get_deploy_name_for_hostedservice(params[:azure_dns_name])
+      params["deploy_name"] = get_deploy_name_for_hostedservice(params[:azure_dns_name])
 
-      if params['deploy_name'] != nil
+      if !params["deploy_name"].nil?
         role = Role.new(@connection)
         roleXML = role.setup(params)
         ret_val = role.create(params, roleXML)
       else
-        params['deploy_name'] = params[:azure_dns_name]
+        params["deploy_name"] = params[:azure_dns_name]
         deploy = Deploy.new(@connection)
         deployXML = deploy.setup(params)
         ret_val = deploy.create(params, deployXML)
@@ -100,7 +101,7 @@ module Azure
       error_code, error_message = error_from_response_xml(ret_val)
       if error_code.length > 0
         Chef::Log.debug(ret_val.to_s)
-        raise Chef::Log.fatal 'Unable to create role:' + error_code + ' : ' + error_message
+        raise Chef::Log.fatal "Unable to create role:" + error_code + " : " + error_message
       end
       @connection.roles.find_in_hosted_service(params[:azure_vm_name], params[:azure_dns_name])
     end
@@ -109,9 +110,9 @@ module Azure
     end
 
     def queryDeploy(hostedservicename)
-        deploy = Deploy.new(@connection)
-        deploy.retrieve(hostedservicename)
-        deploy
+      deploy = Deploy.new(@connection)
+      deploy.retrieve(hostedservicename)
+      deploy
     end
   end
 
@@ -122,32 +123,33 @@ module Azure
     def initialize(connection)
       @connection = connection
     end
+
     def retrieve(hostedservicename)
       @hostedservicename = hostedservicename
       deployXML = @connection.query_azure("hostedservices/#{hostedservicename}/deploymentslots/Production")
-      if deployXML.at_css('Deployment Name') != nil
-        @name = xml_content(deployXML, 'Deployment Name')
-        @status = xml_content(deployXML,'Deployment Status')
-        @url = xml_content(deployXML, 'Deployment Url')
+      if deployXML.at_css("Deployment Name") != nil
+        @name = xml_content(deployXML, "Deployment Name")
+        @status = xml_content(deployXML, "Deployment Status")
+        @url = xml_content(deployXML, "Deployment Url")
         @roles = Hash.new
-        rolesXML = deployXML.css('Deployment RoleInstanceList RoleInstance')
-        rolesListXML = deployXML.css('Deployment RoleList Role')
-        rolesXML.zip(rolesListXML).each do |roleXML,roleListXML|
+        rolesXML = deployXML.css("Deployment RoleInstanceList RoleInstance")
+        rolesListXML = deployXML.css("Deployment RoleList Role")
+        rolesXML.zip(rolesListXML).each do |roleXML, roleListXML|
           role = Role.new(@connection)
           role.parse(roleXML, hostedservicename, @name)
           if role.publicipaddress.to_s.empty?
-            role.publicipaddress = xml_content(deployXML, 'VirtualIPs VirtualIP Address')
+            role.publicipaddress = xml_content(deployXML, "VirtualIPs VirtualIP Address")
           end
           role.parse_role_list_xml(roleListXML)
           @roles[role.name] = role
         end
         @input_endpoints = Array.new
-        endpointsXML = deployXML.css('InputEndpoint')
+        endpointsXML = deployXML.css("InputEndpoint")
         endpointsXML.each do |endpointXML|
           @input_endpoints << parse_endpoint(endpointXML)
         end
         @loadbalancers = Hash.new
-        lbsXML = deployXML.css('Deployment LoadBalancers LoadBalancer')
+        lbsXML = deployXML.css("Deployment LoadBalancers LoadBalancer")
         lbsXML.each do |lbXML|
           loadbalancer = Loadbalancer.new(@connection)
           loadbalancer.parse(lbXML, hostedservicename)
@@ -162,19 +164,19 @@ module Azure
       #roleXML = Nokogiri::XML role.setup(params)
       builder = Nokogiri::XML::Builder.new do |xml|
         xml.Deployment(
-          'xmlns'=>'http://schemas.microsoft.com/windowsazure',
-          'xmlns:i'=>'http://www.w3.org/2001/XMLSchema-instance'
-        ) {
-          xml.Name params['deploy_name']
-          xml.DeploymentSlot 'Production'
-          xml.Label Base64.encode64(params['deploy_name']).strip
-          xml.RoleList { xml.Role('i:type'=>'PersistentVMRole') }
+          "xmlns" => "http://schemas.microsoft.com/windowsazure",
+          "xmlns:i" => "http://www.w3.org/2001/XMLSchema-instance"
+        ) do
+          xml.Name params["deploy_name"]
+          xml.DeploymentSlot "Production"
+          xml.Label Base64.encode64(params["deploy_name"]).strip
+          xml.RoleList { xml.Role("i:type" => "PersistentVMRole") }
           if params[:azure_network_name]
             xml.VirtualNetworkName params[:azure_network_name]
           end
-        }
+        end
       end
-      builder.doc.at_css('Role') << roleXML.at_css('PersistentVMRole').children.to_s
+      builder.doc.at_css("Role") << roleXML.at_css("PersistentVMRole").children.to_s
       builder.doc
     end
 
@@ -191,14 +193,14 @@ module Azure
         hash[key] = xml_content(inputendpoint_xml, key, nil)
       end
       # Protocol could be in there twice... If we have two, pick the second one as the first is for the probe.
-      if inputendpoint_xml.css('Protocol').count > 1
-        hash['Protocol'] = inputendpoint_xml.css('Protocol')[1].content
+      if inputendpoint_xml.css("Protocol").count > 1
+        hash["Protocol"] = inputendpoint_xml.css("Protocol")[1].content
       end
-      probe = inputendpoint_xml.css('LoadBalancerProbe')
+      probe = inputendpoint_xml.css("LoadBalancerProbe")
       if probe
-        hash['LoadBalancerProbe'] = Hash.new
+        hash["LoadBalancerProbe"] = Hash.new
         %w{Path Port Protocol IntervalInSeconds TimeoutInSeconds}.each do |key|
-          hash['LoadBalancerProbe'][key] = xml_content(probe, key, nil)
+          hash["LoadBalancerProbe"][key] = xml_content(probe, key, nil)
         end
       end
       hash

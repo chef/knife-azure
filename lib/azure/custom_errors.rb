@@ -26,10 +26,10 @@ module CustomErrors
   end
 
   module Methods
-     def api_not_implemented(klass)
-      caller.first.match(/in \`(.+)\'/)
+    def api_not_implemented(klass)
+      caller.first =~ /in \`(.+)\'/
       method_name = $1
-      raise CustomErrors::InterfaceNotImplementedError.new("#{klass.class.name} needs to implement '#{method_name}' for interface #{self.name}!")
-    end
+      raise CustomErrors::InterfaceNotImplementedError.new("#{klass.class.name} needs to implement '#{method_name}' for interface #{name}!")
+   end
   end
 end

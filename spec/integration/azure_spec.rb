@@ -56,7 +56,7 @@ def get_active_instance_id
   else
     servers = server_list_output.stdout
   end
-  
+
   servers.each_line do |line|
     if line.include?("ready")
       instance_id = line.split(" ")[1]
@@ -81,7 +81,7 @@ describe 'knife-azure integration test' , :if => is_config_present do
   before(:all) do
     expect(run('gem build knife-azure.gemspec').exitstatus).to be(0)
     expect(run("gem install #{get_gem_file_name}").exitstatus).to be(0)
-    init_azure_test 
+    init_azure_test
   end
 
   after(:all) do
@@ -140,10 +140,10 @@ describe 'knife-azure integration test' , :if => is_config_present do
     before(:each) {rm_known_host}
     context 'when standard options specified and --azure-dns-name option' do
       before(:all) { create_dns_name }
-      
-      let(:command) { "knife azure server create --azure-dns-name #{@dns_name}" + 
+
+      let(:command) { "knife azure server create --azure-dns-name #{@dns_name}" +
        append_azure_creds + " --azure-source-image #{@az_linux_image}" + get_ssh_credentials +
-       " --template-file " + get_linux_template_file_path + 
+       " --template-file " + get_linux_template_file_path +
        " --server-url http://localhost:8889" + " --yes" }
       run_cmd_check_status_and_output("succeed", "#{@dns_name}")
     end
@@ -156,7 +156,7 @@ describe 'knife-azure integration test' , :if => is_config_present do
     context 'when publishsettings file specified and --azure-dns-name option' do
       before(:all) { create_dns_name }
 
-      let(:command) { "knife azure server create --azure-dns-name #{@dns_name}" + 
+      let(:command) { "knife azure server create --azure-dns-name #{@dns_name}" +
       append_azure_creds("publishsettings_file") + " --azure-source-image #{@az_linux_image}" +
       " --template-file " + get_linux_template_file_path + get_ssh_credentials +
       " --server-url http://localhost:8889" + " --yes" }
@@ -172,12 +172,12 @@ describe 'knife-azure integration test' , :if => is_config_present do
     context 'skip user specified --tcp-endpoints if its external port is same as ssh external port' do
       before(:all) { create_dns_name }
       after(:all) { run(delete_instance_cmd + append_azure_creds("list_cmd")) }
-      let(:command) { "knife azure server create --azure-dns-name #{@dns_name}" + 
+      let(:command) { "knife azure server create --azure-dns-name #{@dns_name}" +
       append_azure_creds("publishsettings_file") + get_ssh_credentials +
       " --azure-source-image #{@az_linux_image}" + " --template-file " +
-      get_linux_template_file_path + " --server-url http://localhost:8889" + 
+      get_linux_template_file_path + " --server-url http://localhost:8889" +
       " --tcp-endpoints 22:22,1234:1234" + " --yes" }
-      
+
       run_cmd_check_status_and_output("succeed", "#{@dns_name}")
     end
 
@@ -200,33 +200,33 @@ describe 'knife-azure integration test' , :if => is_config_present do
       end
 
       context 'delete Linux server, Chef node, Chef client by using --purge' do
-        let(:command) { delete_instance_cmd(@dns_name) + 
+        let(:command) { delete_instance_cmd(@dns_name) +
         append_azure_creds("list_cmd") + " --purge" }
         run_cmd_check_status_and_output("succeed", "#{@dns_name}")
       end
 
       context 'delete Linux server, Chef node, Chef client by using --purge and preserve dns' do
-        let(:command) { delete_instance_cmd(@vm_name) + 
+        let(:command) { delete_instance_cmd(@vm_name) +
         append_azure_creds("list_cmd") + " --yes --purge --preserve-azure-dns-name"}
         run_cmd_check_status_and_output("succeed", "#{@vm_name}")
       end
-      
+
       context 'when having duplicate ssh port ' do
         before(:each) {run("knife azure server create --azure-vm-name #{@dns_name} --azure-dns-name #{@dns_name}" + append_azure_creds + " --azure-source-image #{@az_linux_image}" + get_ssh_credentials +
-          " --template-file " + get_linux_template_file_path + " --server-url http://localhost:8889" + 
+          " --template-file " + get_linux_template_file_path + " --server-url http://localhost:8889" +
           " --ssh-port 245 --yes --azure-connect-to-existing-dns")}
-        
+
         after(:each)  { run(delete_instance_cmd(@dns_name) + append_azure_creds("list_cmd") + " --purge")}
 
         let(:command) { "knife azure server create --azure-vm-name #{@vm_name} --azure-dns-name #{@dns_name}" +
         append_azure_creds + " --azure-source-image #{@az_linux_image}" + get_ssh_credentials +
-        " --template-file " + get_linux_template_file_path + " --server-url http://localhost:8889" + 
+        " --template-file " + get_linux_template_file_path + " --server-url http://localhost:8889" +
         " --ssh-port 245 --yes --azure-connect-to-existing-dns" }
         run_cmd_check_status_and_output("fail", "")
       end
 
       context 'when having out of range ssh port' do
-        let(:command) { "knife azure server create --azure-dns-name #{@dns_name}" + 
+        let(:command) { "knife azure server create --azure-dns-name #{@dns_name}" +
         append_azure_creds + " --azure-source-image #{@az_linux_image}" +
         " --template-file " + get_linux_template_file_path + get_ssh_credentials +
         " --server-url http://localhost:8889" + " --ssh-port 900000 --yes" }
@@ -234,8 +234,8 @@ describe 'knife-azure integration test' , :if => is_config_present do
       end
 
       context 'when having duplicate dns name option' do
-        let(:command) { "knife azure server create --azure-dns-name #{@dns_name}" + 
-        append_azure_creds("publishsettings_file") + " --azure-source-image #{@az_linux_image}" + 
+        let(:command) { "knife azure server create --azure-dns-name #{@dns_name}" +
+        append_azure_creds("publishsettings_file") + " --azure-source-image #{@az_linux_image}" +
         " --template-file " + get_linux_template_file_path + get_ssh_credentials +
         " --server-url http://localhost:8889" + " --yes" }
         run_cmd_check_status_and_output("fail", "")
@@ -286,7 +286,7 @@ describe 'knife-azure integration test' , :if => is_config_present do
       before(:all) { create_dns_name; create_vm_name("windows") }
 
       context 'create Windows VM for azure-connect-to-existing-dns' do
-        
+
         let(:command) { "knife azure server create --azure-dns-name #{@dns_name}" + append_azure_creds +
         " --azure-source-image #{@az_windows_image}" + " --template-file " + get_windows_msi_template_file_path +
         " --server-url http://localhost:8889" + get_winrm_credentials + " --yes" }

@@ -18,11 +18,11 @@
 # limitations under the License.
 #
 
-require File.expand_path('../azure_base', __FILE__)
+require File.expand_path("../azure_base", __FILE__)
 
 # These two are needed for the '--purge' deletion case
-require 'chef/node'
-require 'chef/api_client'
+require "chef/node"
+require "chef/api_client"
 
 class Chef
   class Knife
@@ -84,22 +84,20 @@ class Chef
       # the user is already making their intent known.  It is not
       # necessary to make them confirm two more times.
       def destroy_item(klass, name, type_name)
-        begin
-          object = klass.load(name)
-          object.destroy
-          ui.warn("Deleted #{type_name} #{name}")
-        rescue Net::HTTPServerException
-          ui.warn("Could not find a #{type_name} named #{name} to delete. Please provide --node-name option and it's value")
-        end
+        object = klass.load(name)
+        object.destroy
+        ui.warn("Deleted #{type_name} #{name}")
+      rescue Net::HTTPServerException
+        ui.warn("Could not find a #{type_name} named #{name} to delete. Please provide --node-name option and it's value")
       end
 
       def validate_disk_and_storage
-         if locate_config_value(:preserve_azure_os_disk) && locate_config_value(:delete_azure_storage_account)
-            ui.warn("Cannot delete storage account while keeping OS Disk. Please set any one option.")
-            exit
-          else
-            true
-          end
+        if locate_config_value(:preserve_azure_os_disk) && locate_config_value(:delete_azure_storage_account)
+          ui.warn("Cannot delete storage account while keeping OS Disk. Please set any one option.")
+          exit
+        else
+          true
+         end
       end
 
       def run
@@ -108,16 +106,16 @@ class Chef
         @name_args.each do |name|
           begin
             service.delete_server( { name: name, preserve_azure_os_disk: locate_config_value(:preserve_azure_os_disk),
-                                    preserve_azure_vhd: locate_config_value(:preserve_azure_vhd),
-                                    preserve_azure_dns_name: locate_config_value(:preserve_azure_dns_name),
-                                    delete_azure_storage_account: locate_config_value(:delete_azure_storage_account),
+                                     preserve_azure_vhd: locate_config_value(:preserve_azure_vhd),
+                                     preserve_azure_dns_name: locate_config_value(:preserve_azure_dns_name),
+                                     delete_azure_storage_account: locate_config_value(:delete_azure_storage_account),
                                      wait: locate_config_value(:wait) } )
 
             if config[:purge]
               node_to_delete = config[:chef_node_name] || name
               if node_to_delete
-                destroy_item(Chef::Node, node_to_delete, 'node')
-                destroy_item(Chef::ApiClient, node_to_delete, 'client')
+                destroy_item(Chef::Node, node_to_delete, "node")
+                destroy_item(Chef::ApiClient, node_to_delete, "client")
               else
                 ui.warn("Node name to purge not provided. Corresponding client node will remain on Chef Server.")
               end

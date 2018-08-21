@@ -1,4 +1,4 @@
-$:.unshift(File.dirname(__FILE__) + "/lib")
+$LOAD_PATH.unshift(File.dirname(__FILE__) + "/lib")
 require "knife-azure/version"
 
 Gem::Specification.new do |s|
@@ -19,13 +19,13 @@ Gem::Specification.new do |s|
   s.require_paths = ["lib"]
   s.required_ruby_version = ">= 2.3"
 
-  s.add_dependency "nokogiri", ">= 1.5.5"
-  s.add_dependency "knife-windows", "~> 1.0"
-  s.add_dependency "azure_mgmt_resources", "0.9.0"
   s.add_dependency "azure_mgmt_compute", "0.9.0"
-  s.add_dependency "azure_mgmt_storage", "0.9.0"
   s.add_dependency "azure_mgmt_network", "0.9.0"
-  s.add_dependency "listen", "~> 3.0"
-  s.add_dependency "ipaddress"
+  s.add_dependency "azure_mgmt_resources", "0.9.0"
+  s.add_dependency "azure_mgmt_storage", "0.9.0"
   s.add_dependency "ffi"
+  s.add_dependency "ipaddress"
+  s.add_dependency "knife-windows", "~> 1.0"
+  s.add_dependency "listen", "~> 3.0"
+  s.add_dependency "nokogiri", ">= 1.5.5"
 end
