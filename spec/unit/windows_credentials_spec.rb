@@ -1,6 +1,6 @@
 #
 # Author:: Nimisha Sharad (<nimisha.sharad@msystechnologies.com>)
-# Copyright:: Copyright (c) 2013 Opscode, Inc.#
+# Copyright:: Copyright 2013-2018 Chef Software, Inc.
 
 require File.expand_path(File.dirname(__FILE__) + "/../spec_helper")
 require File.expand_path(File.dirname(__FILE__) + "/../unit/query_azure_mock")
