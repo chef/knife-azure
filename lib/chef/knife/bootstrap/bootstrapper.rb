@@ -331,7 +331,9 @@ class Chef
           pri_config = Hash.new
 
           # validator less bootstrap support for bootstrap protocol cloud-api
-          if (Chef::Config[:validation_key] && !File.exist?(File.expand_path(Chef::Config[:validation_key])))
+          if Chef::Config[:validation_key] && File.exist?(File.expand_path(Chef::Config[:validation_key]))
+            pri_config[:validation_key] = File.read(Chef::Config[:validation_key])
+          else
             if Chef::VERSION.split('.').first.to_i == 11
               ui.error('Unable to find validation key. Please verify your configuration file for validation_key config value.')
               exit 1
@@ -348,8 +350,6 @@ class Chef
               key_path = create_node_and_client_pem
               pri_config[:client_pem] = File.read(key_path)
             end
-          else
-            pri_config[:validation_key] = File.read(Chef::Config[:validation_key])
           end
 
           # SSL cert bootstrap support
