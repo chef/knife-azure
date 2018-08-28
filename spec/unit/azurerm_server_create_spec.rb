@@ -55,7 +55,6 @@ describe Chef::Knife::AzurermServerCreate do
 
     allow(@service.ui).to receive(:log)
     allow(Chef::Log).to receive(:info)
-    allow(File).to receive(:exist?).and_return(true)
     allow(File).to receive(:read).and_return('foo')
     allow_any_instance_of(Chef::Knife::AzurermBase).to receive(:get_azure_cli_version).and_return("1.0.0")
   end
@@ -167,6 +166,7 @@ describe Chef::Knife::AzurermServerCreate do
           allow(@xplat_creds_cmd).to receive(:run_command).and_return(@result)
           allow(@result).to receive(:stdout).and_return("")
           @arm_server_instance.instance_variable_set(:@azure_prefix, "azure")
+          allow(File).to receive(:exist?).and_return(true)
         end
 
         it "azure_tenant_id not provided for Linux platform" do
@@ -258,6 +258,7 @@ describe Chef::Knife::AzurermServerCreate do
           Chef::Config[:knife][:azure_vm_size] = 'Medium'
           Chef::Config[:knife][:server_count] = 3
           Chef::Config[:knife][:ssh_public_key] = File.dirname(__FILE__) + "/assets/key_rsa.pub"
+          allow(File).to receive(:exist?).and_return(true)
         end
 
         it "azure_storage_account provided by user so vm_name does not get assigned to it" do
@@ -933,7 +934,7 @@ describe Chef::Knife::AzurermServerCreate do
         it "sets daemon variable in public config" do
           @arm_server_instance.config[:daemon] = 'service'
           allow(@arm_server_instance).to receive(:is_image_windows?).and_return(true)
-          public_config = {:client_rb=>"chef_server_url \t \"https://localhost:443\"\nvalidation_client_name\t\"chef-validator\"", :runlist=>"\"getting-started\"", extendedLogs: "false", :custom_json_attr=>{}, :hints=>["vm_name", "public_fqdn", "platform"], :daemon=>'service', :bootstrap_options=>{:chef_server_url=>"https://localhost:443", :validation_client_name=>"chef-validator"}}   
+          public_config = {:client_rb=>"chef_server_url \t \"https://localhost:443\"\nvalidation_client_name\t\"chef-validator\"", :runlist=>"\"getting-started\"", extendedLogs: "false", :custom_json_attr=>{}, :hints=>["vm_name", "public_fqdn", "platform"], :daemon=>'service', :bootstrap_options=>{:chef_server_url=>"https://localhost:443", :validation_client_name=>"chef-validator"}}
           response = @arm_server_instance.get_chef_extension_public_params
           expect(response).to be == public_config
         end
@@ -979,10 +980,8 @@ describe Chef::Knife::AzurermServerCreate do
       context 'when SSL certificate file option is passed but file does not exist physically' do
         before do
           allow_any_instance_of(Chef::Knife::Bootstrap::ClientBuilder).to receive(:run)
-          allow_any_instance_of(Chef::Knife::Bootstrap::ClientBuilder).to receive(:client_path)
-          allow(File).to receive(:exist?).and_return(false)
-          allow(File).to receive(:read).and_return('foo')
-          @arm_server_instance.config[:cert_path] = '~/my_cert.crt'
+          allow_any_instance_of(Chef::Knife::Bootstrap::ClientBuilder).to receive(:client_path).and_return(File.dirname(__FILE__) + '/assets/client.pem')
+          @arm_server_instance.config[:cert_path] = '~/tmp/my_cert.crt'
         end
 
         it 'raises an error and exits' do

@@ -348,7 +348,12 @@ class Chef
               config[:chef_node_name] = node_name
             else
               key_path = create_node_and_client_pem
-              pri_config[:client_pem] = File.read(key_path)
+              if File.exist?(key_path)
+                pri_config[:client_pem] = File.read(key_path)
+              else
+                ui.error('Unable to find client.pem at given path #{key_path}')
+                exit 1
+              end
             end
           end
 

@@ -1022,7 +1022,7 @@ describe Chef::Knife::AzureServerCreate do
 
       it 'uses Chef ClientBuilder to generate client_pem and sets private config properly' do
         expect_any_instance_of(Chef::Knife::Bootstrap::ClientBuilder).to receive(:run)
-        expect_any_instance_of(Chef::Knife::Bootstrap::ClientBuilder).to receive(:client_path)
+        expect_any_instance_of(Chef::Knife::Bootstrap::ClientBuilder).to receive(:client_path).and_return(File.dirname(__FILE__) + '/assets/client.pem')
         response = @server_instance.get_chef_extension_private_params
         expect(response).to be == private_config
       end
@@ -1057,9 +1057,7 @@ describe Chef::Knife::AzureServerCreate do
     context 'when SSL certificate file option is passed but file does not exist physically' do
       before do
         allow_any_instance_of(Chef::Knife::Bootstrap::ClientBuilder).to receive(:run)
-        allow_any_instance_of(Chef::Knife::Bootstrap::ClientBuilder).to receive(:client_path)
-        allow(File).to receive(:exist?).and_return(false)
-        allow(File).to receive(:read).and_return('foo')
+        allow_any_instance_of(Chef::Knife::Bootstrap::ClientBuilder).to receive(:client_path).and_return(File.dirname(__FILE__) + '/assets/client.pem')
         @server_instance.config[:cert_path] = '~/my_cert.crt'
       end
 
