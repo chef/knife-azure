@@ -275,7 +275,7 @@ class Chef
         def get_chef_extension_public_params
           pub_config = Hash.new
           if(locate_config_value(:azure_extension_client_config))
-            pub_config[:client_rb] = File.read(locate_config_value(:azure_extension_client_config))
+            pub_config[:client_rb] = File.read(File.expand_path(locate_config_value(:azure_extension_client_config)))
           else
             pub_config[:client_rb] = "chef_server_url \t #{Chef::Config[:chef_server_url].to_json}\nvalidation_client_name\t#{Chef::Config[:validation_client_name].to_json}"
           end
@@ -332,7 +332,7 @@ class Chef
 
           # validator less bootstrap support for bootstrap protocol cloud-api
           if Chef::Config[:validation_key] && File.exist?(File.expand_path(Chef::Config[:validation_key]))
-            pri_config[:validation_key] = File.read(Chef::Config[:validation_key])
+            pri_config[:validation_key] = File.read(File.expand_path(Chef::Config[:validation_key]))
           else
             if Chef::VERSION.split('.').first.to_i == 11
               ui.error('Unable to find validation key. Please verify your configuration file for validation_key config value.')
@@ -360,7 +360,7 @@ class Chef
           # SSL cert bootstrap support
           if locate_config_value(:cert_path)
             if File.exist?(File.expand_path(locate_config_value(:cert_path)))
-              pri_config[:chef_server_crt] = File.read(locate_config_value(:cert_path))
+              pri_config[:chef_server_crt] = File.read(File.expand_path(locate_config_value(:cert_path)))
             else
               ui.error('Specified SSL certificate does not exist.')
               exit 1
