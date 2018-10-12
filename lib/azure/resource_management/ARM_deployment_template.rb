@@ -93,6 +93,7 @@ module Azure::ARM
 
         # virtualMachines Resource Variables
         vmName = "[concat(variables('vmName'),copyIndex())]"
+        vmSize = "[concat(variables('vmSize'),copyIndex())]"
         vmId = "[resourceId('Microsoft.Compute/virtualMachines', concat(variables('vmName'),copyIndex()))]"
         depVm2="[concat('Microsoft.Network/networkInterfaces/', variables('nicName'), copyIndex())]"
         computerName = "[concat(variables('vmName'),copyIndex())]"
@@ -115,6 +116,7 @@ module Azure::ARM
 
         # virtualMachines Resource Variables
         vmName = "[variables('vmName')]"
+        vmSize = "[variables('vmSize')]"
         vmId = "[resourceId('Microsoft.Compute/virtualMachines', variables('vmName'))]"
         depVm2="[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
         computerName = "[variables('vmName')]"

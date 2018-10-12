@@ -707,6 +707,30 @@ describe Chef::Knife::AzurermServerCreate do
         response = @service.create_virtual_machine_using_template(@params)
         expect(response).to_not be nil
       end
+
+      context "when VM size is given by user" do
+        before do
+          allow(@service).to receive(:resource_management_client).and_return(@resource_client)
+        end
+
+        it "If VM size is valid, successfully returns virtual machine create response" do
+          @params[:azure_vm_size] = "Standard_F2"
+          expect(@service).to receive(:create_deployment_template).with(@params)
+          expect(@service).to receive(:create_deployment_parameters)
+          expect(@service).to receive(:resource_management_client).and_return(
+            stub_resource_management_client)
+          @service.create_virtual_machine_using_template(@params)
+        end
+
+        it "If VM size is invalid, raises an exception" do
+          @params[:azure_vm_size] = "abcdf"
+          expect(@service).to receive(:create_deployment_template).with(@params)
+          expect(@service).to receive(:create_deployment_parameters)
+          allow(@resource_client).to receive_message_chain(
+            :deployments, :create_or_update).and_raise(Exception)
+          expect{ @service.create_virtual_machine_using_template(@params) }.to raise_error(Exception)
+        end
+      end
     end
 
     describe "vm_public_ip" do

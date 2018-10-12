@@ -84,8 +84,8 @@ https://github.com/chef/knife-windows#nodes
                                         be unique within the deployment.
       :azure_os_disk_name               Optional. Specifies the friendly name of the disk containing
                                         the guest OS image in the image repository.
-      :azure_vm_size                    Size of virtual machine. Default is Small.
-                                        (ExtraSmall, Small, Medium, Large, ExtraLarge)
+      :azure_vm_size                    Size of virtual machine. Default is Small. Accepts all valid size of virual machine.
+                                        Eg: ExtraSmall, Small, Medium, Large, ExtraLarge, Standard_A1, Standard_F2, Standard_G1 etc.
       :azure_connect_to_existing_dns    Set this flag to add the new VM to an existing
                                         deployment/service. Must give the name of the existing
                                         DNS correctly in the --azure-dns-name option
