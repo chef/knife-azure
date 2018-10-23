@@ -26,6 +26,8 @@ Note: `--azure-image-os-type` option should not be passed with `--azure-image-re
 
 To see a list of commonly used image parameters, please refer https://azure.microsoft.com/en-in/documentation/articles/resource-groups-vm-searching/#table-of-commonly-used-images
 
+By default --azure-vm-size will be Standard_A1_v2 and For all valid --azure-vm-size values you can refer to this [docs](https://docs.microsoft.com/en-us/azure/virtual-machines/windows/sizes).
+
 For Windows:
 
 ```
@@ -62,7 +64,7 @@ knife azurerm server create
   --azure-service-location 'westus'
   --azure-image-os-type centos
   --azure-image-reference-sku '6.5'
-  --azure-vm-size Small
+  --azure-vm-size Standard_A1_v2
   --ssh-user myuser --ssh-password mypassword
   -r "recipe[cbk1::rec1]"
   -c ~/.chef/knife.rb
@@ -78,7 +80,7 @@ knife azurerm server create
   --azure-image-reference-sku '6.5'
   --azure-image-reference-version 'latest'
   --ssh-user myuser --ssh-password mypassword
-  --azure-vm-size Small
+  --azure-vm-size Standard_A1_v2
   -r "recipe[cbk1::rec1]"
   -c ~/.chef/knife.rb
 ```
@@ -93,7 +95,7 @@ knife azurerm server create
   --azure-image-os-type ubuntu
   --azure-image-reference-sku '14.04.2-LTS'
   --ssh-user myuser --ssh-password mypassword
-  --azure-vm-size Small
+  --azure-vm-size Standard_A1_v2
   -r "recipe[cbk1::rec1]"
   -c ~/.chef/knife.rb
 ```
@@ -108,7 +110,7 @@ knife azurerm server create
   --azure-image-reference-sku '14.04.2-LTS'
   --azure-image-reference-version 'latest'
   --ssh-user myuser --ssh-password mypassword
-  --azure-vm-size Small
+  --azure-vm-size Standard_A1_v2
   -r "recipe[cbk1::rec1]"
   -c ~/.chef/knife.rb
 ```
@@ -122,7 +124,7 @@ knife azurerm server create
   --azure-service-location 'westus'
   --azure-image-os-type rhel
   --ssh-user myuser --ssh-password mypassword
-  --azure-vm-size Small
+  --azure-vm-size Standard_A1_v2
   -r "recipe[cbk1::rec1]"
   -c ~/.chef/knife.rb
 ```
@@ -137,7 +139,7 @@ knife azurerm server create
   --azure-image-reference-sku '7.2'
   --azure-image-reference-version 'latest'
   --ssh-user myuser --ssh-password mypassword
-  --azure-vm-size Small
+  --azure-vm-size Standard_A1_v2
   -r "recipe[cbk1::rec1]"
   -c ~/.chef/knife.rb
 ```
@@ -151,7 +153,7 @@ knife azurerm server create
   --azure-service-location 'westus'
   --azure-image-os-type debian
   --ssh-user myuser --ssh-password mypassword
-  --azure-vm-size Small
+  --azure-vm-size Standard_A1_v2
   -r "recipe[cbk1::rec1]"
   -c ~/.chef/knife.rb
 ```
@@ -166,7 +168,7 @@ knife azurerm server create
   --azure-image-reference-sku '7'
   --azure-image-reference-version 'latest'
   --ssh-user myuser --ssh-password mypassword
-  --azure-vm-size Small
+  --azure-vm-size Standard_A1_v2
   -r "recipe[cbk1::rec1]"
   -c ~/.chef/knife.rb
 ```
@@ -203,7 +205,7 @@ knife azurerm server create
   --azure-service-location 'westus'
   --azure-image-os-type ubuntu
   --ssh-user myuser --ssh-password mypassword
-  --azure-vm-size Small
+  --azure-vm-size Standard_A1_v2
   -r "recipe[cbk1::rec1]"
   -c ~/.chef/knife.rb
 ```
@@ -215,7 +217,7 @@ knife azurerm server create
   --azure-service-location 'westus'
   --azure-image-os-type ubuntu
   --ssh-user myuser --ssh-password mypassword
-  --azure-vm-size Small
+  --azure-vm-size Standard_A1_v2
   --azure-vnet-name 'VnetName'
   --azure-vnet-subnet-name 'VnetSubnetName'
   -r "recipe[cbk1::rec1]"
@@ -229,7 +231,7 @@ knife azurerm server create
   --azure-service-location 'westus'
   --azure-image-os-type ubuntu
   --ssh-user myuser --ssh-password mypassword
-  --azure-vm-size Small
+  --azure-vm-size Standard_A1_v2
   --azure-vnet-name 'VnetName'
   -r "recipe[cbk1::rec1]"
   -c ~/.chef/knife.rb
@@ -246,7 +248,7 @@ knife azurerm server create
 --azure-vm-name my-new-vm-name
 --azure-service-location 'westus'
 --azure-image-os-type centos
---azure-vm-size Small
+--azure-vm-size Standard_A1_v2
 --server-count 3
 -x myuser -P mypassword
 ```
@@ -262,7 +264,7 @@ knife azurerm server create
 --azure-vm-name my-new-vm-name
 --azure-service-location 'westus'
 --azure-image-os-type centos
---azure-vm-size Small
+--azure-vm-size Standard_A1_v2
 --extended-logs
 -x myuser -P mypassword
 ```
@@ -277,7 +279,7 @@ knife azurerm server create
 --azure-vm-name my-new-vm-name
 --azure-service-location 'westus'
 --azure-image-os-type centos
---azure-vm-size Small
+--azure-vm-size Standard_A1_v2
 --tcp-endpoints '100,123'
 -x myuser -P mypassword
 ```
@@ -297,7 +299,7 @@ knife azurerm server create
 --azure-vm-name my-new-vm-name
 --azure-service-location 'westus'
 --azure-image-os-type centos
---azure-vm-size Small
+--azure-vm-size Standard_A1_v2
 --ohai-hints 'vm_name,platform'
 -x myuser -P mypassword
 ```
@@ -319,7 +321,7 @@ knife azurerm server create
 --azure-vm-name my-new-vm-name
 --azure-service-location 'westus'
 --azure-image-os-type centos
---azure-vm-size Small
+--azure-vm-size Standard_A1_v2
 --azure-storage-account 'teststorage'
 -x myuser -P mypassword
 ```
@@ -337,7 +339,7 @@ knife azurerm server create
 --azure-vm-name my-new-vm-name
 --azure-service-location 'westus'
 --azure-image-os-type centos
---azure-vm-size Small
+--azure-vm-size Standard_A1_v2
 --azure-storage-account 'teststorage'
 -x myuser -P mypassword
 ```

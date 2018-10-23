@@ -10,17 +10,17 @@ location in your knife.rb:
       $ knife azure server list
 
       # Create and bootstrap a Windows VM over winrm (winrm is the default for Windows)
-      $ knife azure server create --azure-dns-name MyNewServerName --azure-vm-size Medium -I a699494373c04fc0bc8f2bb1389d6106__Windows-Server-2012-R2-20150825-en.us-127GB.vhd --azure-service-location 'West US' --winrm-user myuser --winrm-password 'mypassword'
+      $ knife azure server create --azure-dns-name MyNewServerName --azure-vm-size Standard_A2 -I a699494373c04fc0bc8f2bb1389d6106__Windows-Server-2012-R2-20150825-en.us-127GB.vhd --azure-service-location 'West US' --winrm-user myuser --winrm-password 'mypassword'
 
       # Create and bootstrap a Windows VM over winrm using SSL (winrm is the default for Windows)
-      $ knife azure server create --azure-dns-name MyNewServerName --azure-vm-size Medium -I a699494373c04fc0bc8f2bb1389d6106__Windows-Server-2012-R2-20150825-en.us-127GB.vhd --azure-service-location 'West US' --winrm-user myuser --winrm-password 'mypassword' --winrm-transport ssl --winrm-ssl-verify-mode verify_none
+      $ knife azure server create --azure-dns-name MyNewServerName --azure-vm-size Standard_A2 -I a699494373c04fc0bc8f2bb1389d6106__Windows-Server-2012-R2-20150825-en.us-127GB.vhd --azure-service-location 'West US' --winrm-user myuser --winrm-password 'mypassword' --winrm-transport ssl --winrm-ssl-verify-mode verify_none
 
       # Create and bootstrap an Ubuntu VM over ssh
-      $ knife azure server create -N MyNewNode --azure-vm-size Medium -I b39f27a8b8c64d52b05eac6a62ebad85__Ubuntu-14_04_1-LTS-amd64-server-20140927-en-us-30GB -m 'West US' --ssh-user myuser --identity-file ~/.ssh/myprivatekey_rsa
+      $ knife azure server create -N MyNewNode --azure-vm-size Standard_A2 -I b39f27a8b8c64d52b05eac6a62ebad85__Ubuntu-14_04_1-LTS-amd64-server-20140927-en-us-30GB -m 'West US' --ssh-user myuser --identity-file ~/.ssh/myprivatekey_rsa
 
       # Create and bootstrap an Windows VM through the Azure API --
       # No winrm or ssh transport or Internet access required
-      $ knife azure server create --azure-dns-name MyNewServerName --azure-vm-size Medium -I a699494373c04fc0bc8f2bb1389d6106__Windows-Server-2012-R2-20150825-en.us-127GB.vhd --azure-service-location 'West US' --winrm-user myuser --winrm-password 'mypassword' --bootstrap-protocol cloud-api
+      $ knife azure server create --azure-dns-name MyNewServerName --azure-vm-size Standard_A2 -I a699494373c04fc0bc8f2bb1389d6106__Windows-Server-2012-R2-20150825-en.us-127GB.vhd --azure-service-location 'West US' --winrm-user myuser --winrm-password 'mypassword' --bootstrap-protocol cloud-api
 
       # Delete a server and purge it from the Chef server
       $ knife azure server delete MyNewNode --purge -y
@@ -64,32 +64,34 @@ authentication should be set accordingly (Basic, NTLM and Kerberos). Firewall ru
 https://github.com/chef/knife-windows#nodes
 
 #### Azure-specific Options
-      :azure_dns_name                   Required. The DNS prefix name that can be used to access the cloud
-                                        service which is unique within Microsoft Azure. If you want to add
-                                        new VM to an existing service/deployment, specify an exiting
-                                        dns-name, along with --azure-connect-to-existing-dns option. Otherwise
-                                        a new deployment is created.
-      :azure_service_location           Required. Specifies the geographic location of the resource as the
-                                        name of a datacenter location that is valid for your subscription. Eg:
-                                        West US, East US, East Asia, Southeast Asia, North Europe, West Europe.
-      :azure_source_image               Required. Specifies the name of the disk image to use to create
-                                        the virtual machine. Do a "knife azure image list" to see a
-                                        list of available images.
-      :azure_storage_account            A name for the storage account that is unique within Microsoft Azure.
-                                        Storage account names must be between 3 and 24 characters in
-                                        length and use numbers and lower-case letters only. This name is
-                                        the DNS prefix name and can be used to access blobs, queues, and
-                                        tables in the storage account.
-      :azure_vm_name                    Specifies the name for the virtual machine. The name must
-                                        be unique within the deployment.
-      :azure_os_disk_name               Optional. Specifies the friendly name of the disk containing
-                                        the guest OS image in the image repository.
-      :azure_vm_size                    Size of virtual machine. Default is Small. Accepts all valid size of virual machine.
-                                        Eg: ExtraSmall, Small, Medium, Large, ExtraLarge, Standard_A1, Standard_F2, Standard_G1 etc.
-      :azure_connect_to_existing_dns    Set this flag to add the new VM to an existing
-                                        deployment/service. Must give the name of the existing
-                                        DNS correctly in the --azure-dns-name option
-      :azure_availability_set           Optional. Name of availability set to add virtual machine into.
+      --azure-dns-name                   Required. The DNS prefix name that can be used to access the cloud
+                                         service which is unique within Microsoft Azure. If you want to add
+                                         new VM to an existing service/deployment, specify an exiting
+                                         dns-name, along with --azure-connect-to-existing-dns option. Otherwise
+                                         a new deployment is created.
+      --azure-service-location           Required. Specifies the geographic location of the resource as the
+                                         name of a datacenter location that is valid for your subscription. Eg:
+                                         West US, East US, East Asia, Southeast Asia, North Europe, West Europe.
+      --azure-source-image               Required. Specifies the name of the disk image to use to create
+                                         the virtual machine. Do a "knife azure image list" to see a
+                                         list of available images.
+      --azure-storage-account            A name for the storage account that is unique within Microsoft Azure.
+                                         Storage account names must be between 3 and 24 characters in
+                                         length and use numbers and lower-case letters only. This name is
+                                         the DNS prefix name and can be used to access blobs, queues, and
+                                         tables in the storage account.
+      --azure-vm-name                    Specifies the name for the virtual machine. The name must
+                                         be unique within the deployment.
+      --azure-os-disk-name               Optional. Specifies the friendly name of the disk containing
+                                         the guest OS image in the image repository.
+      --azure-vm-size                    Size of virtual machine. Default is Standard_A1_v2.
+                                         Eg: Standard_A2, Standard_F2, Standard_G1, Standard_F2 etc.
+      --azure-connect-to-existing-dns    Set this flag to add the new VM to an existing
+                                         deployment/service. Must give the name of the existing
+                                         DNS correctly in the --azure-dns-name option
+      --azure-availability-set           Optional. Name of availability set to add virtual machine into.
+
+Note: For all valid --azure-vm-size values you can refer to this [docs](https://docs.microsoft.com/en-us/azure/virtual-machines/windows/sizes).
 
 #### Azure VM Quick Create
 You can create a server with minimal configuration. On the Azure Management Portal, this corresponds to a "Quick Create - VM". Sample command for quick create (for an Ubuntu instance):
@@ -266,7 +268,7 @@ Following options are used for creating server with domain join
     :azure_domain_passwd    Specifies the password for domain user who has access to join the domain
 
     Command:
-    knife azure server create -I a699494373c04fc0bc8f2bb1389d6106__Windows-Server-2012-Datacenter-20151022-en.us-127GB.vhd --azure-vm-size Medium  -x 'azure' -P 'admin@123' --azure-domain-passwd 'admin@123' --azure-domain-user 'some.domain.com\user' --azure-domain-name 'some.domain.com' -c '~\chef-repo\.chef\knife.rb' --azure-network-name 'mynetwork' --azure-subnet-name 'subnet1' --azure-service-location 'West US'
+    knife azure server create -I a699494373c04fc0bc8f2bb1389d6106__Windows-Server-2012-Datacenter-20151022-en.us-127GB.vhd --azure-vm-size Standard_A2 -x 'azure' -P 'admin@123' --azure-domain-passwd 'admin@123' --azure-domain-user 'some.domain.com\user' --azure-domain-name 'some.domain.com' -c '~\chef-repo\.chef\knife.rb' --azure-network-name 'mynetwork' --azure-subnet-name 'subnet1' --azure-service-location 'West US'
 
 
 ### Azure Server Delete Subcommand

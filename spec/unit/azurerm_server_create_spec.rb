@@ -1243,7 +1243,7 @@ describe Chef::Knife::AzurermServerCreate do
         :azure_image_reference_version => 'latest',
         :ssh_user => 'ssh_user',
         :server_count => 3,
-        :vm_size => "Standard_A1"
+        :vm_size => "Standard_A1_v2"
       }.each do |key, value|
           @params[key] = value
         end
@@ -1269,7 +1269,7 @@ describe Chef::Knife::AzurermServerCreate do
       expect(template["variables"]["publicIPAddressName"]).to be == "test-vm"
       expect(template["variables"]["vmStorageAccountContainerName"]).to be == "test-vm"
       expect(template["variables"]["vmName"]).to be == "test-vm"
-      expect(template["variables"]["vmSize"]).to be == "Standard_A1"
+      expect(template["variables"]["vmSize"]).to be == "Standard_A1_v2"
       expect(template["variables"]["virtualNetworkName"]).to be == "vnet1"
       expect(template["variables"]["vmExtensionName"]).to be == "chef_extension"
 
