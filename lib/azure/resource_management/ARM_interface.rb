@@ -26,20 +26,21 @@ require "azure_mgmt_network"
 module Azure
   class ResourceManagement
     class ARMInterface < AzureInterface
+      include Azure::ARM::ARMBase
       include Azure::ARM::ARMDeploymentTemplate
       include Azure::ARM::VnetConfig
 
-      include Azure::ARM::Resources
-      include Azure::ARM::Resources::Models
+      include Azure::Resources::Mgmt::V2018_05_01
+      include Azure::Resources::Mgmt::V2018_05_01::Models
 
-      include Azure::ARM::Compute
-      include Azure::ARM::Compute::Models
+      include Azure::Compute::Mgmt::V2018_06_01
+      include Azure::Compute::Mgmt::V2018_06_01::Models
 
-      include Azure::ARM::Storage
-      include Azure::ARM::Storage::Models
+      include Azure::Storage::Mgmt::V2018_07_01
+      include Azure::Storage::Mgmt::V2018_07_01::Models
 
-      include Azure::ARM::Network
-      include Azure::ARM::Network::Models
+      include Azure::Network::Mgmt::V2018_08_01
+      include Azure::Network::Mgmt::V2018_08_01::Models
 
       attr_accessor :connection
 
