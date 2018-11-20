@@ -1,25 +1,23 @@
 # knife-azure Change Log
 
-<!-- latest_release 1.8.6 -->
-## [v1.8.6](https://github.com/chef/knife-azure/tree/v1.8.6) (2018-09-12)
-
-#### Merged Pull Requests
-- Fix for validatorless bootstrap. [#487](https://github.com/chef/knife-azure/pull/487) ([Vasu1105](https://github.com/Vasu1105))
+<!-- latest_release -->
 <!-- latest_release -->
 
-<!-- release_rollup since=1.8.0 -->
-### Changes since 1.8.0 release
-
-#### Merged Pull Requests
-- Fix for validatorless bootstrap. [#487](https://github.com/chef/knife-azure/pull/487) ([Vasu1105](https://github.com/Vasu1105)) <!-- 1.8.6 -->
-- Add github issue/PR templates and a codeowners file [#484](https://github.com/chef/knife-azure/pull/484) ([tas50](https://github.com/tas50)) <!-- 1.8.5 -->
-- Remove require on highline as knife does this [#482](https://github.com/chef/knife-azure/pull/482) ([tas50](https://github.com/tas50)) <!-- 1.8.4 -->
-- Test on modern Ruby releases in Travis [#480](https://github.com/chef/knife-azure/pull/480) ([tas50](https://github.com/tas50)) <!-- 1.8.3 -->
-- Remove github changelog generator dep [#479](https://github.com/chef/knife-azure/pull/479) ([tas50](https://github.com/tas50)) <!-- 1.8.2 -->
+<!-- release_rollup -->
 <!-- release_rollup -->
 
 <!-- latest_stable_release -->
+## [v1.8.6](https://github.com/chef/knife-azure/tree/v1.8.6) (2018-11-20)
+
+#### Merged Pull Requests
+- Remove github changelog generator dep [#479](https://github.com/chef/knife-azure/pull/479) ([tas50](https://github.com/tas50))
+- Test on modern Ruby releases in Travis [#480](https://github.com/chef/knife-azure/pull/480) ([tas50](https://github.com/tas50))
+- Remove require on highline as knife does this [#482](https://github.com/chef/knife-azure/pull/482) ([tas50](https://github.com/tas50))
+- Add github issue/PR templates and a codeowners file [#484](https://github.com/chef/knife-azure/pull/484) ([tas50](https://github.com/tas50))
+- Fix for validatorless bootstrap. [#487](https://github.com/chef/knife-azure/pull/487) ([Vasu1105](https://github.com/Vasu1105))
 <!-- latest_stable_release -->
+
+
 
 ## [v1.8.0](https://github.com/chef/knife-azure/tree/v1.8.0) (2017-09-28)
 
