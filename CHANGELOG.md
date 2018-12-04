@@ -1,9 +1,17 @@
 # knife-azure Change Log
 
-<!-- latest_release -->
+<!-- latest_release 1.8.7 -->
+## [v1.8.7](https://github.com/chef/knife-azure/tree/v1.8.7) (2018-12-04)
+
+#### Merged Pull Requests
+- Don&#39;t ship the readme in the gem artifact [#492](https://github.com/chef/knife-azure/pull/492) ([tas50](https://github.com/tas50))
 <!-- latest_release -->
 
-<!-- release_rollup -->
+<!-- release_rollup since=1.8.6 -->
+### Changes since 1.8.6 release
+
+#### Merged Pull Requests
+- Don&#39;t ship the readme in the gem artifact [#492](https://github.com/chef/knife-azure/pull/492) ([tas50](https://github.com/tas50)) <!-- 1.8.7 -->
 <!-- release_rollup -->
 
 <!-- latest_stable_release -->
