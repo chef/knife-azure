@@ -1,20 +1,18 @@
 # knife-azure Change Log
 
-<!-- latest_release 1.8.7 -->
+<!-- latest_release -->
+<!-- latest_release -->
+
+<!-- release_rollup -->
+<!-- release_rollup -->
+
+<!-- latest_stable_release -->
 ## [v1.8.7](https://github.com/chef/knife-azure/tree/v1.8.7) (2018-12-04)
 
 #### Merged Pull Requests
 - Don&#39;t ship the readme in the gem artifact [#492](https://github.com/chef/knife-azure/pull/492) ([tas50](https://github.com/tas50))
-<!-- latest_release -->
-
-<!-- release_rollup since=1.8.6 -->
-### Changes since 1.8.6 release
-
-#### Merged Pull Requests
-- Don&#39;t ship the readme in the gem artifact [#492](https://github.com/chef/knife-azure/pull/492) ([tas50](https://github.com/tas50)) <!-- 1.8.7 -->
-<!-- release_rollup -->
-
 <!-- latest_stable_release -->
+
 ## [v1.8.6](https://github.com/chef/knife-azure/tree/v1.8.6) (2018-11-20)
 
 #### Merged Pull Requests
@@ -23,7 +21,6 @@
 - Remove require on highline as knife does this [#482](https://github.com/chef/knife-azure/pull/482) ([tas50](https://github.com/tas50))
 - Add github issue/PR templates and a codeowners file [#484](https://github.com/chef/knife-azure/pull/484) ([tas50](https://github.com/tas50))
 - Fix for validatorless bootstrap. [#487](https://github.com/chef/knife-azure/pull/487) ([Vasu1105](https://github.com/Vasu1105))
-<!-- latest_stable_release -->
 
 
 
