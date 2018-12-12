@@ -4,9 +4,9 @@
 
 Bootstrap existing Azure ARM VM using following command:
 
-```knife bootstrap azurerm <server> --azure-resource-group-name <Resource Grp> --azure-service-location <location>```
+```knife bootstrap azurerm <server> --azure-resource-group-name <resource_group_name> --azure-service-location <location>```
 
-```$ knife bootstrap azurerem myVMName --azure-resource-group-name myRersourGroup --azure-service-location 'westus'```
+```$ knife bootstrap azurerm myVMName --azure-resource-group-name myResourceGroup --azure-service-location 'westus'```
 
 You can use other options like --azure-dns-name, --bootstrap-version with this command and there are many more options which can be used with this command. Use --help to identify more options.
 
