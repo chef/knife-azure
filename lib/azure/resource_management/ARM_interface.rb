@@ -26,7 +26,6 @@ require "azure_mgmt_network"
 module Azure
   class ResourceManagement
     class ARMInterface < AzureInterface
-      include Azure::ARM::ARMBase
       include Azure::ARM::ARMDeploymentTemplate
       include Azure::ARM::VnetConfig
 
