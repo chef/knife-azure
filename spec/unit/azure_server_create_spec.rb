@@ -1023,7 +1023,7 @@ describe Chef::Knife::AzureServerCreate do
 
       it "uses Chef ClientBuilder to generate client_pem and sets private config properly" do
         expect_any_instance_of(Chef::Knife::Bootstrap::ClientBuilder).to receive(:run)
-        expect_any_instance_of(Chef::Knife::Bootstrap::ClientBuilder).to receive(:client_path).and_return(File.dirname(__FILE__) + '/assets/client.pem')
+        expect_any_instance_of(Chef::Knife::Bootstrap::ClientBuilder).to receive(:client_path).and_return(File.dirname(__FILE__) + "/assets/client.pem")
         response = @server_instance.get_chef_extension_private_params
         expect(response).to be == private_config
       end

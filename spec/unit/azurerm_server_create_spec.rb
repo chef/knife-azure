@@ -729,7 +729,7 @@ describe Chef::Knife::AzurermServerCreate do
           expect(@service).to receive(:create_deployment_parameters)
           allow(@resource_client).to receive_message_chain(
             :deployments, :create_or_update).and_raise(Exception)
-          expect{ @service.create_virtual_machine_using_template(@params) }.to raise_error(Exception)
+          expect { @service.create_virtual_machine_using_template(@params) }.to raise_error(Exception)
         end
       end
     end
@@ -959,7 +959,7 @@ describe Chef::Knife::AzurermServerCreate do
         it "sets daemon variable in public config" do
           @arm_server_instance.config[:daemon] = "service"
           allow(@arm_server_instance).to receive(:is_image_windows?).and_return(true)
-          public_config = { :client_rb => "chef_server_url \t \"https://localhost:443\"\nvalidation_client_name\t\"chef-validator\"", :runlist => "\"getting-started\"", extendedLogs: "false", :custom_json_attr => {}, :hints => ["vm_name", "public_fqdn", "platform"], :daemon => "service", :bootstrap_options => { :chef_server_url => "https://localhost:443", :validation_client_name => "chef-validator" } }
+          public_config = { :client_rb => "chef_server_url \t \"https://localhost:443\"\nvalidation_client_name\t\"chef-validator\"", :runlist => "\"getting-started\"", extendedLogs: "false", :custom_json_attr => {}, :hints => %w{vm_name public_fqdn platform}, :daemon => "service", :bootstrap_options => { :chef_server_url => "https://localhost:443", :validation_client_name => "chef-validator" } }
           response = @arm_server_instance.get_chef_extension_public_params
           expect(response).to be == public_config
         end

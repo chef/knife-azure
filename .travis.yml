@@ -1,14 +1,6 @@
 sudo: false
 language: ruby
 cache: bundler
-dist: trusty
-sudo: false
-rvm:
-  - 2.2.10
-  - 2.3.8
-  - 2.4.5
-  - 2.5.3
-  - ruby-head
 
 matrix:
   include:

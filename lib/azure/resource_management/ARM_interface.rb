@@ -16,7 +16,6 @@
 #
 
 require "azure/azure_interface"
-require "azure/resource_management/ARM_base"
 require "azure/resource_management/ARM_deployment_template"
 require "azure/resource_management/vnet_config"
 require "azure_mgmt_resources"
@@ -27,7 +26,6 @@ require "azure_mgmt_network"
 module Azure
   class ResourceManagement
     class ARMInterface < AzureInterface
-      include Azure::ARM::ARMBase
       include Azure::ARM::ARMDeploymentTemplate
       include Azure::ARM::VnetConfig
 

@@ -21,5 +21,4 @@ describe Chef::Knife::AzureAgList do
     )
     @server_instance.run
   end
-
 end
