@@ -1,9 +1,17 @@
 # knife-azure Change Log
 
-<!-- latest_release -->
+<!-- latest_release 1.8.8 -->
+## [v1.8.8](https://github.com/chef/knife-azure/tree/v1.8.8) (2018-12-17)
+
+#### Merged Pull Requests
+- Fix for unable to create VM with Standard_F2 or any valid sizes [#489](https://github.com/chef/knife-azure/pull/489) ([kapilchouhan99](https://github.com/kapilchouhan99))
 <!-- latest_release -->
 
-<!-- release_rollup -->
+<!-- release_rollup since=1.8.7 -->
+### Changes since 1.8.7 release
+
+#### Merged Pull Requests
+- Fix for unable to create VM with Standard_F2 or any valid sizes [#489](https://github.com/chef/knife-azure/pull/489) ([kapilchouhan99](https://github.com/kapilchouhan99)) <!-- 1.8.8 -->
 <!-- release_rollup -->
 
 <!-- latest_stable_release -->
