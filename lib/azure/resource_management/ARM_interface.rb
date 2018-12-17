@@ -14,7 +14,6 @@
 #
 
 require 'azure/azure_interface'
-require 'azure/resource_management/ARM_base'
 require 'azure/resource_management/ARM_deployment_template'
 require 'azure/resource_management/vnet_config'
 require 'azure_mgmt_resources'
@@ -25,7 +24,6 @@ require 'azure_mgmt_network'
 module Azure
   class ResourceManagement
     class ARMInterface < AzureInterface
-      include Azure::ARM::ARMBase
       include Azure::ARM::ARMDeploymentTemplate
       include Azure::ARM::VnetConfig
 
@@ -338,7 +336,7 @@ module Azure
           ui.log("INFO:Virtual Machine #{params[:azure_vm_name]} already exist under the Resource Group #{params[:azure_resource_group_name]}. Exiting for now.")
         else
           params[:chef_extension_version] = params[:chef_extension_version].nil? ? get_latest_chef_extension_version(params) : params[:chef_extension_version]
-          params[:vm_size] = get_vm_size(params[:azure_vm_size])
+          params[:vm_size] = params[:azure_vm_size]
           params[:vnet_config] = create_vnet_config(
             params[:azure_resource_group_name],
             params[:azure_vnet_name],

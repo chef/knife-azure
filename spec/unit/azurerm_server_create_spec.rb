@@ -707,6 +707,30 @@ describe Chef::Knife::AzurermServerCreate do
         response = @service.create_virtual_machine_using_template(@params)
         expect(response).to_not be nil
       end
+
+      context "when VM size is given by user" do
+        before do
+          allow(@service).to receive(:resource_management_client).and_return(@resource_client)
+        end
+
+        it "If VM size is valid, successfully returns virtual machine create response" do
+          @params[:azure_vm_size] = "Standard_F2"
+          expect(@service).to receive(:create_deployment_template).with(@params)
+          expect(@service).to receive(:create_deployment_parameters)
+          expect(@service).to receive(:resource_management_client).and_return(
+            stub_resource_management_client)
+          @service.create_virtual_machine_using_template(@params)
+        end
+
+        it "If VM size is invalid, raises an exception" do
+          @params[:azure_vm_size] = "abcdf"
+          expect(@service).to receive(:create_deployment_template).with(@params)
+          expect(@service).to receive(:create_deployment_parameters)
+          allow(@resource_client).to receive_message_chain(
+            :deployments, :create_or_update).and_raise(Exception)
+          expect{ @service.create_virtual_machine_using_template(@params) }.to raise_error(Exception)
+        end
+      end
     end
 
     describe "vm_public_ip" do
@@ -1219,7 +1243,7 @@ describe Chef::Knife::AzurermServerCreate do
         :azure_image_reference_version => 'latest',
         :ssh_user => 'ssh_user',
         :server_count => 3,
-        :vm_size => "Standard_A1"
+        :vm_size => "Standard_A1_v2"
       }.each do |key, value|
           @params[key] = value
         end
@@ -1245,7 +1269,7 @@ describe Chef::Knife::AzurermServerCreate do
       expect(template["variables"]["publicIPAddressName"]).to be == "test-vm"
       expect(template["variables"]["vmStorageAccountContainerName"]).to be == "test-vm"
       expect(template["variables"]["vmName"]).to be == "test-vm"
-      expect(template["variables"]["vmSize"]).to be == "Standard_A1"
+      expect(template["variables"]["vmSize"]).to be == "Standard_A1_v2"
       expect(template["variables"]["virtualNetworkName"]).to be == "vnet1"
       expect(template["variables"]["vmExtensionName"]).to be == "chef_extension"
 

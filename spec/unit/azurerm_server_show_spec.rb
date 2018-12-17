@@ -31,7 +31,7 @@ describe Chef::Knife::AzurermServerShow do
     network_interface_name = "myVMNIC"
     public_ip_id = "/subscriptions/xxx-xx-xxx-xxxxx/resourceGroups/xxxxxxx/providers/Microsoft.Network/publicIPAddresses/myPublicIP"
     public_ip_name = "mypublicip"
-    allow(@server).to receive_message_chain(:hardware_profile, :vm_size).and_return("Standard_A1")
+    allow(@server).to receive_message_chain(:hardware_profile, :vm_size).and_return("Standard_A1_v2")
     allow(@server).to receive(:provisioning_state).and_return("Succeeded")
     allow(@server).to receive_message_chain(:storage_profile, :image_reference, :publisher).and_return("Canonical")
     allow(@server).to receive_message_chain(:storage_profile, :image_reference, :offer).and_return("UbuntuServer")
@@ -74,7 +74,7 @@ describe Chef::Knife::AzurermServerShow do
     public_ip_id_data = nil
     network_interface_id = "/subscriptions/xxx-xx-xxx-xxxxx/resourceGroups/xxxxxxx/providers/Microsoft.Network/networkInterfaces/myVMNic"
     network_interface_name = "myVMNIC"
-    allow(@server).to receive_message_chain(:hardware_profile, :vm_size).and_return("Standard_A1")
+    allow(@server).to receive_message_chain(:hardware_profile, :vm_size).and_return("Standard_A1_v2")
     allow(@server).to receive(:provisioning_state).and_return("Succeeded")
     allow(@server).to receive_message_chain(:storage_profile, :image_reference, :publisher).and_return("Canonical")
     allow(@server).to receive_message_chain(:storage_profile, :image_reference, :offer).and_return("UbuntuServer")
@@ -114,7 +114,7 @@ describe Chef::Knife::AzurermServerShow do
     network_interface_name = "myVMNIC"
     public_ip_id = "/subscriptions/xxx-xx-xxx-xxxxx/resourceGroups/xxxxxxx/providers/Microsoft.Network/publicIPAddresses/myPublicIP"
     public_ip_name = "mypublicip"
-    allow(@server).to receive_message_chain(:hardware_profile, :vm_size).and_return("Standard_A1")
+    allow(@server).to receive_message_chain(:hardware_profile, :vm_size).and_return("Standard_A1_v2")
     allow(@server).to receive(:provisioning_state).and_return("Succeeded")
     allow(@server).to receive_message_chain(:storage_profile, :image_reference, :publisher).and_return("Canonical")
     allow(@server).to receive_message_chain(:storage_profile, :image_reference, :offer).and_return("UbuntuServer")

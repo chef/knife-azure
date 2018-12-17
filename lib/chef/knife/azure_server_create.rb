@@ -131,8 +131,9 @@ class Chef
       option :azure_vm_size,
         :short => "-z SIZE",
         :long => "--azure-vm-size SIZE",
-        :description => "Optional. Size of virtual machine (ExtraSmall, Small, Medium, Large, ExtraLarge)",
-        :default => 'Small',
+        :description => "Optional. Size of virtual machine. Default is Standard_A1_v2.
+                        Eg: Standard_A1_v2, Standard_F2, Standard_G1 etc.",
+        :default => 'Standard_A1_v2',
         :proc => Proc.new { |si| Chef::Config[:knife][:azure_vm_size] = si }
 
       option :azure_availability_set,
