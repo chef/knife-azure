@@ -1,6 +1,6 @@
 #
 # Author:: Aiman Alsari (aiman.alsari@gmail.com)
-# Copyright:: Copyright (c) 2013 Opscode, Inc.
+# Copyright:: Copyright 2013-2018 Chef Software, Inc.
 # License:: Apache License, Version 2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,14 +16,14 @@
 # limitations under the License.
 #
 
-require File.expand_path('../azure_base', __FILE__)
+require File.expand_path("../azure_base", __FILE__)
 
 class Chef
   class Knife
     class AzureInternalLbList < Knife
       include Knife::AzureBase
 
-      banner 'knife azure internal lb list (options)'
+      banner "knife azure internal lb list (options)"
 
       def run
         $stdout.sync = true

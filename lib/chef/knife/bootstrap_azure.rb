@@ -1,6 +1,6 @@
 #
 # Author:: Aliasgar Batterywala (aliasgar.batterywala@clogeny.com)
-# Copyright:: Copyright (c) 2016 Opscode, Inc.
+# Copyright:: Copyright 2016-2018 Chef Software, Inc.
 # License:: Apache License, Version 2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,9 +16,9 @@
 # limitations under the License.
 #
 
-require 'chef/knife/azure_base'
-require 'chef/knife/bootstrap/common_bootstrap_options'
-require 'chef/knife/bootstrap/bootstrapper'
+require "chef/knife/azure_base"
+require "chef/knife/bootstrap/common_bootstrap_options"
+require "chef/knife/bootstrap/bootstrapper"
 
 class Chef
   class Knife
@@ -49,8 +49,8 @@ class Chef
               fetch_chef_client_logs(Time.now, 35)
             end
           else
-            raise ArgumentError, 'Please specify the SERVER name which needs to be bootstrapped via the Chef Extension.' if @name_args.length == 0
-            raise ArgumentError, 'Please specify only one SERVER name which needs to be bootstrapped via the Chef Extension.' if @name_args.length > 1
+            raise ArgumentError, "Please specify the SERVER name which needs to be bootstrapped via the Chef Extension." if @name_args.length == 0
+            raise ArgumentError, "Please specify only one SERVER name which needs to be bootstrapped via the Chef Extension." if @name_args.length > 1
           end
         rescue => error
           ui.error("#{error.message}")
@@ -85,11 +85,11 @@ class Chef
           ui.info "Setting the Chef Extension parameters."
           ext_params = Hash.new
           case server.os_type.downcase
-          when 'windows'
-            ext_params[:chef_extension] = 'ChefClient'
-          when 'linux'
-            if ['ubuntu', 'debian', 'rhel', 'centos'].any? { |platform| server.os_version.downcase.include? platform }
-              ext_params[:chef_extension] = 'LinuxChefClient'
+          when "windows"
+            ext_params[:chef_extension] = "ChefClient"
+          when "linux"
+            if %w{ubuntu debian rhel centos}.any? { |platform| server.os_version.downcase.include? platform }
+              ext_params[:chef_extension] = "LinuxChefClient"
             else
               raise "OS version #{server.os_version} for OS type #{server.os_type} is not supported."
             end
@@ -121,8 +121,8 @@ class Chef
           my_role = nil
           sleep_and_wait = false
           deployment = fetch_deployment
-          if deployment.at_css('Deployment Name') != nil
-            role_list_xml =  deployment.css('RoleInstanceList RoleInstance')
+          if deployment.at_css("Deployment Name") != nil
+            role_list_xml = deployment.css("RoleInstanceList RoleInstance")
             ## list of roles found under the deployment ##
             role_list_xml.each do |role|
               ## search in the roles list for the given role ##

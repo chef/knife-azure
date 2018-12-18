@@ -1,6 +1,6 @@
 #
 # Author:: Aiman Alsari (aiman.alsari@gmail.com)
-# Copyright:: Copyright (c) 2013 Opscode, Inc.
+# Copyright:: Copyright 2013-2018 Chef Software, Inc.
 # License:: Apache License, Version 2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,28 +16,28 @@
 # limitations under the License.
 #
 
-require File.expand_path('../azure_base', __FILE__)
+require File.expand_path("../azure_base", __FILE__)
 
 class Chef
   class Knife
     class AzureInternalLbCreate < Knife
       include Knife::AzureBase
 
-      banner 'knife azure internal lb create (options)'
+      banner "knife azure internal lb create (options)"
 
       option :azure_load_balancer,
-        :short => '-n NAME',
-        :long => '--azure-load-balancer NAME',
-        :description => 'Required. Specifies new load balancer name.'
+        :short => "-n NAME",
+        :long => "--azure-load-balancer NAME",
+        :description => "Required. Specifies new load balancer name."
 
       option :azure_lb_static_vip,
-        :long => '--azure-lb-static-vip VIP',
-        :description => 'Optional. The Virtual IP that will be used for the load balancer.'
+        :long => "--azure-lb-static-vip VIP",
+        :description => "Optional. The Virtual IP that will be used for the load balancer."
 
       option :azure_subnet_name,
-        :long => '--azure-subnet-name SUBNET_NAME',
-        :description => 'Required if static VIP is set. Specifies the subnet name '\
-                        'the load balancer is located in.'
+        :long => "--azure-subnet-name SUBNET_NAME",
+        :description => "Required if static VIP is set. Specifies the subnet name "\
+                        "the load balancer is located in."
 
       option :azure_dns_name,
         :long => "--azure-dns-name DNS_NAME",
@@ -46,7 +46,7 @@ class Chef
       def run
         $stdout.sync = true
 
-        Chef::Log.info('validating...')
+        Chef::Log.info("validating...")
         validate_asm_keys!(:azure_load_balancer)
 
         params = {
@@ -58,9 +58,9 @@ class Chef
 
         rsp = service.create_internal_lb(params)
         print "\n"
-        if rsp.at_css('Status').nil?
-          if rsp.at_css('Code').nil? || rsp.at_css('Message').nil?
-            puts 'Unknown Error. try -VV'
+        if rsp.at_css("Status").nil?
+          if rsp.at_css("Code").nil? || rsp.at_css("Message").nil?
+            puts "Unknown Error. try -VV"
           else
             puts "#{rsp.at_css('Code').content}: "\
                  "#{rsp.at_css('Message').content}"

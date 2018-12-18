@@ -1,10 +1,10 @@
 #
 # Author:: Nimisha Sharad (<nimisha.sharad@clogeny.com>)
-# Copyright:: Copyright (c) 2016 Opscode, Inc.
+# Copyright:: Copyright 2016-2018 Chef Software, Inc.
 #
 
-require File.expand_path(File.dirname(__FILE__) + '/../spec_helper')
-require File.expand_path(File.dirname(__FILE__) + '/../unit/query_azure_mock')
+require File.expand_path(File.dirname(__FILE__) + "/../spec_helper")
+require File.expand_path(File.dirname(__FILE__) + "/../unit/query_azure_mock")
 
 describe Chef::Knife::BootstrapAzurerm do
   include AzureSpecHelper
@@ -14,9 +14,9 @@ describe Chef::Knife::BootstrapAzurerm do
   before do
     @bootstrap_azurerm_instance = create_arm_instance(Chef::Knife::BootstrapAzurerm)
     @service = @bootstrap_azurerm_instance.service
-    @bootstrap_azurerm_instance.name_args = ['test-vm-01']
-    Chef::Config[:knife][:azure_resource_group_name] = 'test-rgp-01'
-    Chef::Config[:knife][:azure_service_location] = 'West US'
+    @bootstrap_azurerm_instance.name_args = ["test-vm-01"]
+    Chef::Config[:knife][:azure_resource_group_name] = "test-rgp-01"
+    Chef::Config[:knife][:azure_service_location] = "West US"
 
     @compute_client = double("ComputeManagementClient")
     allow(@bootstrap_azurerm_instance.service).to receive(
@@ -26,7 +26,7 @@ describe Chef::Knife::BootstrapAzurerm do
   context "parameters validation" do
     it "raises error when server name is not given in the args" do
       allow(@bootstrap_azurerm_instance.name_args).to receive(:length).and_return(0)
-      expect(@bootstrap_azurerm_instance.ui).to receive(:log).with('Validating...')
+      expect(@bootstrap_azurerm_instance.ui).to receive(:log).with("Validating...")
       expect(@bootstrap_azurerm_instance).to receive(:validate_arm_keys!)
       expect(@service).to_not receive(:create_vm_extension)
       expect(@bootstrap_azurerm_instance.ui).to receive(
@@ -37,22 +37,22 @@ describe Chef::Knife::BootstrapAzurerm do
 
     it "raises error when azure_resource_group_name is not specified" do
       Chef::Config[:knife].delete(:azure_resource_group_name)
-      expect(@bootstrap_azurerm_instance.ui).to receive(:log).with('Validating...')
+      expect(@bootstrap_azurerm_instance.ui).to receive(:log).with("Validating...")
       expect(@bootstrap_azurerm_instance.ui).to receive(:error)
-      expect {@bootstrap_azurerm_instance.run}.to raise_error(SystemExit)
+      expect { @bootstrap_azurerm_instance.run }.to raise_error(SystemExit)
     end
 
     it "raises error when azure_service_location is not specified" do
       Chef::Config[:knife].delete(:azure_service_location)
-      expect(@bootstrap_azurerm_instance.ui).to receive(:log).with('Validating...')
+      expect(@bootstrap_azurerm_instance.ui).to receive(:log).with("Validating...")
       expect(@bootstrap_azurerm_instance.ui).to receive(:error)
-      expect {@bootstrap_azurerm_instance.run}.to raise_error(SystemExit)
+      expect { @bootstrap_azurerm_instance.run }.to raise_error(SystemExit)
     end
 
     it "raises error when more than one server name is specified" do
-      @bootstrap_azurerm_instance.name_args = ['test-vm-01', 'test-vm-02', 'test-vm-03']
+      @bootstrap_azurerm_instance.name_args = ["test-vm-01", "test-vm-02", "test-vm-03"]
       expect(@bootstrap_azurerm_instance.name_args.length).to be == 3
-      expect(@bootstrap_azurerm_instance.ui).to receive(:log).with('Validating...')
+      expect(@bootstrap_azurerm_instance.ui).to receive(:log).with("Validating...")
       expect(@service).to_not receive(:create_vm_extension)
       expect(@bootstrap_azurerm_instance.ui).to receive(
         :error).twice
@@ -93,14 +93,14 @@ describe Chef::Knife::BootstrapAzurerm do
       allow(@bootstrap_azurerm_instance).to receive(:get_chef_extension_public_params).and_return("public_params")
       allow(@bootstrap_azurerm_instance).to receive(:get_chef_extension_private_params).and_return("private_params")
       response = @bootstrap_azurerm_instance.set_ext_params
-      expect(response[:chef_extension]).to be == 'ChefClient'
-      expect(response[:azure_resource_group_name]).to be == 'test-rgp-01'
-      expect(response[:azure_vm_name]).to be == 'test-vm-01'
-      expect(response[:azure_service_location]).to be == 'West US'
-      expect(response[:chef_extension_publisher]).to be == 'Chef.Bootstrap.WindowsAzure'
-      expect(response[:chef_extension_version]).to be == '1210.*'
-      expect(response[:chef_extension_public_param]).to be == 'public_params'
-      expect(response[:chef_extension_private_param]).to be == 'private_params'
+      expect(response[:chef_extension]).to be == "ChefClient"
+      expect(response[:azure_resource_group_name]).to be == "test-rgp-01"
+      expect(response[:azure_vm_name]).to be == "test-vm-01"
+      expect(response[:azure_service_location]).to be == "West US"
+      expect(response[:chef_extension_publisher]).to be == "Chef.Bootstrap.WindowsAzure"
+      expect(response[:chef_extension_version]).to be == "1210.*"
+      expect(response[:chef_extension_public_param]).to be == "public_params"
+      expect(response[:chef_extension_private_param]).to be == "private_params"
     end
 
     it "sets LinuxChefClient extension in the ext_params for linux" do
@@ -113,14 +113,14 @@ describe Chef::Knife::BootstrapAzurerm do
       allow(@bootstrap_azurerm_instance).to receive(:get_chef_extension_public_params).and_return("public_params")
       allow(@bootstrap_azurerm_instance).to receive(:get_chef_extension_private_params).and_return("private_params")
       response = @bootstrap_azurerm_instance.set_ext_params
-      expect(response[:chef_extension]).to be == 'LinuxChefClient'
-      expect(response[:azure_resource_group_name]).to be == 'test-rgp-01'
-      expect(response[:azure_vm_name]).to be == 'test-vm-01'
-      expect(response[:azure_service_location]).to be == 'West US'
-      expect(response[:chef_extension_publisher]).to be == 'Chef.Bootstrap.WindowsAzure'
-      expect(response[:chef_extension_version]).to be == '1210.*'
-      expect(response[:chef_extension_public_param]).to be == 'public_params'
-      expect(response[:chef_extension_private_param]).to be == 'private_params'
+      expect(response[:chef_extension]).to be == "LinuxChefClient"
+      expect(response[:azure_resource_group_name]).to be == "test-rgp-01"
+      expect(response[:azure_vm_name]).to be == "test-vm-01"
+      expect(response[:azure_service_location]).to be == "West US"
+      expect(response[:chef_extension_publisher]).to be == "Chef.Bootstrap.WindowsAzure"
+      expect(response[:chef_extension_version]).to be == "1210.*"
+      expect(response[:chef_extension_public_param]).to be == "public_params"
+      expect(response[:chef_extension_private_param]).to be == "private_params"
     end
 
     it "raises error if an offer of OS_type linux is not supported" do
@@ -140,7 +140,7 @@ describe Chef::Knife::BootstrapAzurerm do
     it "creates VM extension with no extended log option passed" do
       @server = double("server", :name => "foo", :id => 1)
       vm_extension = double("vm_extension", :name => "foo", :id => 1)
-      public_params = {:extendedLogs => "false"}
+      public_params = { :extendedLogs => "false" }
       allow(@service).to receive(:find_server).and_return(@server)
       allow(@service).to receive(:extension_already_installed?).and_return(false)
       allow(@server).to receive_message_chain(:storage_profile, :os_disk, :os_type).and_return("linux")
@@ -157,7 +157,7 @@ describe Chef::Knife::BootstrapAzurerm do
     it "creates VM extension with extended log option passed" do
       @server = double("server", :name => "foo", :id => 1)
       vm_extension = double("vm_extension", :name => "foo", :id => 1)
-      public_params = {:extendedLogs => "true"}
+      public_params = { :extendedLogs => "true" }
       allow(@service).to receive(:find_server).and_return(@server)
       allow(@service).to receive(:extension_already_installed?).and_return(false)
       allow(@server).to receive_message_chain(:storage_profile, :os_disk, :os_type).and_return("linux")
@@ -176,7 +176,7 @@ describe Chef::Knife::BootstrapAzurerm do
   context "find_server" do
     it "returns error if the server or resource group doesn't exist" do
       allow(@compute_client).to receive_message_chain(:virtual_machines, :get).and_return(nil)
-      response = @service.find_server('test-vm-01', 'test-rgp-01')
+      response = @service.find_server("test-vm-01", "test-rgp-01")
       expect(response).to be(nil)
     end
   end
@@ -204,56 +204,56 @@ describe Chef::Knife::BootstrapAzurerm do
     end
   end
 
-  describe 'get_chef_extension_version' do
+  describe "get_chef_extension_version" do
     before do
       allow(@service).to receive(:instance_of?).with(
         Azure::ResourceManagement::ARMInterface).and_return(true)
     end
 
-    context 'when extension version is set in knife.rb' do
+    context "when extension version is set in knife.rb" do
       before do
-        Chef::Config[:knife][:azure_chef_extension_version] = '1312.11'
+        Chef::Config[:knife][:azure_chef_extension_version] = "1312.11"
       end
 
-      it 'will pick up the extension version from knife.rb' do
-        response = @bootstrap_azurerm_instance.get_chef_extension_version('MyChefClient')
-        expect(response).to be == '1312.11'
+      it "will pick up the extension version from knife.rb" do
+        response = @bootstrap_azurerm_instance.get_chef_extension_version("MyChefClient")
+        expect(response).to be == "1312.11"
       end
     end
 
-    context 'when extension version is not set in knife.rb' do
+    context "when extension version is not set in knife.rb" do
       before do
         Chef::Config[:knife].delete(:azure_chef_extension_version)
         allow(@service).to receive(
-          :get_latest_chef_extension_version).and_return('1213.14')
+          :get_latest_chef_extension_version).and_return("1213.14")
       end
 
-      it 'will pick up the latest version of the extension' do
+      it "will pick up the latest version of the extension" do
         expect(@service).to_not receive(:get_extension)
-        response = @bootstrap_azurerm_instance.get_chef_extension_version('MyChefClient')
-        expect(response).to be == '1213.14'
+        response = @bootstrap_azurerm_instance.get_chef_extension_version("MyChefClient")
+        expect(response).to be == "1213.14"
       end
     end
   end
 
-  describe 'get_chef_extension_public_params' do
-    context 'service is an instance_of ARM' do
+  describe "get_chef_extension_public_params" do
+    context "service is an instance_of ARM" do
       before do
         allow(@service).to receive(:instance_of?).and_return(true)
       end
 
-      it 'does not set hints in extension\'s public config parameters' do
+      it "does not set hints in extension's public config parameters" do
         response = @bootstrap_azurerm_instance.get_chef_extension_public_params
         expect(response.has_key? :hints).to be == false
       end
     end
 
-    context 'service is not an instance_of ARM' do
+    context "service is not an instance_of ARM" do
       before do
         allow(@service).to receive(:instance_of?).and_return(false)
       end
 
-      it 'does not set hints in extension\'s public config parameters' do
+      it "does not set hints in extension's public config parameters" do
         response = @bootstrap_azurerm_instance.get_chef_extension_public_params
         expect(response.has_key? :hints).to be == false
       end

@@ -1,7 +1,7 @@
 #
 # Author:: Aliasgar Batterywala (aliasgar.batterywala@clogeny.com)
 #
-# Copyright:: Copyright (c) 2016 Opscode, Inc.
+# Copyright:: Copyright 2016-2018 Chef Software, Inc.
 # License:: Apache License, Version 2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,8 +23,8 @@
 # choice to bootstrap the target system through cloud-api protocol.
 #
 
-require 'chef/knife/winrm_base'
-require 'chef/knife/bootstrap_windows_base'
+require "chef/knife/winrm_base"
+require "chef/knife/bootstrap_windows_base"
 class Chef
   class Knife
     class Bootstrap
@@ -36,7 +36,7 @@ class Chef
             include Knife::WinrmBase
             include Knife::BootstrapWindowsBase
             deps do
-              require 'chef/knife/bootstrap'
+              require "chef/knife/bootstrap"
               Chef::Knife::Bootstrap.load_deps
             end
 
@@ -97,10 +97,9 @@ class Chef
                                 none - Currently prevents the chef-client service from being configured as a service.
                                 service - Configures the chef-client to run automatically in the background as a service.
                                 task - Configures the chef-client to run automatically in the background as a scheduled task."
-  	  	  end
+          end
         end
-  	  end
-  	end
+      end
+    end
   end
 end
-

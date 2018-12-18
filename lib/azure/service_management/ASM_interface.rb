@@ -1,6 +1,5 @@
 #
-# Author::
-# Copyright:: Copyright (c) 2016 Opscode, Inc.
+# Copyright:: Copyright 2016-2018 Chef Software, Inc.
 # License:: Apache License, Version 2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,9 +15,9 @@
 # limitations under the License.
 #
 
-require 'azure/azure_interface'
-require 'azure/service_management/rest'
-require 'azure/service_management/connection'
+require "azure/azure_interface"
+require "azure/service_management/rest"
+require "azure/service_management/connection"
 
 module Azure
   class ServiceManagement
@@ -39,20 +38,20 @@ module Azure
 
       def list_servers
         servers = connection.roles.all
-        cols = ['DNS Name', 'VM Name', 'Status', 'IP Address', 'SSH Port', 'WinRM Port', 'RDP Port']
+        cols = ["DNS Name", "VM Name", "Status", "IP Address", "SSH Port", "WinRM Port", "RDP Port"]
         rows = []
         servers.each do |server|
-          rows << server.hostedservicename.to_s+".cloudapp.net"  # Info about the DNS name at http://msdn.microsoft.com/en-us/library/ee460806.aspx
+          rows << server.hostedservicename.to_s + ".cloudapp.net" # Info about the DNS name at http://msdn.microsoft.com/en-us/library/ee460806.aspx
           rows << server.name.to_s
           rows << begin
                            state = server.status.to_s.downcase
                            case state
-                           when 'shutting-down','terminated','stopping','stopped'
+                           when "shutting-down", "terminated", "stopping", "stopped"
                              ui.color(state, :red)
-                           when 'pending'
+                           when "pending"
                              ui.color(state, :yellow)
                            else
-                             ui.color('ready', :green)
+                             ui.color("ready", :green)
                            end
                          end
           rows << server.publicipaddress.to_s
@@ -66,16 +65,16 @@ module Azure
 
       def rdp_port(arr_ports)
         if !arr_ports
-          return ''
+          return ""
         end
         if arr_ports.length > 0
           arr_ports.each do |port|
-            if port['Name'] == "Remote Desktop"
-              return port['PublicPort']
+            if port["Name"] == "Remote Desktop"
+              return port["PublicPort"]
             end
           end
         end
-        return ''
+        ""
       end
 
       def find_server(params = {})
@@ -83,7 +82,7 @@ module Azure
       end
 
       def delete_server(params = {})
-        server = find_server({name: params[:name], azure_dns_name: params[:azure_dns_name]})
+        server = find_server({ name: params[:name], azure_dns_name: params[:azure_dns_name] })
 
         unless server
           puts "\n"
@@ -92,14 +91,14 @@ module Azure
         end
 
         puts "\n"
-        msg_pair(ui, 'DNS Name', server.hostedservicename + ".cloudapp.net")
-        msg_pair(ui, 'VM Name', server.name)
-        msg_pair(ui, 'Size', server.size)
-        msg_pair(ui, 'Public Ip Address', server.publicipaddress)
+        msg_pair(ui, "DNS Name", server.hostedservicename + ".cloudapp.net")
+        msg_pair(ui, "VM Name", server.name)
+        msg_pair(ui, "Size", server.size)
+        msg_pair(ui, "Public Ip Address", server.publicipaddress)
         puts "\n"
 
         begin
-          ui.confirm('Do you really want to delete this server')
+          ui.confirm("Do you really want to delete this server")
         rescue SystemExit   # Need to handle this as confirming with N/n raises SystemExit exception
           server = nil      # Cleanup is implicitly performed in other cloud plugins
           exit!
@@ -114,72 +113,69 @@ module Azure
       end
 
       def show_server(name)
-        begin
-          role = connection.roles.find name
+        role = connection.roles.find name
 
-          puts ''
-          if (role)
-            details = Array.new
-            details << ui.color('Role name', :bold, :cyan)
-            details << role.name
-            details << ui.color('Status', :bold, :cyan)
-            details << role.status
-            details << ui.color('Size', :bold, :cyan)
-            details << role.size
-            details << ui.color('Hosted service name', :bold, :cyan)
-            details << role.hostedservicename
-            details << ui.color('Deployment name', :bold, :cyan)
-            details << role.deployname
-            details << ui.color('Host name', :bold, :cyan)
-            details << role.hostname
-            unless role.sshport.nil?
-              details << ui.color('SSH port', :bold, :cyan)
-              details << role.sshport
-            end
-            unless role.winrmport.nil?
-              details << ui.color('WinRM port', :bold, :cyan)
-              details << role.winrmport
-            end
-            details << ui.color('Public IP', :bold, :cyan)
-            details << role.publicipaddress.to_s
-
-            unless role.thumbprint.empty?
-              details << ui.color('Thumbprint', :bold, :cyan)
-              details << role.thumbprint
-            end
-            puts ui.list(details, :columns_across, 2)
-            if role.tcpports.length > 0 || role.udpports.length > 0
-              details.clear
-              details << ui.color('Ports open', :bold, :cyan)
-              details << ui.color('Local port', :bold, :cyan)
-              details << ui.color('IP', :bold, :cyan)
-              details << ui.color('Public port', :bold, :cyan)
-              if role.tcpports.length > 0
-                role.tcpports.each do |port|
-                  details << 'tcp'
-                  details << port['LocalPort']
-                  details << port['Vip']
-                  details << port['PublicPort']
-                end
-              end
-              if role.udpports.length > 0
-                role.udpports.each do |port|
-                  details << 'udp'
-                  details << port['LocalPort']
-                  details << port['Vip']
-                  details << port['PublicPort']
-                end
-              end
-              puts ui.list(details, :columns_across, 4)
-            end
-          else
-            puts "No VM found"
+        puts ""
+        if role
+          details = Array.new
+          details << ui.color("Role name", :bold, :cyan)
+          details << role.name
+          details << ui.color("Status", :bold, :cyan)
+          details << role.status
+          details << ui.color("Size", :bold, :cyan)
+          details << role.size
+          details << ui.color("Hosted service name", :bold, :cyan)
+          details << role.hostedservicename
+          details << ui.color("Deployment name", :bold, :cyan)
+          details << role.deployname
+          details << ui.color("Host name", :bold, :cyan)
+          details << role.hostname
+          unless role.sshport.nil?
+            details << ui.color("SSH port", :bold, :cyan)
+            details << role.sshport
           end
+          unless role.winrmport.nil?
+            details << ui.color("WinRM port", :bold, :cyan)
+            details << role.winrmport
+          end
+          details << ui.color("Public IP", :bold, :cyan)
+          details << role.publicipaddress.to_s
 
-        rescue => error
-          puts "#{error.class} and #{error.message}"
+          unless role.thumbprint.empty?
+            details << ui.color("Thumbprint", :bold, :cyan)
+            details << role.thumbprint
+          end
+          puts ui.list(details, :columns_across, 2)
+          if role.tcpports.length > 0 || role.udpports.length > 0
+            details.clear
+            details << ui.color("Ports open", :bold, :cyan)
+            details << ui.color("Local port", :bold, :cyan)
+            details << ui.color("IP", :bold, :cyan)
+            details << ui.color("Public port", :bold, :cyan)
+            if role.tcpports.length > 0
+              role.tcpports.each do |port|
+                details << "tcp"
+                details << port["LocalPort"]
+                details << port["Vip"]
+                details << port["PublicPort"]
+              end
+            end
+            if role.udpports.length > 0
+              role.udpports.each do |port|
+                details << "udp"
+                details << port["LocalPort"]
+                details << port["Vip"]
+                details << port["PublicPort"]
+              end
+            end
+            puts ui.list(details, :columns_across, 4)
+          end
+        else
+          puts "No VM found"
         end
 
+      rescue => error
+        puts "#{error.class} and #{error.message}"
       end
 
       def list_internal_lb
@@ -198,10 +194,10 @@ module Azure
 
       def list_vnets
         vnets = connection.vnets.all
-        cols = ['Name', 'Affinity Group', 'State']
+        cols = ["Name", "Affinity Group", "State"]
         rows = []
         vnets.each do |vnet|
-          %w(name affinity_group state).each{ |col| rows << vnet.send(col).to_s }
+          %w{name affinity_group state}.each { |col| rows << vnet.send(col).to_s }
         end
         display_list(ui, cols, rows)
       end
@@ -252,12 +248,11 @@ module Azure
         begin
           connection.deploys.create(params)
         rescue Exception => e
-          Chef::Log.error("Failed to create the server -- exception being rescued: #{e.to_s}")
+          Chef::Log.error("Failed to create the server -- exception being rescued: #{e}")
           backtrace_message = "#{e.class}: #{e}\n#{e.backtrace.join("\n")}"
           Chef::Log.debug("#{backtrace_message}")
           cleanup_and_exit(remove_hosted_service_on_failure, remove_storage_service_on_failure)
         end
-
       end
 
       def cleanup_and_exit(remove_hosted_service_on_failure, remove_storage_service_on_failure)
@@ -275,10 +270,10 @@ module Azure
         exit 1
       end
 
-       def get_role_server(dns_name, vm_name)
+      def get_role_server(dns_name, vm_name)
         deploy = connection.deploys.queryDeploy(dns_name)
         deploy.find_role(vm_name)
-      end
+     end
 
       def get_extension(name, publisher)
         connection.query_azure("resourceextensions/#{publisher}/#{name}")
@@ -301,17 +296,14 @@ module Azure
       end
 
       def add_extension(name, params = {})
-        begin
-          ui.info "Started with Chef Extension deployment on the server #{name}..."
-          connection.roles.update(name, params)
-          ui.info "\nSuccessfully deployed Chef Extension on the server #{name}."
-        rescue Exception => e
-          Chef::Log.error("Failed to add extension to the server -- exception being rescued: #{e.to_s}")
-          backtrace_message = "#{e.class}: #{e}\n#{e.backtrace.join("\n")}"
-          Chef::Log.debug("#{backtrace_message}")
-        end
+        ui.info "Started with Chef Extension deployment on the server #{name}..."
+        connection.roles.update(name, params)
+        ui.info "\nSuccessfully deployed Chef Extension on the server #{name}."
+      rescue Exception => e
+        Chef::Log.error("Failed to add extension to the server -- exception being rescued: #{e}")
+        backtrace_message = "#{e.class}: #{e}\n#{e.backtrace.join("\n")}"
+        Chef::Log.debug("#{backtrace_message}")
       end
     end
   end
 end
-

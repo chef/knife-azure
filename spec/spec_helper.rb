@@ -1,40 +1,38 @@
-$LOAD_PATH.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
+$LOAD_PATH.unshift(File.join(File.dirname(__FILE__), "..", "lib"))
 
+require "chef/knife/azure_ag_create"
+require "chef/knife/azure_ag_list"
+require "chef/knife/azure_image_list"
+require "chef/knife/azure_internal-lb_create"
+require "chef/knife/azure_internal-lb_list"
+require "chef/knife/azure_server_create"
+require "chef/knife/azure_server_delete"
+require "chef/knife/azure_server_show"
+require "chef/knife/azure_server_list"
+require "chef/knife/azure_vnet_create"
+require "chef/knife/azure_vnet_list"
 
-require 'chef/knife/azure_ag_create'
-require 'chef/knife/azure_ag_list'
-require 'chef/knife/azure_image_list'
-require 'chef/knife/azure_internal-lb_create'
-require 'chef/knife/azure_internal-lb_list'
-require 'chef/knife/azure_server_create'
-require 'chef/knife/azure_server_delete'
-require 'chef/knife/azure_server_show'
-require 'chef/knife/azure_server_list'
-require 'chef/knife/azure_vnet_create'
-require 'chef/knife/azure_vnet_list'
+require "chef/knife/azurerm_server_list"
+require "chef/knife/azurerm_server_show"
+require "chef/knife/azurerm_server_delete"
+require "chef/knife/azurerm_server_create"
+require "chef/knife/bootstrap_azure"
 
-require 'chef/knife/azurerm_server_list'
-require 'chef/knife/azurerm_server_show'
-require 'chef/knife/azurerm_server_delete'
-require 'chef/knife/azurerm_server_create'
-require 'chef/knife/bootstrap_azure'
-
-require 'chef/knife/bootstrap_azurerm'
+require "chef/knife/bootstrap_azurerm"
 
 if Chef::Platform.windows?
-  require 'azure/resource_management/windows_credentials'
+  require "azure/resource_management/windows_credentials"
 end
 
-require 'fileutils'
+require "fileutils"
 require "securerandom"
-require 'knife-azure/version'
-
+require "knife-azure/version"
 
 def temp_dir
   @_temp_dir ||= Dir.mktmpdir
 end
 
-def tmpFile filename
+def tmpFile(filename)
   temp_dir + "/" + filename
 end
 
@@ -45,10 +43,10 @@ RSpec.configure do |c|
 
   c.before(:all) do
     #Create an empty mock certificate file
-    @cert_file = tmpFile('AzureLinuxCert.pem')
+    @cert_file = tmpFile("AzureLinuxCert.pem")
     FileUtils.touch(@cert_file)
-    Chef::Log.init(tmpFile('debug.log'))
-    Chef::Log.level=:debug
+    Chef::Log.init(tmpFile("debug.log"))
+    Chef::Log.level = :debug
   end
 
   c.after(:all) do
@@ -64,17 +62,17 @@ TEST_PARAMS = {
 }
 
 module AzureSpecHelper
-  def readFile filename
+  def readFile(filename)
     File.read(File.dirname(__FILE__) + "/unit/assets/#{filename}")
   end
 
-  def get_publish_settings_file_path filename
+  def get_publish_settings_file_path(filename)
     File.dirname(__FILE__) + "/unit/assets/publish-settings-files/#{filename}"
   end
 end
 
 def is_config_present
-  if ! ENV['RUN_INTEGRATION_TESTS']
+  if ! ENV["RUN_INTEGRATION_TESTS"]
     puts("\nPlease set RUN_INTEGRATION_TESTS environment variable to run integration tests")
     return false
   end
@@ -85,9 +83,9 @@ def is_config_present
   config_file_exist = File.exist?(File.expand_path("../integration/config/environment.yml", __FILE__))
   azure_config = YAML.load(File.read(File.expand_path("../integration/config/environment.yml", __FILE__))) if config_file_exist
 
-  %w(AZURE_PUBLISH_SETTINGS_FILE AZURE_MGMT_CERT AZURE_SUBSCRIPTION_ID AZURE_API_HOST_NAME).each do |az_env_var|
+  %w{AZURE_PUBLISH_SETTINGS_FILE AZURE_MGMT_CERT AZURE_SUBSCRIPTION_ID AZURE_API_HOST_NAME}.each do |az_env_var|
     if ENV[az_env_var].nil?
-      unset_env_var <<  az_env_var
+      unset_env_var << az_env_var
       is_config = false
     end
   end
@@ -96,8 +94,7 @@ def is_config_present
   err_msg = err_msg + ( unset_env_var.length > 1 ? " variables " : " variable " ) + "for integration tests."
   puts err_msg unless unset_env_var.empty?
 
-
-  %w(AZ_SSH_USER  AZ_SSH_PASSWORD AZ_WINDOWS_SSH_USER AZ_WINDOWS_SSH_PASSWORD AZ_WINRM_USER AZ_WINRM_PASSWORD AZ_LINUX_IMAGE AZ_LINUX_VM_SIZE AZ_INVALID_VM_SIZE AZ_WINDOWS_VM_SIZE AZ_WINDOWS_IMAGE AZ_WINDOWS_SSH_IMAGE  AZURE_SERVICE_LOCATION).each do |os_config_opt|
+  %w{AZ_SSH_USER AZ_SSH_PASSWORD AZ_WINDOWS_SSH_USER AZ_WINDOWS_SSH_PASSWORD AZ_WINRM_USER AZ_WINRM_PASSWORD AZ_LINUX_IMAGE AZ_LINUX_VM_SIZE AZ_INVALID_VM_SIZE AZ_WINDOWS_VM_SIZE AZ_WINDOWS_IMAGE AZ_WINDOWS_SSH_IMAGE AZURE_SERVICE_LOCATION}.each do |os_config_opt|
     option_value = ENV[os_config_opt] || (azure_config[os_config_opt] if azure_config)
     if option_value.nil?
       unset_config_options << os_config_opt
@@ -129,16 +126,16 @@ def delete_instance_cmd(vm_name)
 end
 
 def create_node_name(name)
-  @name_node  = (name == "linux") ? "az-lnxtest#{SecureRandom.hex(4)}" :  "az-wintest-#{SecureRandom.hex(4)}"
+  @name_node = (name == "linux") ? "az-lnxtest#{SecureRandom.hex(4)}" : "az-wintest-#{SecureRandom.hex(4)}"
 end
 
 def init_azure_test
   init_test
 
   begin
-    %w(azure_invalid.publishsettings).each do |file_name|
+    %w{azure_invalid.publishsettings}.each do |file_name|
       data_to_write = File.read(File.expand_path("../integration/config/#{file_name}", __FILE__))
-      File.open("#{temp_dir}/#{file_name}", 'w') {|f| f.write(data_to_write)}
+      File.open("#{temp_dir}/#{file_name}", "w") { |f| f.write(data_to_write) }
     end
   rescue
     puts "Error while creating file - azure invalid"
@@ -147,17 +144,17 @@ def init_azure_test
   config_file_exist = File.exist?(File.expand_path("../integration/config/environment.yml", __FILE__))
   azure_config = YAML.load(File.read(File.expand_path("../integration/config/environment.yml", __FILE__))) if config_file_exist
 
-  %w(AZ_SSH_USER AZ_SSH_PASSWORD AZ_WINDOWS_SSH_USER AZ_WINDOWS_SSH_PASSWORD AZ_WINRM_USER AZ_WINRM_PASSWORD AZ_LINUX_IMAGE AZ_LINUX_VM_SIZE AZ_INVALID_VM_SIZE AZ_WINDOWS_VM_SIZE AZ_WINDOWS_IMAGE AZ_WINDOWS_SSH_IMAGE AZURE_SERVICE_LOCATION).each do |az_config_opt|
+  %w{AZ_SSH_USER AZ_SSH_PASSWORD AZ_WINDOWS_SSH_USER AZ_WINDOWS_SSH_PASSWORD AZ_WINRM_USER AZ_WINRM_PASSWORD AZ_LINUX_IMAGE AZ_LINUX_VM_SIZE AZ_INVALID_VM_SIZE AZ_WINDOWS_VM_SIZE AZ_WINDOWS_IMAGE AZ_WINDOWS_SSH_IMAGE AZURE_SERVICE_LOCATION}.each do |az_config_opt|
     instance_variable_set("@#{az_config_opt.downcase}", (azure_config[az_config_opt] if azure_config) || ENV[az_config_opt])
   end
 end
 
 def chef_gte_12?
-  Chef::VERSION.split('.').first.to_i >= 12
+  Chef::VERSION.split(".").first.to_i >= 12
 end
 
 def chef_lt_12?
-  Chef::VERSION.split('.').first.to_i < 12
+  Chef::VERSION.split(".").first.to_i < 12
 end
 
 def is_windows?

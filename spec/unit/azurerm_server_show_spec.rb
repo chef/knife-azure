@@ -1,5 +1,5 @@
-require File.expand_path(File.dirname(__FILE__) + '/../spec_helper')
-require File.expand_path(File.dirname(__FILE__) + '/../unit/query_azure_mock')
+require File.expand_path(File.dirname(__FILE__) + "/../spec_helper")
+require File.expand_path(File.dirname(__FILE__) + "/../unit/query_azure_mock")
 
 describe Chef::Knife::AzurermServerShow do
   include AzureSpecHelper
@@ -8,7 +8,7 @@ describe Chef::Knife::AzurermServerShow do
   before do
     @arm_server_instance = create_arm_instance(Chef::Knife::AzurermServerShow)
     Chef::Config[:knife][:azure_resource_group_name] = "RESOURCE_GROUP"
-    @arm_server_instance.name_args = %w(vmname)
+    @arm_server_instance.name_args = %w{vmname}
     @compute_client = double("ComputeManagementClient")
     @network_client = double("NetworkManagementClient")
     allow(@arm_server_instance.service).to receive(:compute_management_client).and_return(@compute_client)
@@ -27,7 +27,7 @@ describe Chef::Knife::AzurermServerShow do
     @network_interface_data = double
     @public_ip_data =  double
     @public_ip_id_data = double(:id => double)
-    network_interface_id ="/subscriptions/xxx-xx-xxx-xxxxx/resourceGroups/xxxxxxx/providers/Microsoft.Network/networkInterfaces/myVMNic"
+    network_interface_id = "/subscriptions/xxx-xx-xxx-xxxxx/resourceGroups/xxxxxxx/providers/Microsoft.Network/networkInterfaces/myVMNic"
     network_interface_name = "myVMNIC"
     public_ip_id = "/subscriptions/xxx-xx-xxx-xxxxx/resourceGroups/xxxxxxx/providers/Microsoft.Network/publicIPAddresses/myPublicIP"
     public_ip_name = "mypublicip"
@@ -40,10 +40,10 @@ describe Chef::Knife::AzurermServerShow do
     allow(@server).to receive_message_chain(:storage_profile, :os_disk, :os_type).and_return("Linux")
     allow(@public_ip_data).to receive(:ip_address).and_return("23.3.4.1")
     allow(@public_ip_data).to receive_message_chain(:dns_settings, :fqdn).and_return("test.westus.cloudapp.azure.com")
-    allow(@server).to receive_message_chain(:network_profile, :network_interfaces).and_return(['network_interfaces'])
+    allow(@server).to receive_message_chain(:network_profile, :network_interfaces).and_return(["network_interfaces"])
     allow(@server.network_profile.network_interfaces[0]).to receive_message_chain(:id).and_return(network_interface_id)
     expect(network_interface_id).to receive(:split).with("/").and_return(network_interface_name)
-    allow(@network_interface_data).to receive(:ip_configurations).and_return(['ip_configurations'])
+    allow(@network_interface_data).to receive(:ip_configurations).and_return(["ip_configurations"])
     allow(@network_interface_data.ip_configurations[0]).to receive(:public_ipaddress).and_return(@public_ip_id_data)
     allow(@public_ip_id_data).to receive(:id).and_return(public_ip_id)
     expect(public_ip_id).to receive(:split).with("/").and_return(public_ip_name)
@@ -55,7 +55,7 @@ describe Chef::Knife::AzurermServerShow do
                 "Size", @server.hardware_profile.vm_size,
                 "Provisioning State", @server.provisioning_state,
                 "Location", @server.location,
-                "Publisher",  @server.storage_profile.image_reference.publisher,
+                "Publisher", @server.storage_profile.image_reference.publisher,
                 "Offer", @server.storage_profile.image_reference.offer,
                 "Sku", @server.storage_profile.image_reference.sku,
                 "Version", @server.storage_profile.image_reference.version,
@@ -81,10 +81,10 @@ describe Chef::Knife::AzurermServerShow do
     allow(@server).to receive_message_chain(:storage_profile, :image_reference, :sku).and_return("12.04.5-LTS")
     allow(@server).to receive_message_chain(:storage_profile, :image_reference, :version).and_return("latest")
     allow(@server).to receive_message_chain(:storage_profile, :os_disk, :os_type).and_return("Linux")
-    allow(@server).to receive_message_chain(:network_profile, :network_interfaces).and_return(['network_interfaces'])
+    allow(@server).to receive_message_chain(:network_profile, :network_interfaces).and_return(["network_interfaces"])
     allow(@server.network_profile.network_interfaces[0]).to receive_message_chain(:id).and_return(network_interface_id)
     expect(network_interface_id).to receive(:split).with("/").and_return(network_interface_name)
-    allow(@network_interface_data).to receive(:ip_configurations).and_return(['ip_configurations'])
+    allow(@network_interface_data).to receive(:ip_configurations).and_return(["ip_configurations"])
     allow(@network_interface_data.ip_configurations[0]).to receive(:public_ipaddress).and_return(public_ip_id_data)
     expect(@compute_client).to receive_message_chain(:virtual_machines, :get).and_return(@server)
     expect(@network_client).to receive_message_chain(:network_interfaces, :get).and_return(@network_interface_data)
@@ -93,7 +93,7 @@ describe Chef::Knife::AzurermServerShow do
                 "Size", @server.hardware_profile.vm_size,
                 "Provisioning State", @server.provisioning_state,
                 "Location", @server.location,
-                "Publisher",  @server.storage_profile.image_reference.publisher,
+                "Publisher", @server.storage_profile.image_reference.publisher,
                 "Offer", @server.storage_profile.image_reference.offer,
                 "Sku", @server.storage_profile.image_reference.sku,
                 "Version", @server.storage_profile.image_reference.version,
@@ -110,7 +110,7 @@ describe Chef::Knife::AzurermServerShow do
     @network_interface_data = double
     @public_ip_data =  double
     @public_ip_id_data = double(:id => double)
-    network_interface_id ="/subscriptions/xxx-xx-xxx-xxxxx/resourceGroups/xxxxxxx/providers/Microsoft.Network/networkInterfaces/myVMNic"
+    network_interface_id = "/subscriptions/xxx-xx-xxx-xxxxx/resourceGroups/xxxxxxx/providers/Microsoft.Network/networkInterfaces/myVMNic"
     network_interface_name = "myVMNIC"
     public_ip_id = "/subscriptions/xxx-xx-xxx-xxxxx/resourceGroups/xxxxxxx/providers/Microsoft.Network/publicIPAddresses/myPublicIP"
     public_ip_name = "mypublicip"
@@ -123,10 +123,10 @@ describe Chef::Knife::AzurermServerShow do
     allow(@server).to receive_message_chain(:storage_profile, :os_disk, :os_type).and_return("Linux")
     allow(@public_ip_data).to receive(:ip_address).and_return("23.3.4.1")
     allow(@public_ip_data).to receive(:dns_settings).and_return(nil)
-    allow(@server).to receive_message_chain(:network_profile, :network_interfaces).and_return(['network_interfaces'])
+    allow(@server).to receive_message_chain(:network_profile, :network_interfaces).and_return(["network_interfaces"])
     allow(@server.network_profile.network_interfaces[0]).to receive_message_chain(:id).and_return(network_interface_id)
     expect(network_interface_id).to receive(:split).with("/").and_return(network_interface_name)
-    allow(@network_interface_data).to receive(:ip_configurations).and_return(['ip_configurations'])
+    allow(@network_interface_data).to receive(:ip_configurations).and_return(["ip_configurations"])
     allow(@network_interface_data.ip_configurations[0]).to receive(:public_ipaddress).and_return(@public_ip_id_data)
     allow(@public_ip_id_data).to receive(:id).and_return(public_ip_id)
     expect(public_ip_id).to receive(:split).with("/").and_return(public_ip_name)
@@ -138,7 +138,7 @@ describe Chef::Knife::AzurermServerShow do
                 "Size", @server.hardware_profile.vm_size,
                 "Provisioning State", @server.provisioning_state,
                 "Location", @server.location,
-                "Publisher",  @server.storage_profile.image_reference.publisher,
+                "Publisher", @server.storage_profile.image_reference.publisher,
                 "Offer", @server.storage_profile.image_reference.offer,
                 "Sku", @server.storage_profile.image_reference.sku,
                 "Version", @server.storage_profile.image_reference.version,

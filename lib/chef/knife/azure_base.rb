@@ -1,7 +1,7 @@
 
 # Author:: Barry Davis (barryd@jetstreamsoftware.com)
-# Author:: Seth Chisamore (<schisamo@opscode.com>)
-# Copyright:: Copyright (c) 2011 Opscode, Inc.
+# Author:: Seth Chisamore (<schisamo@chef.io>)
+# Copyright:: Copyright 2011-2018 Chef Software, Inc.
 # License:: Apache License, Version 2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,8 +17,8 @@
 # limitations under the License.
 #
 
-require 'chef/knife'
-require 'azure/service_management/ASM_interface'
+require "chef/knife"
+require "azure/service_management/ASM_interface"
 
 class Chef
   class Knife
@@ -31,8 +31,8 @@ class Chef
         includer.class_eval do
 
           deps do
-            require 'readline'
-            require 'chef/json_compat'
+            require "readline"
+            require "chef/json_compat"
           end
 
           option :azure_subscription_id,
@@ -70,7 +70,7 @@ class Chef
         images = service.list_images
         target_image = images.select { |i| i.name == locate_config_value(:azure_source_image) }
         unless target_image[0].nil?
-          return target_image[0].os == 'Windows'
+          return target_image[0].os == "Windows"
         else
           ui.error("Invalid image. Use the command \"knife azure image list\" to verify the image name")
           exit 1
@@ -95,7 +95,7 @@ class Chef
         config[key] || Chef::Config[:knife][key]
       end
 
-      def msg_pair(label, value, color=:cyan)
+      def msg_pair(label, value, color = :cyan)
         if value && !value.to_s.empty?
           puts "#{ui.color(label, color)}: #{value}"
         end
@@ -103,24 +103,24 @@ class Chef
 
       def msg_server_summary(server)
         puts "\n"
-        msg_pair('DNS Name', server.hostedservicename + ".cloudapp.net")
-        msg_pair('VM Name', server.name)
-        msg_pair('Size', server.size)
-        msg_pair('Azure Source Image', locate_config_value(:azure_source_image))
-        msg_pair('Azure Service Location', locate_config_value(:azure_service_location))
-        msg_pair('Public Ip Address', server.publicipaddress)
-        msg_pair('Private Ip Address', server.ipaddress)
-        msg_pair('SSH Port', server.sshport) unless server.sshport.nil?
-        msg_pair('WinRM Port', server.winrmport) unless server.winrmport.nil?
-        msg_pair('TCP Ports', server.tcpports) unless server.tcpports.nil? or server.tcpports.empty?
-        msg_pair('UDP Ports', server.udpports) unless server.udpports.nil? or server.udpports.empty?
-        msg_pair('Environment', locate_config_value(:environment) || '_default')
-        msg_pair('Runlist', locate_config_value(:run_list)) unless locate_config_value(:run_list).empty?
+        msg_pair("DNS Name", server.hostedservicename + ".cloudapp.net")
+        msg_pair("VM Name", server.name)
+        msg_pair("Size", server.size)
+        msg_pair("Azure Source Image", locate_config_value(:azure_source_image))
+        msg_pair("Azure Service Location", locate_config_value(:azure_service_location))
+        msg_pair("Public Ip Address", server.publicipaddress)
+        msg_pair("Private Ip Address", server.ipaddress)
+        msg_pair("SSH Port", server.sshport) unless server.sshport.nil?
+        msg_pair("WinRM Port", server.winrmport) unless server.winrmport.nil?
+        msg_pair("TCP Ports", server.tcpports) unless server.tcpports.nil? || server.tcpports.empty?
+        msg_pair("UDP Ports", server.udpports) unless server.udpports.nil? || server.udpports.empty?
+        msg_pair("Environment", locate_config_value(:environment) || "_default")
+        msg_pair("Runlist", locate_config_value(:run_list)) unless locate_config_value(:run_list).empty?
         puts "\n"
       end
 
       def pretty_key(key)
-        key.to_s.gsub(/_/, ' ').gsub(/\w+/){ |w| (w =~ /(ssh)|(aws)/i) ? w.upcase  : w.capitalize }
+        key.to_s.tr("_", " ").gsub(/\w+/) { |w| (w =~ /(ssh)|(aws)/i) ? w.upcase : w.capitalize }
       end
 
       # validate command pre-requisites (cli options)
@@ -172,12 +172,12 @@ class Chef
           exit 1
         end
 
-        if locate_config_value(:extended_logs) && locate_config_value(:bootstrap_protocol) != 'cloud-api'
+        if locate_config_value(:extended_logs) && locate_config_value(:bootstrap_protocol) != "cloud-api"
           ui.error("--extended-logs option only works with --bootstrap-protocol cloud-api")
           exit 1
         end
 
-        if locate_config_value(:bootstrap_protocol) == 'cloud-api' && locate_config_value(:azure_vm_name).nil? && locate_config_value(:azure_dns_name).nil?
+        if locate_config_value(:bootstrap_protocol) == "cloud-api" && locate_config_value(:azure_vm_name).nil? && locate_config_value(:azure_dns_name).nil?
           ui.error("Specifying the DNS name using --azure-dns-name or VM name using --azure-vm-name option is required with --bootstrap-protocol cloud-api")
           exit 1
         end
@@ -187,7 +187,7 @@ class Chef
             raise ArgumentError, "The daemon option is only supported for Windows nodes."
           end
 
-          unless  locate_config_value(:bootstrap_protocol) == 'cloud-api'
+          unless  locate_config_value(:bootstrap_protocol) == "cloud-api"
             raise ArgumentError, "The --daemon option requires the use of --bootstrap-protocol cloud-api"
           end
 
@@ -205,7 +205,7 @@ class Chef
             errors << "You did not provide a valid '#{pretty_key(k)}' value. Please set knife[:#{k}] in your knife.rb or pass as an option."
           end
         end
-        if errors.each{|e| ui.error(e)}.any?
+        if errors.each { |e| ui.error(e) }.any?
           exit 1
         end
       end
@@ -215,11 +215,11 @@ class Chef
         mandatory_keys = [:azure_subscription_id, :azure_mgmt_cert, :azure_api_host_name]
         keys.concat(mandatory_keys)
 
-        if(locate_config_value(:azure_mgmt_cert) != nil)
+        if !locate_config_value(:azure_mgmt_cert).nil?
           config[:azure_mgmt_cert] = File.read find_file(locate_config_value(:azure_mgmt_cert))
         end
 
-        if(locate_config_value(:azure_publish_settings_file) != nil)
+        if !locate_config_value(:azure_publish_settings_file).nil?
           parse_publish_settings_file(locate_config_value(:azure_publish_settings_file))
         elsif locate_config_value(:azure_subscription_id).nil? && locate_config_value(:azure_mgmt_cert).nil? && locate_config_value(:azure_api_host_name).nil?
           azureprofile_file = get_azure_profile_file_path
@@ -231,10 +231,10 @@ class Chef
       end
 
       def parse_publish_settings_file(filename)
-        require 'nokogiri'
-        require 'base64'
-        require 'openssl'
-        require 'uri'
+        require "nokogiri"
+        require "base64"
+        require "openssl"
+        require "uri"
         begin
           doc = Nokogiri::XML(File.open(find_file(filename)))
           profile = doc.at_css("PublishProfile")
@@ -258,23 +258,23 @@ class Chef
       end
 
       def get_azure_profile_file_path
-        '~/.azure/azureProfile.json'
+        "~/.azure/azureProfile.json"
       end
 
       def parse_azure_profile(filename, errors)
-        require 'openssl'
-        require 'uri'
+        require "openssl"
+        require "uri"
         errors = [] if errors.nil?
         azure_profile = File.read(File.expand_path(filename))
         azure_profile = JSON.parse(azure_profile)
         default_subscription = get_default_subscription(azure_profile)
-        if default_subscription.has_key?('id') && default_subscription.has_key?('managementCertificate') && default_subscription.has_key?('managementEndpointUrl')
+        if default_subscription.has_key?("id") && default_subscription.has_key?("managementCertificate") && default_subscription.has_key?("managementEndpointUrl")
 
-          Chef::Config[:knife][:azure_subscription_id] = default_subscription['id']
-          mgmt_key = OpenSSL::PKey::RSA.new(default_subscription['managementCertificate']['key']).to_pem
-          mgmt_cert = OpenSSL::X509::Certificate.new(default_subscription['managementCertificate']['cert']).to_pem
+          Chef::Config[:knife][:azure_subscription_id] = default_subscription["id"]
+          mgmt_key = OpenSSL::PKey::RSA.new(default_subscription["managementCertificate"]["key"]).to_pem
+          mgmt_cert = OpenSSL::X509::Certificate.new(default_subscription["managementCertificate"]["cert"]).to_pem
           Chef::Config[:knife][:azure_mgmt_cert] = mgmt_key + mgmt_cert
-          Chef::Config[:knife][:azure_api_host_name] = URI(default_subscription['managementEndpointUrl']).host
+          Chef::Config[:knife][:azure_api_host_name] = URI(default_subscription["managementEndpointUrl"]).host
         else
           errors << "Check if values set for 'id', 'managementCertificate', 'managementEndpointUrl' in -> #{filename} for 'defaultSubscription'. \n  OR "
         end
@@ -283,8 +283,8 @@ class Chef
 
       def get_default_subscription(azure_profile)
         first_subscription_as_default = nil
-        azure_profile['subscriptions'].each do |subscription|
-          if subscription['isDefault']
+        azure_profile["subscriptions"].each do |subscription|
+          if subscription["isDefault"]
             Chef::Log.info("Default subscription \'#{subscription['name']}\'' selected.")
             return subscription
           end
@@ -295,7 +295,7 @@ class Chef
         if first_subscription_as_default
           Chef::Log.info("First subscription \'#{subscription['name']}\' selected as default.")
         else
-          Chef::Log.info('No subscriptions found.')
+          Chef::Log.info("No subscriptions found.")
           exit 1
         end
         first_subscription_as_default
@@ -308,10 +308,10 @@ class Chef
           file = name
         elsif config_dir && File.exist?(File.join(config_dir, name))
           file = File.join(config_dir, name)
-        elsif File.exist?(File.join(ENV['HOME'], '.chef', name))
-          file = File.join(ENV['HOME'], '.chef', name)
+        elsif File.exist?(File.join(ENV["HOME"], ".chef", name))
+          file = File.join(ENV["HOME"], ".chef", name)
         else
-          ui.error('Unable to find file - ' + name)
+          ui.error("Unable to find file - " + name)
           exit 1
         end
         file
@@ -327,15 +327,15 @@ class Chef
       def fetch_role
         deployment = fetch_deployment
 
-        if deployment.at_css('Deployment Name') != nil
-          role_list_xml =  deployment.css('RoleInstanceList RoleInstance')
+        if deployment.at_css("Deployment Name") != nil
+          role_list_xml = deployment.css("RoleInstanceList RoleInstance")
           role_list_xml.each do |role|
             if role.at_css("RoleName").text == (locate_config_value(:azure_vm_name) || @name_args[0])
               return role
             end
           end
         end
-        return nil
+        nil
       end
 
       def fetch_extension(role)
@@ -347,7 +347,7 @@ class Chef
             return ext
           end
         end
-        return nil
+        nil
       end
 
       def fetch_substatus(extension)
@@ -358,19 +358,19 @@ class Chef
             return substatus
           end
         end
-        return nil
+        nil
       end
 
       def fetch_chef_client_logs(fetch_process_start_time, fetch_process_wait_timeout)
         ## fetch server details ##
         role = fetch_role
-        if role != nil
+        if !role.nil?
           ## fetch Chef Extension details deployed on the server ##
           ext = fetch_extension(role)
-          if ext != nil
+          if !ext.nil?
             ## fetch substatus field which contains the chef-client run logs ##
             substatus = fetch_substatus(ext)
-            if substatus != nil
+            if !substatus.nil?
               ## chef-client run logs becomes available ##
               name = substatus.at_css("Name").text
               status = substatus.at_css("Status").text
@@ -393,11 +393,11 @@ class Chef
               end
               puts "#{ui.color(status, color, :bold)}"
               puts "----> chef-client run logs: "
-              puts "\n#{message}\n"  ## message field of substatus contains the chef-client run logs ##
+              puts "\n#{message}\n" ## message field of substatus contains the chef-client run logs ##
             else
               ## unavailability of the substatus field indicates that chef-client run is not completed yet on the server ##
               fetch_process_wait_time = ((Time.now - fetch_process_start_time) / 60).round
-              if fetch_process_wait_time <= fetch_process_wait_timeout  ## wait for maximum 30 minutes until chef-client run logs becomes available ##
+              if fetch_process_wait_time <= fetch_process_wait_timeout ## wait for maximum 30 minutes until chef-client run logs becomes available ##
                 print "#{ui.color('.', :bold)}"
                 sleep 30
                 fetch_chef_client_logs(fetch_process_start_time, fetch_process_wait_timeout)

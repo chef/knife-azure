@@ -1,6 +1,6 @@
 #
 # Author:: Barry Davis (barryd@jetstreamsoftware.com)
-# Copyright:: Copyright (c) 2010-2011 Opscode, Inc.
+# Copyright:: Copyright 2010-2018 Chef Software, Inc.
 # License:: Apache License, Version 2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,22 +30,22 @@ module AzureAPI
     end
 
     def query_azure(service_name,
-                    verb = 'get',
-                    body = '',
-                    params = '',
+                    verb = "get",
+                    body = "",
+                    params = "",
                     services = true,
                     content_type = nil)
-      svc_str = services ? '/services' : ''
+      svc_str = services ? "/services" : ""
       uri = URI.parse("#{@host_name}/#{@subscription_id}#{svc_str}/#{service_name}")
       scheme = !uri.scheme ? "https://" : ""
       request_url = "#{scheme}#{@host_name}/#{@subscription_id}#{svc_str}/#{service_name}"
-      print '.'
+      print "."
       response = http_query(request_url, verb, body, params, content_type)
       if response.code.to_i == 307
         Chef::Log.debug "Redirect to #{response['Location']}"
-        response = http_query(response['Location'], verb, body, params, content_type)
+        response = http_query(response["Location"], verb, body, params, content_type)
       end
-      @last_request_id = response['x-ms-request-id']
+      @last_request_id = response["x-ms-request-id"]
       response
     end
 
@@ -55,18 +55,18 @@ module AzureAPI
       http = http_setup(uri)
       request = request_setup(uri, verb, body, content_type)
       response = http.request(request)
-      @last_request_id = response['x-ms-request-id']
+      @last_request_id = response["x-ms-request-id"]
       response
     end
 
-    def query_for_completion()
+    def query_for_completion
       uri = URI.parse("#{@host_name}/#{@subscription_id}/operations/#{@last_request_id}")
       scheme = !uri.scheme ? "https://" : ""
       request_url = "#{scheme}#{@host_name}/#{@subscription_id}/operations/#{@last_request_id}"
-      response = http_query(request_url, 'get', '', '')
+      response = http_query(request_url, "get", "", "")
       if response.code.to_i == 307
         Chef::Log.debug "Redirect to #{response['Location']}"
-        response = http_query(response['Location'], 'get', '', '')
+        response = http_query(response["Location"], "get", "", "")
       end
       response
     end
@@ -87,20 +87,21 @@ module AzureAPI
       rescue OpenSSL::X509::CertificateError => err
         raise "Invalid Azure Certificate pem file. Error: #{err}"
       end
-        http.key = OpenSSL::PKey::RSA.new(@pem_file)
+      http.key = OpenSSL::PKey::RSA.new(@pem_file)
       http
     end
+
     def request_setup(uri, verb, body, content_type)
-      if verb == 'get'
+      if verb == "get"
         request = Net::HTTP::Get.new(uri.request_uri)
-      elsif verb == 'post'
+      elsif verb == "post"
         request = Net::HTTP::Post.new(uri.request_uri)
-      elsif verb == 'delete'
+      elsif verb == "delete"
         request = Net::HTTP::Delete.new(uri.request_uri)
-      elsif verb == 'put'
+      elsif verb == "put"
         request = Net::HTTP::Put.new(uri.request_uri)
       end
-      text = verb == 'put' && content_type.nil?
+      text = verb == "put" && content_type.nil?
       request["x-ms-version"] = "2014-05-01"
       request["content-type"] = text ? "text/plain" : "application/xml"
       request["accept"] = "application/xml"
@@ -117,7 +118,7 @@ module AzureAPI
       puts "=== response.inspect ==="
       puts response.inspect
       puts "=== all of the headers ==="
-      puts response.each_header { |h, j| puts h.inspect + ' : ' + j.inspect}
+      puts response.each_header { |h, j| puts h.inspect + " : " + j.inspect }
     end
   end
 end

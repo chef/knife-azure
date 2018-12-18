@@ -1,5 +1,5 @@
-require File.expand_path(File.dirname(__FILE__) + '/../spec_helper')
-require File.expand_path(File.dirname(__FILE__) + '/../unit/query_azure_mock')
+require File.expand_path(File.dirname(__FILE__) + "/../spec_helper")
+require File.expand_path(File.dirname(__FILE__) + "/../unit/query_azure_mock")
 
 describe Chef::Knife::AzureServerList do
   include AzureSpecHelper
@@ -25,16 +25,16 @@ describe Chef::Knife::AzureServerList do
     @server_instance.run
   end
 
-  it "should return public port for Remote Desktop if set" do 
-    arr_hash = [{"Name"=>"PowerShell", "Vip"=>"13.92.236.37", "PublicPort"=>"5986", "LocalPort"=>"5986"},
-                {"Name"=>"Remote Desktop", "Vip"=>"13.92.236.37", "PublicPort"=>"3389", "LocalPort"=>"3389"}]
+  it "should return public port for Remote Desktop if set" do
+    arr_hash = [{ "Name" => "PowerShell", "Vip" => "13.92.236.37", "PublicPort" => "5986", "LocalPort" => "5986" },
+                { "Name" => "Remote Desktop", "Vip" => "13.92.236.37", "PublicPort" => "3389", "LocalPort" => "3389" }]
     rdp_port = @server_management_instance.rdp_port(arr_hash)
-    expect(rdp_port).to be ==  "3389"
+    expect(rdp_port).to be == "3389"
   end
 
   it "should return empty port for Remote Desktop if not set" do
-    arr_hash = [{"Name"=>"PowerShell", "Vip"=>"13.92.236.37", "PublicPort"=>"5986", "LocalPort"=>"5986"}]
+    arr_hash = [{ "Name" => "PowerShell", "Vip" => "13.92.236.37", "PublicPort" => "5986", "LocalPort" => "5986" }]
     rdp_port = @server_management_instance.rdp_port(arr_hash)
-    expect(rdp_port).to be ==  ""
+    expect(rdp_port).to be == ""
   end
 end

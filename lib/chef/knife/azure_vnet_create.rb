@@ -1,6 +1,6 @@
 #
 # Author:: Jeff Mendoza (jeffmendoza@live.com)
-# Copyright:: Copyright (c) 2013 Opscode, Inc.
+# Copyright:: Copyright 2013-2018 Chef Software, Inc.
 # License:: Apache License, Version 2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,41 +16,41 @@
 # limitations under the License.
 #
 
-require File.expand_path('../azure_base', __FILE__)
+require File.expand_path("../azure_base", __FILE__)
 
 class Chef
   class Knife
     class AzureVnetCreate < Knife
       include Knife::AzureBase
 
-      banner 'knife azure vnet create (options)'
+      banner "knife azure vnet create (options)"
 
       option :azure_network_name,
-        :short => '-n NETWORK_NAME',
-        :long => '--azure-network-name NETWORK_NAME',
+        :short => "-n NETWORK_NAME",
+        :long => "--azure-network-name NETWORK_NAME",
         :description =>
-          'Specifies the name of the virtual network to create.'
+          "Specifies the name of the virtual network to create."
 
       option :azure_affinity_group,
-        :short => '-a GROUP',
-        :long => '--azure-affinity-group GROUP',
+        :short => "-a GROUP",
+        :long => "--azure-affinity-group GROUP",
         :description =>
-          'Specifies the affinity group to associate with the vnet.'
+          "Specifies the affinity group to associate with the vnet."
 
       option :azure_address_space,
-        :long => '--azure-address-space CIDR',
+        :long => "--azure-address-space CIDR",
         :description =>
-          'Specifies the address space of the vnet using CIDR notation.'
+          "Specifies the address space of the vnet using CIDR notation."
 
       option :azure_subnet_name,
-        :long => '--azure-subnet-name CIDR',
+        :long => "--azure-subnet-name CIDR",
         :description =>
-          'Specifies the Subnet Name.'
+          "Specifies the Subnet Name."
 
       def run
         $stdout.sync = true
 
-        Chef::Log.info('validating...')
+        Chef::Log.info("validating...")
         validate_asm_keys!(:azure_network_name, :azure_affinity_group, :azure_address_space)
 
         params = {
@@ -62,9 +62,9 @@ class Chef
 
         rsp = service.create_vnet(params)
         print "\n"
-        if rsp.at_css('Status').nil?
-          if rsp.at_css('Code').nil? || rsp.at_css('Message').nil?
-            puts 'Unknown Error. try -VV'
+        if rsp.at_css("Status").nil?
+          if rsp.at_css("Code").nil? || rsp.at_css("Message").nil?
+            puts "Unknown Error. try -VV"
           else
             puts "#{rsp.at_css('Code').content}: "\
                  "#{rsp.at_css('Message').content}"

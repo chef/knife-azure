@@ -1,4 +1,4 @@
-require File.expand_path(File.dirname(__FILE__) + '/../spec_helper')
+require File.expand_path(File.dirname(__FILE__) + "/../spec_helper")
 
 describe "roles" do
   before(:all) do
@@ -6,9 +6,9 @@ describe "roles" do
     @roles = @connection.roles.all
   end
 
-  specify { @connection.roles.exists?('notexist').should == false }
-  specify { @connection.roles.exists?('role126').should == true }
-  it 'run through roles' do
+  specify { @connection.roles.exists?("notexist").should == false }
+  specify { @connection.roles.exists?("role126").should == true }
+  it "run through roles" do
     @connection.roles.roles.each do |role|
       role.name.should_not be_nil
     end

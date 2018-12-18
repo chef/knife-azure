@@ -1,7 +1,7 @@
 #
 # Author:: Nimisha Sharad (nimisha.sharad@clogeny.com)
 #
-# Copyright:: Copyright (c) 2016 Opscode, Inc.
+# Copyright:: Copyright 2016-2018 Chef Software, Inc.
 # License:: Apache License, Version 2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,11 +17,11 @@
 # limitations under the License.
 #
 
-require 'chef/knife/azurerm_base'
-require 'chef/knife/bootstrap/common_bootstrap_options'
-require 'chef/knife/bootstrap/bootstrapper'
-require 'azure/resource_management/ARM_interface'
-require 'time'
+require "chef/knife/azurerm_base"
+require "chef/knife/bootstrap/common_bootstrap_options"
+require "chef/knife/bootstrap/bootstrapper"
+require "azure/resource_management/ARM_interface"
+require "time"
 
 class Chef
   class Knife
@@ -49,16 +49,16 @@ class Chef
             ext_params = set_ext_params
             vm_extension = service.create_vm_extension(ext_params)
             if vm_extension
-              if ext_params[:chef_extension_public_param][:extendedLogs] == 'true'
+              if ext_params[:chef_extension_public_param][:extendedLogs] == "true"
                 service.fetch_chef_client_logs(ext_params[:azure_resource_group_name], ext_params[:azure_vm_name], ext_params[:chef_extension], Time.now)
-              end 
+              end
               ui.log("VirtualMachineExtension creation successfull.")
               ui.log("Virtual Machine Extension name is: #{vm_extension.name}")
               ui.log("Virtual Machine Extension ID is: #{vm_extension.id}")
             end
           else
-            raise ArgumentError, 'Please specify the SERVER name which needs to be bootstrapped via the Chef Extension.' if @name_args.length == 0
-            raise ArgumentError, 'Please specify only one SERVER name which needs to be bootstrapped via the Chef Extension.' if @name_args.length > 1
+            raise ArgumentError, "Please specify the SERVER name which needs to be bootstrapped via the Chef Extension." if @name_args.length == 0
+            raise ArgumentError, "Please specify only one SERVER name which needs to be bootstrapped via the Chef Extension." if @name_args.length > 1
           end
         rescue => error
           service.common_arm_rescue_block(error)
@@ -74,11 +74,11 @@ class Chef
           else
             ext_params = Hash.new
             case server.storage_profile.os_disk.os_type.downcase
-            when 'windows'
-              ext_params[:chef_extension] = 'ChefClient'
-            when 'linux'
-              if ['ubuntu', 'debian', 'rhel', 'centos'].any? { |platform| server.storage_profile.image_reference.offer.downcase.include? platform }
-                ext_params[:chef_extension] = 'LinuxChefClient'
+            when "windows"
+              ext_params[:chef_extension] = "ChefClient"
+            when "linux"
+              if %w{ubuntu debian rhel centos}.any? { |platform| server.storage_profile.image_reference.offer.downcase.include? platform }
+                ext_params[:chef_extension] = "LinuxChefClient"
               else
                 raise "Offer #{server.storage_profile.image_reference.offer} is not supported in the extension."
               end

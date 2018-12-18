@@ -1,6 +1,6 @@
 #
 # Author:: Barry Davis (barryd@jetstreamsoftware.com)
-# Copyright:: Copyright (c) 2010-2011 Opscode, Inc.
+# Copyright:: Copyright 2010-2018 Chef Software, Inc.
 # License:: Apache License, Version 2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,7 +17,7 @@
 #
 
 module AzureUtility
-  def xml_content(xml, key, default='')
+  def xml_content(xml, key, default = "")
     content = default
     node = xml.at_css(key)
     if node
@@ -27,15 +27,14 @@ module AzureUtility
   end
 
   def error_from_response_xml(response_xml)
-    error_code_and_message = ['','']
-    error_node = response_xml.at_css('Error')
+    error_code_and_message = ["", ""]
+    error_node = response_xml.at_css("Error")
 
     if error_node
-      error_code_and_message[0] = xml_content(error_node, 'Code')
-      error_code_and_message[1] = xml_content(error_node, 'Message')
+      error_code_and_message[0] = xml_content(error_node, "Code")
+      error_code_and_message[1] = xml_content(error_node, "Message")
     end
 
     error_code_and_message
   end
 end
-

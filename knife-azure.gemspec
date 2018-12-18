@@ -1,5 +1,5 @@
-$:.unshift(File.dirname(__FILE__) + '/lib')
-require 'knife-azure/version'
+$:.unshift(File.dirname(__FILE__) + "/lib")
+require "knife-azure/version"
 
 Gem::Specification.new do |s|
   s.name = "knife-azure"
@@ -14,10 +14,10 @@ Gem::Specification.new do |s|
   s.extra_rdoc_files = [
     "LICENSE"
   ]
-  s.files = %w(LICENSE) + Dir.glob("lib/**/*")
+  s.files = %w{LICENSE} + Dir.glob("lib/**/*")
   s.homepage = "https://github.com/chef/knife-azure"
   s.require_paths = ["lib"]
-  s.required_ruby_version = ">= 2.2.2"
+  s.required_ruby_version = ">= 2.3"
 
   s.add_dependency "nokogiri", ">= 1.5.5"
   s.add_dependency "knife-windows", "~> 1.0"
@@ -28,8 +28,4 @@ Gem::Specification.new do |s|
   s.add_dependency "listen", "~> 3.0"
   s.add_dependency "ipaddress"
   s.add_dependency "ffi"
-  s.add_development_dependency 'chef',  '>= 12.2.1'
-  s.add_development_dependency "mixlib-config", "~> 2.0"
-  s.add_development_dependency "equivalent-xml", "~> 0.2.9"
-  s.add_development_dependency "knife-cloud", ">= 1.0.0"
 end

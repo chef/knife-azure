@@ -1,6 +1,6 @@
 #
 # Author:: Mukta Aphale (mukta.aphale@clogeny.com)
-# Copyright:: Copyright (c) 2010-2011 Opscode, Inc.
+# Copyright:: Copyright 2010-2018 Chef Software, Inc.
 # License:: Apache License, Version 2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,7 +19,7 @@
 module Azure
   class Certificates
     def initialize(connection)
-      @connection=connection
+      @connection = connection
     end
 
     def create(params)
@@ -33,7 +33,7 @@ module Azure
     end
 
     def create_ssl_certificate(azure_dns_name)
-      cert_params = { output_file: 'winrm', key_length: 2048, cert_validity: 24,
+      cert_params = { output_file: "winrm", key_length: 2048, cert_validity: 24,
                       azure_dns_name: azure_dns_name }
       certificate = Certificate.new(@connection)
       thumbprint = certificate.create_ssl_certificate(cert_params)
@@ -58,15 +58,15 @@ module Azure
     def create(params)
       # If RSA private key has been specified, then generate an x 509 certificate from the
       # public part of the key
-      @cert_data = generate_public_key_certificate_data({:ssh_key => params[:identity_file],
-                                             :ssh_key_passphrase => params[:identity_file_passphrase]})
-      add_certificate @cert_data, 'knifeazure', 'pfx', params[:azure_dns_name]
+      @cert_data = generate_public_key_certificate_data({ :ssh_key => params[:identity_file],
+                                                          :ssh_key_passphrase => params[:identity_file_passphrase] })
+      add_certificate @cert_data, "knifeazure", "pfx", params[:azure_dns_name]
 
       # Return the fingerprint to be used while adding role
       @fingerprint
     end
 
-    def generate_public_key_certificate_data (params)
+    def generate_public_key_certificate_data(params)
       # Generate OpenSSL RSA key from the mentioned ssh key path (and passphrase)
       key = OpenSSL::PKey::RSA.new(File.read(params[:ssh_key]), params[:ssh_key_passphrase])
       # Generate X 509 certificate
@@ -81,28 +81,28 @@ module Azure
       ef = OpenSSL::X509::ExtensionFactory.new
       ef.subject_certificate = ca
       ef.issuer_certificate = ca
-      ca.add_extension(ef.create_extension("basicConstraints","CA:TRUE",true))
-      ca.add_extension(ef.create_extension("keyUsage","keyCertSign, cRLSign", true))
-      ca.add_extension(ef.create_extension("subjectKeyIdentifier","hash",false))
-      ca.add_extension(ef.create_extension("authorityKeyIdentifier","keyid:always",false))
+      ca.add_extension(ef.create_extension("basicConstraints", "CA:TRUE", true))
+      ca.add_extension(ef.create_extension("keyUsage", "keyCertSign, cRLSign", true))
+      ca.add_extension(ef.create_extension("subjectKeyIdentifier", "hash", false))
+      ca.add_extension(ef.create_extension("authorityKeyIdentifier", "keyid:always", false))
       ca.sign(key, OpenSSL::Digest::SHA256.new)
       # Generate the SHA1 fingerprint of the der format of the X 509 certificate
-      @fingerprint =  OpenSSL::Digest::SHA1.new(ca.to_der)
+      @fingerprint = OpenSSL::Digest::SHA1.new(ca.to_der)
       # Create the pfx format of the certificate
-      pfx = OpenSSL::PKCS12.create('knifeazure', 'knife-azure-pfx',  key,  ca)
+      pfx = OpenSSL::PKCS12.create("knifeazure", "knife-azure-pfx", key, ca)
       # Encode the pfx format - upload this certificate
       Base64.strict_encode64(pfx.to_der)
     end
 
-    def add_certificate certificate_data, certificate_password, certificate_format, dns_name
+    def add_certificate(certificate_data, certificate_password, certificate_format, dns_name)
       # Generate XML to call the API
       # Add certificate to the hosted service
       builder = Nokogiri::XML::Builder.new do |xml|
-       xml.CertificateFile('xmlns'=>'http://schemas.microsoft.com/windowsazure') {
-       xml.Data certificate_data
-       xml.CertificateFormat certificate_format
-       xml.Password certificate_password
-       }
+        xml.CertificateFile("xmlns" => "http://schemas.microsoft.com/windowsazure") do
+          xml.Data certificate_data
+          xml.CertificateFormat certificate_format
+          xml.Password certificate_password
+        end
       end
       # Windows Azure API call
       @connection.query_azure("hostedservices/#{dns_name}/certificates", "post", builder.to_xml)
@@ -125,8 +125,8 @@ module Azure
     end
 
     ########   SSL certificate generation for knife-azure ssl bootstrap ######
-    def create_ssl_certificate cert_params
-      file_path = cert_params[:output_file].sub(/\.(\w+)$/,'')
+    def create_ssl_certificate(cert_params)
+      file_path = cert_params[:output_file].sub(/\.(\w+)$/, "")
       path = prompt_for_file_path
       file_path = File.join(path, file_path) unless path.empty?
       cert_params[:domain] = prompt_for_domain
@@ -134,21 +134,21 @@ module Azure
       rsa_key = generate_keypair cert_params[:key_length]
       cert = generate_certificate(rsa_key, cert_params)
       write_certificate_to_file cert, file_path, rsa_key, cert_params
-      puts "*"*70
+      puts "*" * 70
       puts "Generated Certificates:"
       puts "- #{file_path}.pfx - PKCS12 format keypair. Contains both the public and private keys, usually used on the server."
       puts "- #{file_path}.b64 - Base64 encoded PKCS12 keypair. Contains both the public and private keys, for upload to the Azure REST API."
       puts "- #{file_path}.pem - Base64 encoded public certificate only. Required by the client to connect to the server."
       puts "Certificate Thumbprint: #{@thumbprint.to_s.upcase}"
-      puts "*"*70
+      puts "*" * 70
 
       Chef::Config[:knife][:ca_trust_file] = file_path + ".pem" if Chef::Config[:knife][:ca_trust_file].nil?
       cert_data = File.read (file_path + ".b64")
-      add_certificate cert_data, @winrm_cert_passphrase, 'pfx', cert_params[:azure_dns_name]
+      add_certificate cert_data, @winrm_cert_passphrase, "pfx", cert_params[:azure_dns_name]
       @thumbprint
     end
 
-    def generate_keypair key_length
+    def generate_keypair(key_length)
       OpenSSL::PKey::RSA.new(key_length.to_i)
     end
 
@@ -166,7 +166,7 @@ module Azure
     end
 
     def prompt_for_file_path
-      file_path = ''
+      file_path = ""
       counter = 0
       begin
         print "Invalid location! \n" unless file_path.empty?
@@ -183,7 +183,7 @@ module Azure
     def prompt_for_domain
       counter = 0
       begin
-        print 'Enter the domain (mandatory):'
+        print "Enter the domain (mandatory):"
         domain = STDIN.gets
         domain = domain.strip
         counter += 1
@@ -211,15 +211,15 @@ module Azure
       ef = OpenSSL::X509::ExtensionFactory.new
       ef.subject_certificate = cert
       ef.issuer_certificate = cert
-      cert.add_extension(ef.create_extension("subjectKeyIdentifier","hash",false))
-      cert.add_extension(ef.create_extension("authorityKeyIdentifier","keyid:always",false))
+      cert.add_extension(ef.create_extension("subjectKeyIdentifier", "hash", false))
+      cert.add_extension(ef.create_extension("authorityKeyIdentifier", "keyid:always", false))
       cert.add_extension(ef.create_extension("extendedKeyUsage", "1.3.6.1.5.5.7.3.1", false))
       cert.sign(rsa_key, OpenSSL::Digest::SHA1.new)
       @thumbprint = OpenSSL::Digest::SHA1.new(cert.to_der)
       cert
     end
 
-    def write_certificate_to_file cert, file_path, rsa_key, cert_params
+    def write_certificate_to_file(cert, file_path, rsa_key, cert_params)
       File.open(file_path + ".pem", "wb") { |f| f.print cert.to_pem }
       @winrm_cert_passphrase = prompt_for_passphrase unless @winrm_cert_passphrase
       pfx = OpenSSL::PKCS12.create("#{cert_params[:winrm_cert_passphrase]}", "winrmcert", rsa_key, cert)
@@ -228,7 +228,6 @@ module Azure
     end
 
     ##########   SSL certificate generation ends ###########
-
 
   end
 end

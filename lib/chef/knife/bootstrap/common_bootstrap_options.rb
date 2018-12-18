@@ -1,7 +1,7 @@
 #
 # Author:: Aliasgar Batterywala (aliasgar.batterywala@clogeny.com)
 #
-# Copyright:: Copyright (c) 2016 Opscode, Inc.
+# Copyright:: Copyright 2016-2018 Chef Software, Inc.
 # License:: Apache License, Version 2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -29,7 +29,7 @@ class Chef
           includer.class_eval do
 
             deps do
-              require 'chef/knife/bootstrap'
+              require "chef/knife/bootstrap"
               Chef::Knife::Bootstrap.load_deps
             end
 
@@ -69,7 +69,7 @@ class Chef
               :long        => "--node-ssl-verify-mode [peer|none]",
               :description => "Whether or not to verify the SSL cert for all HTTPS requests.",
               :proc        => Proc.new { |v|
-                valid_values = ["none", "peer"]
+                valid_values = %w{none peer}
                 unless valid_values.include?(v)
                   raise "Invalid value '#{v}' for --node-ssl-verify-mode. Valid values are: #{valid_values.join(", ")}"
                 end
@@ -117,4 +117,3 @@ class Chef
     end
   end
 end
-
