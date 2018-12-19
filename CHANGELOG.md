@@ -1,16 +1,17 @@
 # knife-azure Change Log
 
-<!-- latest_release 1.8.10 -->
-## [v1.8.10](https://github.com/chef/knife-azure/tree/v1.8.10) (2018-12-18)
+<!-- latest_release 1.8.11 -->
+## [v1.8.11](https://github.com/chef/knife-azure/tree/v1.8.11) (2018-12-19)
 
 #### Merged Pull Requests
-- Require Ruby 2.3+ and fix Chefstyle offenses [#494](https://github.com/chef/knife-azure/pull/494) ([kapilchouhan99](https://github.com/kapilchouhan99))
+- Fix for undefined method get_vm_size error and fixing the missing code which not reflected after resolving conflict in previous merge [#495](https://github.com/chef/knife-azure/pull/495) ([kapilchouhan99](https://github.com/kapilchouhan99))
 <!-- latest_release -->
 
 <!-- release_rollup since=1.8.7 -->
 ### Changes since 1.8.7 release
 
 #### Merged Pull Requests
+- Fix for undefined method get_vm_size error and fixing the missing code which not reflected after resolving conflict in previous merge [#495](https://github.com/chef/knife-azure/pull/495) ([kapilchouhan99](https://github.com/kapilchouhan99)) <!-- 1.8.11 -->
 - Require Ruby 2.3+ and fix Chefstyle offenses [#494](https://github.com/chef/knife-azure/pull/494) ([kapilchouhan99](https://github.com/kapilchouhan99)) <!-- 1.8.10 -->
 - Clarify character limit for azure-storage-account [#463](https://github.com/chef/knife-azure/pull/463) ([OBrienCommaJosh](https://github.com/OBrienCommaJosh)) <!-- 1.8.9 -->
 - Fix for unable to create VM with Standard_F2 or any valid sizes [#489](https://github.com/chef/knife-azure/pull/489) ([kapilchouhan99](https://github.com/kapilchouhan99)) <!-- 1.8.8 -->
