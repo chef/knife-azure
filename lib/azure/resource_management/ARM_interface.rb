@@ -334,7 +334,7 @@ module Azure
           ui.log("INFO:Virtual Machine #{params[:azure_vm_name]} already exist under the Resource Group #{params[:azure_resource_group_name]}. Exiting for now.")
         else
           params[:chef_extension_version] = params[:chef_extension_version].nil? ? get_latest_chef_extension_version(params) : params[:chef_extension_version]
-          params[:vm_size] = get_vm_size(params[:azure_vm_size])
+          params[:vm_size] = params[:azure_vm_size]
           params[:vnet_config] = create_vnet_config(
             params[:azure_resource_group_name],
             params[:azure_vnet_name],
