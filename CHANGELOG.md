@@ -1,16 +1,17 @@
 # knife-azure Change Log
 
-<!-- latest_release 1.8.11 -->
-## [v1.8.11](https://github.com/chef/knife-azure/tree/v1.8.11) (2018-12-19)
+<!-- latest_release 1.8.12 -->
+## [v1.8.12](https://github.com/chef/knife-azure/tree/v1.8.12) (2018-12-20)
 
 #### Merged Pull Requests
-- Fix for undefined method get_vm_size error and fixing the missing code which not reflected after resolving conflict in previous merge [#495](https://github.com/chef/knife-azure/pull/495) ([kapilchouhan99](https://github.com/kapilchouhan99))
+- Upgraded version of knife-azure azure-sdk libraries.  [#491](https://github.com/chef/knife-azure/pull/491) ([Vasu1105](https://github.com/Vasu1105))
 <!-- latest_release -->
 
 <!-- release_rollup since=1.8.7 -->
 ### Changes since 1.8.7 release
 
 #### Merged Pull Requests
+- Upgraded version of knife-azure azure-sdk libraries.  [#491](https://github.com/chef/knife-azure/pull/491) ([Vasu1105](https://github.com/Vasu1105)) <!-- 1.8.12 -->
 - Fix for undefined method get_vm_size error and fixing the missing code which not reflected after resolving conflict in previous merge [#495](https://github.com/chef/knife-azure/pull/495) ([kapilchouhan99](https://github.com/kapilchouhan99)) <!-- 1.8.11 -->
 - Require Ruby 2.3+ and fix Chefstyle offenses [#494](https://github.com/chef/knife-azure/pull/494) ([kapilchouhan99](https://github.com/kapilchouhan99)) <!-- 1.8.10 -->
 - Clarify character limit for azure-storage-account [#463](https://github.com/chef/knife-azure/pull/463) ([OBrienCommaJosh](https://github.com/OBrienCommaJosh)) <!-- 1.8.9 -->
