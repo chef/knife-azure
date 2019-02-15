@@ -261,7 +261,7 @@ module Azure
           resource_group_name,
           virtual_machine_name,
           chef_extension_name,
-          "instanceView"
+          expand: "instanceView"
         ).instance_view.substatuses
 
         return nil if substatuses.nil?
