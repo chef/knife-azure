@@ -4,7 +4,7 @@
 
 ## Description
 
-A [knife] (<http://docs.chef.io/knife.html>) plugin to create, delete, and enumerate [Microsoft Azure] (<https://azure.microsoft.com>) resources to be managed by Chef.
+A [knife](http://docs.chef.io/knife.html) plugin to create, delete, and enumerate [Microsoft Azure](https://azure.microsoft.com) resources to be managed by Chef.
 
 NOTE: You may also want to consider using the [Azure CLI](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli), this application is written by the Azure team and has many other integrations with Azure. If click [here](https://github.com/chef-partners/azure-chef-extension/blob/master/examples/azure-xplat-cli-examples.md) you'll see deeper examples of using the Chef extension and Azure.
 
