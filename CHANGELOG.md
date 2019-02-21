@@ -1,31 +1,28 @@
 # knife-azure Change Log
 
-<!-- latest_release 1.9.0 -->
-## [v1.9.0](https://github.com/chef/knife-azure/tree/v1.9.0) (2019-02-15)
-
-#### Merged Pull Requests
-- Fix for wrong number of arguments error while using extended logs option. [#497](https://github.com/chef/knife-azure/pull/497) ([Vasu1105](https://github.com/Vasu1105))
+<!-- latest_release -->
 <!-- latest_release -->
 
-<!-- release_rollup since=1.8.7 -->
-### Changes since 1.8.7 release
-
-#### Merged Pull Requests
-- Fix for wrong number of arguments error while using extended logs option. [#497](https://github.com/chef/knife-azure/pull/497) ([Vasu1105](https://github.com/Vasu1105)) <!-- 1.9.0 -->
-- Tidy up bootstrap.md  [#493](https://github.com/chef/knife-azure/pull/493) ([stuartpreston](https://github.com/stuartpreston)) <!-- 1.8.13 -->
-- Upgraded version of knife-azure azure-sdk libraries.  [#491](https://github.com/chef/knife-azure/pull/491) ([Vasu1105](https://github.com/Vasu1105)) <!-- 1.8.12 -->
-- Fix for undefined method get_vm_size error and fixing the missing code which not reflected after resolving conflict in previous merge [#495](https://github.com/chef/knife-azure/pull/495) ([kapilchouhan99](https://github.com/kapilchouhan99)) <!-- 1.8.11 -->
-- Require Ruby 2.3+ and fix Chefstyle offenses [#494](https://github.com/chef/knife-azure/pull/494) ([kapilchouhan99](https://github.com/kapilchouhan99)) <!-- 1.8.10 -->
-- Clarify character limit for azure-storage-account [#463](https://github.com/chef/knife-azure/pull/463) ([OBrienCommaJosh](https://github.com/OBrienCommaJosh)) <!-- 1.8.9 -->
-- Fix for unable to create VM with Standard_F2 or any valid sizes [#489](https://github.com/chef/knife-azure/pull/489) ([kapilchouhan99](https://github.com/kapilchouhan99)) <!-- 1.8.8 -->
+<!-- release_rollup -->
 <!-- release_rollup -->
 
 <!-- latest_stable_release -->
+## [v1.9.0](https://github.com/chef/knife-azure/tree/v1.9.0) (2019-02-21)
+
+#### Merged Pull Requests
+- Fix for unable to create VM with Standard_F2 or any valid sizes [#489](https://github.com/chef/knife-azure/pull/489) ([kapilchouhan99](https://github.com/kapilchouhan99))
+- Clarify character limit for azure-storage-account [#463](https://github.com/chef/knife-azure/pull/463) ([OBrienCommaJosh](https://github.com/OBrienCommaJosh))
+- Require Ruby 2.3+ and fix Chefstyle offenses [#494](https://github.com/chef/knife-azure/pull/494) ([kapilchouhan99](https://github.com/kapilchouhan99))
+- Fix for undefined method get_vm_size error and fixing the missing code which not reflected after resolving conflict in previous merge [#495](https://github.com/chef/knife-azure/pull/495) ([kapilchouhan99](https://github.com/kapilchouhan99))
+- Upgraded version of knife-azure azure-sdk libraries.  [#491](https://github.com/chef/knife-azure/pull/491) ([Vasu1105](https://github.com/Vasu1105))
+- Tidy up bootstrap.md  [#493](https://github.com/chef/knife-azure/pull/493) ([stuartpreston](https://github.com/stuartpreston))
+- Fix for wrong number of arguments error while using extended logs option. [#497](https://github.com/chef/knife-azure/pull/497) ([Vasu1105](https://github.com/Vasu1105))
+<!-- latest_stable_release -->
+
 ## [v1.8.7](https://github.com/chef/knife-azure/tree/v1.8.7) (2018-12-04)
 
 #### Merged Pull Requests
 - Don&#39;t ship the readme in the gem artifact [#492](https://github.com/chef/knife-azure/pull/492) ([tas50](https://github.com/tas50))
-<!-- latest_stable_release -->
 
 ## [v1.8.6](https://github.com/chef/knife-azure/tree/v1.8.6) (2018-11-20)
 
