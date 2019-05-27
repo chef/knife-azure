@@ -1,7 +1,7 @@
 #
 # Author:: Aliasgar Batterywala (aliasgar.batterywala@clogeny.com)
 #
-# Copyright:: Copyright 2009-2018, Chef Software Inc.
+# Copyright:: Copyright 2008-2019, Chef Software, Inc.
 # License:: Apache License, Version 2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,7 +24,7 @@ require "chef/knife/bootstrap/bootstrapper"
 
 class Chef
   class Knife
-    class AzurermServerCreate < Knife
+    class AzurermServerCreate < Knife::Bootstrap
 
       include Knife::AzurermBase
       include Knife::Bootstrap::CommonBootstrapOptions
@@ -34,122 +34,51 @@ class Chef
 
       attr_accessor :initial_sleep_delay
 
-      option :ssh_user,
-        :short => "-x USERNAME",
-        :long => "--ssh-user USERNAME",
-        :description => "The ssh username",
-        :default => "root"
-
-      option :ssh_password,
-        :short => "-P PASSWORD",
-        :long => "--ssh-password PASSWORD",
-        :description => "The ssh password"
-
-      option :ssh_port,
-        :long => "--ssh-port PORT",
-        :description => "The ssh port. Default is 22."
-
-      option :node_ssl_verify_mode,
-        :long        => "--node-ssl-verify-mode [peer|none]",
-        :description => "Whether or not to verify the SSL cert for all HTTPS requests."
-
-      option :winrm_user,
-        :short => "-x USERNAME",
-        :long => "--winrm-user USERNAME",
-        :description => "The WinRM username",
-        :default => "Administrator",
-        :proc => Proc.new { |key| Chef::Config[:knife][:winrm_user] = key }
-
-      option :winrm_password,
-        :short => "-P PASSWORD",
-        :long => "--winrm-password PASSWORD",
-        :description => "The WinRM password",
-        :proc => Proc.new { |key| Chef::Config[:knife][:winrm_password] = key }
-
-      option :azure_storage_account,
-        :short => "-a NAME",
-        :long => "--azure-storage-account NAME",
-        :description => "Required for advanced server-create option.
-                                      A name for the storage account that is unique within Windows Azure. Storage account names must be
-                                      between 3 and 24 characters in length and use numbers and lower-case letters only.
-                                      This name is the DNS prefix name and can be used to access blobs, queues, and tables in the storage account.
-                                      For example: http://ServiceName.blob.core.windows.net/mycontainer/"
-
       option :azure_storage_account_type,
-        :long => "--azure-storage-account-type TYPE",
-        :description => "Optional. One of the following account types (case-sensitive):
+        long: "--azure-storage-account-type TYPE",
+        description: "Optional. One of the following account types (case-sensitive):
                                       Standard_LRS (Standard Locally-redundant storage)
                                       Standard_ZRS (Standard Zone-redundant storage)
                                       Standard_GRS (Standard Geo-redundant storage)
                                       Standard_RAGRS (Standard Read access geo-redundant storage)
                                       Premium_LRS (Premium Locally-redundant storage)",
-        :default => "Standard_GRS"
-
-      option :azure_vm_name,
-        :long => "--azure-vm-name NAME",
-        :description => "Required. Specifies the name for the virtual machine.
-                        The name must be unique within the ResourceGroup.
-                        The azure vm name cannot be more than 15 characters long"
-
-      option :azure_service_location,
-        :short => "-m LOCATION",
-        :long => "--azure-service-location LOCATION",
-        :description => "Required if not using an Affinity Group. Specifies the geographic location - the name of the data center location that is valid for your subscription.
-                                      Eg: westus, eastus, eastasia, southeastasia, northeurope, westeurope",
-        :proc        => Proc.new { |lo| Chef::Config[:knife][:azure_service_location] = lo }
-
-      option :azure_os_disk_name,
-        :short => "-o DISKNAME",
-        :long => "--azure-os-disk-name DISKNAME",
-        :description => "Optional. Specifies the friendly name of the disk containing the guest OS image in the image repository."
+        default: "Standard_GRS"
 
       option :azure_image_reference_publisher,
-        :long => "--azure-image-reference-publisher PUBLISHER_NAME",
-        :description => "Optional. Specifies the publisher of the image used to create the virtual machine.
+        long: "--azure-image-reference-publisher PUBLISHER_NAME",
+        description: "Optional. Specifies the publisher of the image used to create the virtual machine.
                           eg. OpenLogic, Canonical, MicrosoftWindowsServer"
 
       option :azure_image_reference_offer,
-        :long => "--azure-image-reference-offer OFFER",
-        :description => "Optional. Specifies the offer of the image used to create the virtual machine.
+        long: "--azure-image-reference-offer OFFER",
+        description: "Optional. Specifies the offer of the image used to create the virtual machine.
                           eg. CentOS, UbuntuServer, WindowsServer"
 
       option :azure_image_reference_sku,
-        :long => "--azure-image-reference-sku SKU",
-        :description => "Optional. Specifies the SKU of the image used to create the virtual machine."
+        long: "--azure-image-reference-sku SKU",
+        description: "Optional. Specifies the SKU of the image used to create the virtual machine."
 
       option :azure_image_reference_version,
-        :long => "--azure-image-reference-version VERSION",
-        :description => "Optional. Specifies the version of the image used to create the virtual machine.
+        long: "--azure-image-reference-version VERSION",
+        description: "Optional. Specifies the version of the image used to create the virtual machine.
                           Default value is 'latest'",
-        :default => "latest"
+        default: "latest"
 
       option :azure_image_os_type,
-        :long => "--azure-image-os-type OSTYPE",
-        :description => "Optional. Specifies the image OS Type for which server needs to be created. Accepted values ubuntu|centos|rhel|debian|windows"
-
-      option :azure_vm_size,
-        :short => "-z SIZE",
-        :long => "--azure-vm-size SIZE",
-        :description => "Optional. Size of virtual machine. Default is Standard_A1_v2.
-                        Eg: Standard_A2, Standard_F2, Standard_G1 etc.",
-        :default => "Standard_A1_v2",
-        :proc => Proc.new { |si| Chef::Config[:knife][:azure_vm_size] = si }
-
-      option :azure_availability_set,
-             :long => "--azure-availability-set NAME",
-             :description => "Optional. Name of availability set to add virtual machine into."
+        long: "--azure-image-os-type OSTYPE",
+        description: "Optional. Specifies the image OS Type for which server needs to be created. Accepted values ubuntu|centos|rhel|debian|windows"
 
       option :azure_vnet_name,
-        :long => "--azure-vnet-name VNET_NAME",
-        :description => "Optional. Specifies the virtual network name.
+        long: "--azure-vnet-name VNET_NAME",
+        description: "Optional. Specifies the virtual network name.
                          This may be the name of an existing vnet present under the given resource group
                          or this may be the name of a new vnet to be added in the given resource group.
                          If not specified then azure-vm-name will be taken as the default name for vnet name as well.
                          Along with this option azure-vnet-subnet-name option can also be specified or it can also be skipped."
 
       option :azure_vnet_subnet_name,
-        :long => "--azure-vnet-subnet-name VNET_SUBNET_NAME",
-        :description => "Optional. Specifies the virtual network subnet name.
+        long: "--azure-vnet-subnet-name VNET_SUBNET_NAME",
+        description: "Optional. Specifies the virtual network subnet name.
                          Must be specified only with azure-vnet-name option.
                          This may be the name of an existing subnet present under the given virtual network
                          or this may be the name of a new subnet to be added in the given virtual network.
@@ -157,39 +86,22 @@ class Chef
                          Value as 'GatewaySubnet' cannot be used as the name for the --azure-vnet-subnet-name option."
 
       option :ssh_public_key,
-        :long => "--ssh-public-key FILENAME",
-        :description => "It is the ssh-rsa public key path. Specify either ssh-password or ssh-public-key"
-
-      option :thumbprint,
-        :long => "--thumbprint THUMBPRINT",
-        :description => "The thumprint of the ssl certificate"
-
-      option :cert_passphrase,
-        :long => "--cert-passphrase PASSWORD",
-        :description => "SSL Certificate Password"
-
-      option :cert_path,
-        :long => "--cert-path PATH",
-        :description => "SSL Certificate Path"
-
-      option :tcp_endpoints,
-        :short => "-t PORT_LIST",
-        :long => "--tcp-endpoints PORT_LIST",
-        :description => "Comma-separated list of TCP ports to open e.g. '80,433'"
+        long: "--ssh-public-key FILENAME",
+        description: "It is the ssh-rsa public key path. Specify either ssh-password or ssh-public-key"
 
       option :server_count,
-        :long => "--server-count COUNT",
-        :description => "Number of servers to create with same configuration.
+        long: "--server-count COUNT",
+        description: "Number of servers to create with same configuration.
                                     Maximum count is 5. Default value is 1.",
-        :default => 1
+        default: 1
 
       option :ohai_hints,
-        :long => "--ohai-hints HINT_OPTIONS",
-        :description => "Hint option names to be set in Ohai configuration of the target node.
+        long: "--ohai-hints HINT_OPTIONS",
+        description: "Hint option names to be set in Ohai configuration of the target node.
                                      Supported values are: vm_name, public_fqdn and platform.
                                      User can pass any comma separated combination of these values like 'vm_name,public_fqdn'.
                                      Default value is 'default' which corresponds to the supported values list mentioned here.",
-        :default => "default"
+        default: "default"
 
       def run
         $stdout.sync = true
@@ -214,28 +126,28 @@ class Chef
 
       def create_server_def
         server_def = {
-          :azure_resource_group_name => locate_config_value(:azure_resource_group_name),
-          :azure_storage_account => locate_config_value(:azure_storage_account),
-          :azure_storage_account_type => locate_config_value(:azure_storage_account_type),
-          :azure_vm_name => locate_config_value(:azure_vm_name),
-          :azure_service_location => locate_config_value(:azure_service_location),
-          :azure_os_disk_name => locate_config_value(:azure_os_disk_name),
-          :azure_os_disk_caching => locate_config_value(:azure_os_disk_caching),
-          :azure_os_disk_create_option => locate_config_value(:azure_os_disk_create_option),
-          :azure_vm_size => locate_config_value(:azure_vm_size),
-          :azure_image_reference_publisher => locate_config_value(:azure_image_reference_publisher),
-          :azure_image_reference_offer => locate_config_value(:azure_image_reference_offer),
-          :azure_image_reference_sku => locate_config_value(:azure_image_reference_sku),
-          :azure_image_reference_version => locate_config_value(:azure_image_reference_version),
-          :winrm_user => locate_config_value(:winrm_user),
-          :azure_availability_set => locate_config_value(:azure_availability_set),
-          :azure_vnet_name => locate_config_value(:azure_vnet_name),
-          :azure_vnet_subnet_name => locate_config_value(:azure_vnet_subnet_name),
-          :ssl_cert_fingerprint => locate_config_value(:thumbprint),
-          :cert_path => locate_config_value(:cert_path),
-          :cert_password => locate_config_value(:cert_passphrase),
-          :vnet_subnet_address_prefix => locate_config_value(:vnet_subnet_address_prefix),
-          :server_count => locate_config_value(:server_count)
+          azure_resource_group_name: locate_config_value(:azure_resource_group_name),
+          azure_storage_account: locate_config_value(:azure_storage_account),
+          azure_storage_account_type: locate_config_value(:azure_storage_account_type),
+          azure_vm_name: locate_config_value(:azure_vm_name),
+          azure_service_location: locate_config_value(:azure_service_location),
+          azure_os_disk_name: locate_config_value(:azure_os_disk_name),
+          azure_os_disk_caching: locate_config_value(:azure_os_disk_caching),
+          azure_os_disk_create_option: locate_config_value(:azure_os_disk_create_option),
+          azure_vm_size: locate_config_value(:azure_vm_size),
+          azure_image_reference_publisher: locate_config_value(:azure_image_reference_publisher),
+          azure_image_reference_offer: locate_config_value(:azure_image_reference_offer),
+          azure_image_reference_sku: locate_config_value(:azure_image_reference_sku),
+          azure_image_reference_version: locate_config_value(:azure_image_reference_version),
+          winrm_user: locate_config_value(:winrm_user),
+          azure_availability_set: locate_config_value(:azure_availability_set),
+          azure_vnet_name: locate_config_value(:azure_vnet_name),
+          azure_vnet_subnet_name: locate_config_value(:azure_vnet_subnet_name),
+          ssl_cert_fingerprint: locate_config_value(:thumbprint),
+          cert_path: locate_config_value(:cert_path),
+          cert_password: locate_config_value(:cert_passphrase),
+          vnet_subnet_address_prefix: locate_config_value(:vnet_subnet_address_prefix),
+          server_count: locate_config_value(:server_count),
         }
 
         server_def[:tcp_endpoints] = locate_config_value(:tcp_endpoints) if locate_config_value(:tcp_endpoints)
