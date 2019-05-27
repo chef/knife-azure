@@ -19,25 +19,21 @@
 #
 
 require "chef/knife/azure_base"
-require "chef/knife/winrm_base"
 require "securerandom"
-require "chef/knife/bootstrap/bootstrap_options"
+require "chef/knife/bootstrap"
 require "chef/knife/bootstrap/bootstrapper"
 
 class Chef
   class Knife
-    class AzureServerCreate < Knife
+    class AzureServerCreate < Knife::Bootstrap
 
       include Knife::AzureBase
-      include Knife::WinrmBase
-      include Knife::Bootstrap::BootstrapOptions
       include Knife::Bootstrap::Bootstrapper
 
       deps do
         require "readline"
         require "chef/json_compat"
         require "chef/knife/bootstrap"
-        require "chef/knife/bootstrap_windows_ssh"
         require "chef/knife/core/windows_bootstrap_context"
         Chef::Knife::Bootstrap.load_deps
       end
@@ -47,29 +43,29 @@ class Chef
       attr_accessor :initial_sleep_delay
 
       option :bootstrap_protocol,
-        :long => "--bootstrap-protocol protocol",
-        :description => "Protocol to bootstrap windows servers. options: 'winrm' or 'ssh' or 'cloud-api'.",
-        :default => "winrm"
+        long: "--bootstrap-protocol protocol",
+        description: "Protocol to bootstrap windows servers. options: 'winrm' or 'ssh' or 'cloud-api'.",
+        default: "winrm"
 
       option :ssh_user,
-        :short => "-x USERNAME",
-        :long => "--ssh-user USERNAME",
-        :description => "The ssh username",
-        :default => "root"
+        short: "-x USERNAME",
+        long: "--ssh-user USERNAME",
+        description: "The ssh username",
+        default: "root"
 
       option :ssh_password,
-        :short => "-P PASSWORD",
-        :long => "--ssh-password PASSWORD",
-        :description => "The ssh password"
+        short: "-P PASSWORD",
+        long: "--ssh-password PASSWORD",
+        description: "The ssh password"
 
       option :ssh_port,
-        :long => "--ssh-port PORT",
-        :description => "The ssh port. Default is 22. If --azure-connect-to-existing-dns set then default SSH port is random"
+        long: "--ssh-port PORT",
+        description: "The ssh port. Default is 22. If --azure-connect-to-existing-dns set then default SSH port is random"
 
       option :node_ssl_verify_mode,
-        :long        => "--node-ssl-verify-mode [peer|none]",
-        :description => "Whether or not to verify the SSL cert for all HTTPS requests.",
-        :proc        => Proc.new { |v|
+        long: "--node-ssl-verify-mode [peer|none]",
+        description: "Whether or not to verify the SSL cert for all HTTPS requests.",
+        proc: Proc.new { |v|
           valid_values = %w{none peer}
           unless valid_values.include?(v)
             raise "Invalid value '#{v}' for --node-ssl-verify-mode. Valid values are: #{valid_values.join(", ")}"
@@ -77,158 +73,179 @@ class Chef
         }
 
       option :node_verify_api_cert,
-        :long        => "--[no-]node-verify-api-cert",
-        :description => "Verify the SSL cert for HTTPS requests to the Chef server API.",
-        :boolean     => true
+        long: "--[no-]node-verify-api-cert",
+        description: "Verify the SSL cert for HTTPS requests to the Chef server API.",
+        boolean: true
 
       option :azure_storage_account,
-        :short => "-a NAME",
-        :long => "--azure-storage-account NAME",
-        :description => "Required for advanced server-create option.
+        short: "-a NAME",
+        long: "--azure-storage-account NAME",
+        description: "Required for advanced server-create option.
                                       A name for the storage account that is unique within Windows Azure. Storage account names must be
                                       between 3 and 24 characters in length and use numbers and lower-case letters only.
                                       This name is the DNS prefix name and can be used to access blobs, queues, and tables in the storage account.
                                       For example: http://ServiceName.blob.core.windows.net/mycontainer/"
 
       option :azure_vm_name,
-        :long => "--azure-vm-name NAME",
-        :description => "Required for advanced server-create option.
+        long: "--azure-vm-name NAME",
+        description: "Required for advanced server-create option.
                                       Specifies the name for the virtual machine. The name must be unique within the deployment. The azure vm name cannot be more than 15 characters long"
 
       option :azure_service_location,
-        :short => "-m LOCATION",
-        :long => "--azure-service-location LOCATION",
-        :description => "Required if not using an Affinity Group. Specifies the geographic location - the name of the data center location that is valid for your subscription.
+        short: "-m LOCATION",
+        long: "--azure-service-location LOCATION",
+        description: "Required if not using an Affinity Group. Specifies the geographic location - the name of the data center location that is valid for your subscription.
                                       Eg: West US, East US, East Asia, Southeast Asia, North Europe, West Europe",
-        :proc        => Proc.new { |lo| Chef::Config[:knife][:azure_service_location] = lo }
+        proc: Proc.new { |lo| Chef::Config[:knife][:azure_service_location] = lo }
 
       option :azure_affinity_group,
-        :short => "-a GROUP",
-        :long => "--azure-affinity-group GROUP",
-        :description => "Required if not using a Service Location. Specifies Affinity Group the VM should belong to."
+        short: "-a GROUP",
+        long: "--azure-affinity-group GROUP",
+        description: "Required if not using a Service Location. Specifies Affinity Group the VM should belong to."
 
       option :azure_dns_name,
-        :short => "-d DNS_NAME",
-        :long => "--azure-dns-name DNS_NAME",
-        :description => "The DNS prefix name that can be used to access the cloud service which is unique within Windows Azure. Default is 'azure-dns-any_random_text'(e.g: azure-dns-be9b0f6f-7dda-456f-b2bf-4e28a3bc0add).
+        short: "-d DNS_NAME",
+        long: "--azure-dns-name DNS_NAME",
+        description: "The DNS prefix name that can be used to access the cloud service which is unique within Windows Azure. Default is 'azure-dns-any_random_text'(e.g: azure-dns-be9b0f6f-7dda-456f-b2bf-4e28a3bc0add).
                                       If you want to add new VM to an existing service/deployment, specify an exiting dns-name,
                                       along with --azure-connect-to-existing-dns option.
                                       Otherwise a new deployment is created. For example, if the DNS of cloud service is MyService you could access the cloud service
                                       by calling: http://DNS_NAME.cloudapp.net"
 
       option :azure_os_disk_name,
-        :short => "-o DISKNAME",
-        :long => "--azure-os-disk-name DISKNAME",
-        :description => "Optional. Specifies the friendly name of the disk containing the guest OS image in the image repository."
+        short: "-o DISKNAME",
+        long: "--azure-os-disk-name DISKNAME",
+        description: "Optional. Specifies the friendly name of the disk containing the guest OS image in the image repository."
 
       option :azure_source_image,
-        :short => "-I IMAGE",
-        :long => "--azure-source-image IMAGE",
-        :description => "Required. Specifies the name of the disk image to use to create the virtual machine.
+        short: "-I IMAGE",
+        long: "--azure-source-image IMAGE",
+        description: "Required. Specifies the name of the disk image to use to create the virtual machine.
                                       Do a \"knife azure image list\" to see a list of available images."
 
       option :azure_vm_size,
-        :short => "-z SIZE",
-        :long => "--azure-vm-size SIZE",
-        :description => "Optional. Size of virtual machine. Default is Standard_A1_v2.
+        short: "-z SIZE",
+        long: "--azure-vm-size SIZE",
+        description: "Optional. Size of virtual machine. Default is Standard_A1_v2.
                         Eg: Standard_A1_v2, Standard_F2, Standard_G1 etc.",
-        :default => "Standard_A1_v2",
-        :proc => Proc.new { |si| Chef::Config[:knife][:azure_vm_size] = si }
+        default: "Standard_A1_v2",
+        proc: Proc.new { |si| Chef::Config[:knife][:azure_vm_size] = si }
 
       option :azure_availability_set,
-             :long => "--azure-availability-set NAME",
-             :description => "Optional. Name of availability set to add virtual machine into."
+             long: "--azure-availability-set NAME",
+             description: "Optional. Name of availability set to add virtual machine into."
 
       option :tcp_endpoints,
-        :short => "-t PORT_LIST",
-        :long => "--tcp-endpoints PORT_LIST",
-        :description => "Comma-separated list of TCP local and public ports to open e.g. '80:80,433:5000'"
+        short: "-t PORT_LIST",
+        long: "--tcp-endpoints PORT_LIST",
+        description: "Comma-separated list of TCP local and public ports to open e.g. '80:80,433:5000'"
 
       option :udp_endpoints,
-        :short => "-u PORT_LIST",
-        :long => "--udp-endpoints PORT_LIST",
-        :description => "Comma-separated list of UDP local and public ports to open e.g. '80:80,433:5000'"
+        short: "-u PORT_LIST",
+        long: "--udp-endpoints PORT_LIST",
+        description: "Comma-separated list of UDP local and public ports to open e.g. '80:80,433:5000'"
 
       option :azure_connect_to_existing_dns,
-        :short => "-c",
-        :long => "--azure-connect-to-existing-dns",
-        :boolean => true,
-        :default => false,
-        :description => "Set this flag to add the new VM to an existing deployment/service. Must give the name of the existing
+        short: "-c",
+        long: "--azure-connect-to-existing-dns",
+        boolean: true,
+        default: false,
+        description: "Set this flag to add the new VM to an existing deployment/service. Must give the name of the existing
                                         DNS correctly in the --dns-name option"
 
       option :azure_network_name,
-        :long => "--azure-network-name NETWORK_NAME",
-        :description => "Optional. Specifies the network of virtual machine"
+        long: "--azure-network-name NETWORK_NAME",
+        description: "Optional. Specifies the network of virtual machine"
 
       option :azure_subnet_name,
-        :long => "--azure-subnet-name SUBNET_NAME",
-        :description => "Optional. Specifies the subnet of virtual machine"
+        long: "--azure-subnet-name SUBNET_NAME",
+        description: "Optional. Specifies the subnet of virtual machine"
 
       option :azure_vm_startup_timeout,
-        :long => "--azure-vm-startup-timeout TIMEOUT",
-        :description => "The number of minutes that knife-azure will wait for the virtual machine to reach the 'provisioning' state. Default is 10.",
-        :default => 10
+        long: "--azure-vm-startup-timeout TIMEOUT",
+        description: "The number of minutes that knife-azure will wait for the virtual machine to reach the 'provisioning' state. Default is 10.",
+        default: 10
 
       option :azure_vm_ready_timeout,
-        :long => "--azure-vm-ready-timeout TIMEOUT",
-        :description => "The number of minutes that knife-azure will wait for the virtual machine state to transition from 'provisioning' to 'ready'. Default is 15.",
-        :default => 15
+        long: "--azure-vm-ready-timeout TIMEOUT",
+        description: "The number of minutes that knife-azure will wait for the virtual machine state to transition from 'provisioning' to 'ready'. Default is 15.",
+        default: 15
 
       option :auth_timeout,
-        :long => "--windows-auth-timeout MINUTES",
-        :description => "The maximum time in minutes to wait to for authentication over the transport to the node to succeed. The default value is 25 minutes.",
-        :default => 25
+        long: "--windows-auth-timeout MINUTES",
+        description: "The maximum time in minutes to wait to for authentication over the transport to the node to succeed. The default value is 25 minutes.",
+        default: 25
 
       option :identity_file,
-        :long => "--identity-file FILENAME",
-        :description => "SSH identity file for authentication, optional. It is the RSA private key path. Specify either ssh-password or identity-file"
+        long: "--identity-file FILENAME",
+        description: "SSH identity file for authentication, optional. It is the RSA private key path. Specify either ssh-password or identity-file"
 
       option :identity_file_passphrase,
-        :long => "--identity-file-passphrase PASSWORD",
-        :description => "SSH key passphrase. Optional, specify if passphrase for identity-file exists"
+        long: "--identity-file-passphrase PASSWORD",
+        description: "SSH key passphrase. Optional, specify if passphrase for identity-file exists"
 
       option :thumbprint,
-        :long => "--thumbprint THUMBPRINT",
-        :description => "The thumprint of the ssl certificate"
+        long: "--thumbprint THUMBPRINT",
+        description: "The thumprint of the ssl certificate"
 
       option :cert_passphrase,
-        :long => "--cert-passphrase PASSWORD",
-        :description => "SSL Certificate Password"
+        long: "--cert-passphrase PASSWORD",
+        description: "SSL Certificate Password"
 
       option :cert_path,
-        :long => "--cert-path PATH",
-        :description => "SSL Certificate Path"
+        long: "--cert-path PATH",
+        description: "SSL Certificate Path"
 
       option :winrm_max_timeout,
-        :long => "--winrm-max-timeout MINUTES",
-        :description => "Set winrm maximum command timeout in minutes, useful for long bootstraps"
+        long: "--winrm-max-timeout MINUTES",
+        description: "Set winrm maximum command timeout in minutes, useful for long bootstraps"
 
       option :winrm_max_memorypershell,
-        :long => "--winrm-max-memory-per-shell",
-        :description => "Set winrm max memory per shell in MB"
+        long: "--winrm-max-memory-per-shell",
+        description: "Set winrm max memory per shell in MB"
 
       option :azure_domain_name,
-        :long => "--azure-domain-name DOMAIN_NAME",
-        :description => "Optional. Specifies the domain name to join. If the domains name is not specified, --azure-domain-user must specify the user principal name (UPN) format (user@fully-qualified-DNS-domain) or the fully-qualified-DNS-domain\\username format"
+        long: "--azure-domain-name DOMAIN_NAME",
+        description: "Optional. Specifies the domain name to join. If the domains name is not specified, --azure-domain-user must specify the user principal name (UPN) format (user@fully-qualified-DNS-domain) or the fully-qualified-DNS-domain\\username format"
 
       option :azure_domain_ou_dn,
-        :long => "--azure-domain-ou-dn DOMAIN_OU_DN",
-        :description => "Optional. Specifies the (LDAP) X 500-distinguished name of the organizational unit (OU) in which the computer account is created. This account is in Active Directory on a domain controller in the domain to which the computer is being joined. Example: OU=HR,dc=opscode,dc=com"
+        long: "--azure-domain-ou-dn DOMAIN_OU_DN",
+        description: "Optional. Specifies the (LDAP) X 500-distinguished name of the organizational unit (OU) in which the computer account is created. This account is in Active Directory on a domain controller in the domain to which the computer is being joined. Example: OU=HR,dc=opscode,dc=com"
 
       option :azure_domain_user,
-        :long => "--azure-domain-user DOMAIN_USER_NAME",
-        :description => 'Optional. Specifies the username who has access to join the domain.
+        long: "--azure-domain-user DOMAIN_USER_NAME",
+        description: 'Optional. Specifies the username who has access to join the domain.
           Supported format: username(if domain is already specified in --azure-domain-name option),
           fully-qualified-DNS-domain\username, user@fully-qualified-DNS-domain'
 
       option :azure_domain_passwd,
-        :long => "--azure-domain-passwd DOMAIN_PASSWD",
-        :description => "Optional. Specifies the password for domain user who has access to join the domain."
+        long: "--azure-domain-passwd DOMAIN_PASSWD",
+        description: "Optional. Specifies the password for domain user who has access to join the domain."
 
       option :azure_extension_client_config,
-        :long => "--azure-extension-client-config CLIENT_PATH",
-        :description => "Optional. Path to a client.rb file for use by the bootstrapped node. Only honored when --bootstrap-protocol is set to `cloud-api`."
+        long: "--azure-extension-client-config CLIENT_PATH",
+        description: "Optional. Path to a client.rb file for use by the bootstrapped node. Only honored when --bootstrap-protocol is set to `cloud-api`."
+
+      # Extracted out from BootstrapOptions:
+      option :chef_daemon_interval,
+        long: "--chef-daemon-interval INTERVAL",
+        description: "Optional. Provide this option when --bootstrap-protocol is set to 'cloud-api'.
+                            It specifies the frequency (in minutes) at which the chef-service runs.
+                            Pass 0 if you don't want the chef-service to be installed on the target machine."
+
+      option :daemon,
+        long: "--daemon DAEMON",
+        description: "Optional. Configures the chef-client service for unattended execution. Requires --bootstrap-protocol to be 'cloud-api' and the node platform to be Windows.
+                          Options: 'none' or 'service' or 'task'.
+                          none - Currently prevents the chef-client service from being configured as a service.
+                          service - Configures the chef-client to run automatically in the background as a service.
+                          task - Configures the chef-client to run automatically in the background as a scheduled task."
+
+      option :extended_logs,
+        long: "--extended-logs",
+        boolean: true,
+        default: false,
+        description: "Optional. Provide this option when --bootstrap-protocol is set to 'cloud-api'. It shows chef converge logs in detail."
 
       def wait_until_virtual_machine_ready(retry_interval_in_seconds = 30)
         vm_status = nil
@@ -269,8 +286,8 @@ class Chef
       end
 
       def wait_for_virtual_machine_state(vm_status_goal, total_wait_time_in_minutes, retry_interval_in_seconds)
-        vm_status_ordering = { :vm_status_not_detected => 0, :vm_status_provisioning => 1, :vm_status_ready => 2 }
-        vm_status_description = { :vm_status_not_detected => "any", :vm_status_provisioning => "provisioning", :vm_status_ready => "ready" }
+        vm_status_ordering = { vm_status_not_detected: 0, vm_status_provisioning: 1, vm_status_ready: 2 }
+        vm_status_description = { vm_status_not_detected: "any", vm_status_provisioning: "provisioning", vm_status_ready: "ready" }
 
         print ui.color("Waiting for virtual machine to reach status '#{vm_status_description[vm_status_goal]}'", :magenta)
 
@@ -298,9 +315,9 @@ class Chef
       end
 
       def wait_for_resource_extension_state(extension_status_goal, total_wait_time_in_minutes, retry_interval_in_seconds)
-        extension_status_ordering = { :extension_status_not_detected => 0, :wagent_provisioning => 1, :extension_installing => 2, :extension_provisioning => 3, :extension_ready => 4 }
+        extension_status_ordering = { extension_status_not_detected: 0, wagent_provisioning: 1, extension_installing: 2, extension_provisioning: 3, extension_ready: 4 }
 
-        status_description = { :extension_status_not_detected => "any", :wagent_provisioning => "wagent provisioning", :extension_installing => "installing", :extension_provisioning => "provisioning", :extension_ready => "ready" }
+        status_description = { extension_status_not_detected: "any", wagent_provisioning: "wagent provisioning", extension_installing: "installing", extension_provisioning: "provisioning", extension_ready: "ready" }
 
         print ui.color("Waiting for Resource Extension to reach status '#{status_description[extension_status_goal]}'", :magenta)
 
@@ -410,29 +427,29 @@ class Chef
 
       def create_server_def
         server_def = {
-          :azure_storage_account => locate_config_value(:azure_storage_account),
-          :azure_api_host_name => locate_config_value(:azure_api_host_name),
-          :azure_dns_name => locate_config_value(:azure_dns_name),
-          :azure_vm_name => locate_config_value(:azure_vm_name),
-          :azure_service_location => locate_config_value(:azure_service_location),
-          :azure_os_disk_name => locate_config_value(:azure_os_disk_name),
-          :azure_source_image => locate_config_value(:azure_source_image),
-          :azure_vm_size => locate_config_value(:azure_vm_size),
-          :tcp_endpoints => locate_config_value(:tcp_endpoints),
-          :udp_endpoints => locate_config_value(:udp_endpoints),
-          :bootstrap_proto => locate_config_value(:bootstrap_protocol),
-          :azure_connect_to_existing_dns => locate_config_value(:azure_connect_to_existing_dns),
-          :winrm_user => locate_config_value(:winrm_user),
-          :azure_availability_set => locate_config_value(:azure_availability_set),
-          :azure_affinity_group => locate_config_value(:azure_affinity_group),
-          :azure_network_name => locate_config_value(:azure_network_name),
-          :azure_subnet_name => locate_config_value(:azure_subnet_name),
-          :ssl_cert_fingerprint => locate_config_value(:thumbprint),
-          :cert_path => locate_config_value(:cert_path),
-          :cert_password => locate_config_value(:cert_passphrase),
-          :winrm_transport => locate_config_value(:winrm_transport),
-          :winrm_max_timeout => locate_config_value(:winrm_max_timeout).to_i * 60 * 1000, #converting minutes to milliseconds
-          :winrm_max_memoryPerShell => locate_config_value(:winrm_max_memory_per_shell)
+          azure_storage_account: locate_config_value(:azure_storage_account),
+          azure_api_host_name: locate_config_value(:azure_api_host_name),
+          azure_dns_name: locate_config_value(:azure_dns_name),
+          azure_vm_name: locate_config_value(:azure_vm_name),
+          azure_service_location: locate_config_value(:azure_service_location),
+          azure_os_disk_name: locate_config_value(:azure_os_disk_name),
+          azure_source_image: locate_config_value(:azure_source_image),
+          azure_vm_size: locate_config_value(:azure_vm_size),
+          tcp_endpoints: locate_config_value(:tcp_endpoints),
+          udp_endpoints: locate_config_value(:udp_endpoints),
+          bootstrap_proto: locate_config_value(:bootstrap_protocol),
+          azure_connect_to_existing_dns: locate_config_value(:azure_connect_to_existing_dns),
+          winrm_user: locate_config_value(:winrm_user),
+          azure_availability_set: locate_config_value(:azure_availability_set),
+          azure_affinity_group: locate_config_value(:azure_affinity_group),
+          azure_network_name: locate_config_value(:azure_network_name),
+          azure_subnet_name: locate_config_value(:azure_subnet_name),
+          ssl_cert_fingerprint: locate_config_value(:thumbprint),
+          cert_path: locate_config_value(:cert_path),
+          cert_password: locate_config_value(:cert_passphrase),
+          winrm_transport: locate_config_value(:winrm_transport),
+          winrm_max_timeout: locate_config_value(:winrm_max_timeout).to_i * 60 * 1000, # converting minutes to milliseconds
+          winrm_max_memoryPerShell: locate_config_value(:winrm_max_memory_per_shell),
         }
 
         if locate_config_value(:bootstrap_protocol) == "cloud-api"
