@@ -17,6 +17,7 @@
 #
 
 require "chef/knife/azure_base"
+require "chef/knife/bootstrap"
 require "chef/knife/bootstrap/common_bootstrap_options"
 require "chef/knife/bootstrap/bootstrapper"
 

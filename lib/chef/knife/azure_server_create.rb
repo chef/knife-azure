@@ -20,6 +20,7 @@
 
 require "chef/knife/azure_base"
 require "securerandom"
+require "chef/knife/bootstrap"
 require "chef/knife/bootstrap/common_bootstrap_options"
 require "chef/knife/bootstrap/bootstrapper"
 
@@ -42,11 +43,6 @@ class Chef
       banner "knife azure server create (options)"
 
       attr_accessor :initial_sleep_delay
-
-      option :node_verify_api_cert,
-        long: "--[no-]node-verify-api-cert",
-        description: "Verify the SSL cert for HTTPS requests to the Chef server API.",
-        boolean: true
 
       option :azure_affinity_group,
         short: "-a GROUP",
@@ -106,7 +102,7 @@ class Chef
 
       option :identity_file,
         long: "--identity-file FILENAME",
-        description: "SSH identity file for authentication, optional. It is the RSA private key path. Specify either ssh-password or identity-file"
+        description: "SSH identity file for authentication, optional. It is the RSA private key path. Specify either connection-password or identity-file"
 
       option :identity_file_passphrase,
         long: "--identity-file-passphrase PASSWORD",
@@ -330,7 +326,7 @@ class Chef
           udp_endpoints: locate_config_value(:udp_endpoints),
           bootstrap_proto: locate_config_value(:bootstrap_protocol),
           azure_connect_to_existing_dns: locate_config_value(:azure_connect_to_existing_dns),
-          winrm_user: locate_config_value(:winrm_user),
+          connection_user: locate_config_value(:connection_user),
           azure_availability_set: locate_config_value(:azure_availability_set),
           azure_affinity_group: locate_config_value(:azure_affinity_group),
           azure_network_name: locate_config_value(:azure_network_name),
@@ -338,7 +334,7 @@ class Chef
           ssl_cert_fingerprint: locate_config_value(:thumbprint),
           cert_path: locate_config_value(:cert_path),
           cert_password: locate_config_value(:cert_passphrase),
-          winrm_transport: locate_config_value(:winrm_transport),
+          winrm_ssl: locate_config_value(:winrm_ssl),
           winrm_max_timeout: locate_config_value(:winrm_max_timeout).to_i * 60 * 1000, # converting minutes to milliseconds
           winrm_max_memoryPerShell: locate_config_value(:winrm_max_memory_per_shell),
         }
@@ -351,28 +347,28 @@ class Chef
           server_def[:chef_extension_private_param] = get_chef_extension_private_params
         else
           if is_image_windows?
-            if (not locate_config_value(:winrm_password)) || (not locate_config_value(:bootstrap_protocol))
+            if (not locate_config_value(:connection_password)) || (not locate_config_value(:bootstrap_protocol))
               ui.error("WinRM Password and Bootstrapping Protocol are compulsory parameters")
               exit 1
             end
             # We can specify the AdminUsername after API version 2013-03-01. However, in this API version,
             # the AdminUsername is a required parameter.
             # Also, the user name cannot be Administrator, Admin, Admin1 etc, for enhanced security (provided by Azure)
-            if locate_config_value(:winrm_user).nil? || locate_config_value(:winrm_user).downcase =~ /admin*/
+            if locate_config_value(:connection_user).nil? || locate_config_value(:connection_user).downcase =~ /admin*/
               ui.error("WinRM User is compulsory parameter and it cannot be named 'admin*'")
               exit 1
             end
             # take cares of when user name contains domain
             # azure add role api doesn't support '\\' in user name
-            if locate_config_value(:winrm_user) && locate_config_value(:winrm_user).split("\\").length.eql?(2)
-              server_def[:winrm_user] = locate_config_value(:winrm_user).split("\\")[1]
+            if locate_config_value(:connection_user) && locate_config_value(:connection_user).split("\\").length.eql?(2)
+              server_def[:connection_user] = locate_config_value(:connection_user).split("\\")[1]
             end
           else
-            if not locate_config_value(:ssh_user)
+            if not locate_config_value(:connection_user)
               ui.error("SSH User is compulsory parameter")
               exit 1
             end
-            unless locate_config_value(:ssh_password) || locate_config_value(:identity_file)
+            unless locate_config_value(:connection_password) || locate_config_value(:identity_file)
               ui.error("Specify either SSH Key or SSH Password")
               exit 1
             end
@@ -381,24 +377,24 @@ class Chef
 
         if is_image_windows?
           server_def[:os_type] = "Windows"
-          server_def[:admin_password] = locate_config_value(:winrm_password)
+          server_def[:admin_password] = locate_config_value(:connection_password)
           server_def[:bootstrap_proto] = locate_config_value(:bootstrap_protocol)
         else
           server_def[:os_type] = "Linux"
           server_def[:bootstrap_proto] = (locate_config_value(:bootstrap_protocol) == "winrm") ? "ssh" : locate_config_value(:bootstrap_protocol)
-          server_def[:ssh_user] = locate_config_value(:ssh_user)
-          server_def[:ssh_password] = locate_config_value(:ssh_password)
+          server_def[:connection_user] = locate_config_value(:connection_user)
+          server_def[:connection_password] = locate_config_value(:connection_password)
           server_def[:identity_file] = locate_config_value(:identity_file)
           server_def[:identity_file_passphrase] = locate_config_value(:identity_file_passphrase)
         end
 
         azure_connect_to_existing_dns = locate_config_value(:azure_connect_to_existing_dns)
         if is_image_windows? && server_def[:bootstrap_proto] == "winrm"
-          port = locate_config_value(:winrm_port) || "5985"
-          port = locate_config_value(:winrm_port) || Random.rand(64000) + 1000 if azure_connect_to_existing_dns
+          port = locate_config_value(:connection_port) || "5985"
+          port = locate_config_value(:connection_port) || Random.rand(64000) + 1000 if azure_connect_to_existing_dns
         elsif server_def[:bootstrap_proto] == "ssh"
-          port = locate_config_value(:ssh_port) || "22"
-          port = locate_config_value(:ssh_port) || Random.rand(64000) + 1000 if azure_connect_to_existing_dns
+          port = locate_config_value(:connection_port) || "22"
+          port = locate_config_value(:connection_port) || Random.rand(64000) + 1000 if azure_connect_to_existing_dns
         end
 
         server_def[:port] = port
@@ -434,20 +430,20 @@ class Chef
       private
 
       def ssh_override_winrm
-        # unchanged ssh_user and changed winrm_user, override ssh_user
-        if locate_config_value(:ssh_user).eql?(options[:ssh_user][:default]) &&
-            !locate_config_value(:winrm_user).eql?(options[:winrm_user][:default])
-          config[:ssh_user] = locate_config_value(:winrm_user)
+        # unchanged connection_user and changed --connection-user, override connection_user
+        if locate_config_value(:connection_user).eql?(options[:connection_user][:default]) &&
+            !locate_config_value(:connection_user).eql?(options[:connection_user][:default])
+          config[:connection_user] = locate_config_value(:connection_user)
         end
-        # unchanged ssh_port and changed winrm_port, override ssh_port
-        if locate_config_value(:ssh_port).eql?(options[:ssh_port][:default]) &&
-            !locate_config_value(:winrm_port).eql?(options[:winrm_port][:default])
-          config[:ssh_port] = locate_config_value(:winrm_port)
+        # unchanged connection_port and changed connection_port, override connection_port
+        if locate_config_value(:connection_port).eql?(options[:connection_port][:default]) &&
+            !locate_config_value(:connection_port).eql?(options[:connection_port][:default])
+          config[:connection_port] = locate_config_value(:connection_port)
         end
-        # unset ssh_password and set winrm_password, override ssh_password
-        if locate_config_value(:ssh_password).nil? &&
-            !locate_config_value(:winrm_password).nil?
-          config[:ssh_password] = locate_config_value(:winrm_password)
+        # unset connection_password and set connection_password, override connection_password
+        if locate_config_value(:connection_password).nil? &&
+            !locate_config_value(:connection_password).nil?
+          config[:connection_password] = locate_config_value(:connection_password)
         end
         # unset identity_file and set _file, override identity_file
         if locate_config_value(:identity_file).nil? &&

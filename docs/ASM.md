@@ -10,17 +10,17 @@ location in your knife.rb:
       $ knife azure server list
 
       # Create and bootstrap a Windows VM over winrm (winrm is the default for Windows)
-      $ knife azure server create --azure-dns-name MyNewServerName --azure-vm-size Standard_A2 -I a699494373c04fc0bc8f2bb1389d6106__Windows-Server-2012-R2-20150825-en.us-127GB.vhd --azure-service-location 'West US' --winrm-user myuser --winrm-password 'mypassword'
+      $ knife azure server create --azure-dns-name MyNewServerName --azure-vm-size Standard_A2 -I a699494373c04fc0bc8f2bb1389d6106__Windows-Server-2012-R2-20150825-en.us-127GB.vhd --azure-service-location 'West US' --connection-user myuser --connection-password 'mypassword'
 
       # Create and bootstrap a Windows VM over winrm using SSL (winrm is the default for Windows)
-      $ knife azure server create --azure-dns-name MyNewServerName --azure-vm-size Standard_A2 -I a699494373c04fc0bc8f2bb1389d6106__Windows-Server-2012-R2-20150825-en.us-127GB.vhd --azure-service-location 'West US' --winrm-user myuser --winrm-password 'mypassword' --winrm-transport ssl --winrm-ssl-verify-mode verify_none
+      $ knife azure server create --azure-dns-name MyNewServerName --azure-vm-size Standard_A2 -I a699494373c04fc0bc8f2bb1389d6106__Windows-Server-2012-R2-20150825-en.us-127GB.vhd --azure-service-location 'West US' --connection-user myuser --connection-password 'mypassword' --winrm-ssl ssl --winrm-no-verify-cert verify_none
 
       # Create and bootstrap an Ubuntu VM over ssh
-      $ knife azure server create -N MyNewNode --azure-vm-size Standard_A2 -I b39f27a8b8c64d52b05eac6a62ebad85__Ubuntu-14_04_1-LTS-amd64-server-20140927-en-us-30GB -m 'West US' --ssh-user myuser --identity-file ~/.ssh/myprivatekey_rsa
+      $ knife azure server create -N MyNewNode --azure-vm-size Standard_A2 -I b39f27a8b8c64d52b05eac6a62ebad85__Ubuntu-14_04_1-LTS-amd64-server-20140927-en-us-30GB -m 'West US' --connection-user myuser --identity-file ~/.ssh/myprivatekey_rsa
 
       # Create and bootstrap an Windows VM through the Azure API --
       # No winrm or ssh transport or Internet access required
-      $ knife azure server create --azure-dns-name MyNewServerName --azure-vm-size Standard_A2 -I a699494373c04fc0bc8f2bb1389d6106__Windows-Server-2012-R2-20150825-en.us-127GB.vhd --azure-service-location 'West US' --winrm-user myuser --winrm-password 'mypassword' --bootstrap-protocol cloud-api
+      $ knife azure server create --azure-dns-name MyNewServerName --azure-vm-size Standard_A2 -I a699494373c04fc0bc8f2bb1389d6106__Windows-Server-2012-R2-20150825-en.us-127GB.vhd --azure-service-location 'West US' --connection-user myuser --connection-password 'mypassword' --bootstrap-protocol cloud-api
 
       # Delete a server and purge it from the Chef server
       $ knife azure server delete MyNewNode --purge -y
@@ -101,17 +101,17 @@ You can create a server with minimal configuration. On the Azure Management Port
                 --azure-dns-name 'myservice'
                 --azure-service-location 'West US'
                 --azure-source-image 'source-image-name'
-                --ssh-user 'jetstream'
+                --connection-user 'jetstream'
                 --identity-file '~/.ssh/myazure_rsa'
 
 Note that the --identity-file option, which enables specification of a private
 key authorized to communicate securely with the created server during the
-bootstrap process, will also configure the user specified by --ssh-user with
+bootstrap process, will also configure the user specified by --connection-user with
 the public key that corresponds to the private key specified by
 --identity-file. This configuration persists even after the create subcommand
 has completed successfully, so that the key specified with --identity-file can
 be used with ssh clients for subsequent access to the server as the user
-specified by --ssh-user.
+specified by --connection-user.
 
 You can set these options from knife.rb. A typical knife.rb is
 shown below:
@@ -120,7 +120,7 @@ shown below:
     knife[:azure_dns_name] = 'myservice'
     knife[:azure_service_location] = 'West US'
     knife[:azure_source_image] = 'source-image-name'
-    knife[:ssh_user] = 'jetstream'
+    knife[:connection_user] = 'jetstream'
     knife[:identity_file] = '~/.ssh/myazure_rsa'
 
 #### Azure VM Advanced Create
@@ -139,8 +139,8 @@ To connect to an existing DNS/service, you can use a command as below:
                 --azure-vm-name 'myvm02'
                 --azure-service-location 'West US'
                 --azure-source-image 'source-image-name'
-                --ssh-user 'jetstream'
-                --ssh-password 'jetstream@123'
+                --connection-user 'jetstream'
+                --connection-password 'jetstream@123'
 
 These options may also be configured from knife.rb, as in this example:
 
@@ -150,7 +150,7 @@ These options may also be configured from knife.rb, as in this example:
     knife[:azure_service_location] = 'West US'
     knife[:azure_dns_name]='myservice'
     knife[:azure_vm_name]='myvm02'
-    knife[:ssh_user]='jetstream'
+    knife[:connection_user]='jetstream'
     knife[:identity_file]='/path/to/RSA/private/key'
     knife[:azure_storage_account]='auxpreview104'
     knife[:azure_os_disk_name]='disk107'
@@ -174,12 +174,12 @@ Note that the load balancing set will be created if it does not exist. If it exi
 #### Options for Bootstrapping a Windows Node in Azure
 
     :bootstrap_protocol            Default is winrm for a windows image
-    :winrm_password                The WinRM password
-    :winrm_authentication_protocol Defaults to negotiate, supports kerberos, can be set to basic for debugging
-    :winrm_transport               Defaults to plaintext, use ssl for improved privacy
-    :winrm_port                    Defaults to 5985 plaintext transport, or 5986 for SSL
+    :connection_password           The WinRM password
+    :winrm_auth_method             Defaults to negotiate, supports kerberos, can also be set to plaintext or ssl
+    :winrm_ssl                     Defaults to plaintext, use ssl for improved privacy
+    :connection_port               Defaults to 5985 plaintext transport, or 5986 for SSL
     :ca_trust_file                 The CA certificate file to use to verify the server when using SSL
-    :winrm_ssl_verify_mode         Defaults to verify_peer, use verify_none to skip validation of the server certificate during testing
+    :winrm_no_verify_cert          Defaults to verify_peer, use verify_none to skip validation of the server certificate during testing
     :kerberos_keytab_file          The Kerberos keytab file used for authentication
     :kerberos_realm                The Kerberos realm used for authentication
     :kerberos_service              The Kerberos service used for authentication
@@ -196,8 +196,8 @@ Theses options are useful if you have long-running run-lists and if the chef run
             --azure-dns-name 'myserver'
             --azure-source-image 'windows-2012-image-id'
             --azure-service-location 'West US'
-            --winrm-user azure
-            --winrm-password 'azure@123'
+            --connection-user azure
+            --connection-password 'azure@123'
             --winrm-max-timeout 30
             --winrm-max-memoryPerShell 400
 
@@ -209,16 +209,16 @@ The quick create option requires the following options for a windows instance:
                 --azure-dns-name 'myserverdnsname'
                 --azure-service-location 'West US'
                 --azure-source-image 'windows-2012-image-id'
-                --winrm-user 'jetstream'
-                --winrm-password 'jetstream@123'
+                --connection-user 'jetstream'
+                --connection-password 'jetstream@123'
                 --distro 'windows-chef-client-msi'
 
 Sample knife.rb for bootstrapping Windows Node with basic authentication
 
     knife[:bootstrap_protocol] = 'winrm'
-    knife[:winrm_password] = 'mgcvTuvV2Rh'
-    knife[:winrm_user] = 'myuser'
-    knife[:winrm_port] = '5985'
+    knife[:connection_password] = 'mgcvTuvV2Rh'
+    knife[:connection_user] = 'myuser'
+    knife[:connection_port] = '5985'
     knife[:distro] = 'windows-chef-client-msi'
     knife[:azure_source_image]='windows-2012-image-id'
 
@@ -238,8 +238,8 @@ Option `chef_daemon_interval` can be used for running the chef-client as a servi
                 --azure-dns-name 'myserverdnsname'
                 --azure-service-location 'West US'
                 --azure-source-image 'windows-2012-image-id'
-                --winrm-user 'jetstream'
-                --winrm-password 'jetstream@123'
+                --connection-user 'jetstream'
+                --connection-password 'jetstream@123'
                 --bootstrap-protocol 'cloud-api'
                 --daemon 'task'
                 --chef-daemon-interval '18'

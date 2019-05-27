@@ -36,33 +36,33 @@ class Chef
           end
 
           option :azure_subscription_id,
-            :short => "-S ID",
-            :long => "--azure-subscription-id ID",
-            :description => "Your Azure subscription ID",
-            :proc => Proc.new { |key| Chef::Config[:knife][:azure_subscription_id] = key }
+            short: "-S ID",
+            long: "--azure-subscription-id ID",
+            description: "Your Azure subscription ID",
+            proc: Proc.new { |key| Chef::Config[:knife][:azure_subscription_id] = key }
 
           option :azure_mgmt_cert,
-            :short => "-p FILENAME",
-            :long => "--azure-mgmt-cert FILENAME",
-            :description => "Your Azure PEM file name",
-            :proc => Proc.new { |key| Chef::Config[:knife][:azure_mgmt_cert] = key }
+            short: "-p FILENAME",
+            long: "--azure-mgmt-cert FILENAME",
+            description: "Your Azure PEM file name",
+            proc: Proc.new { |key| Chef::Config[:knife][:azure_mgmt_cert] = key }
 
           option :azure_api_host_name,
-            :short => "-H HOSTNAME",
-            :long => "--azure-api-host-name HOSTNAME",
-            :description => "Your Azure host name",
-            :proc => Proc.new { |key| Chef::Config[:knife][:azure_api_host_name] = key }
+            short: "-H HOSTNAME",
+            long: "--azure-api-host-name HOSTNAME",
+            description: "Your Azure host name",
+            proc: Proc.new { |key| Chef::Config[:knife][:azure_api_host_name] = key }
 
           option :verify_ssl_cert,
-            :long => "--verify-ssl-cert",
-            :description => "Verify SSL Certificates for communication over HTTPS",
-            :boolean => true,
-            :default => false
+            long: "--verify-ssl-cert",
+            description: "Verify SSL Certificates for communication over HTTPS",
+            boolean: true,
+            default: false
 
           option :azure_publish_settings_file,
-            :long => "--azure-publish-settings-file FILENAME",
-            :description => "Your Azure Publish Settings File",
-            :proc => Proc.new { |key| Chef::Config[:knife][:azure_publish_settings_file] = key }
+            long: "--azure-publish-settings-file FILENAME",
+            description: "Your Azure Publish Settings File",
+            proc: Proc.new { |key| Chef::Config[:knife][:azure_publish_settings_file] = key }
         end
       end
 
@@ -80,10 +80,10 @@ class Chef
       def service
         @service ||= begin
                       service = Azure::ServiceManagement::ASMInterface.new(
-                        :azure_subscription_id => locate_config_value(:azure_subscription_id),
-                        :azure_mgmt_cert => locate_config_value(:azure_mgmt_cert),
-                        :azure_api_host_name => locate_config_value(:azure_api_host_name),
-                        :verify_ssl_cert => locate_config_value(:verify_ssl_cert)
+                        azure_subscription_id: locate_config_value(:azure_subscription_id),
+                        azure_mgmt_cert: locate_config_value(:azure_mgmt_cert),
+                        azure_api_host_name: locate_config_value(:azure_api_host_name),
+                        verify_ssl_cert: locate_config_value(:verify_ssl_cert)
                       )
                     end
         @service.ui = ui
@@ -124,14 +124,14 @@ class Chef
       end
 
       # validate command pre-requisites (cli options)
-      # (locate_config_value(:winrm_password).length <= 6 && locate_config_value(:winrm_password).length >= 72)
+      # (locate_config_value(:connection_password).length <= 6 && locate_config_value(:connection_password).length >= 72)
       def validate_params!
-        if locate_config_value(:winrm_password) && !locate_config_value(:winrm_password).strip.size.between?(6, 72)
+        if locate_config_value(:connection_password) && !locate_config_value(:connection_password).strip.size.between?(6, 72)
           ui.error("The supplied password must be 6-72 characters long and meet password complexity requirements")
           exit 1
         end
 
-        if locate_config_value(:ssh_password) && !locate_config_value(:ssh_password).empty? && !locate_config_value(:ssh_password).strip.size.between?(6, 72)
+        if locate_config_value(:connection_password) && !locate_config_value(:connection_password).empty? && !locate_config_value(:connection_password).strip.size.between?(6, 72)
           ui.error("The supplied ssh password must be 6-72 characters long and meet password complexity requirements")
           exit 1
         end
@@ -149,8 +149,8 @@ class Chef
           exit 1
         end
 
-        if locate_config_value(:winrm_authentication_protocol) && ! %w{basic negotiate kerberos}.include?(locate_config_value(:winrm_authentication_protocol).downcase)
-          ui.error("Invalid value for --winrm-authentication-protocol option. Use valid protocol values i.e [basic, negotiate, kerberos]")
+        if locate_config_value(:winrm_auth_method) && ! %w{plaintext, kerberos, ssl, negotiate}.include?(locate_config_value(:winrm_auth_method).downcase)
+          ui.error("Invalid value for --winrm-auth-method option. Use valid protocol values i.e [plaintext, kerberos, ssl, negotiate]")
           exit 1
         end
 
@@ -167,8 +167,8 @@ class Chef
           end
         end
 
-        if locate_config_value(:winrm_transport) == "ssl" && locate_config_value(:thumbprint).nil? && ( locate_config_value(:winrm_ssl_verify_mode).nil? || locate_config_value(:winrm_ssl_verify_mode) == :verify_peer )
-          ui.error("The SSL transport was specified without the --thumbprint option. Specify a thumbprint, or alternatively set the --winrm-ssl-verify-mode option to 'verify_none' to skip verification.")
+        if locate_config_value(:winrm_ssl) == "ssl" && locate_config_value(:thumbprint).nil? && ( locate_config_value(:winrm_no_verify_cert).nil? || locate_config_value(:winrm_no_verify_cert) == :verify_peer )
+          ui.error("The SSL transport was specified without the --thumbprint option. Specify a thumbprint, or alternatively set the --winrm-no-verify-cert option to 'verify_none' to skip verification.")
           exit 1
         end
 
@@ -239,7 +239,7 @@ class Chef
           doc = Nokogiri::XML(File.open(find_file(filename)))
           profile = doc.at_css("PublishProfile")
           subscription = profile.at_css("Subscription")
-          #check given PublishSettings XML file format.Currently PublishSettings file have two different XML format
+          # check given PublishSettings XML file format.Currently PublishSettings file have two different XML format
           if profile.attribute("SchemaVersion").nil?
             management_cert = OpenSSL::PKCS12.new(Base64.decode64(profile.attribute("ManagementCertificate").value))
             Chef::Config[:knife][:azure_api_host_name] = URI(profile.attribute("Url").value).host
@@ -268,7 +268,7 @@ class Chef
         azure_profile = File.read(File.expand_path(filename))
         azure_profile = JSON.parse(azure_profile)
         default_subscription = get_default_subscription(azure_profile)
-        if default_subscription.has_key?("id") && default_subscription.has_key?("managementCertificate") && default_subscription.has_key?("managementEndpointUrl")
+        if default_subscription.key?("id") && default_subscription.key?("managementCertificate") && default_subscription.key?("managementEndpointUrl")
 
           Chef::Config[:knife][:azure_subscription_id] = default_subscription["id"]
           mgmt_key = OpenSSL::PKey::RSA.new(default_subscription["managementCertificate"]["key"]).to_pem

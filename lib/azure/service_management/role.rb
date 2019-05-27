@@ -200,8 +200,8 @@ module Azure
                               "995" => "POP3S",
                               "993" => "IMAPS",
                               "1433" => "MSSQL",
-                              "3306" => "MySQL"
-                            }
+                              "3306" => "MySQL",
+                            }.freeze
 
     def initialize(connection)
       @connection = connection
@@ -336,19 +336,19 @@ module Azure
               xml.ConfigurationSet("i:type" => "LinuxProvisioningConfigurationSet") do
                 xml.ConfigurationSetType "LinuxProvisioningConfiguration"
                 xml.HostName params[:azure_vm_name]
-                xml.UserName params[:ssh_user]
+                xml.UserName params[:connection_user]
                 unless params[:identity_file].nil?
                   xml.DisableSshPasswordAuthentication "true"
                   xml.SSH do
                     xml.PublicKeys do
                       xml.PublicKey do
                         xml.Fingerprint params[:fingerprint].to_s.upcase
-                        xml.Path "/home/" + params[:ssh_user] + "/.ssh/authorized_keys"
+                        xml.Path "/home/" + params[:connection_user] + "/.ssh/authorized_keys"
                       end
                     end
                   end
                 else
-                  xml.UserPassword params[:ssh_password]
+                  xml.UserPassword params[:connection_password]
                   xml.DisableSshPasswordAuthentication "false"
                 end
               end
@@ -382,7 +382,7 @@ module Azure
                   end
                   xml.WinRM do
                     xml.Listeners do
-                      if params[:winrm_transport] == "ssl" || params[:ssl_cert_fingerprint]
+                      if params[:winrm_ssl] == "ssl" || params[:ssl_cert_fingerprint]
                         xml.Listener do
                           xml.CertificateThumbprint params[:ssl_cert_fingerprint] if params[:ssl_cert_fingerprint]
                           xml.Protocol "Https"
@@ -395,7 +395,7 @@ module Azure
                     end
                   end
                 end
-                xml.AdminUsername params[:winrm_user]
+                xml.AdminUsername params[:connection_user]
                 if params[:bootstrap_proto].casecmp("winrm").zero? && (params[:winrm_max_timeout] || params[:winrm_max_memoryPerShell])
                   xml.AdditionalUnattendContent do
                     xml.Passes do
@@ -410,7 +410,7 @@ module Azure
                                 xml.Content Base64.encode64(
                                   Nokogiri::XML::Builder.new do |auto_logon_xml|
                                     auto_logon_xml.AutoLogon do
-                                      auto_logon_xml.Username params[:winrm_user]
+                                      auto_logon_xml.Username params[:connection_user]
                                       auto_logon_xml.Password do
                                         auto_logon_xml.Value params[:admin_password]
                                         auto_logon_xml.PlainText true
@@ -459,12 +459,12 @@ module Azure
               xml.ConfigurationSetType "NetworkConfiguration"
               xml.InputEndpoints do
 
-                #1. bootstrap_proto = 'winrm' for windows => Set winrm port
-                #2. bootstrap_proto = 'ssh' for windows and linux => Set ssh port
-                #3. bootstrap_proto = 'cloud-api' for windows and linux => Set no port
+                # 1. bootstrap_proto = 'winrm' for windows => Set winrm port
+                # 2. bootstrap_proto = 'ssh' for windows and linux => Set ssh port
+                # 3. bootstrap_proto = 'cloud-api' for windows and linux => Set no port
                 if (params[:os_type] == "Windows") && (params[:bootstrap_proto].casecmp("winrm").zero?)
                   xml.InputEndpoint do
-                    if params[:winrm_transport] == "ssl"
+                    if params[:winrm_ssl] == "ssl"
                       xml.LocalPort "5986"
                     else
                       xml.LocalPort "5985"
@@ -540,7 +540,7 @@ module Azure
 
           xml.Label Base64.encode64(params[:azure_vm_name]).strip
 
-          #OSVirtualHardDisk not required in case azure_source_image is a VMImage
+          # OSVirtualHardDisk not required in case azure_source_image is a VMImage
           unless params[:is_vm_image]
             xml.OSVirtualHardDisk do
               disk_name = params[:azure_os_disk_name] || "disk_" + SecureRandom.uuid

@@ -17,40 +17,39 @@ describe Chef::Knife::AzurermServerCreate do
     @service = @arm_server_instance.service
 
     @params = {
-      :azure_resource_group_name => Chef::Config[:knife][:azure_resource_group_name],
-      :azure_service_location => Chef::Config[:knife][:azure_service_location],
-      :azure_vm_name => Chef::Config[:knife][:azure_vm_name],
-      :winrm_user => "winrm_user",
-      :ssh_user => Chef::Config[:knife][:ssh_user],
-      :ssh_password => "ssh_password",
-      :azure_vm_size => "small",
-      :azure_storage_account => "azurestorageaccount",
-      :azure_storage_account_type => "azure_storage_account_type",
-      :azure_os_disk_name => "azureosdiskname",
-      :azure_os_disk_caching => "azure_os_disk_caching",
-      :azure_os_disk_create_option => "azure_os_disk_create_option",
-      :azure_vnet_name => "azure_virtual_network_name",
-      :azure_vnet_subnet_name => "azure_subnet_name",
-      :rdp_port => "3389",
-      :ssh_port => "22",
-      :chef_extension_publisher => "chef_extension_publisher",
-      :chef_extension => "chef_extension",
-      :chef_extension_version => "11.10.1",
-      :chef_extension_private_param => { :validation_key => "37284723sdjfhsdkfsfd" },
-      :latest_chef_extension_version => "1210.12",
-      :chef_extension_public_param => {
-        :hints => %w{vm_name public_fqdn platform},
-        :bootstrap_options => { :bootstrap_version => "12.8.1" }
+      azure_resource_group_name: Chef::Config[:knife][:azure_resource_group_name],
+      azure_service_location: Chef::Config[:knife][:azure_service_location],
+      azure_vm_name: Chef::Config[:knife][:azure_vm_name],
+      connection_user: Chef::Config[:knife][:connection_user],
+      connection_password: "connection_password",
+      azure_vm_size: "small",
+      azure_storage_account: "azurestorageaccount",
+      azure_storage_account_type: "azure_storage_account_type",
+      azure_os_disk_name: "azureosdiskname",
+      azure_os_disk_caching: "azure_os_disk_caching",
+      azure_os_disk_create_option: "azure_os_disk_create_option",
+      azure_vnet_name: "azure_virtual_network_name",
+      azure_vnet_subnet_name: "azure_subnet_name",
+      rdp_port: "3389",
+      connection_port: "22",
+      chef_extension_publisher: "chef_extension_publisher",
+      chef_extension: "chef_extension",
+      chef_extension_version: "11.10.1",
+      chef_extension_private_param: { validation_key: "37284723sdjfhsdkfsfd" },
+      latest_chef_extension_version: "1210.12",
+      chef_extension_public_param: {
+        hints: %w{vm_name public_fqdn platform},
+        bootstrap_options: { bootstrap_version: "12.8.1" },
       },
-      :vnet_config => {
-        :virtualNetworkName => "vnet1",
-        :addressPrefixes => [ "10.0.0.0/16" ],
-        :subnets => [{ "name" => "sbn1",
-                       "properties" => {
-            "addressPrefix" => "10.0.0.0/24"
-          }
-        }]
-      }
+      vnet_config: {
+        virtualNetworkName: "vnet1",
+        addressPrefixes: [ "10.0.0.0/16" ],
+        subnets: [{ "name" => "sbn1",
+                    "properties" => {
+            "addressPrefix" => "10.0.0.0/24",
+          },
+        }],
+      },
     }
 
     allow(@service.ui).to receive(:log)
@@ -141,8 +140,8 @@ describe Chef::Knife::AzurermServerCreate do
       end
 
       it "winrm user and password error if not provided for windows image" do
-        Chef::Config[:knife].delete(:winrm_user)
-        Chef::Config[:knife].delete(:winrm_password)
+        Chef::Config[:knife].delete(:connection_user)
+        Chef::Config[:knife].delete(:connection_password)
         allow(@arm_server_instance).to receive(:is_image_windows?).and_return(true)
         expect { @arm_server_instance.validate_params! }.to raise_error(ArgumentError)
       end
@@ -158,10 +157,10 @@ describe Chef::Knife::AzurermServerCreate do
       context "when not given by user" do
         before do
           @vm_name_with_no_special_chars = "testvm"
-          Chef::Config[:knife][:ssh_password] = "ssh_password"
+          Chef::Config[:knife][:connection_password] = "connection_password"
           @azure_vm_size_default_value = "Small"
-          @xplat_creds_cmd = double(:run_command => double)
-          @result = double(:stdout => "")
+          @xplat_creds_cmd = double(run_command: double)
+          @result = double(stdout: "")
           allow(Mixlib::ShellOut).to receive(:new).and_return(@xplat_creds_cmd)
           allow(@xplat_creds_cmd).to receive(:run_command).and_return(@result)
           allow(@result).to receive(:stdout).and_return("")
@@ -241,14 +240,14 @@ describe Chef::Knife::AzurermServerCreate do
         end
 
         after do
-          Chef::Config[:knife].delete(:ssh_password)
+          Chef::Config[:knife].delete(:connection_password)
         end
       end
 
       context "when given by user" do
         before do
           @vm_name_with_no_special_chars = "testvm"
-          Chef::Config[:knife][:ssh_password] = "ssh_password"
+          Chef::Config[:knife][:connection_password] = "connection_password"
           Chef::Config[:knife][:azure_storage_account] = "azure_storage_account"
           @storage_account_name_with_no_special_chars = "azurestorageaccount"
           Chef::Config[:knife][:azure_os_disk_name] = "azure_os_disk_name"
@@ -383,7 +382,7 @@ describe Chef::Knife::AzurermServerCreate do
         end
 
         after do
-          Chef::Config[:knife].delete(:ssh_password)
+          Chef::Config[:knife].delete(:connection_password)
           Chef::Config[:knife].delete(:azure_storage_account)
           Chef::Config[:knife].delete(:azure_os_disk_name)
           Chef::Config[:knife].delete(:azure_vnet_name)
@@ -397,8 +396,8 @@ describe Chef::Knife::AzurermServerCreate do
 
   describe "server create" do
     before do
-      Chef::Config[:knife][:ssh_password] = "ssh_password"
-      Chef::Config[:knife][:winrm_password] = "winrm_password"
+      Chef::Config[:knife][:connection_password] = "connection_password"
+      Chef::Config[:knife][:connection_password] = "connection_password"
 
       @resource_client = double("ResourceManagementClient")
       @compute_client = double("ComputeManagementClient")
@@ -459,12 +458,12 @@ describe Chef::Knife::AzurermServerCreate do
           @sec_grp_name = "sec_grp_2"
           request = {}
           response = OpenStruct.new({
-            "body" => '{"error": {"code": "ResourceNotFound"}}'
+            "body" => '{"error": {"code": "ResourceNotFound"}}',
           })
           body = "MsRestAzure::AzureOperationError"
           error = MsRestAzure::AzureOperationError.new(request, response, body)
           network_resource_client = double("NetworkResourceClient",
-            :network_security_groups => double)
+            network_security_groups: double)
           allow(network_resource_client.network_security_groups).to receive(
             :get).and_raise(error)
           allow(@dummy_class).to receive(:network_resource_client).and_return(
@@ -483,12 +482,12 @@ describe Chef::Knife::AzurermServerCreate do
           @sec_grp_name = "sec_grp_2"
           request = {}
           response = OpenStruct.new({
-            "body" => '{"error": {"code": "SomeProblemOccurred"}}'
+            "body" => '{"error": {"code": "SomeProblemOccurred"}}',
           })
           body = "MsRestAzure::AzureOperationError"
           @error = MsRestAzure::AzureOperationError.new(request, response, body)
           network_resource_client = double("NetworkResourceClient",
-            :network_security_groups => double)
+            network_security_groups: double)
           allow(network_resource_client.network_security_groups).to receive(
             :get).and_raise(@error)
           allow(@dummy_class).to receive(:network_resource_client).and_return(
@@ -530,12 +529,12 @@ describe Chef::Knife::AzurermServerCreate do
       context "for Linux" do
         before do
           {
-            :azure_image_reference_publisher => "OpenLogic",
-            :azure_image_reference_offer => "CentOS",
-            :azure_image_reference_sku => "6.5",
-            :azure_image_reference_version => "latest",
-            :ssh_user => "ssh_user",
-            :azure_chef_extension_version => "1210.12"
+            azure_image_reference_publisher: "OpenLogic",
+            azure_image_reference_offer: "CentOS",
+            azure_image_reference_sku: "6.5",
+            azure_image_reference_version: "latest",
+            connection_user: "connection_user",
+            azure_chef_extension_version: "1210.12",
           }.each do |key, value|
             Chef::Config[:knife][key] = value
           end
@@ -592,7 +591,7 @@ describe Chef::Knife::AzurermServerCreate do
             :azure_image_reference_offer => "WindowsServer",
             :azure_image_reference_sku => "2012-R2-Datacenter",
             :azure_image_reference_version => "latest",
-            :winrm_user => "winrm_user"
+            :connection_user => "--connection-user",
           }.each do |key, value|
             Chef::Config[:knife][key] = value
           end
@@ -636,10 +635,10 @@ describe Chef::Knife::AzurermServerCreate do
         end
 
         it "uses template for VM creation and does not show chef-client run logs to user when extended_logs is false" do
-          deployment = double("deployment", :name => "name", :id => "id", :properties => double)
-          @deploy1 = double("deploy1", :resource_type => "Microsoft.Compute/virtualMachines", :resource_name => "MyVM0", :id => "/subscriptions/e00d2b3f-3b94-4dfc-ae8e-ca34c8ba1a99/resourceGroups/vjgroup/providers/Microsoft.Compute/virtualMachines/MyVM0")
-          @deploy2 = double("deploy2", :resource_type => "Microsoft.Compute/virtualMachines", :resource_name => "MyVM1", :id => "/subscriptions/e00d2b3f-3b94-4dfc-ae8e-ca34c8ba1a99/resourceGroups/vjgroup/providers/Microsoft.Compute/virtualMachines/MyVM1")
-          @deploy3 = double("deploy3", :resource_type => "Microsoft.Compute/virtualMachines", :resource_name => "MyVM2", :id => "/subscriptions/e00d2b3f-3b94-4dfc-ae8e-ca34c8ba1a99/resourceGroups/vjgroup/providers/Microsoft.Compute/virtualMachines/MyVM2")
+          deployment = double("deployment", name: "name", id: "id", properties: double)
+          @deploy1 = double("deploy1", resource_type: "Microsoft.Compute/virtualMachines", resource_name: "MyVM0", id: "/subscriptions/e00d2b3f-3b94-4dfc-ae8e-ca34c8ba1a99/resourceGroups/vjgroup/providers/Microsoft.Compute/virtualMachines/MyVM0")
+          @deploy2 = double("deploy2", resource_type: "Microsoft.Compute/virtualMachines", resource_name: "MyVM1", id: "/subscriptions/e00d2b3f-3b94-4dfc-ae8e-ca34c8ba1a99/resourceGroups/vjgroup/providers/Microsoft.Compute/virtualMachines/MyVM1")
+          @deploy3 = double("deploy3", resource_type: "Microsoft.Compute/virtualMachines", resource_name: "MyVM2", id: "/subscriptions/e00d2b3f-3b94-4dfc-ae8e-ca34c8ba1a99/resourceGroups/vjgroup/providers/Microsoft.Compute/virtualMachines/MyVM2")
           allow(deployment.properties).to receive(:dependencies).and_return([@deploy1, @deploy2, @deploy3])
           allow(@service.ui).to receive(:log).at_least(:once)
           expect(@service).to receive(:create_vnet_config)
@@ -655,10 +654,10 @@ describe Chef::Knife::AzurermServerCreate do
 
         it "uses template for VM creation and also shows chef-client run logs to user when extended_logs is true" do
           @arm_server_instance.config[:extended_logs] = true
-          deployment = double("deployment", :name => "name", :id => "id", :properties => double)
-          @deploy1 = double("deploy1", :resource_type => "Microsoft.Compute/virtualMachines", :resource_name => "MyVM0", :id => "/subscriptions/e00d2b3f-3b94-4dfc-ae8e-ca34c8ba1a99/resourceGroups/vjgroup/providers/Microsoft.Compute/virtualMachines/MyVM0")
-          @deploy2 = double("deploy2", :resource_type => "Microsoft.Compute/virtualMachines", :resource_name => "MyVM1", :id => "/subscriptions/e00d2b3f-3b94-4dfc-ae8e-ca34c8ba1a99/resourceGroups/vjgroup/providers/Microsoft.Compute/virtualMachines/MyVM1")
-          @deploy3 = double("deploy3", :resource_type => "Microsoft.Compute/virtualMachines", :resource_name => "MyVM2", :id => "/subscriptions/e00d2b3f-3b94-4dfc-ae8e-ca34c8ba1a99/resourceGroups/vjgroup/providers/Microsoft.Compute/virtualMachines/MyVM2")
+          deployment = double("deployment", name: "name", id: "id", properties: double)
+          @deploy1 = double("deploy1", resource_type: "Microsoft.Compute/virtualMachines", resource_name: "MyVM0", id: "/subscriptions/e00d2b3f-3b94-4dfc-ae8e-ca34c8ba1a99/resourceGroups/vjgroup/providers/Microsoft.Compute/virtualMachines/MyVM0")
+          @deploy2 = double("deploy2", resource_type: "Microsoft.Compute/virtualMachines", resource_name: "MyVM1", id: "/subscriptions/e00d2b3f-3b94-4dfc-ae8e-ca34c8ba1a99/resourceGroups/vjgroup/providers/Microsoft.Compute/virtualMachines/MyVM1")
+          @deploy3 = double("deploy3", resource_type: "Microsoft.Compute/virtualMachines", resource_name: "MyVM2", id: "/subscriptions/e00d2b3f-3b94-4dfc-ae8e-ca34c8ba1a99/resourceGroups/vjgroup/providers/Microsoft.Compute/virtualMachines/MyVM2")
           allow(deployment.properties).to receive(:dependencies).and_return([@deploy1, @deploy2, @deploy3])
           allow(@service.ui).to receive(:log).at_least(:once)
           expect(@service).to receive(:create_vnet_config)
@@ -917,7 +916,7 @@ describe Chef::Knife::AzurermServerCreate do
       context "get_chef_extension_public_params" do
         it "sets bootstrapVersion variable in public_config" do
           @arm_server_instance.config[:bootstrap_version] = "12.4.2"
-          public_config = { :client_rb => "chef_server_url \t \"https://localhost:443\"\nvalidation_client_name\t\"chef-validator\"", :runlist => "\"getting-started\"", extendedLogs: "false", :custom_json_attr => {}, :hints => %w{vm_name public_fqdn platform}, :bootstrap_options => { :chef_server_url => "https://localhost:443", :validation_client_name => "chef-validator", :bootstrap_version => "12.4.2" } }
+          public_config = { client_rb: "chef_server_url \t \"https://localhost:443\"\nvalidation_client_name\t\"chef-validator\"", runlist: "\"getting-started\"", extendedLogs: "false", custom_json_attr: {}, hints: %w{vm_name public_fqdn platform}, bootstrap_options: { chef_server_url: "https://localhost:443", validation_client_name: "chef-validator", bootstrap_version: "12.4.2" } }
 
           response = @arm_server_instance.get_chef_extension_public_params
           expect(response).to be == public_config
@@ -925,7 +924,7 @@ describe Chef::Knife::AzurermServerCreate do
 
         it "should set extendedLogs flag to true" do
           @arm_server_instance.config[:extended_logs] = true
-          public_config = { client_rb: "chef_server_url \t \"https://localhost:443\"\nvalidation_client_name\t\"chef-validator\"", runlist: "\"getting-started\"", extendedLogs: "true", custom_json_attr: {}, :hints => %w{vm_name public_fqdn platform}, bootstrap_options: { chef_server_url: "https://localhost:443", validation_client_name: "chef-validator" } }
+          public_config = { client_rb: "chef_server_url \t \"https://localhost:443\"\nvalidation_client_name\t\"chef-validator\"", runlist: "\"getting-started\"", extendedLogs: "true", custom_json_attr: {}, hints: %w{vm_name public_fqdn platform}, bootstrap_options: { chef_server_url: "https://localhost:443", validation_client_name: "chef-validator" } }
           response = @arm_server_instance.get_chef_extension_public_params
           expect(response).to be == public_config
         end
@@ -950,7 +949,7 @@ describe Chef::Knife::AzurermServerCreate do
 
         it "sets chefServiceInterval variable in public_config" do
           @arm_server_instance.config[:chef_daemon_interval] = "0"
-          public_config = { :client_rb => "chef_server_url \t \"https://localhost:443\"\nvalidation_client_name\t\"chef-validator\"", :runlist => "\"getting-started\"", extendedLogs: "false", :custom_json_attr => {}, :hints => %w{vm_name public_fqdn platform}, :chef_daemon_interval => "0", :bootstrap_options => { :chef_server_url => "https://localhost:443", :validation_client_name => "chef-validator" } }
+          public_config = { client_rb: "chef_server_url \t \"https://localhost:443\"\nvalidation_client_name\t\"chef-validator\"", runlist: "\"getting-started\"", extendedLogs: "false", custom_json_attr: {}, hints: %w{vm_name public_fqdn platform}, chef_daemon_interval: "0", bootstrap_options: { chef_server_url: "https://localhost:443", validation_client_name: "chef-validator" } }
 
           response = @arm_server_instance.get_chef_extension_public_params
           expect(response).to be == public_config
@@ -959,7 +958,7 @@ describe Chef::Knife::AzurermServerCreate do
         it "sets daemon variable in public config" do
           @arm_server_instance.config[:daemon] = "service"
           allow(@arm_server_instance).to receive(:is_image_windows?).and_return(true)
-          public_config = { :client_rb => "chef_server_url \t \"https://localhost:443\"\nvalidation_client_name\t\"chef-validator\"", :runlist => "\"getting-started\"", extendedLogs: "false", :custom_json_attr => {}, :hints => %w{vm_name public_fqdn platform}, :daemon => "service", :bootstrap_options => { :chef_server_url => "https://localhost:443", :validation_client_name => "chef-validator" } }
+          public_config = { client_rb: "chef_server_url \t \"https://localhost:443\"\nvalidation_client_name\t\"chef-validator\"", runlist: "\"getting-started\"", extendedLogs: "false", custom_json_attr: {}, hints: %w{vm_name public_fqdn platform}, daemon: "service", bootstrap_options: { chef_server_url: "https://localhost:443", validation_client_name: "chef-validator" } }
           response = @arm_server_instance.get_chef_extension_public_params
           expect(response).to be == public_config
         end
@@ -979,8 +978,8 @@ describe Chef::Knife::AzurermServerCreate do
       context "when validation key is not present", :chef_gte_12_only do
         context "when encrypted_data_bag_secret option is passed" do
           let(:private_config) do
-            { :validation_key => "my_validation_key",
-              :encrypted_data_bag_secret => "my_encrypted_data_bag_secret"
+            { validation_key: "my_validation_key",
+              encrypted_data_bag_secret: "my_encrypted_data_bag_secret",
           } end
 
           before do
@@ -992,8 +991,8 @@ describe Chef::Knife::AzurermServerCreate do
 
         context "when encrypted_data_bag_secret_file option is passed" do
           let(:private_config) do
-            { :validation_key => "my_validation_key",
-              :encrypted_data_bag_secret => "PgIxStCmMDsuIw3ygRhmdMtStpc9EMiWisQXoP"
+            { validation_key: "my_validation_key",
+              encrypted_data_bag_secret: "PgIxStCmMDsuIw3ygRhmdMtStpc9EMiWisQXoP",
           } end
 
           before do
@@ -1230,35 +1229,34 @@ describe Chef::Knife::AzurermServerCreate do
 
   describe "create_deployment_template" do
     before do
-      bootstrap_options = { :chef_server_url => "url",
-                            :validation_client_name => "client_name",
-                            :bootstrap_proxy => "http://test.com",
-                            :node_ssl_verify_mode => "true",
-                            :node_verify_api_cert => "hfyreiur374294nehfdishf",
-                            :environment => "development" }
-      @params[:chef_extension_public_param] = { :hints =>
-        %w{vm_name public_fqdn platform},
-                                                :bootstrap_options => bootstrap_options,
-                                                :extendedLogs => "true"
+      bootstrap_options = { chef_server_url: "url",
+                            validation_client_name: "client_name",
+                            bootstrap_proxy: "http://test.com",
+                            node_ssl_verify_mode: "true",
+                            node_verify_api_cert: "hfyreiur374294nehfdishf",
+                            environment: "development" }
+      @params[:chef_extension_public_param] = { hints: %w{vm_name public_fqdn platform},
+                                                bootstrap_options: bootstrap_options,
+                                                extendedLogs: "true",
       }
       {
-        :azure_image_reference_publisher => "OpenLogic",
-        :azure_image_reference_offer => "CentOS",
-        :azure_image_reference_sku => "6.5",
-        :azure_image_reference_version => "latest",
-        :ssh_user => "ssh_user",
-        :server_count => 3,
-        :vm_size => "Standard_A1_v2"
+        azure_image_reference_publisher: "OpenLogic",
+        azure_image_reference_offer: "CentOS",
+        azure_image_reference_sku: "6.5",
+        azure_image_reference_version: "latest",
+        connection_user: "connection_user",
+        server_count: 3,
+        vm_size: "Standard_A1_v2",
       }.each do |key, value|
         @params[key] = value
       end
 
       @hints_json = { "vm_name" => "[reference(resourceId('Microsoft.Compute/virtualMachines', concat(variables('vmName'),copyIndex()))).osProfile.computerName]",
                       "public_fqdn" => "[reference(resourceId('Microsoft.Network/publicIPAddresses',concat(variables('publicIPAddressName'),copyIndex()))).dnsSettings.fqdn]",
-                      "platform" => "[concat(reference(resourceId('Microsoft.Compute/virtualMachines', concat(variables('vmName'),copyIndex()))).storageProfile.imageReference.offer, concat(' ', reference(resourceId('Microsoft.Compute/virtualMachines', concat(variables('vmName'),copyIndex()))).storageProfile.imageReference.sku))]"
+                      "platform" => "[concat(reference(resourceId('Microsoft.Compute/virtualMachines', concat(variables('vmName'),copyIndex()))).storageProfile.imageReference.offer, concat(' ', reference(resourceId('Microsoft.Compute/virtualMachines', concat(variables('vmName'),copyIndex()))).storageProfile.imageReference.sku))]",
       }
       @params[:chef_extension_private_param] = {
-        :encrypted_data_bag_secret => "rihrfwe739085928592nehrweirwefjsndwe"
+        encrypted_data_bag_secret: "rihrfwe739085928592nehrweirwefjsndwe",
       }
     end
 
@@ -1310,7 +1308,7 @@ describe Chef::Knife::AzurermServerCreate do
         extension = resource if resource["type"] == "Microsoft.Compute/virtualMachines/extensions"
       end
 
-      expect(extension["properties"]["settings"].has_key? "extendedLogs").to be == false
+      expect(extension["properties"]["settings"].key? "extendedLogs").to be == false
     end
 
     context "chef_daemon_interval option" do
@@ -1327,7 +1325,7 @@ describe Chef::Knife::AzurermServerCreate do
             extension = resource if resource["type"] == "Microsoft.Compute/virtualMachines/extensions"
           end
 
-          expect(extension["properties"]["settings"].has_key? "chef_daemon_interval").to be == true
+          expect(extension["properties"]["settings"].key? "chef_daemon_interval").to be == true
           expect(extension["properties"]["settings"]["chef_daemon_interval"]).to be == "19"
         end
       end
@@ -1345,7 +1343,7 @@ describe Chef::Knife::AzurermServerCreate do
             extension = resource if resource["type"] == "Microsoft.Compute/virtualMachines/extensions"
           end
 
-          expect(extension["properties"]["settings"].has_key? "chef_daemon_interval").to be == false
+          expect(extension["properties"]["settings"].key? "chef_daemon_interval").to be == false
         end
       end
     end
@@ -1364,7 +1362,7 @@ describe Chef::Knife::AzurermServerCreate do
             extension = resource if resource["type"] == "Microsoft.Compute/virtualMachines/extensions"
           end
 
-          expect(extension["properties"]["settings"].has_key? "daemon").to be == true
+          expect(extension["properties"]["settings"].key? "daemon").to be == true
           expect(extension["properties"]["settings"]["daemon"]).to be == "service"
         end
       end
@@ -1382,7 +1380,7 @@ describe Chef::Knife::AzurermServerCreate do
             extension = resource if resource["type"] == "Microsoft.Compute/virtualMachines/extensions"
           end
 
-          expect(extension["properties"]["settings"].has_key? "daemon").to be == false
+          expect(extension["properties"]["settings"].key? "daemon").to be == false
         end
       end
     end
@@ -1394,28 +1392,28 @@ describe Chef::Knife::AzurermServerCreate do
 
   describe "create_deployment_parameters" do
     before do
-      bootstrap_options = { :chef_server_url => "url",
-                            :validation_client_name => "client_name",
-                            :bootstrap_proxy => "http://test.com",
-                            :node_ssl_verify_mode => "true",
-                            :node_verify_api_cert => "hfyreiur374294nehfdishf",
-                            :chef_node_name => "test-vm",
-                            :environment => "development" }
-      @params[:chef_extension_public_param] = { :bootstrap_options => bootstrap_options }
+      bootstrap_options = { chef_server_url: "url",
+                            validation_client_name: "client_name",
+                            bootstrap_proxy: "http://test.com",
+                            node_ssl_verify_mode: "true",
+                            node_verify_api_cert: "hfyreiur374294nehfdishf",
+                            chef_node_name: "test-vm",
+                            environment: "development" }
+      @params[:chef_extension_public_param] = { bootstrap_options: bootstrap_options }
       @params[:chef_extension_private_param] = {
-        :validation_key => "validation_key",
-        :encrypted_data_bag_secret => "rihrfwe739085928592nehrweirwefjsndwe"
+        validation_key: "validation_key",
+        encrypted_data_bag_secret: "rihrfwe739085928592nehrweirwefjsndwe",
       }
       {
-        :azure_image_reference_publisher => "OpenLogic",
-        :azure_image_reference_offer => "CentOS",
-        :azure_image_reference_sku => "6.5",
-        :azure_image_reference_version => "latest",
-        :ssh_user => "ssh_user",
-        :admin_password => "admin_password",
-        :server_count => 3,
-        :client_rb => "contents_of_client_rb",
-        :custom_json_attr => '"{name: test}"'
+        azure_image_reference_publisher: "OpenLogic",
+        azure_image_reference_offer: "CentOS",
+        azure_image_reference_sku: "6.5",
+        azure_image_reference_version: "latest",
+        connection_user: "connection_user",
+        admin_password: "admin_password",
+        server_count: 3,
+        client_rb: "contents_of_client_rb",
+        custom_json_attr: '"{name: test}"',
       }.each do |key, value|
         @params[key] = value
       end
@@ -1423,7 +1421,7 @@ describe Chef::Knife::AzurermServerCreate do
 
     it "sets the parameters which are passed in the template" do
       parameters = @service.create_deployment_parameters(@params, "Windows")
-      expect(parameters["adminUserName"]["value"]).to be == "winrm_user"
+      expect(parameters["adminUserName"]["value"]).to be == "--connection-user"
       expect(parameters["adminPassword"]["value"]).to be == "admin_password"
       expect(parameters["dnsLabelPrefix"]["value"]).to be == "test-vm"
       expect(parameters["imageSKU"]["value"]).to be == "6.5"
@@ -1706,11 +1704,11 @@ describe Chef::Knife::AzurermServerCreate do
     context "chef-client run logs substatus available now" do
       before do
         substatus = OpenStruct.new(
-          :code => "ComponentStatus/Chef Client run logs/succeeded",
-          :level => "Info",
-          :display_status => "Provisioning succeeded",
-          :message => "chef_client_run_logs",
-          :time => "chef_client_run_logs_write_time"
+          code: "ComponentStatus/Chef Client run logs/succeeded",
+          level: "Info",
+          display_status: "Provisioning succeeded",
+          message: "chef_client_run_logs",
+          time: "chef_client_run_logs_write_time"
         )
         allow(@service).to receive(:fetch_substatus).and_return(substatus)
         @start_time = Time.now

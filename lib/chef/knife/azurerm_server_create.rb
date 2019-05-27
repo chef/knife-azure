@@ -19,6 +19,7 @@
 
 require "chef/knife/azurerm_base"
 require "securerandom"
+require "chef/knife/bootstrap"
 require "chef/knife/bootstrap/common_bootstrap_options"
 require "chef/knife/bootstrap/bootstrapper"
 
@@ -87,7 +88,7 @@ class Chef
 
       option :ssh_public_key,
         long: "--ssh-public-key FILENAME",
-        description: "It is the ssh-rsa public key path. Specify either ssh-password or ssh-public-key"
+        description: "It is the ssh-rsa public key path. Specify either connection-password or ssh-public-key"
 
       option :server_count,
         long: "--server-count COUNT",
@@ -139,7 +140,7 @@ class Chef
           azure_image_reference_offer: locate_config_value(:azure_image_reference_offer),
           azure_image_reference_sku: locate_config_value(:azure_image_reference_sku),
           azure_image_reference_version: locate_config_value(:azure_image_reference_version),
-          winrm_user: locate_config_value(:winrm_user),
+          connection_user: locate_config_value(:connection_user),
           azure_availability_set: locate_config_value(:azure_availability_set),
           azure_vnet_name: locate_config_value(:azure_vnet_name),
           azure_vnet_subnet_name: locate_config_value(:azure_vnet_subnet_name),
@@ -172,10 +173,10 @@ class Chef
         server_def[:auto_upgrade_minor_version] = false
 
         if is_image_windows?
-          server_def[:admin_password] = locate_config_value(:winrm_password)
+          server_def[:admin_password] = locate_config_value(:connection_password)
         else
-          server_def[:ssh_user] = locate_config_value(:ssh_user)
-          server_def[:ssh_password] = locate_config_value(:ssh_password)
+          server_def[:connection_user] = locate_config_value(:connection_user)
+          server_def[:connection_password] = locate_config_value(:connection_password)
           server_def[:disablePasswordAuthentication] = "false"
           if locate_config_value(:ssh_public_key)
             server_def[:disablePasswordAuthentication] = "true"
@@ -215,15 +216,15 @@ class Chef
       private
 
       def ssh_override_winrm
-        # unchanged ssh_user and changed winrm_user, override ssh_user
-        if locate_config_value(:ssh_user).eql?(options[:ssh_user][:default]) &&
-            !locate_config_value(:winrm_user).eql?(options[:winrm_user][:default])
-          config[:ssh_user] = locate_config_value(:winrm_user)
+        # unchanged connection_user and changed --connection-user, override connection_user
+        if locate_config_value(:connection_user).eql?(options[:connection_user][:default]) &&
+            !locate_config_value(:connection_user).eql?(options[:connection_user][:default])
+          config[:connection_user] = locate_config_value(:connection_user)
         end
 
-        if locate_config_value(:ssh_password).nil? &&
-            !locate_config_value(:winrm_password).nil?
-          config[:ssh_password] = locate_config_value(:winrm_password)
+        if locate_config_value(:connection_password).nil? &&
+            !locate_config_value(:connection_password).nil?
+          config[:connection_password] = locate_config_value(:connection_password)
         end
       end
 

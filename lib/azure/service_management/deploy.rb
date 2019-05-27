@@ -82,8 +82,8 @@ module Azure
       if params[:cert_path]
         cert_data = File.read (params[:cert_path])
         @connection.certificates.add cert_data, params[:cert_password], "pfx", params[:azure_dns_name]
-      elsif params[:winrm_transport] == "ssl"
-        #TODO: generate certificates for ssl listener
+      elsif params[:winrm_ssl] == "ssl"
+        # TODO: generate certificates for ssl listener
       end
 
       params["deploy_name"] = get_deploy_name_for_hostedservice(params[:azure_dns_name])
@@ -161,7 +161,7 @@ module Azure
     def setup(params)
       role = Role.new(@connection)
       roleXML = role.setup(params)
-      #roleXML = Nokogiri::XML role.setup(params)
+      # roleXML = Nokogiri::XML role.setup(params)
       builder = Nokogiri::XML::Builder.new do |xml|
         xml.Deployment(
           "xmlns" => "http://schemas.microsoft.com/windowsazure",

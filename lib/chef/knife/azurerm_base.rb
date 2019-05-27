@@ -31,7 +31,7 @@ class Chef
 
       ## azure-xplat-cli versio that introduced deprecation of Windows Credentials
       ## Manager (WCM) usage for authentication credentials storage purpose ##
-      XPLAT_VERSION_WITH_WCM_DEPRECATED ||= "0.10.5"
+      XPLAT_VERSION_WITH_WCM_DEPRECATED ||= "0.10.5".freeze
 
       if Chef::Platform.windows?
         require "azure/resource_management/windows_credentials"
@@ -46,15 +46,15 @@ class Chef
           end
 
           option :azure_resource_group_name,
-            :short => "-r RESOURCE_GROUP_NAME",
-            :long => "--azure-resource-group-name RESOURCE_GROUP_NAME",
-            :description => "The Resource Group name."
+            short: "-r RESOURCE_GROUP_NAME",
+            long: "--azure-resource-group-name RESOURCE_GROUP_NAME",
+            description: "The Resource Group name."
         end
       end
 
       def service
         details = authentication_details
-        details.update(:azure_subscription_id => locate_config_value(:azure_subscription_id))
+        details.update(azure_subscription_id: locate_config_value(:azure_subscription_id))
         @service ||= begin
                       service = Azure::ResourceManagement::ARMInterface.new(details)
                     end
@@ -91,7 +91,7 @@ class Chef
 
       def authentication_details
         if is_azure_cred?
-          return { :azure_tenant_id => locate_config_value(:azure_tenant_id), :azure_client_id => locate_config_value(:azure_client_id), :azure_client_secret => locate_config_value(:azure_client_secret) }
+          return { azure_tenant_id: locate_config_value(:azure_tenant_id), azure_client_id: locate_config_value(:azure_client_id), azure_client_secret: locate_config_value(:azure_client_secret) }
         elsif Chef::Platform.windows?
           token_details = token_details_for_windows()
         else
@@ -126,7 +126,7 @@ class Chef
         home_dir = File.expand_path("~")
         file = File.read(home_dir + "/.azure/accessTokens.json")
         file = JSON.parse(file)
-        token_details = { :tokentype => file[-1]["tokenType"], :user => file[-1]["userId"], :token => file[-1]["accessToken"], :clientid => file[-1]["_clientId"], :expiry_time => file[-1]["expiresOn"], :refreshtoken => file[-1]["refreshToken"] }
+        token_details = { tokentype: file[-1]["tokenType"], user: file[-1]["userId"], token: file[-1]["accessToken"], clientid: file[-1]["_clientId"], expiry_time: file[-1]["expiresOn"], refreshtoken: file[-1]["refreshToken"] }
         token_details
       end
 
@@ -149,7 +149,7 @@ class Chef
 
       def azure_authentication
         ui.log("Authenticating...")
-        Mixlib::ShellOut.new("#{@azure_prefix} vm show 'knifetest@resourcegroup' testvm", :timeout => 30).run_command
+        Mixlib::ShellOut.new("#{@azure_prefix} vm show 'knifetest@resourcegroup' testvm", timeout: 30).run_command
       rescue Mixlib::ShellOut::CommandTimeout
       rescue Exception
         raise_azure_status
@@ -190,7 +190,7 @@ class Chef
           doc = Nokogiri::XML(File.open(find_file(filename)))
           profile = doc.at_css("PublishProfile")
           subscription = profile.at_css("Subscription")
-          #check given PublishSettings XML file format.Currently PublishSettings file have two different XML format
+          # check given PublishSettings XML file format.Currently PublishSettings file have two different XML format
           if profile.attribute("SchemaVersion").nil?
             management_cert = OpenSSL::PKCS12.new(Base64.decode64(profile.attribute("ManagementCertificate").value))
             Chef::Config[:knife][:azure_api_host_name] = URI(profile.attribute("Url").value).host
@@ -277,8 +277,8 @@ class Chef
         end
 
         if is_image_windows?
-          if locate_config_value(:winrm_user).nil? || locate_config_value(:winrm_password).nil?
-            raise ArgumentError, "Please provide --winrm-user and --winrm-password options for Windows option."
+          if locate_config_value(:connection_user).nil? || locate_config_value(:connection_password).nil?
+            raise ArgumentError, "Please provide --connection-user and --connection-password options for Windows option."
           end
         end
 

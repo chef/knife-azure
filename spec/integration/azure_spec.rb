@@ -35,15 +35,15 @@ def append_azure_creds(*options)
 end
 
 def get_ssh_credentials
-  " --ssh-user #{@az_ssh_user} --ssh-password #{@az_ssh_password}"
+  " --connection-user #{@az_ssh_user} --connection-password #{@az_ssh_password}"
 end
 
 def get_winrm_credentials
-  " --winrm-user #{@az_winrm_user} --winrm-password #{@az_winrm_password}"
+  " --connection-user #{@az_winrm_user} --connection-password #{@az_winrm_password}"
 end
 
 def get_ssh_credentials_for_windows_image
-  " --ssh-user #{@az_windows_ssh_user} --ssh-password #{@az_windows_ssh_password}"
+  " --connection-user #{@az_windows_ssh_user} --connection-password #{@az_windows_ssh_password}"
 end
 
 # get azure active instance_id for knife azure show command run
@@ -222,7 +222,7 @@ describe "knife-azure integration test", if: is_config_present do
         before(:each) do
            run("knife azure server create --azure-vm-name #{@dns_name} --azure-dns-name #{@dns_name}" + append_azure_creds + " --azure-source-image #{@az_linux_image}" + get_ssh_credentials +
           " --template-file " + get_linux_template_file_path + " --server-url http://localhost:8889" +
-          " --ssh-port 245 --yes --azure-connect-to-existing-dns") end
+          " --connection-port 245 --yes --azure-connect-to-existing-dns") end
 
         after(:each)  { run(delete_instance_cmd(@dns_name) + append_azure_creds("list_cmd") + " --purge") }
 
@@ -230,7 +230,7 @@ describe "knife-azure integration test", if: is_config_present do
           "knife azure server create --azure-vm-name #{@vm_name} --azure-dns-name #{@dns_name}" +
             append_azure_creds + " --azure-source-image #{@az_linux_image}" + get_ssh_credentials +
             " --template-file " + get_linux_template_file_path + " --server-url http://localhost:8889" +
-            " --ssh-port 245 --yes --azure-connect-to-existing-dns" end
+            " --connection-port 245 --yes --azure-connect-to-existing-dns" end
         run_cmd_check_status_and_output("fail", "")
       end
 
@@ -239,7 +239,7 @@ describe "knife-azure integration test", if: is_config_present do
           "knife azure server create --azure-dns-name #{@dns_name}" +
             append_azure_creds + " --azure-source-image #{@az_linux_image}" +
             " --template-file " + get_linux_template_file_path + get_ssh_credentials +
-            " --server-url http://localhost:8889" + " --ssh-port 900000 --yes" end
+            " --server-url http://localhost:8889" + " --connection-port 900000 --yes" end
         run_cmd_check_status_and_output("fail", "")
       end
 
@@ -259,7 +259,7 @@ describe "knife-azure integration test", if: is_config_present do
           "knife azure server create --azure-vm-name #{@vm_name} --azure-dns-name #{@dns_name}" +
             append_azure_creds + " --azure-source-image #{@az_linux_image}" + get_ssh_credentials +
             " --template-file " + get_linux_template_file_path + " --server-url http://localhost:8889" +
-            " --ssh-port 3245 --yes --azure-connect-to-existing-dns" end
+            " --connection-port 3245 --yes --azure-connect-to-existing-dns" end
 
         run_cmd_check_status_and_output("succeed", "#{@vm_name}")
       end
@@ -316,7 +316,7 @@ describe "knife-azure integration test", if: is_config_present do
           "knife azure server create --azure-vm-name #{@vm_name} --azure-dns-name #{@dns_name}" +
             append_azure_creds + " --azure-source-image #{@az_windows_image}" + get_winrm_credentials +
             " --template-file " + get_windows_msi_template_file_path + " --server-url http://localhost:8889" +
-            " --winrm-port 5682 --yes --azure-connect-to-existing-dns" end
+            " --connection-port 5682 --yes --azure-connect-to-existing-dns" end
         run_cmd_check_status_and_output("fail", "")
       end
 
@@ -324,7 +324,7 @@ describe "knife-azure integration test", if: is_config_present do
         after(:each)  { run(delete_instance_cmd(@vm_name) + append_azure_creds("list_cmd")) }
         let(:command) do
           "knife azure server create --azure-vm-name #{@vm_name} --azure-dns-name #{@dns_name}" + append_azure_creds_for_windows + " --azure-source-image #{@az_windows_image}" + get_winrm_credentials +
-            " --template-file " + get_windows_msi_template_file_path + " --server-url http://localhost:8889" + " --winrm-port 5682 --yes --azure-connect-to-existing-dns" end
+            " --template-file " + get_windows_msi_template_file_path + " --server-url http://localhost:8889" + " --connection-port 5682 --yes --azure-connect-to-existing-dns" end
         run_cmd_check_status_and_output("succeed", "#{@vm_name}")
       end
     end

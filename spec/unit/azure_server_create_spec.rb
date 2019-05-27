@@ -18,16 +18,16 @@ describe Chef::Knife::AzureServerCreate do
   before do
     @server_instance = Chef::Knife::AzureServerCreate.new
     {
-      :azure_subscription_id => "azure_subscription_id",
-      :azure_mgmt_cert => @cert_file,
-      :azure_api_host_name => "preview.core.windows-int.net",
-      :azure_service_location => "West Europe",
-      :azure_source_image => "SUSE__SUSE-Linux-Enterprise-Server-11SP2-20120521-en-us-30GB.vhd",
-      :azure_dns_name => "service001",
-      :azure_vm_name => "vm002",
-      :azure_storage_account => "ka001testeurope",
-      :azure_vm_size => "Small",
-      :ssh_user => "test-user"
+      azure_subscription_id: "azure_subscription_id",
+      azure_mgmt_cert: @cert_file,
+      azure_api_host_name: "preview.core.windows-int.net",
+      azure_service_location: "West Europe",
+      azure_source_image: "SUSE__SUSE-Linux-Enterprise-Server-11SP2-20120521-en-us-30GB.vhd",
+      azure_dns_name: "service001",
+      azure_vm_name: "vm002",
+      azure_storage_account: "ka001testeurope",
+      azure_vm_size: "Small",
+      connection_user: "test-user",
     }.each do |key, value|
       Chef::Config[:knife][key] = value
     end
@@ -43,8 +43,8 @@ describe Chef::Knife::AzureServerCreate do
   end
 
   def test_params(testxml, chef_config, role_name, host_name)
-    expect(xml_content(testxml, "UserName")).to be == chef_config[:ssh_user]
-    expect(xml_content(testxml, "UserPassword")).to be == chef_config[:ssh_password]
+    expect(xml_content(testxml, "UserName")).to be == chef_config[:connection_user]
+    expect(xml_content(testxml, "UserPassword")).to be == chef_config[:connection_password]
     expect(xml_content(testxml, "SourceImageName")).to be == chef_config[:azure_source_image]
     expect(xml_content(testxml, "RoleSize")).to be == chef_config[:azure_vm_size]
     expect(xml_content(testxml, "HostName")).to be == host_name
@@ -104,16 +104,16 @@ describe Chef::Knife::AzureServerCreate do
 
       context "when winrm authentication protocol invalid" do
         it "raise error" do
-          Chef::Config[:knife][:winrm_authentication_protocol] = "invalide"
+          Chef::Config[:knife][:winrm_auth_method] = "invalide"
           expect(@server_instance.ui).to receive(:error)
           expect { @server_instance.run }.to raise_error(SystemExit)
         end
       end
 
-      context "when winrm-transport ssl and missing thumbprint" do
-        it "raise error on :winrm_ssl_verify_mode verify_peer" do
-          Chef::Config[:knife][:winrm_transport] = "ssl"
-          Chef::Config[:knife][:winrm_ssl_verify_mode] = :verify_peer
+      context "when winrm-ssl ssl and missing thumbprint" do
+        it "raise error on :winrm_no_verify_cert verify_peer" do
+          Chef::Config[:knife][:winrm_ssl] = "ssl"
+          Chef::Config[:knife][:winrm_no_verify_cert] = :verify_peer
           expect(@server_instance.ui).to receive(:error)
           expect { @server_instance.run }.to raise_error(SystemExit)
         end
@@ -179,7 +179,7 @@ describe Chef::Knife::AzureServerCreate do
       end
 
       it "matches the CLI options" do
-        #Set params to non-default values
+        # Set params to non-default values
         Chef::Config[:knife][:azure_vm_startup_timeout] = 5
         Chef::Config[:knife][:azure_vm_ready_timeout] = 10
         expect(@server_instance.send(:locate_config_value, :azure_vm_startup_timeout).to_i).to eq(Chef::Config[:knife][:azure_vm_startup_timeout])
@@ -190,8 +190,8 @@ describe Chef::Knife::AzureServerCreate do
     context "server create options" do
       before do
         Chef::Config[:knife][:bootstrap_protocol] = "ssh"
-        Chef::Config[:knife][:ssh_user] = "ssh_user"
-        Chef::Config[:knife][:ssh_password] = "ssh_password"
+        Chef::Config[:knife][:connection_user] = "connection_user"
+        Chef::Config[:knife][:connection_password] = "connection_password"
         Chef::Config[:knife].delete(:azure_vm_name)
         Chef::Config[:knife].delete(:azure_storage_account)
         @bootstrap = Chef::Knife::Bootstrap.new
@@ -216,8 +216,8 @@ describe Chef::Knife::AzureServerCreate do
       it "quick create with wirm - API check" do
         expect(@server_instance).to receive(:is_image_windows?).at_least(:twice).and_return(true)
         Chef::Config[:knife][:azure_dns_name] = "vmname" # service name to be used as vm name
-        Chef::Config[:knife][:winrm_user] = "opscodechef"
-        Chef::Config[:knife][:winrm_password] = "Opscode123"
+        Chef::Config[:knife][:connection_user] = "opscodechef"
+        Chef::Config[:knife][:connection_password] = "Opscode123"
         Chef::Config[:knife][:bootstrap_protocol] = "winrm"
         expect(@server_instance).to receive(:get_dns_name)
         @server_instance.run
@@ -294,7 +294,7 @@ describe Chef::Knife::AzureServerCreate do
 
       it "creates new load balanced endpoints" do
         Chef::Config[:knife][:azure_dns_name] = "vmname"
-        @server_instance.config[:tcp_endpoints] = "80:80:EXTERNAL:lb_set,443:443:EXTERNAL:lb_set_ssl:/healthcheck" #TODO is this a good way of specifying this?
+        @server_instance.config[:tcp_endpoints] = "80:80:EXTERNAL:lb_set,443:443:EXTERNAL:lb_set_ssl:/healthcheck" # TODO is this a good way of specifying this?
         expect(@server_instance).to receive(:is_image_windows?).at_least(:twice).and_return(false)
         @server_instance.run
         testxml = Nokogiri::XML(@receivedXML)
@@ -360,7 +360,7 @@ describe Chef::Knife::AzureServerCreate do
 
       it "allows internal load balancer to be specified" do
         Chef::Config[:knife][:azure_dns_name] = "vmname"
-        @server_instance.config[:tcp_endpoints] = "80:80:internal-lb-name:lb_set" #TODO is this a good way of specifying this?
+        @server_instance.config[:tcp_endpoints] = "80:80:internal-lb-name:lb_set" # TODO is this a good way of specifying this?
         expect(@server_instance).to receive(:is_image_windows?).at_least(:twice).and_return(false)
 
         @server_instance.run
@@ -396,8 +396,8 @@ describe Chef::Knife::AzureServerCreate do
           Chef::Config[:knife][:azure_dns_name] = "vmname"
           allow(@server_instance).to receive(:is_image_windows?).and_return(true)
           Chef::Config[:knife][:bootstrap_protocol] = "winrm"
-          Chef::Config[:knife][:winrm_user] = "testuser"
-          Chef::Config[:knife][:winrm_password] = "winrm_password"
+          Chef::Config[:knife][:connection_user] = "testuser"
+          Chef::Config[:knife][:connection_password] = "connection_password"
         end
 
         it "server create with domain join options" do
@@ -452,8 +452,8 @@ describe Chef::Knife::AzureServerCreate do
     context "missing create options" do
       before do
         Chef::Config[:knife][:bootstrap_protocol] = "winrm"
-        Chef::Config[:knife][:winrm_user] = "testuser"
-        Chef::Config[:knife][:winrm_password] = "winrm_password"
+        Chef::Config[:knife][:connection_user] = "testuser"
+        Chef::Config[:knife][:connection_password] = "connection_password"
         Chef::Config[:knife].delete(:azure_vm_name)
         Chef::Config[:knife].delete(:azure_storage_account)
       end
@@ -538,76 +538,76 @@ describe Chef::Knife::AzureServerCreate do
 
       it "should throw error when DNS does not exist" do
         Chef::Config[:knife][:azure_dns_name] = "does-not-exist"
-        Chef::Config[:knife][:ssh_user] = "azureuser"
-        Chef::Config[:knife][:ssh_password] = "Jetstream123!"
+        Chef::Config[:knife][:connection_user] = "azureuser"
+        Chef::Config[:knife][:connection_password] = "Jetstream123!"
         expect { @server_instance.run }.to raise_error(NoMethodError)
       end
 
-      it "port should be unique number when winrm-port not specified for winrm", :chef_lt_12_only do
-        Chef::Config[:knife][:winrm_port] = nil
+      it "port should be unique number when connection-port not specified for winrm", :chef_lt_12_only do
+        Chef::Config[:knife][:connection_port] = nil
         Chef::Config[:knife][:azure_dns_name] = "service001"
         Chef::Config[:knife][:azure_vm_name] = "newvm01"
         Chef::Config[:knife][:bootstrap_protocol] = "winrm"
-        Chef::Config[:knife][:winrm_user] = "testuser"
-        Chef::Config[:knife][:winrm_password] = "Jetstream123!"
+        Chef::Config[:knife][:connection_user] = "testuser"
+        Chef::Config[:knife][:connection_password] = "Jetstream123!"
         expect(@server_instance).to receive(:is_image_windows?).exactly(3).times.and_return(true)
         @server_params = @server_instance.create_server_def
         expect(@server_params[:port]).to be == "5985"
       end
 
-      it "port should be winrm-port value specified in the option" do
+      it "port should be connection-port value specified in the option" do
         Chef::Config[:knife][:bootstrap_protocol] = "winrm"
-        Chef::Config[:knife][:winrm_user] = "testuser"
-        Chef::Config[:knife][:winrm_password] = "Jetstream123!"
-        Chef::Config[:knife][:winrm_port] = "5990"
+        Chef::Config[:knife][:connection_user] = "testuser"
+        Chef::Config[:knife][:connection_password] = "Jetstream123!"
+        Chef::Config[:knife][:connection_port] = "5990"
         expect(@server_instance).to receive(:is_image_windows?).exactly(3).times.and_return(true)
         @server_params = @server_instance.create_server_def
         expect(@server_params[:port]).to be == "5990"
       end
 
-      it "extract user name when winrm_user contains domain name" do
+      it "extract user name when --connection-user contains domain name" do
         Chef::Config[:knife][:bootstrap_protocol] = "winrm"
-        Chef::Config[:knife][:winrm_user] = 'domain\\testuser'
-        Chef::Config[:knife][:winrm_password] = "Jetstream123!"
-        Chef::Config[:knife][:winrm_port] = "5990"
+        Chef::Config[:knife][:connection_user] = 'domain\\testuser'
+        Chef::Config[:knife][:connection_password] = "Jetstream123!"
+        Chef::Config[:knife][:connection_port] = "5990"
         expect(@server_instance).to receive(:is_image_windows?).exactly(3).times.and_return(true)
         @server_params = @server_instance.create_server_def
-        expect(@server_params[:winrm_user]).to be == "testuser"
+        expect(@server_params[:connection_user]).to be == "testuser"
       end
 
-      it "port should be unique number when ssh-port not specified for linux image" do
-        Chef::Config[:knife][:ssh_user] = "azureuser"
-        Chef::Config[:knife][:ssh_password] = "Jetstream123!"
+      it "port should be unique number when connection-port not specified for linux image" do
+        Chef::Config[:knife][:connection_user] = "azureuser"
+        Chef::Config[:knife][:connection_password] = "Jetstream123!"
         Chef::Config[:knife][:bootstrap_protocol] = "ssh"
         expect(@server_instance).to receive(:is_image_windows?).exactly(3).times.and_return(false)
         @server_params = @server_instance.create_server_def
         expect(@server_params[:port]).to_not be == "22"
       end
 
-      it "port should be ssh-port value specified in the option" do
+      it "port should be connection-port value specified in the option" do
         Chef::Config[:knife][:bootstrap_protocol] = "ssh"
-        Chef::Config[:knife][:ssh_user] = "azureuser"
-        Chef::Config[:knife][:ssh_password] = "Jetstream123!"
-        Chef::Config[:knife][:ssh_port] = "24"
+        Chef::Config[:knife][:connection_user] = "azureuser"
+        Chef::Config[:knife][:connection_password] = "Jetstream123!"
+        Chef::Config[:knife][:connection_port] = "24"
         expect(@server_instance).to receive(:is_image_windows?).exactly(3).times.and_return(false)
         @server_params = @server_instance.create_server_def
         expect(@server_params[:port]).to be == "24"
       end
 
-      it "port should be 22 if user specified --ssh-port 22" do
+      it "port should be 22 if user specified --connection-port 22" do
         Chef::Config[:knife][:bootstrap_protocol] = "ssh"
-        Chef::Config[:knife][:ssh_user] = "azureuser"
-        Chef::Config[:knife][:ssh_password] = "Jetstream123!"
-        Chef::Config[:knife][:ssh_port] = "22"
+        Chef::Config[:knife][:connection_user] = "azureuser"
+        Chef::Config[:knife][:connection_password] = "Jetstream123!"
+        Chef::Config[:knife][:connection_port] = "22"
         expect(@server_instance).to receive(:is_image_windows?).exactly(3).times.and_return(false)
         @server_params = @server_instance.create_server_def
         expect(@server_params[:port]).to be == "22"
       end
 
-      it "port should be 5985 if user specified --winrm-port 5985" do
-        Chef::Config[:knife][:winrm_user] = "azureuser"
-        Chef::Config[:knife][:winrm_password] = "Jetstream123!"
-        Chef::Config[:knife][:winrm_port] = "5985"
+      it "port should be 5985 if user specified --connection-port 5985" do
+        Chef::Config[:knife][:connection_user] = "azureuser"
+        Chef::Config[:knife][:connection_password] = "Jetstream123!"
+        Chef::Config[:knife][:connection_port] = "5985"
         Chef::Config[:knife][:bootstrap_protocol] = "winrm"
         expect(@server_instance).to receive(:is_image_windows?).exactly(3).times.and_return(true)
         @server_params = @server_instance.create_server_def
@@ -624,8 +624,8 @@ describe Chef::Knife::AzureServerCreate do
         expect(@bootstrap).to receive(:run)
         allow(@server_instance).to receive(:is_image_windows?).and_return(true)
         Chef::Config[:knife][:bootstrap_protocol] = "winrm"
-        Chef::Config[:knife][:winrm_user] = "testuser"
-        Chef::Config[:knife][:winrm_password] = "winrm_password"
+        Chef::Config[:knife][:connection_user] = "testuser"
+        Chef::Config[:knife][:connection_password] = "connection_password"
         Chef::Config[:knife][:azure_dns_name] = "service004"
         Chef::Config[:knife][:azure_vm_name] = "winrm-vm"
         Chef::Config[:knife][:hints] = nil # reset as this is loaded only once for app(test here)
@@ -650,8 +650,8 @@ describe Chef::Knife::AzureServerCreate do
         expect(@bootstrap).to receive(:run)
         allow(@server_instance).to receive(:is_image_windows?).and_return(false)
         Chef::Config[:knife][:bootstrap_protocol] = "ssh"
-        Chef::Config[:knife][:ssh_password] = "ssh_password"
-        Chef::Config[:knife][:ssh_user] = "ssh_user"
+        Chef::Config[:knife][:connection_password] = "connection_password"
+        Chef::Config[:knife][:connection_user] = "connection_user"
         Chef::Config[:knife][:azure_dns_name] = "service004"
         Chef::Config[:knife][:azure_vm_name] = "ssh-vm"
         Chef::Config[:knife][:hints] = nil # reset as this is loaded only once for app(test here)
@@ -673,8 +673,8 @@ describe Chef::Knife::AzureServerCreate do
   describe "for bootstrap protocol winrm:" do
     before do
       Chef::Config[:knife][:bootstrap_protocol] = "winrm"
-      Chef::Config[:knife][:winrm_user] = "testuser"
-      Chef::Config[:knife][:winrm_password] = "winrm_password"
+      Chef::Config[:knife][:connection_user] = "testuser"
+      Chef::Config[:knife][:connection_password] = "connection_password"
       allow(@server_instance.ui).to receive(:error)
       allow(@server_instance).to receive(:msg_server_summary)
     end
@@ -683,23 +683,23 @@ describe Chef::Knife::AzureServerCreate do
       expect(@server_instance).to receive(:is_image_windows?).exactly(3).times.and_return(true)
       @server_params = @server_instance.create_server_def
       expect(@server_params[:os_type]).to be == "Windows"
-      expect(@server_params[:admin_password]).to be == "winrm_password"
+      expect(@server_params[:admin_password]).to be == "connection_password"
       expect(@server_params[:bootstrap_proto]).to be == "winrm"
       expect(@server_params[:azure_dns_name]).to be == "service001"
       expect(@server_params[:azure_vm_name]).to be == "vm002"
-      expect(@server_params[:winrm_user]).to be == "testuser"
+      expect(@server_params[:connection_user]).to be == "testuser"
       expect(@server_params[:port]).to be == "5985"
     end
 
-    it "winrm_user cannot be 'administrator'" do
+    it "--connection-user cannot be 'administrator'" do
       expect(@server_instance).to receive(:is_image_windows?).and_return(true)
-      Chef::Config[:knife][:winrm_user] = "administrator"
+      Chef::Config[:knife][:connection_user] = "administrator"
       expect { @server_instance.create_server_def }.to raise_error(SystemExit)
     end
 
-    it "winrm_user cannot be 'admin*'" do
+    it "--connection-user cannot be 'admin*'" do
       expect(@server_instance).to receive(:is_image_windows?).and_return(true)
-      Chef::Config[:knife][:winrm_user] = "Admin12"
+      Chef::Config[:knife][:connection_user] = "Admin12"
       expect { @server_instance.create_server_def }.to raise_error(SystemExit)
     end
 
@@ -731,10 +731,10 @@ describe Chef::Knife::AzureServerCreate do
       end
 
       it "sets winrm authentication protocol for windows vm" do
-        Chef::Config[:knife][:winrm_authentication_protocol] = "negotiate"
+        Chef::Config[:knife][:winrm_auth_method] = "negotiate"
         expect(@server_instance).to receive(:is_image_windows?).at_least(:twice).and_return(true)
         @server_instance.run
-        expect(@bootstrap.config[:winrm_authentication_protocol]).to be == "negotiate"
+        expect(@bootstrap.config[:winrm_auth_method]).to be == "negotiate"
       end
 
       it "sets 'msi_url' correctly" do
@@ -744,11 +744,11 @@ describe Chef::Knife::AzureServerCreate do
         expect(@bootstrap.config[:msi_url]).to be == "https://opscode-omnibus-packages.s3.amazonaws.com/windows/2008r2/x86_64/chef-client-12.3.0-1.msi"
       end
 
-      it "sets 'install_as_service' correctly" do
+      it "does not use 'install_as_service' anymore" do
         Chef::Config[:knife][:install_as_service] = true
         allow(@server_instance).to receive(:is_image_windows?).and_return(true)
         @server_instance.run
-        expect(@bootstrap.config[:install_as_service]).to eq(true)
+        expect(@bootstrap.config[:install_as_service]).to be_nil
       end
     end
   end
@@ -761,26 +761,26 @@ describe Chef::Knife::AzureServerCreate do
 
     context "windows instance:" do
       before do
-        Chef::Config[:knife][:forward_agent] = true
+        Chef::Config[:knife][:ssh_forward_agent] = true
       end
 
-      it "sets 'forward_agent' correctly" do
-        expect(@server_instance.send(:locate_config_value, :forward_agent)).to be(true)
+      it "sets 'ssh_forward_agent' correctly" do
+        expect(@server_instance.send(:locate_config_value, :ssh_forward_agent)).to be(true)
       end
     end
 
     context "linux instance" do
       before do
-        Chef::Config[:knife][:ssh_user] = "ssh_user"
-        Chef::Config[:knife][:ssh_password] = "ssh_password"
+        Chef::Config[:knife][:connection_user] = "connection_user"
+        Chef::Config[:knife][:connection_password] = "connection_password"
       end
 
       it "check if all server params are set correctly" do
         expect(@server_instance).to receive(:is_image_windows?).exactly(3).and_return(false)
         @server_params = @server_instance.create_server_def
         expect(@server_params[:os_type]).to be == "Linux"
-        expect(@server_params[:ssh_user]).to be == "ssh_user"
-        expect(@server_params[:ssh_password]).to be == "ssh_password"
+        expect(@server_params[:connection_user]).to be == "connection_user"
+        expect(@server_params[:connection_password]).to be == "connection_password"
         expect(@server_params[:bootstrap_proto]).to be == "ssh"
         expect(@server_params[:azure_dns_name]).to be == "service001"
         expect(@server_params[:azure_vm_name]).to be == "vm002"
@@ -798,7 +798,7 @@ describe Chef::Knife::AzureServerCreate do
 
       context "ssh key" do
         before do
-          Chef::Config[:knife][:ssh_password] = ""
+          Chef::Config[:knife][:connection_password] = ""
           Chef::Config[:knife][:identity_file] = "path_to_rsa_private_key"
         end
 
@@ -807,7 +807,7 @@ describe Chef::Knife::AzureServerCreate do
           @server_params = @server_instance.create_server_def
           expect(@server_params[:os_type]).to be == "Linux"
           expect(@server_params[:identity_file]).to be == "path_to_rsa_private_key"
-          expect(@server_params[:ssh_user]).to be == "ssh_user"
+          expect(@server_params[:connection_user]).to be == "connection_user"
           expect(@server_params[:bootstrap_proto]).to be == "ssh"
           expect(@server_params[:azure_dns_name]).to be == "service001"
         end
@@ -830,15 +830,15 @@ describe Chef::Knife::AzureServerCreate do
           allow(Chef::Knife::Bootstrap).to receive(:new).and_return(@bootstrap)
         end
 
-        it "enables sudo password when ssh_user is not root" do
+        it "enables sudo password when connection_user is not root" do
           expect(@bootstrap).to receive(:run)
           @server_instance.run
           expect(@bootstrap.config[:use_sudo_password]).to be true
         end
 
-        it "does not enable sudo password when ssh_user is root" do
+        it "does not enable sudo password when connection_user is root" do
           expect(@bootstrap).to receive(:run)
-          Chef::Config[:knife][:ssh_user] = "root"
+          Chef::Config[:knife][:connection_user] = "root"
           @server_instance.run
           expect(@bootstrap.config[:use_sudo_password]).to_not be true
         end
@@ -905,15 +905,15 @@ describe Chef::Knife::AzureServerCreate do
 
       let(:public_config) do
         {
-        :client_rb => "chef_server_url \t \"https://localhost:443\"\nvalidation_client_name\t\"chef-validator\"",
-        :runlist => "\"getting-started\"",
-        :extendedLogs => "true",
-        :custom_json_attr => {},
-        :chef_daemon_interval => "16",
-        :bootstrap_options => { :chef_server_url => "https://localhost:443",
-                                :validation_client_name => "chef-validator",
-                                :bootstrap_version => "12.4.2"
-        }
+        client_rb: "chef_server_url \t \"https://localhost:443\"\nvalidation_client_name\t\"chef-validator\"",
+        runlist: "\"getting-started\"",
+        extendedLogs: "true",
+        custom_json_attr: {},
+        chef_daemon_interval: "16",
+        bootstrap_options: { chef_server_url: "https://localhost:443",
+                             validation_client_name: "chef-validator",
+                             bootstrap_version: "12.4.2",
+        },
       } end
 
       it "should set public config properly" do
@@ -1032,8 +1032,8 @@ describe Chef::Knife::AzureServerCreate do
     context "when validation key is not present", :chef_gte_12_only do
       context "when encrypted_data_bag_secret option is passed" do
         let(:private_config) do
-          { :client_pem => "my_client_pem",
-            :encrypted_data_bag_secret => "my_encrypted_data_bag_secret"
+          { client_pem: "my_client_pem",
+            encrypted_data_bag_secret: "my_encrypted_data_bag_secret",
         } end
 
         before do
@@ -1045,8 +1045,8 @@ describe Chef::Knife::AzureServerCreate do
 
       context "when encrypted_data_bag_secret_file option is passed" do
         let(:private_config) do
-          { :client_pem => "my_client_pem",
-            :encrypted_data_bag_secret => "PgIxStCmMDsuIw3ygRhmdMtStpc9EMiWisQXoP"
+          { client_pem: "my_client_pem",
+            encrypted_data_bag_secret: "PgIxStCmMDsuIw3ygRhmdMtStpc9EMiWisQXoP",
         } end
 
         before do
@@ -1085,7 +1085,7 @@ describe Chef::Knife::AzureServerCreate do
   describe "extended_logs feature for cloud-api bootstrap protocol" do
     describe "run" do
       before do
-        Chef::Config[:knife][:ssh_password] = "ssh_password"
+        Chef::Config[:knife][:connection_password] = "connection_password"
         allow(Chef::Log).to receive(:info)
         allow(@server_instance).to receive(:validate_asm_keys!)
         allow(@server_instance).to receive(:validate_params!)

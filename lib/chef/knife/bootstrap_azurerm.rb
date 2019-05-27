@@ -18,6 +18,7 @@
 #
 
 require "chef/knife/azurerm_base"
+require "chef/knife/bootstrap"
 require "chef/knife/bootstrap/common_bootstrap_options"
 require "chef/knife/bootstrap/bootstrapper"
 require "azure/resource_management/ARM_interface"

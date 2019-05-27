@@ -145,7 +145,7 @@ class Chef
 
         def bootstrap_common_params(bootstrap, server)
           bootstrap.config[:run_list] = locate_config_value(:run_list)
-          bootstrap.config[:prerelease] = locate_config_value(:prerelease)
+          bootstrap.config[:channel] = locate_config_value(:channel)
           bootstrap.config[:first_boot_attributes] = locate_config_value(:json_attributes) || {}
           bootstrap.config[:bootstrap_version] = locate_config_value(:bootstrap_version)
           bootstrap.config[:distro] = locate_config_value(:distro) || default_bootstrap_template
@@ -173,22 +173,22 @@ class Chef
 
             bootstrap = Chef::Knife::BootstrapWindowsWinrm.new
 
-            bootstrap.config[:winrm_user] = locate_config_value(:winrm_user) || "Administrator"
-            bootstrap.config[:winrm_password] = locate_config_value(:winrm_password)
-            bootstrap.config[:winrm_transport] = locate_config_value(:winrm_transport)
-            bootstrap.config[:winrm_authentication_protocol] = locate_config_value(:winrm_authentication_protocol)
-            bootstrap.config[:winrm_port] = port
+            bootstrap.config[:connection_user] = locate_config_value(:connection_user) || "Administrator"
+            bootstrap.config[:connection_password] = locate_config_value(:connection_password)
+            bootstrap.config[:winrm_ssl] = locate_config_value(:winrm_ssl)
+            bootstrap.config[:winrm_auth_method] = locate_config_value(:winrm_auth_method)
+            bootstrap.config[:connection_port] = port
             bootstrap.config[:auth_timeout] = locate_config_value(:auth_timeout)
-            # Todo: we should skip cert generate in case when winrm_ssl_verify_mode=verify_none
-            bootstrap.config[:winrm_ssl_verify_mode] = locate_config_value(:winrm_ssl_verify_mode)
+            # Todo: we should skip cert generate in case when winrm_no_verify_cert=verify_none
+            bootstrap.config[:winrm_no_verify_cert] = locate_config_value(:winrm_no_verify_cert)
           elsif locate_config_value(:bootstrap_protocol) == "ssh"
             bootstrap = Chef::Knife::BootstrapWindowsSsh.new
-            bootstrap.config[:ssh_user] = locate_config_value(:ssh_user)
-            bootstrap.config[:ssh_password] = locate_config_value(:ssh_password)
-            bootstrap.config[:forward_agent] = locate_config_value(:forward_agent)
-            bootstrap.config[:ssh_port] = port
+            bootstrap.config[:connection_user] = locate_config_value(:connection_user)
+            bootstrap.config[:connection_password] = locate_config_value(:connection_password)
+            bootstrap.config[:ssh_forward_agent] = locate_config_value(:ssh_forward_agent)
+            bootstrap.config[:connection_port] = port
             bootstrap.config[:identity_file] = locate_config_value(:identity_file)
-            bootstrap.config[:host_key_verify] = locate_config_value(:host_key_verify)
+            bootstrap.config[:ssh_verify_host_key] = locate_config_value(:ssh_verify_host_key)
           else
             ui.error("Unsupported Bootstrapping Protocol. Supported : winrm, ssh")
             exit 1
@@ -198,23 +198,22 @@ class Chef
           bootstrap.config[:encrypted_data_bag_secret] = locate_config_value(:encrypted_data_bag_secret)
           bootstrap.config[:encrypted_data_bag_secret_file] = locate_config_value(:encrypted_data_bag_secret_file)
           bootstrap.config[:msi_url] = locate_config_value(:msi_url)
-          bootstrap.config[:install_as_service] = locate_config_value(:install_as_service)
           bootstrap_common_params(bootstrap, server)
         end
 
         def bootstrap_for_node(server, fqdn, port)
           bootstrap = Chef::Knife::Bootstrap.new
           bootstrap.name_args = [fqdn]
-          bootstrap.config[:ssh_user] = locate_config_value(:ssh_user)
-          bootstrap.config[:ssh_password] = locate_config_value(:ssh_password)
-          bootstrap.config[:ssh_port] = port
+          bootstrap.config[:connection_user] = locate_config_value(:connection_user)
+          bootstrap.config[:connection_password] = locate_config_value(:connection_password)
+          bootstrap.config[:connection_port] = port
           bootstrap.config[:identity_file] = locate_config_value(:identity_file)
           bootstrap.config[:chef_node_name] = locate_config_value(:chef_node_name) || server.name
-          bootstrap.config[:use_sudo] = true unless locate_config_value(:ssh_user) == "root"
+          bootstrap.config[:use_sudo] = true unless locate_config_value(:connection_user) == "root"
           bootstrap.config[:use_sudo_password] = true if bootstrap.config[:use_sudo]
           bootstrap.config[:environment] = locate_config_value(:environment)
           # may be needed for vpc_mode
-          bootstrap.config[:host_key_verify] = config[:host_key_verify]
+          bootstrap.config[:ssh_verify_host_key] = config[:ssh_verify_host_key]
           Chef::Config[:knife][:secret] = config[:encrypted_data_bag_secret] if config[:encrypted_data_bag_secret]
           Chef::Config[:knife][:secret_file] = config[:encrypted_data_bag_secret_file] if config[:encrypted_data_bag_secret_file]
           bootstrap.config[:secret] = locate_config_value(:encrypted_data_bag_secret)
@@ -241,9 +240,9 @@ class Chef
             chef_extension_name = chef_extension_name.nil? ? get_chef_extension_name : chef_extension_name
             if @service.instance_of? Azure::ResourceManagement::ARMInterface
               service.get_latest_chef_extension_version({
-                :azure_service_location => locate_config_value(:azure_service_location),
-                :chef_extension_publisher => get_chef_extension_publisher,
-                :chef_extension => chef_extension_name
+                azure_service_location: locate_config_value(:azure_service_location),
+                chef_extension_publisher: get_chef_extension_publisher,
+                chef_extension: chef_extension_name,
               })
             elsif @service.instance_of? Azure::ServiceManagement::ASMInterface
               extensions = service.get_extension(chef_extension_name, get_chef_extension_publisher)
@@ -306,8 +305,8 @@ class Chef
           cli_secret_file = config[:encrypted_data_bag_secret_file]
           cli_secret = config[:encrypted_data_bag_secret]
 
-          #The value set in knife.rb gets set in config object too
-          #That's why setting cli objects to nil if the values are specified in knife.rb
+          # The value set in knife.rb gets set in config object too
+          # That's why setting cli objects to nil if the values are specified in knife.rb
           cli_secret_file = nil if cli_secret_file == knife_secret_file
           cli_secret = nil if cli_secret == knife_secret
 

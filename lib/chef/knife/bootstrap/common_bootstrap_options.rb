@@ -106,11 +106,6 @@ class Chef
               default: false,
               description: "Optional. Provide this option when --bootstrap-protocol is set to 'cloud-api'. It shows chef converge logs in detail."
 
-            option :node_ssl_verify_mode,
-              long: "--node-ssl-verify-mode [peer|none]",
-              description: "Whether or not to verify the SSL cert for all HTTPS requests.",
-              in: %w{peer none}
-
             option :tcp_endpoints,
               short: "-t PORT_LIST",
               long: "--tcp-endpoints PORT_LIST",
