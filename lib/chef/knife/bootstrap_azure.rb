@@ -22,7 +22,7 @@ require "chef/knife/bootstrap/bootstrapper"
 
 class Chef
   class Knife
-    class BootstrapAzure < Knife
+    class BootstrapAzure < Knife::Bootstrap
 
       include Knife::AzureBase
       include Knife::Bootstrap::CommonBootstrapOptions
@@ -31,9 +31,9 @@ class Chef
       banner "knife bootstrap azure SERVER (options)"
 
       option :azure_dns_name,
-        :short => "-d DNS_NAME",
-        :long => "--azure-dns-name DNS_NAME",
-        :description => "Optional. The DNS prefix name that is used to access the cloud service."
+        short: "-d DNS_NAME",
+        long: "--azure-dns-name DNS_NAME",
+        description: "Optional. The DNS prefix name that is used to access the cloud service."
 
       def run
         ui.info "Validating..."
@@ -64,7 +64,7 @@ class Chef
           ui.info "Looking for the server #{@name_args[0]}..."
           server = service.find_server({
               name: @name_args[0],
-              azure_dns_name: locate_config_value(:azure_dns_name)
+              azure_dns_name: locate_config_value(:azure_dns_name),
             })
 
           ## if azure_dns_name value not passed by user then set it using the hostedservicename attribute from the retrieved server's object ##

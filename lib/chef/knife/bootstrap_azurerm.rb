@@ -25,19 +25,13 @@ require "time"
 
 class Chef
   class Knife
-    class BootstrapAzurerm < Knife
+    class BootstrapAzurerm < Knife::Bootstrap
+
       include Knife::AzurermBase
       include Knife::Bootstrap::CommonBootstrapOptions
       include Knife::Bootstrap::Bootstrapper
 
       banner "knife bootstrap azurerm SERVER (options)"
-
-      option :azure_service_location,
-        :short => "-m LOCATION",
-        :long => "--azure-service-location LOCATION",
-        :description => "Required if not using an Affinity Group. Specifies the geographic location - the name of the data center location that is valid for your subscription.
-                                      Eg: westus, eastus, eastasia, southeastasia, northeurope, westeurope",
-        :proc        => Proc.new { |lo| Chef::Config[:knife][:azure_service_location] = lo }
 
       def run
         ui.log("Validating...")
