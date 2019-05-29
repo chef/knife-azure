@@ -76,7 +76,7 @@ module Azure
       unless @connection.storageaccounts.exists?(params[:azure_storage_account])
         @connection.storageaccounts.create(params)
       end
-      if params[:identity_file]
+      if params[:ssh_identity_file]
         params[:fingerprint] = @connection.certificates.create(params)
       end
       if params[:cert_path]

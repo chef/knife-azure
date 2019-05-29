@@ -337,7 +337,7 @@ module Azure
                 xml.ConfigurationSetType "LinuxProvisioningConfiguration"
                 xml.HostName params[:azure_vm_name]
                 xml.UserName params[:connection_user]
-                unless params[:identity_file].nil?
+                unless params[:ssh_identity_file].nil?
                   xml.DisableSshPasswordAuthentication "true"
                   xml.SSH do
                     xml.PublicKeys do

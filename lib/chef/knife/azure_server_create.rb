@@ -100,10 +100,6 @@ class Chef
         description: "The maximum time in minutes to wait to for authentication over the transport to the node to succeed. The default value is 25 minutes.",
         default: 25
 
-      option :identity_file,
-        long: "--identity-file FILENAME",
-        description: "SSH identity file for authentication, optional. It is the RSA private key path. Specify either connection-password or identity-file"
-
       option :identity_file_passphrase,
         long: "--identity-file-passphrase PASSWORD",
         description: "SSH key passphrase. Optional, specify if passphrase for identity-file exists"
@@ -368,7 +364,7 @@ class Chef
               ui.error("SSH User is compulsory parameter")
               exit 1
             end
-            unless locate_config_value(:connection_password) || locate_config_value(:identity_file)
+            unless locate_config_value(:connection_password) || locate_config_value(:ssh_identity_file)
               ui.error("Specify either SSH Key or SSH Password")
               exit 1
             end
@@ -384,7 +380,7 @@ class Chef
           server_def[:bootstrap_proto] = (locate_config_value(:bootstrap_protocol) == "winrm") ? "ssh" : locate_config_value(:bootstrap_protocol)
           server_def[:connection_user] = locate_config_value(:connection_user)
           server_def[:connection_password] = locate_config_value(:connection_password)
-          server_def[:identity_file] = locate_config_value(:identity_file)
+          server_def[:ssh_identity_file] = locate_config_value(:ssh_identity_file)
           server_def[:identity_file_passphrase] = locate_config_value(:identity_file_passphrase)
         end
 
@@ -445,10 +441,10 @@ class Chef
             !locate_config_value(:connection_password).nil?
           config[:connection_password] = locate_config_value(:connection_password)
         end
-        # unset identity_file and set _file, override identity_file
-        if locate_config_value(:identity_file).nil? &&
+        # unset ssh_identity_file and set _file, override ssh_identity_file
+        if locate_config_value(:ssh_identity_file).nil? &&
             !locate_config_value(:kerberos_keytab_file).nil?
-          config[:identity_file] = locate_config_value(:kerberos_keytab_file)
+          config[:ssh_identity_file] = locate_config_value(:kerberos_keytab_file)
         end
       end
 

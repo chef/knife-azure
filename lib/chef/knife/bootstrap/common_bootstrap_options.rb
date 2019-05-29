@@ -74,7 +74,7 @@ class Chef
               proc: Proc.new { |si| Chef::Config[:knife][:azure_vm_size] = si }
 
             option :bootstrap_protocol,
-              long: "--bootstrap-protocol protocol",
+              long: "--bootstrap-protocol PROTOCOL",
               description: "Protocol to bootstrap windows servers. options: 'winrm' or 'ssh' or 'cloud-api'.",
               default: "winrm"
 

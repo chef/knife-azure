@@ -58,8 +58,8 @@ module Azure
     def create(params)
       # If RSA private key has been specified, then generate an x 509 certificate from the
       # public part of the key
-      @cert_data = generate_public_key_certificate_data({ :ssh_key => params[:identity_file],
-                                                          :ssh_key_passphrase => params[:identity_file_passphrase] })
+      @cert_data = generate_public_key_certificate_data({ ssh_key: params[:ssh_identity_file],
+                                                          ssh_key_passphrase: params[:identity_file_passphrase] })
       add_certificate @cert_data, "knifeazure", "pfx", params[:azure_dns_name]
 
       # Return the fingerprint to be used while adding role
@@ -198,7 +198,7 @@ module Azure
         @hostname = "*." + cert_params[:domain]
       end
 
-      #Create a self-signed X509 certificate from the rsa_key (unencrypted)
+      # Create a self-signed X509 certificate from the rsa_key (unencrypted)
       cert = OpenSSL::X509::Certificate.new
       cert.version = 2
       cert.serial = Random.rand(65534) + 1 # 2 digit byte range random number for better security aspect

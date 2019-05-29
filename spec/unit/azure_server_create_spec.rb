@@ -799,14 +799,14 @@ describe Chef::Knife::AzureServerCreate do
       context "ssh key" do
         before do
           Chef::Config[:knife][:connection_password] = ""
-          Chef::Config[:knife][:identity_file] = "path_to_rsa_private_key"
+          Chef::Config[:knife][:ssh_identity_file] = "path_to_rsa_private_key"
         end
 
         it "check if ssh-key set correctly" do
           expect(@server_instance).to receive(:is_image_windows?).exactly(3).times.and_return(false)
           @server_params = @server_instance.create_server_def
           expect(@server_params[:os_type]).to be == "Linux"
-          expect(@server_params[:identity_file]).to be == "path_to_rsa_private_key"
+          expect(@server_params[:ssh_identity_file]).to be == "path_to_rsa_private_key"
           expect(@server_params[:connection_user]).to be == "connection_user"
           expect(@server_params[:bootstrap_proto]).to be == "ssh"
           expect(@server_params[:azure_dns_name]).to be == "service001"

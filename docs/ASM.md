@@ -121,7 +121,7 @@ shown below:
     knife[:azure_service_location] = 'West US'
     knife[:azure_source_image] = 'source-image-name'
     knife[:connection_user] = 'jetstream'
-    knife[:identity_file] = '~/.ssh/myazure_rsa'
+    knife[:ssh_identity_file] = '~/.ssh/myazure_rsa'
 
 #### Azure VM Advanced Create
 You can set various other options in the advanced create.
@@ -151,7 +151,7 @@ These options may also be configured from knife.rb, as in this example:
     knife[:azure_dns_name]='myservice'
     knife[:azure_vm_name]='myvm02'
     knife[:connection_user]='jetstream'
-    knife[:identity_file]='/path/to/RSA/private/key'
+    knife[:ssh_identity_file]='/path/to/RSA/private/key'
     knife[:azure_storage_account]='auxpreview104'
     knife[:azure_os_disk_name]='disk107'
     knife[:tcp-endpoints]='80:80,3389:5678'

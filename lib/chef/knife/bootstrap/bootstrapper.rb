@@ -187,7 +187,7 @@ class Chef
             bootstrap.config[:connection_password] = locate_config_value(:connection_password)
             bootstrap.config[:ssh_forward_agent] = locate_config_value(:ssh_forward_agent)
             bootstrap.config[:connection_port] = port
-            bootstrap.config[:identity_file] = locate_config_value(:identity_file)
+            bootstrap.config[:ssh_identity_file] = locate_config_value(:ssh_identity_file)
             bootstrap.config[:ssh_verify_host_key] = locate_config_value(:ssh_verify_host_key)
           else
             ui.error("Unsupported Bootstrapping Protocol. Supported : winrm, ssh")
@@ -207,7 +207,7 @@ class Chef
           bootstrap.config[:connection_user] = locate_config_value(:connection_user)
           bootstrap.config[:connection_password] = locate_config_value(:connection_password)
           bootstrap.config[:connection_port] = port
-          bootstrap.config[:identity_file] = locate_config_value(:identity_file)
+          bootstrap.config[:ssh_identity_file] = locate_config_value(:ssh_identity_file)
           bootstrap.config[:chef_node_name] = locate_config_value(:chef_node_name) || server.name
           bootstrap.config[:use_sudo] = true unless locate_config_value(:connection_user) == "root"
           bootstrap.config[:use_sudo_password] = true if bootstrap.config[:use_sudo]
