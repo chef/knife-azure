@@ -24,11 +24,11 @@ module Azure::ARM
       hint_names.each do |hint_name|
         case hint_name
         when "vm_name"
-          hints_json["vm_name"] = "[reference(#{resource_ids['vmId']}).osProfile.computerName]" if !hints_json.key? "vm_name"
+          hints_json["vm_name"] = "[reference(#{resource_ids['vmId']}).osProfile.computerName]" unless hints_json.key? "vm_name"
         when "public_fqdn"
-          hints_json["public_fqdn"] = "[reference(#{resource_ids['pubId']}).dnsSettings.fqdn]" if !hints_json.key? "public_fqdn"
+          hints_json["public_fqdn"] = "[reference(#{resource_ids['pubId']}).dnsSettings.fqdn]" unless hints_json.key? "public_fqdn"
         when "platform"
-          hints_json["platform"] = "[concat(reference(#{resource_ids['vmId']}).storageProfile.imageReference.offer, concat(' ', reference(#{resource_ids['vmId']}).storageProfile.imageReference.sku))]" if !hints_json.key? "platform"
+          hints_json["platform"] = "[concat(reference(#{resource_ids['vmId']}).storageProfile.imageReference.offer, concat(' ', reference(#{resource_ids['vmId']}).storageProfile.imageReference.sku))]" unless hints_json.key? "platform"
         end
       end
 
@@ -412,15 +412,14 @@ module Azure::ARM
                 "adminUserName" => "[parameters('adminUserName')]",
                 "adminPassword" => "[parameters('adminPassword')]",
                 "linuxConfiguration" => ( if params[:disablePasswordAuthentication] == "true"
-                                            {
-                  "disablePasswordAuthentication" => "[parameters('disablePasswordAuthentication')]",
-                  "ssh" => {
-                    "publicKeys" => [ {
-                    "path" => "[variables('sshKeyPath')]",
-                    "keyData" => "[parameters('sshKeyData')]",
-                    } ],
-                  },
-                }
+                                            {  "disablePasswordAuthentication" => "[parameters('disablePasswordAuthentication')]",
+                                               "ssh" => {
+                                                 "publicKeys" => [{
+                                                   "path" => "[variables('sshKeyPath')]",
+                                                   "keyData" => "[parameters('sshKeyData')]",
+                                                 }],
+                                               },
+                                            }
                                           end),
               },
               "storageProfile" => {
@@ -433,7 +432,8 @@ module Azure::ARM
                 "osDisk" => {
                   "name" => "[variables('OSDiskName')]",
                   "vhd" => {
-                    "uri" => uri },
+                    "uri" => uri,
+                  },
                   "caching" => "ReadWrite",
                   "createOption" => "FromImage",
                 },
@@ -499,15 +499,15 @@ module Azure::ARM
 
       if params[:azure_availability_set]
         set_val = {
-            "name" => "[parameters('availabilitySetName')]",
-            "type" => "Microsoft.Compute/availabilitySets",
-            "apiVersion" => "[variables('apiVersion')]",
-            "location" => "[resourceGroup().location]",
-            "properties" => {
-              "platformFaultDomainCount" => "[parameters('availabilitySetPlatformFaultDomainCount')]",
-              "platformUpdateDomainCount" => "[parameters('availabilitySetPlatformUpdateDomainCount')]",
-            },
-          }
+          "name" => "[parameters('availabilitySetName')]",
+          "type" => "Microsoft.Compute/availabilitySets",
+          "apiVersion" => "[variables('apiVersion')]",
+          "location" => "[resourceGroup().location]",
+          "properties" => {
+            "platformFaultDomainCount" => "[parameters('availabilitySetPlatformFaultDomainCount')]",
+            "platformUpdateDomainCount" => "[parameters('availabilitySetPlatformUpdateDomainCount')]",
+          },
+        }
 
         length = template["resources"].length.to_i - 1
         for i in 0..length do
@@ -560,32 +560,27 @@ module Azure::ARM
         template["resources"].last["properties"]["protectedSettings"]["client_pem"] = "[parameters(concat('client_pem',copyIndex()))]"
         0.upto (params[:server_count].to_i - 1) do |count|
           template["parameters"]["client_pem" + count.to_s] = {
-              "type" => "string",
-              "metadata" => {
-                "description" => "Required for validtorless bootstrap.",
-              },
-            }
-        end
-      else
-        template["resources"].last["properties"]["protectedSettings"]["client_pem"] = "[parameters('client_pem')]"
-        template["parameters"]["client_pem"] = {
             "type" => "string",
             "metadata" => {
               "description" => "Required for validtorless bootstrap.",
             },
           }
+        end
+      else
+        template["resources"].last["properties"]["protectedSettings"]["client_pem"] = "[parameters('client_pem')]"
+        template["parameters"]["client_pem"] = {
+          "type" => "string",
+          "metadata" => {
+            "description" => "Required for validtorless bootstrap.",
+          },
+        }
       end
       template
     end
 
-    def create_deployment_parameters(params, platform)
-      if platform == "Windows"
-        admin_user = params[:connection_user]
-        admin_password = params[:admin_password]
-      else
-        admin_user = params[:connection_user]
-        admin_password = params[:connection_password]
-      end
+    def create_deployment_parameters(params)
+      admin_user = params[:connection_user]
+      admin_password = params[:connection_password]
 
       parameters = {
         "adminUserName" => {

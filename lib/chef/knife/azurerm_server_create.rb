@@ -104,26 +104,51 @@ class Chef
                                      Default value is 'default' which corresponds to the supported values list mentioned here.",
         default: "default"
 
-      def run
-        $stdout.sync = true
-        # check azure cli version due to azure changed `azure` to `az` in azure-cli2.0
+# run() would be executing from parent class
+# Chef::Knife::Bootstrap, defined in core.
+# Required methods have been overridden here
+#### run() execution begins ####
+
+      def plugin_setup!
+        # Check azure cli version due to azure changed `azure` to `az` in azure-cli2.0
         get_azure_cli_version
+        set_default_image_reference!
+      end
+
+      def validate_name_args!; end
+
+      def plugin_validate_options!
         validate_arm_keys!(
           :azure_resource_group_name,
           :azure_vm_name,
           :azure_service_location
         )
-
-        begin
-          validate_params!
-          set_default_image_reference!
-          ssh_override_winrm if !is_image_windows?
-          vm_details = service.create_server(create_server_def)
-        rescue => error
-          service.common_arm_rescue_block(error)
-          exit
-        end
+        validate_params!
       end
+
+      def plugin_create_instance!
+        set_defaults
+        vm_details = service.create_server(create_server_def)
+      rescue => error
+        service.common_arm_rescue_block(error)
+        exit
+      end
+
+      def plugin_finalize; end
+
+      # Following methods are not required for ARM
+      #
+      def connect!; end
+
+      def register_client; end
+
+      def render_template; end
+
+      def upload_bootstrap(content); end
+
+      def perform_bootstrap(bootstrap_path); end
+
+      #### run() execution ends ####
 
       def create_server_def
         server_def = {
@@ -140,7 +165,6 @@ class Chef
           azure_image_reference_offer: locate_config_value(:azure_image_reference_offer),
           azure_image_reference_sku: locate_config_value(:azure_image_reference_sku),
           azure_image_reference_version: locate_config_value(:azure_image_reference_version),
-          connection_user: locate_config_value(:connection_user),
           azure_availability_set: locate_config_value(:azure_availability_set),
           azure_vnet_name: locate_config_value(:azure_vnet_name),
           azure_vnet_subnet_name: locate_config_value(:azure_vnet_subnet_name),
@@ -171,18 +195,14 @@ class Chef
         server_def[:chef_extension_public_param] = get_chef_extension_public_params
         server_def[:chef_extension_private_param] = get_chef_extension_private_params
         server_def[:auto_upgrade_minor_version] = false
-
-        if is_image_windows?
-          server_def[:admin_password] = locate_config_value(:connection_password)
-        else
-          server_def[:connection_user] = locate_config_value(:connection_user)
-          server_def[:connection_password] = locate_config_value(:connection_password)
-          server_def[:disablePasswordAuthentication] = "false"
-          if locate_config_value(:ssh_public_key)
-            server_def[:disablePasswordAuthentication] = "true"
-            server_def[:ssh_key] = File.read(locate_config_value(:ssh_public_key))
-          end
-        end
+        server_def[:connection_user] = locate_config_value(:connection_user)
+        server_def[:disablePasswordAuthentication] = if locate_config_value(:ssh_public_key)
+                                                       server_def[:ssh_key] = File.read(locate_config_value(:ssh_public_key))
+                                                       "true"
+                                                     else
+                                                       server_def[:connection_password] = locate_config_value(:connection_password)
+                                                       "false"
+                                                     end
 
         server_def
       end
@@ -196,7 +216,7 @@ class Chef
       end
 
       def format_ohai_hints(ohai_hints)
-        ohai_hints = ohai_hints.split(",").each { |hint| hint.strip! }
+        ohai_hints = ohai_hints.split(",").each(&:strip!)
         ohai_hints.join(",")
       end
 
@@ -207,7 +227,7 @@ class Chef
       def validate_ohai_hints
         hint_values = locate_config_value(:ohai_hints).split(",")
         hint_values.each do |hint|
-          if ! is_supported_ohai_hint?(hint)
+          unless is_supported_ohai_hint?(hint)
             raise ArgumentError, "Ohai Hint name #{hint} passed is not supported. Please run the command help to see the list of supported values."
           end
         end
@@ -215,15 +235,17 @@ class Chef
 
       private
 
-      def ssh_override_winrm
-        # unchanged connection_user and changed --connection-user, override connection_user
-        if locate_config_value(:connection_user).eql?(options[:connection_user][:default]) &&
-            !locate_config_value(:connection_user).eql?(options[:connection_user][:default])
+      def set_defaults
+        # set_default_image_reference!
+        set_configs
+      end
+
+      def set_configs
+        unless locate_config_value(:connection_user).nil?
           config[:connection_user] = locate_config_value(:connection_user)
         end
 
-        if locate_config_value(:connection_password).nil? &&
-            !locate_config_value(:connection_password).nil?
+        unless locate_config_value(:connection_password).nil?
           config[:connection_password] = locate_config_value(:connection_password)
         end
       end
@@ -246,7 +268,7 @@ class Chef
             when "windows"
               set_os_image("MicrosoftWindowsServer", "WindowsServer", "2012-R2-Datacenter")
             else
-              raise ArgumentError, "Invalid value of --azure-image-os-type. Accepted values ubuntu|centos|windows"
+              raise ArgumentError, "Invalid value of --azure-image-os-type. Accepted values ubuntu|centos|rhel|debian|windows"
             end
           else
             validate_arm_keys!(:azure_image_os_type) unless is_image_os_type?

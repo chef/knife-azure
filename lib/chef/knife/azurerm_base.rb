@@ -64,7 +64,11 @@ class Chef
 
       def locate_config_value(key)
         key = key.to_sym
-        config[key] || Chef::Config[:knife][key] || default_config[key]
+        if defined?(config_value) # Inherited by bootstrap
+          config_value(key)
+        else
+          config[key] || Chef::Config[:knife][key] || default_config[key]
+        end
       end
 
       # validates ARM mandatory keys
@@ -144,7 +148,7 @@ class Chef
 
       def refresh_token
         azure_authentication
-        token_details = Chef::Platform.windows? ? token_details_for_windows() : token_details_for_linux()
+        token_details = Chef::Platform.windows? ? token_details_for_windows : token_details_for_linux
       end
 
       def azure_authentication
@@ -158,9 +162,7 @@ class Chef
       def check_token_validity(token_details)
         unless is_token_valid?(token_details)
           token_details = refresh_token
-          unless is_token_valid?(token_details)
-            raise_azure_status
-          end
+          raise_azure_status unless is_token_valid?(token_details)
         end
         token_details
       end
@@ -170,9 +172,7 @@ class Chef
           # cmdkey command is used for accessing windows credential manager
           xplat_creds_cmd = Mixlib::ShellOut.new("cmdkey /list | findstr AzureXplatCli")
           result = xplat_creds_cmd.run_command
-          if result.stdout.nil? || result.stdout.empty?
-            raise login_message
-          end
+          raise login_message if result.stdout.nil? || result.stdout.empty?
         else
           home_dir = File.expand_path("~")
           if !File.exist?(home_dir + "/.azure/accessTokens.json") || File.size?(home_dir + "/.azure/accessTokens.json") <= 2
@@ -264,6 +264,18 @@ class Chef
       end
 
       def validate_params!
+        if locate_config_value(:connection_user).nil?
+          raise ArgumentError, "Please provide --connection-user option for authentication."
+        end
+
+        unless locate_config_value(:connection_password).nil? ^ locate_config_value(:ssh_public_key).nil?
+          raise ArgumentError, "Please specify either --connection-password or --ssh-public-key option for authentication."
+        end
+
+        if is_image_windows? && !locate_config_value(:ssh_public_key).nil?
+          raise ArgumentError, "Windows doesn't support SSH authentication. Please provide --connection-password option."
+        end
+
         if locate_config_value(:azure_vnet_subnet_name) && !locate_config_value(:azure_vnet_name)
           raise ArgumentError, "When --azure-vnet-subnet-name is specified, the --azure-vnet-name must also be specified."
         end
@@ -274,12 +286,6 @@ class Chef
 
         if locate_config_value(:node_ssl_verify_mode) && !%w{none peer}.include?(locate_config_value(:node_ssl_verify_mode))
           raise ArgumentError, "Invalid value '#{locate_config_value(:node_ssl_verify_mode)}' for --node-ssl-verify-mode. Use Valid values i.e 'none', 'peer'."
-        end
-
-        if is_image_windows?
-          if locate_config_value(:connection_user).nil? || locate_config_value(:connection_password).nil?
-            raise ArgumentError, "Please provide --connection-user and --connection-password options for Windows option."
-          end
         end
 
         if !is_image_windows?
@@ -304,8 +310,14 @@ class Chef
           end
         end
 
+        if locate_config_value(:azure_image_os_type)
+          unless %w{ubuntu centos rhel debian windows}.include?(locate_config_value(:azure_image_os_type))
+            raise ArgumentError, "Invalid value of --azure-image-os-type. Accepted values ubuntu|centos|rhel|debian|windows"
+          end
+        end
+
         config[:ohai_hints] = format_ohai_hints(locate_config_value(:ohai_hints))
-        validate_ohai_hints if ! locate_config_value(:ohai_hints).casecmp("default").zero?
+        validate_ohai_hints unless locate_config_value(:ohai_hints).casecmp("default").zero?
       end
 
       private
@@ -334,6 +346,7 @@ class Chef
 
       def is_old_xplat?
         return true unless @azure_version
+
         Gem::Version.new(@azure_version) < Gem::Version.new(XPLAT_VERSION_WITH_WCM_DEPRECATED)
       end
 

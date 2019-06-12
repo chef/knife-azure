@@ -86,15 +86,14 @@ module Azure
         end
       end
 
-      def list_images
-      end
+      def list_images; end
 
       def list_servers(resource_group_name = nil)
-        if resource_group_name.nil?
-          servers = compute_management_client.virtual_machines.list_all
-        else
-          servers = compute_management_client.virtual_machines.list(resource_group_name)
-        end
+        servers = if resource_group_name.nil?
+                    compute_management_client.virtual_machines.list_all
+                  else
+                    compute_management_client.virtual_machines.list(resource_group_name)
+                  end
 
         cols = ["VM Name", "Resource Group Name", "Location", "Provisioning State", "OS Type"]
         rows = []
@@ -152,14 +151,14 @@ module Azure
           network_interface_name = server.network_profile.network_interfaces[0].id.split("/")[-1]
           network_interface_data = network_resource_client.network_interfaces.get(resource_group, network_interface_name)
           public_ip_id_data = network_interface_data.ip_configurations[0].public_ipaddress
-          unless public_ip_id_data.nil?
+          if public_ip_id_data.nil?
+            public_ip_data = nil
+          else
             public_ip_name = public_ip_id_data.id.split("/")[-1]
             public_ip_data = network_resource_client.public_ipaddresses.get(resource_group, public_ip_name)
-          else
-            public_ip_data = nil
           end
 
-          details = Array.new
+          details = []
           details << ui.color("Server Name", :bold, :cyan)
           details << server.name
 
@@ -188,18 +187,18 @@ module Azure
           details << server.storage_profile.os_disk.os_type
 
           details << ui.color("Public IP address", :bold, :cyan)
-          unless public_ip_data.nil?
-            details << public_ip_data.ip_address
-          else
-            details << " -- "
-          end
+          details << if public_ip_data.nil?
+                       " -- "
+                     else
+                       public_ip_data.ip_address
+                     end
 
           details << ui.color("FQDN", :bold, :cyan)
-          unless public_ip_data.nil? || public_ip_data.dns_settings.nil?
-            details << public_ip_data.dns_settings.fqdn
-          else
-            details << " -- "
-          end
+          details << if public_ip_data.nil? || public_ip_data.dns_settings.nil?
+                       " -- "
+                     else
+                       public_ip_data.dns_settings.fqdn
+                     end
 
           puts ui.list(details, :columns_across, 2)
         end
@@ -243,11 +242,11 @@ module Azure
 
       def platform(image_reference)
         @platform ||= begin
-          if image_reference =~ /WindowsServer.*/
-            platform = "Windows"
-          else
-            platform = "Linux"
-          end
+          platform = if image_reference =~ /WindowsServer.*/
+                       "Windows"
+                     else
+                       "Linux"
+                     end
           platform
         end
       end
@@ -279,7 +278,18 @@ module Azure
         ## fetch substatus field which contains the chef-client run logs ##
         substatus = fetch_substatus(resource_group_name, virtual_machine_name, chef_extension_name)
 
-        unless substatus.nil?
+        if substatus.nil?
+          ## unavailability of the substatus field indicates that chef-client run is not completed yet on the server ##
+          fetch_process_wait_time = ((Time.now - fetch_process_start_time) / 60).round
+          if fetch_process_wait_time <= fetch_process_wait_timeout
+            print ui.color(".", :bold).to_s
+            sleep 30
+            fetch_chef_client_logs(resource_group_name, virtual_machine_name, chef_extension_name, fetch_process_start_time, fetch_process_wait_timeout)
+          else
+            ## wait time exceeded 30 minutes timeout ##
+            ui.error "\nchef-client run logs could not be fetched since fetch process exceeded wait timeout of #{fetch_process_wait_timeout} minutes.\n"
+          end
+        else
           ## chef-client run logs becomes available ##
           status = parse_substatus_code(substatus.code, 2)
           message = substatus.message
@@ -287,31 +297,20 @@ module Azure
           puts "\n\n******** Please find the chef-client run details below ********\n\n"
           print "----> chef-client run status: "
           case status
-            when "succeeded"
-              ## chef-client run succeeded ##
-              color = :green
-            when "failed"
-              ## chef-client run failed ##
-              color = :red
-            when "transitioning"
-              ## chef-client run did not complete within maximum timeout of 30 minutes ##
-              ## fetch whatever logs available under the chef-client.log file ##
-              color = :yellow
+          when "succeeded"
+            ## chef-client run succeeded ##
+            color = :green
+          when "failed"
+            ## chef-client run failed ##
+            color = :red
+          when "transitioning"
+            ## chef-client run did not complete within maximum timeout of 30 minutes ##
+            ## fetch whatever logs available under the chef-client.log file ##
+            color = :yellow
             end
-          puts "#{ui.color(status, color, :bold)}"
+          puts ui.color(status, color, :bold).to_s
           puts "----> chef-client run logs: "
           puts "\n#{message}\n" ## message field of substatus contains the chef-client run logs ##
-        else
-          ## unavailability of the substatus field indicates that chef-client run is not completed yet on the server ##
-          fetch_process_wait_time = ((Time.now - fetch_process_start_time) / 60).round
-          if fetch_process_wait_time <= fetch_process_wait_timeout
-            print "#{ui.color('.', :bold)}"
-            sleep 30
-            fetch_chef_client_logs(resource_group_name, virtual_machine_name, chef_extension_name, fetch_process_start_time, fetch_process_wait_timeout)
-          else
-            ## wait time exceeded 30 minutes timeout ##
-            ui.error "\nchef-client run logs could not be fetched since fetch process exceeded wait timeout of #{fetch_process_wait_timeout} minutes.\n"
-          end
         end
       end
 
@@ -341,11 +340,11 @@ module Azure
             params[:azure_vnet_subnet_name]
           )
           if params[:tcp_endpoints]
-            if @platform == "Windows"
-              params[:tcp_endpoints] = params[:tcp_endpoints] + ",3389"
-            else
-              params[:tcp_endpoints] = params[:tcp_endpoints] + ",22,16001"
-            end
+            params[:tcp_endpoints] = if @platform == "Windows"
+                                       params[:tcp_endpoints] + ",3389"
+                                     else
+                                       params[:tcp_endpoints] + ",22,16001"
+                                     end
             random_no = rand(100..1000)
             params[:azure_sec_group_name] = params[:azure_vm_name] + "_sec_grp_" + random_no.to_s
             if security_group_exist?(params[:azure_resource_group_name], params[:azure_sec_group_name])
@@ -362,22 +361,21 @@ module Azure
             ui.log("Deployment name is: #{deployment.name}")
             ui.log("Deployment ID is: #{deployment.id}")
             deployment.properties.dependencies.each do |deploy|
-              if deploy.resource_type == "Microsoft.Compute/virtualMachines"
-                if params[:chef_extension_public_param][:extendedLogs] == "true"
-                  print "\n\nWaiting for the first chef-client run on virtual machine #{deploy.resource_name}"
-                  fetch_chef_client_logs(params[:azure_resource_group_name],
-                    deploy.resource_name,
-                    params[:chef_extension],
-                    Time.now
-                  )
-                end
+              next unless deploy.resource_type == "Microsoft.Compute/virtualMachines"
 
-                ui.log("VM Details ...")
-                ui.log("-------------------------------")
-                ui.log("Virtual Machine name is: #{deploy.resource_name}")
-                ui.log("Virtual Machine ID is: #{deploy.id}")
-                show_server(deploy.resource_name, params[:azure_resource_group_name])
+              if params[:chef_extension_public_param][:extendedLogs] == "true"
+                print "\n\nWaiting for the first chef-client run on virtual machine #{deploy.resource_name}"
+                fetch_chef_client_logs(params[:azure_resource_group_name],
+                                       deploy.resource_name,
+                                       params[:chef_extension],
+                                       Time.now)
               end
+
+              ui.log("VM Details ...")
+              ui.log("-------------------------------")
+              ui.log("Virtual Machine name is: #{deploy.resource_name}")
+              ui.log("Virtual Machine ID is: #{deploy.id}")
+              show_server(deploy.resource_name, params[:azure_resource_group_name])
             end
           end
         end
@@ -398,7 +396,7 @@ module Azure
       end
 
       def create_resource_group(params = {})
-        resource_group = ResourceGroup.new()
+        resource_group = ResourceGroup.new
         resource_group.name = params[:azure_resource_group_name]
         resource_group.location = params[:azure_service_location]
 
@@ -414,7 +412,7 @@ module Azure
 
       def create_virtual_machine_using_template(params)
         template = create_deployment_template(params)
-        parameters = create_deployment_parameters(params, @platform)
+        parameters = create_deployment_parameters(params)
 
         deploy_prop = DeploymentProperties.new
         deploy_prop.template = template

@@ -75,8 +75,11 @@ class Chef
 
             option :bootstrap_protocol,
               long: "--bootstrap-protocol PROTOCOL",
-              description: "Protocol to bootstrap windows servers. options: 'winrm' or 'ssh' or 'cloud-api'.",
-              default: "winrm"
+              description: "This flag is deprecated. Please use '--connection-protocol' instead.",
+              default: "winrm",
+              proc: Proc.new { |proto| Chef::Config[:knife][:connection_protocol] = proto },
+              deprecated: true,
+              on: :tail
 
             option :cert_passphrase,
               long: "--cert-passphrase PASSWORD",
