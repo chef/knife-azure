@@ -1,4 +1,4 @@
-  #
+#
 # Author:: Aliasgar Batterywala (<aliasgar.batterywala@clogeny.com>)
 # Copyright:: Copyright 2016-2018 Chef Software, Inc.
 #
@@ -43,27 +43,45 @@ describe Chef::Knife::AzurermServerCreate do
       },
       vnet_config: {
         virtualNetworkName: "vnet1",
-        addressPrefixes: [ "10.0.0.0/16" ],
+        addressPrefixes: ["10.0.0.0/16"],
         subnets: [{ "name" => "sbn1",
                     "properties" => {
-            "addressPrefix" => "10.0.0.0/24",
-          },
-        }],
+                      "addressPrefix" => "10.0.0.0/24",
+                    } }],
       },
     }
 
     allow(@service.ui).to receive(:log)
     allow(Chef::Log).to receive(:info)
     allow(File).to receive(:read).and_return("foo")
+    allow(@arm_server_instance).to receive(:check_license)
+    stub_client_builder
     allow_any_instance_of(Chef::Knife::AzurermBase).to receive(:get_azure_cli_version).and_return("1.0.0")
   end
 
   describe "parameter test:" do
     context "compulsory parameters" do
+      it "connection_user" do
+        Chef::Config[:knife].delete(:connection_user)
+        expect(@arm_server_instance.ui).to receive(:error)
+        expect { @arm_server_instance.run }.to raise_error(SystemExit)
+      end
+
+      it "connection_password" do
+        Chef::Config[:knife].delete(:connection_password)
+        expect(@arm_server_instance.ui).to receive(:error)
+        expect { @arm_server_instance.run }.to raise_error(SystemExit)
+      end
+
+      it "ssh_public_key" do
+        Chef::Config[:knife].delete(:ssh_public_key)
+        expect(@arm_server_instance.ui).to receive(:error)
+        expect { @arm_server_instance.run }.to raise_error(SystemExit)
+      end
 
       it "azure_subscription_id" do
         Chef::Config[:knife].delete(:azure_subscription_id)
-        expect(@arm_server_instance.ui).to receive(:error)
+        expect(@arm_server_instance.ui).to receive(:error).twice
         expect { @arm_server_instance.run }.to raise_error(SystemExit)
       end
 
@@ -81,12 +99,14 @@ describe Chef::Knife::AzurermServerCreate do
 
       it "vm name validation success for Linux" do
         Chef::Config[:knife][:azure_vm_name] = "test-vm1234"
+        Chef::Config[:knife][:ssh_public_key] = "ssh_public_key"
         allow(@arm_server_instance).to receive(:is_image_windows?).and_return(false)
         expect { @arm_server_instance.validate_params! }.not_to raise_error
       end
 
       it "vm name validation success for Windows" do
         Chef::Config[:knife][:azure_vm_name] = "test-vm1234"
+        Chef::Config[:knife][:connection_password] = "connection_password"
         allow(@arm_server_instance).to receive(:is_image_windows?).and_return(true)
         expect { @arm_server_instance.validate_params! }.not_to raise_error
       end
@@ -148,7 +168,7 @@ describe Chef::Knife::AzurermServerCreate do
 
       it "exits when incorrect Ohai Hints are given by the user" do
         @arm_server_instance.config[:ohai_hints] = "vm_name,mac_address"
-        expect(@arm_server_instance.ui).to receive(:error).twice
+        expect(@arm_server_instance.ui).to receive(:error)
         expect { @arm_server_instance.run }.to raise_error(SystemExit)
       end
     end
@@ -172,42 +192,42 @@ describe Chef::Knife::AzurermServerCreate do
           allow(Chef::Platform).to receive(:windows?).and_return(false)
           Chef::Config[:knife].delete(:azure_tenant_id)
           allow(File).to receive(:exists?).and_return(false)
-          expect { @arm_server_instance.run }.to raise_error("Please run XPLAT's 'azure login' command OR specify azure_tenant_id, azure_subscription_id, azure_client_id, azure_client_secret in your knife.rb")
+          expect { @arm_server_instance.run }.to raise_error(SystemExit)
         end
 
         it "azure_client_id not provided for Linux platform" do
           allow(Chef::Platform).to receive(:windows?).and_return(false)
           Chef::Config[:knife].delete(:azure_client_id)
           allow(File).to receive(:exists?).and_return(false)
-          expect { @arm_server_instance.run }.to raise_error("Please run XPLAT's 'azure login' command OR specify azure_tenant_id, azure_subscription_id, azure_client_id, azure_client_secret in your knife.rb")
+          expect { @arm_server_instance.run }.to raise_error(SystemExit)
         end
 
         it "azure_client_secret not provided for Linux platform" do
           allow(Chef::Platform).to receive(:windows?).and_return(false)
           Chef::Config[:knife].delete(:azure_client_secret)
           allow(File).to receive(:exists?).and_return(false)
-          expect { @arm_server_instance.run }.to raise_error("Please run XPLAT's 'azure login' command OR specify azure_tenant_id, azure_subscription_id, azure_client_id, azure_client_secret in your knife.rb")
+          expect { @arm_server_instance.run }.to raise_error(SystemExit)
         end
 
         it "azure_tenant_id not provided for Windows platform" do
           allow(Chef::Platform).to receive(:windows?).and_return(true)
           Chef::Config[:knife].delete(:azure_tenant_id)
           allow(File).to receive(:exists?).and_return(false)
-          expect { @arm_server_instance.run }.to raise_error("Please run XPLAT's 'azure login' command OR specify azure_tenant_id, azure_subscription_id, azure_client_id, azure_client_secret in your knife.rb")
+          expect { @arm_server_instance.run }.to raise_error(SystemExit)
         end
 
         it "azure_client_id not provided for Windows platform" do
           allow(Chef::Platform).to receive(:windows?).and_return(true)
           Chef::Config[:knife].delete(:azure_client_id)
           allow(File).to receive(:exists?).and_return(false)
-          expect { @arm_server_instance.run }.to raise_error("Please run XPLAT's 'azure login' command OR specify azure_tenant_id, azure_subscription_id, azure_client_id, azure_client_secret in your knife.rb")
+          expect { @arm_server_instance.run }.to raise_error(SystemExit)
         end
 
         it "azure_client_secret not provided for windows platform" do
           allow(Chef::Platform).to receive(:windows?).and_return(true)
           Chef::Config[:knife].delete(:azure_client_secret)
           allow(File).to receive(:exists?).and_return(false)
-          expect { @arm_server_instance.run }.to raise_error("Please run XPLAT's 'azure login' command OR specify azure_tenant_id, azure_subscription_id, azure_client_id, azure_client_secret in your knife.rb")
+          expect { @arm_server_instance.run }.to raise_error(SystemExit)
         end
 
         it "azure_storage_account not provided by user so vm_name gets assigned to it" do
@@ -244,10 +264,9 @@ describe Chef::Knife::AzurermServerCreate do
         end
       end
 
-      context "when given by user" do
+      shared_context "and other common parameters" do
         before do
           @vm_name_with_no_special_chars = "testvm"
-          Chef::Config[:knife][:connection_password] = "connection_password"
           Chef::Config[:knife][:azure_storage_account] = "azure_storage_account"
           @storage_account_name_with_no_special_chars = "azurestorageaccount"
           Chef::Config[:knife][:azure_os_disk_name] = "azure_os_disk_name"
@@ -256,7 +275,6 @@ describe Chef::Knife::AzurermServerCreate do
           Chef::Config[:knife][:azure_vnet_subnet_name] = "azure_vnet_subnet_name"
           Chef::Config[:knife][:azure_vm_size] = "Medium"
           Chef::Config[:knife][:server_count] = 3
-          Chef::Config[:knife][:ssh_public_key] = File.dirname(__FILE__) + "/assets/key_rsa.pub"
           allow(File).to receive(:exist?).and_return(true)
         end
 
@@ -335,60 +353,77 @@ describe Chef::Knife::AzurermServerCreate do
           expect(@server_params[:server_count]).to be == 3
         end
 
-        it "should set the value of ssh_key params if --identity-file option is provided by the user" do
-          @server_params = @arm_server_instance.create_server_def
-          allow(File).to receive(:read).and_call_original
-          expect(@server_params[:ssh_key]).to be == "foo"
-          expect(@server_params[:disablePasswordAuthentication]).to be == "true"
-        end
-
-        it "raises error if wrong value is provided for daemon option by user" do
-          Chef::Config[:knife][:daemon] = "foo"
-          allow(@arm_server_instance).to receive(:is_image_windows?).and_return(true)
-          expect { @arm_server_instance.validate_params! }.to raise_error(
-            ArgumentError, "Invalid value for --daemon option. Use valid daemon values i.e 'none', 'service' and 'task'."
-          )
-        end
-
-        it "raises error if daemon option is provided for other than windows node by user" do
-          Chef::Config[:knife][:daemon] = "service"
-          expect { @arm_server_instance.validate_params! }.to raise_error(
-            ArgumentError, "The daemon option is only support for Windows nodes."
-          )
-        end
-
-        it "deos not raise any error if daemon option value is 'service'" do
-          Chef::Config[:knife][:daemon] = "service"
-          allow(@arm_server_instance).to receive(:is_image_windows?).and_return(true)
-          expect { @arm_server_instance.validate_params! }.not_to raise_error(
-            ArgumentError, "Invalid value for --daemon option. Use valid daemon values i.e 'none', 'service' and 'task'."
-          )
-        end
-
-        it "does not raise any error if daemon option value is 'none'" do
-          Chef::Config[:knife][:daemon] = "none"
-          allow(@arm_server_instance).to receive(:is_image_windows?).and_return(true)
-          expect { @arm_server_instance.validate_params! }.not_to raise_error(
-            ArgumentError, "Invalid value for --daemon option. Use valid daemon values i.e 'none', 'service' and 'task'."
-          )
-        end
-
-        it "does not raise any error if daemon option value is 'task'" do
-          Chef::Config[:knife][:daemon] = "task"
-          allow(@arm_server_instance).to receive(:is_image_windows?).and_return(true)
-          expect { @arm_server_instance.validate_params! }.not_to raise_error(
-            ArgumentError, "Invalid value for --daemon option. Use valid daemon values i.e 'none', 'service' and 'task'."
-          )
-        end
-
         after do
           Chef::Config[:knife].delete(:connection_password)
+          Chef::Config[:knife].delete(:ssh_public_key)
           Chef::Config[:knife].delete(:azure_storage_account)
           Chef::Config[:knife].delete(:azure_os_disk_name)
           Chef::Config[:knife].delete(:azure_vnet_name)
           Chef::Config[:knife].delete(:azure_vnet_subnet_name)
           Chef::Config[:knife].delete(:azure_vm_size)
           Chef::Config[:knife].delete(:server_count)
+        end
+      end
+
+      context "when given by user" do
+        context "for windows nodes with --connection-password" do
+          before do
+            Chef::Config[:knife][:connection_password] = "connection_password"
+            # @arm_server_instance.config[:azure_image_os_type] = "windows"
+            allow(@arm_server_instance).to receive(:is_image_windows?).and_return(true)
+          end
+
+          include_context "and other common parameters"
+
+          it "does not disable the passwod authentication" do
+            @server_params = @arm_server_instance.create_server_def
+            allow(File).to receive(:read).and_call_original
+            expect(@server_params[:chef_extension_private_param][:validation_key]).to be == "foo"
+            expect(@server_params[:disablePasswordAuthentication]).to be == "false"
+          end
+
+          it "raises error if invalid daemon value is provided" do
+            Chef::Config[:knife][:daemon] = "foo"
+            expect { @arm_server_instance.validate_params! }.to raise_error(
+              ArgumentError, "Invalid value for --daemon option. Use valid daemon values i.e 'none', 'service' and 'task'."
+            )
+          end
+
+          %w{service task none}.each do |daemon|
+            it "does not raises error if valid daemon option is provided" do
+              Chef::Config[:knife][:daemon] = daemon
+              expect { @arm_server_instance.validate_params! }.not_to raise_error(
+                ArgumentError, "The daemon option is only support for Windows nodes."
+              )
+              expect { @arm_server_instance.validate_params! }.not_to raise_error(
+                ArgumentError, "Invalid value for --daemon option. Use valid daemon values i.e 'none', 'service' and 'task'."
+              )
+            end
+          end
+        end
+
+        context "for other than windows nodes with --ssh-public-key" do
+          before do
+            Chef::Config[:knife][:ssh_public_key] = File.dirname(__FILE__) + "/assets/key_rsa.pub"
+            # @arm_server_instance.config[:azure_image_os_type] = "ubuntu"
+            allow(@arm_server_instance).to receive(:is_image_windows?).and_return(false)
+          end
+
+          include_context "and other common parameters"
+
+          it "disable the passwod authentication" do
+            @server_params = @arm_server_instance.create_server_def
+            allow(File).to receive(:read).and_call_original
+            expect(@server_params[:chef_extension_private_param][:validation_key]).to be == "foo"
+            expect(@server_params[:disablePasswordAuthentication]).to be == "true"
+          end
+
+          it "raises error if daemon option is provided" do
+            Chef::Config[:knife][:daemon] = "service"
+            expect { @arm_server_instance.validate_params! }.to raise_error(
+              ArgumentError, "The daemon option is only support for Windows nodes."
+            )
+          end
         end
       end
     end
@@ -408,21 +443,31 @@ describe Chef::Knife::AzurermServerCreate do
       @compute_promise = double("ComputePromise")
 
       allow(@service).to receive(
-        :resource_management_client).and_return(
-          @resource_client)
+        :resource_management_client
+      ).and_return(
+        @resource_client
+      )
       allow(@service).to receive(
-        :compute_management_client).and_return(
-          @compute_client)
+        :compute_management_client
+      ).and_return(
+        @compute_client
+      )
       allow(@service).to receive(
-        :storage_management_client).and_return(
-          @storage_client)
+        :storage_management_client
+      ).and_return(
+        @storage_client
+      )
       allow(@service).to receive(
-        :network_resource_client).and_return(
-          @network_client)
+        :network_resource_client
+      ).and_return(
+        @network_client
+      )
       allow(@arm_server_instance).to receive(
-            :msg_server_summary)
+        :msg_server_summary
+      )
       allow(@arm_server_instance).to receive(
-            :set_default_image_reference!)
+        :set_default_image_reference!
+      )
     end
 
     describe "security_group_exist" do
@@ -443,7 +488,8 @@ describe Chef::Knife::AzurermServerCreate do
           @vnet_name = "vnet-2"
           @sec_grp_name = "sec_grp_2"
           allow(@dummy_class).to receive(:network_resource_client).and_return(
-            stub_network_resource_client(nil, @resource_group_name, @vnet_name, @sec_grp_name))
+            stub_network_resource_client(nil, @resource_group_name, @vnet_name, @sec_grp_name)
+          )
         end
 
         it "returns true" do
@@ -457,17 +503,19 @@ describe Chef::Knife::AzurermServerCreate do
           @resource_group_name = "rgrp-2"
           @sec_grp_name = "sec_grp_2"
           request = {}
-          response = OpenStruct.new({
-            "body" => '{"error": {"code": "ResourceNotFound"}}',
-          })
+          response = OpenStruct.new(
+            "body" => '{"error": {"code": "ResourceNotFound"}}'
+          )
           body = "MsRestAzure::AzureOperationError"
           error = MsRestAzure::AzureOperationError.new(request, response, body)
           network_resource_client = double("NetworkResourceClient",
-            network_security_groups: double)
+                                           network_security_groups: double)
           allow(network_resource_client.network_security_groups).to receive(
-            :get).and_raise(error)
+            :get
+          ).and_raise(error)
           allow(@dummy_class).to receive(:network_resource_client).and_return(
-            network_resource_client)
+            network_resource_client
+          )
         end
 
         it "returns false" do
@@ -481,17 +529,19 @@ describe Chef::Knife::AzurermServerCreate do
           @resource_group_name = "rgrp-2"
           @sec_grp_name = "sec_grp_2"
           request = {}
-          response = OpenStruct.new({
-            "body" => '{"error": {"code": "SomeProblemOccurred"}}',
-          })
+          response = OpenStruct.new(
+            "body" => '{"error": {"code": "SomeProblemOccurred"}}'
+          )
           body = "MsRestAzure::AzureOperationError"
           @error = MsRestAzure::AzureOperationError.new(request, response, body)
           network_resource_client = double("NetworkResourceClient",
-            network_security_groups: double)
+                                           network_security_groups: double)
           allow(network_resource_client.network_security_groups).to receive(
-            :get).and_raise(@error)
+            :get
+          ).and_raise(@error)
           allow(@dummy_class).to receive(:network_resource_client).and_return(
-            network_resource_client)
+            network_resource_client
+          )
         end
 
         it "raises error" do
@@ -510,16 +560,20 @@ describe Chef::Knife::AzurermServerCreate do
 
       it "create resource group when it does not exist already" do
         expect(@resource_client).to receive_message_chain(
-          :resource_groups, :check_existence).and_return(false)
+          :resource_groups, :check_existence
+        ).and_return(false)
         expect(@service).to receive(
-          :create_resource_group).exactly(1).and_return(
-            stub_resource_group_create_response)
+          :create_resource_group
+        ).exactly(1).and_return(
+          stub_resource_group_create_response
+        )
         @arm_server_instance.run
       end
 
       it "skip resource group creation when it does exist already" do
         expect(@resource_client).to receive_message_chain(
-          :resource_groups, :check_existence).and_return(true)
+          :resource_groups, :check_existence
+        ).and_return(true)
         expect(@service).to_not receive(:create_resource_group)
         @arm_server_instance.run
       end
@@ -540,13 +594,17 @@ describe Chef::Knife::AzurermServerCreate do
           end
 
           expect(@arm_server_instance).to receive(
-            :is_image_windows?).at_least(3).and_return(false)
+            :is_image_windows?
+          ).at_least(3).and_return(false)
 
           allow(@resource_client).to receive_message_chain(
-            :resource_groups, :check_existence).and_return(false)
+            :resource_groups, :check_existence
+          ).and_return(false)
           allow(@service).to receive(
-            :create_resource_group).and_return(
-              stub_resource_group_create_response)
+            :create_resource_group
+          ).and_return(
+            stub_resource_group_create_response
+          )
         end
 
         it "create virtual machine when it does not exist already and does not show chef-client run logs when extended_logs is false" do
@@ -587,23 +645,27 @@ describe Chef::Knife::AzurermServerCreate do
       context "for Windows" do
         before do
           {
-            :azure_image_reference_publisher => "MicrosoftWindowsServer",
-            :azure_image_reference_offer => "WindowsServer",
-            :azure_image_reference_sku => "2012-R2-Datacenter",
-            :azure_image_reference_version => "latest",
-            :connection_user => "--connection-user",
+            azure_image_reference_publisher: "MicrosoftWindowsServer",
+            azure_image_reference_offer: "WindowsServer",
+            azure_image_reference_sku: "2012-R2-Datacenter",
+            azure_image_reference_version: "latest",
+            connection_user: "connection_user",
           }.each do |key, value|
             Chef::Config[:knife][key] = value
           end
 
           expect(@arm_server_instance).to receive(
-            :is_image_windows?).at_least(3).and_return(true)
+            :is_image_windows?
+          ).at_least(3).and_return(true)
 
           allow(@resource_client).to receive_message_chain(
-            :resource_groups, :check_existence).and_return(false)
+            :resource_groups, :check_existence
+          ).and_return(false)
           allow(@service).to receive(
-            :create_resource_group).and_return(
-              stub_resource_group_create_response)
+            :create_resource_group
+          ).and_return(
+            stub_resource_group_create_response
+          )
         end
 
         it "skip virtual machine creation when it does exist already" do
@@ -622,13 +684,17 @@ describe Chef::Knife::AzurermServerCreate do
           Chef::Config[:knife][:azure_chef_extension_version] = "1210.12"
 
           expect(@arm_server_instance).to receive(
-            :is_image_windows?).at_least(3).and_return(false)
+            :is_image_windows?
+          ).at_least(3).and_return(false)
 
           allow(@resource_client).to receive_message_chain(
-            :resource_groups, :check_existence).and_return(false)
+            :resource_groups, :check_existence
+          ).and_return(false)
           allow(@service).to receive(
-            :create_resource_group).and_return(
-              stub_resource_group_create_response)
+            :create_resource_group
+          ).and_return(
+            stub_resource_group_create_response
+          )
 
           allow(@service).to receive(:security_group_exist?).and_return(false)
           allow(@service).to receive(:virtual_machine_exist?).and_return(false)
@@ -680,7 +746,8 @@ describe Chef::Knife::AzurermServerCreate do
     describe "create_resource_group" do
       it "successfully returns resource group create response" do
         expect(@service).to receive(:resource_management_client).and_return(
-          stub_resource_management_client)
+          stub_resource_management_client
+        )
         response = @service.create_resource_group(@params)
 
         expect(response.name).to_not be nil
@@ -690,12 +757,12 @@ describe Chef::Knife::AzurermServerCreate do
     end
 
     describe "create_single_virtual_machine_using_template" do
-
       it "creates deployment template and deployment parameters" do
         expect(@service).to receive(:create_deployment_template).with(@params)
         expect(@service).to receive(:create_deployment_parameters)
         expect(@service).to receive(:resource_management_client).and_return(
-          stub_resource_management_client)
+          stub_resource_management_client
+        )
         @service.create_virtual_machine_using_template(@params)
       end
 
@@ -703,7 +770,8 @@ describe Chef::Knife::AzurermServerCreate do
         @platform = "Linux"
         allow(@service).to receive(:set_platform).and_return("Linux")
         expect(@service).to receive(:resource_management_client).and_return(
-          stub_resource_management_client)
+          stub_resource_management_client
+        )
         response = @service.create_virtual_machine_using_template(@params)
         expect(response).to_not be nil
       end
@@ -718,7 +786,8 @@ describe Chef::Knife::AzurermServerCreate do
           expect(@service).to receive(:create_deployment_template).with(@params)
           expect(@service).to receive(:create_deployment_parameters)
           expect(@service).to receive(:resource_management_client).and_return(
-            stub_resource_management_client)
+            stub_resource_management_client
+          )
           @service.create_virtual_machine_using_template(@params)
         end
 
@@ -727,7 +796,8 @@ describe Chef::Knife::AzurermServerCreate do
           expect(@service).to receive(:create_deployment_template).with(@params)
           expect(@service).to receive(:create_deployment_parameters)
           allow(@resource_client).to receive_message_chain(
-            :deployments, :create_or_update).and_raise(Exception)
+            :deployments, :create_or_update
+          ).and_raise(Exception)
           expect { @service.create_virtual_machine_using_template(@params) }.to raise_error(Exception)
         end
       end
@@ -810,7 +880,8 @@ describe Chef::Knife::AzurermServerCreate do
     describe "get_latest_chef_extension_version" do
       it "successfully returns latest Chef Extension version" do
         expect(@service).to receive(:compute_management_client).and_return(
-          stub_compute_management_client("NA"))
+          stub_compute_management_client("NA")
+        )
         response = @service.get_latest_chef_extension_version(@params)
         expect(response).to be == "1210.12"
       end
@@ -834,19 +905,22 @@ describe Chef::Knife::AzurermServerCreate do
         context "for chef_extension parameter" do
           before do
             allow(@arm_server_instance).to receive(
-              :is_image_windows?).and_return(false)
+              :is_image_windows?
+            ).and_return(false)
           end
 
           it "sets correct value for Linux platform" do
             allow(@arm_server_instance).to receive(
-              :is_image_windows?).and_return(false)
+              :is_image_windows?
+            ).and_return(false)
             @server_params = @arm_server_instance.create_server_def
             expect(@server_params[:chef_extension]).to be == "LinuxChefClient"
           end
 
           it "sets correct value for Windows platform" do
             allow(@arm_server_instance).to receive(
-              :is_image_windows?).and_return(true)
+              :is_image_windows?
+            ).and_return(true)
             @server_params = @arm_server_instance.create_server_def
             expect(@server_params[:chef_extension]).to be == "ChefClient"
           end
@@ -871,16 +945,20 @@ describe Chef::Knife::AzurermServerCreate do
 
         it "sets correct config for chef_extension_public_param parameter" do
           allow(@arm_server_instance).to receive(
-            :get_chef_extension_public_params).and_return(
-              "public_params")
+            :get_chef_extension_public_params
+          ).and_return(
+            "public_params"
+          )
           @server_params = @arm_server_instance.create_server_def
           expect(@server_params[:chef_extension_public_param]).to be == "public_params"
         end
 
         it "sets correct config for chef_extension_private_param parameter" do
           allow(@arm_server_instance).to receive(
-            :get_chef_extension_private_params).and_return(
-              "private_params")
+            :get_chef_extension_private_params
+          ).and_return(
+            "private_params"
+          )
           @server_params = @arm_server_instance.create_server_def
           expect(@server_params[:chef_extension_private_param]).to be == "private_params"
         end
@@ -890,7 +968,8 @@ describe Chef::Knife::AzurermServerCreate do
         context "for Linux" do
           it "successfully returns chef extension name for Linux platform" do
             allow(@arm_server_instance).to receive(
-              :is_image_windows?).and_return(false)
+              :is_image_windows?
+            ).and_return(false)
             response = @arm_server_instance.get_chef_extension_name
             expect(response).to be == "LinuxChefClient"
           end
@@ -899,7 +978,8 @@ describe Chef::Knife::AzurermServerCreate do
         context "for Windows" do
           it "successfully returns chef extension name for Windows platform" do
             allow(@arm_server_instance).to receive(
-              :is_image_windows?).and_return(true)
+              :is_image_windows?
+            ).and_return(true)
             response = @arm_server_instance.get_chef_extension_name
             expect(response).to be == "ChefClient"
           end
@@ -916,7 +996,7 @@ describe Chef::Knife::AzurermServerCreate do
       context "get_chef_extension_public_params" do
         it "sets bootstrapVersion variable in public_config" do
           @arm_server_instance.config[:bootstrap_version] = "12.4.2"
-          public_config = { client_rb: "chef_server_url \t \"https://localhost:443\"\nvalidation_client_name\t\"chef-validator\"", runlist: "\"getting-started\"", extendedLogs: "false", custom_json_attr: {}, hints: %w{vm_name public_fqdn platform}, bootstrap_options: { chef_server_url: "https://localhost:443", validation_client_name: "chef-validator", bootstrap_version: "12.4.2" } }
+          public_config = { client_rb: "chef_server_url \t \"https://localhost:443\"\nvalidation_client_name\t\"chef-validator\"", runlist: '"getting-started"', extendedLogs: "false", custom_json_attr: {}, hints: %w{vm_name public_fqdn platform}, bootstrap_options: { chef_server_url: "https://localhost:443", validation_client_name: "chef-validator", bootstrap_version: "12.4.2" } }
 
           response = @arm_server_instance.get_chef_extension_public_params
           expect(response).to be == public_config
@@ -924,7 +1004,7 @@ describe Chef::Knife::AzurermServerCreate do
 
         it "should set extendedLogs flag to true" do
           @arm_server_instance.config[:extended_logs] = true
-          public_config = { client_rb: "chef_server_url \t \"https://localhost:443\"\nvalidation_client_name\t\"chef-validator\"", runlist: "\"getting-started\"", extendedLogs: "true", custom_json_attr: {}, hints: %w{vm_name public_fqdn platform}, bootstrap_options: { chef_server_url: "https://localhost:443", validation_client_name: "chef-validator" } }
+          public_config = { client_rb: "chef_server_url \t \"https://localhost:443\"\nvalidation_client_name\t\"chef-validator\"", runlist: '"getting-started"', extendedLogs: "true", custom_json_attr: {}, hints: %w{vm_name public_fqdn platform}, bootstrap_options: { chef_server_url: "https://localhost:443", validation_client_name: "chef-validator" } }
           response = @arm_server_instance.get_chef_extension_public_params
           expect(response).to be == public_config
         end
@@ -949,7 +1029,7 @@ describe Chef::Knife::AzurermServerCreate do
 
         it "sets chefServiceInterval variable in public_config" do
           @arm_server_instance.config[:chef_daemon_interval] = "0"
-          public_config = { client_rb: "chef_server_url \t \"https://localhost:443\"\nvalidation_client_name\t\"chef-validator\"", runlist: "\"getting-started\"", extendedLogs: "false", custom_json_attr: {}, hints: %w{vm_name public_fqdn platform}, chef_daemon_interval: "0", bootstrap_options: { chef_server_url: "https://localhost:443", validation_client_name: "chef-validator" } }
+          public_config = { client_rb: "chef_server_url \t \"https://localhost:443\"\nvalidation_client_name\t\"chef-validator\"", runlist: '"getting-started"', extendedLogs: "false", custom_json_attr: {}, hints: %w{vm_name public_fqdn platform}, chef_daemon_interval: "0", bootstrap_options: { chef_server_url: "https://localhost:443", validation_client_name: "chef-validator" } }
 
           response = @arm_server_instance.get_chef_extension_public_params
           expect(response).to be == public_config
@@ -958,7 +1038,7 @@ describe Chef::Knife::AzurermServerCreate do
         it "sets daemon variable in public config" do
           @arm_server_instance.config[:daemon] = "service"
           allow(@arm_server_instance).to receive(:is_image_windows?).and_return(true)
-          public_config = { client_rb: "chef_server_url \t \"https://localhost:443\"\nvalidation_client_name\t\"chef-validator\"", runlist: "\"getting-started\"", extendedLogs: "false", custom_json_attr: {}, hints: %w{vm_name public_fqdn platform}, daemon: "service", bootstrap_options: { chef_server_url: "https://localhost:443", validation_client_name: "chef-validator" } }
+          public_config = { client_rb: "chef_server_url \t \"https://localhost:443\"\nvalidation_client_name\t\"chef-validator\"", runlist: '"getting-started"', extendedLogs: "false", custom_json_attr: {}, hints: %w{vm_name public_fqdn platform}, daemon: "service", bootstrap_options: { chef_server_url: "https://localhost:443", validation_client_name: "chef-validator" } }
           response = @arm_server_instance.get_chef_extension_public_params
           expect(response).to be == public_config
         end
@@ -966,6 +1046,7 @@ describe Chef::Knife::AzurermServerCreate do
 
       shared_context "private config contents" do
         before do
+          allow(File).to receive(:exist?).and_return(true)
           allow(File).to receive(:read).and_return("my_validation_key")
         end
 
@@ -979,8 +1060,8 @@ describe Chef::Knife::AzurermServerCreate do
         context "when encrypted_data_bag_secret option is passed" do
           let(:private_config) do
             { validation_key: "my_validation_key",
-              encrypted_data_bag_secret: "my_encrypted_data_bag_secret",
-          } end
+              encrypted_data_bag_secret: "my_encrypted_data_bag_secret" }
+          end
 
           before do
             @arm_server_instance.config[:encrypted_data_bag_secret] = "my_encrypted_data_bag_secret"
@@ -992,8 +1073,8 @@ describe Chef::Knife::AzurermServerCreate do
         context "when encrypted_data_bag_secret_file option is passed" do
           let(:private_config) do
             { validation_key: "my_validation_key",
-              encrypted_data_bag_secret: "PgIxStCmMDsuIw3ygRhmdMtStpc9EMiWisQXoP",
-          } end
+              encrypted_data_bag_secret: "PgIxStCmMDsuIw3ygRhmdMtStpc9EMiWisQXoP" }
+          end
 
           before do
             @arm_server_instance.config[:encrypted_data_bag_secret_file] = File.dirname(__FILE__) + "/assets/secret_file"
@@ -1052,7 +1133,8 @@ describe Chef::Knife::AzurermServerCreate do
         :azure_image_reference_publisher,
         :azure_image_reference_offer,
         :azure_image_reference_sku,
-        :azure_image_reference_version)
+        :azure_image_reference_version
+      )
       expect(@arm_server_instance.ui).to_not receive(:error)
       @arm_server_instance.send(:set_default_image_reference!)
     end
@@ -1064,7 +1146,8 @@ describe Chef::Knife::AzurermServerCreate do
         :azure_image_reference_publisher,
         :azure_image_reference_offer,
         :azure_image_reference_sku,
-        :azure_image_reference_version)
+        :azure_image_reference_version
+      )
       expect(@arm_server_instance.ui).to_not receive(:error)
       @arm_server_instance.send(:set_default_image_reference!)
     end
@@ -1073,18 +1156,22 @@ describe Chef::Knife::AzurermServerCreate do
       @arm_server_instance.config.delete(:azure_image_os_type)
       expect(@arm_server_instance.ui).to receive(:error)
       expect do
-         @arm_server_instance.validate_arm_keys!(
-        :azure_image_os_type) end.to raise_error(SystemExit)
+        @arm_server_instance.validate_arm_keys!(
+          :azure_image_os_type
+        )
+      end .to raise_error(SystemExit)
     end
 
     it "validate_arm_keys! raises error and exits if image reference parameters are not specified" do
       expect(@arm_server_instance.ui).to receive(:error).thrice
       expect do
-         @arm_server_instance.validate_arm_keys!(
-        :azure_image_reference_publisher,
-        :azure_image_reference_offer,
-        :azure_image_reference_sku,
-        :azure_image_reference_version) end.to raise_error(SystemExit)
+        @arm_server_instance.validate_arm_keys!(
+          :azure_image_reference_publisher,
+          :azure_image_reference_offer,
+          :azure_image_reference_sku,
+          :azure_image_reference_version
+        )
+      end .to raise_error(SystemExit)
     end
 
     it "calls validation for azure_image_os_type if azure_image_os_type and other image reference parameters are not given" do
@@ -1210,7 +1297,8 @@ describe Chef::Knife::AzurermServerCreate do
       expect(@service).to receive(:create_deployment_template).with(@params)
       expect(@service).to receive(:create_deployment_parameters)
       expect(@service).to receive(:resource_management_client).and_return(
-        stub_resource_management_client)
+        stub_resource_management_client
+      )
       @service.create_virtual_machine_using_template(@params)
     end
 
@@ -1218,7 +1306,8 @@ describe Chef::Knife::AzurermServerCreate do
       expect(@service).to receive(:create_deployment_template).with(@params)
       expect(@service).to receive(:create_deployment_parameters)
       allow(@resource_client).to receive_message_chain(
-          :deployments, :create_or_update).and_raise(Exception)
+        :deployments, :create_or_update
+      ).and_raise(Exception)
       expect { @service.create_virtual_machine_using_template(@params) }.to raise_error(Exception)
     end
 
@@ -1237,8 +1326,7 @@ describe Chef::Knife::AzurermServerCreate do
                             environment: "development" }
       @params[:chef_extension_public_param] = { hints: %w{vm_name public_fqdn platform},
                                                 bootstrap_options: bootstrap_options,
-                                                extendedLogs: "true",
-      }
+                                                extendedLogs: "true" }
       {
         azure_image_reference_publisher: "OpenLogic",
         azure_image_reference_offer: "CentOS",
@@ -1253,8 +1341,7 @@ describe Chef::Knife::AzurermServerCreate do
 
       @hints_json = { "vm_name" => "[reference(resourceId('Microsoft.Compute/virtualMachines', concat(variables('vmName'),copyIndex()))).osProfile.computerName]",
                       "public_fqdn" => "[reference(resourceId('Microsoft.Network/publicIPAddresses',concat(variables('publicIPAddressName'),copyIndex()))).dnsSettings.fqdn]",
-                      "platform" => "[concat(reference(resourceId('Microsoft.Compute/virtualMachines', concat(variables('vmName'),copyIndex()))).storageProfile.imageReference.offer, concat(' ', reference(resourceId('Microsoft.Compute/virtualMachines', concat(variables('vmName'),copyIndex()))).storageProfile.imageReference.sku))]",
-      }
+                      "platform" => "[concat(reference(resourceId('Microsoft.Compute/virtualMachines', concat(variables('vmName'),copyIndex()))).storageProfile.imageReference.offer, concat(' ', reference(resourceId('Microsoft.Compute/virtualMachines', concat(variables('vmName'),copyIndex()))).storageProfile.imageReference.sku))]" }
       @params[:chef_extension_private_param] = {
         encrypted_data_bag_secret: "rihrfwe739085928592nehrweirwefjsndwe",
       }
@@ -1308,7 +1395,7 @@ describe Chef::Knife::AzurermServerCreate do
         extension = resource if resource["type"] == "Microsoft.Compute/virtualMachines/extensions"
       end
 
-      expect(extension["properties"]["settings"].key? "extendedLogs").to be == false
+      expect(extension["properties"]["settings"].key?("extendedLogs")).to be == false
     end
 
     context "chef_daemon_interval option" do
@@ -1325,7 +1412,7 @@ describe Chef::Knife::AzurermServerCreate do
             extension = resource if resource["type"] == "Microsoft.Compute/virtualMachines/extensions"
           end
 
-          expect(extension["properties"]["settings"].key? "chef_daemon_interval").to be == true
+          expect(extension["properties"]["settings"].key?("chef_daemon_interval")).to be == true
           expect(extension["properties"]["settings"]["chef_daemon_interval"]).to be == "19"
         end
       end
@@ -1343,7 +1430,7 @@ describe Chef::Knife::AzurermServerCreate do
             extension = resource if resource["type"] == "Microsoft.Compute/virtualMachines/extensions"
           end
 
-          expect(extension["properties"]["settings"].key? "chef_daemon_interval").to be == false
+          expect(extension["properties"]["settings"].key?("chef_daemon_interval")).to be == false
         end
       end
     end
@@ -1362,7 +1449,7 @@ describe Chef::Knife::AzurermServerCreate do
             extension = resource if resource["type"] == "Microsoft.Compute/virtualMachines/extensions"
           end
 
-          expect(extension["properties"]["settings"].key? "daemon").to be == true
+          expect(extension["properties"]["settings"].key?("daemon")).to be == true
           expect(extension["properties"]["settings"]["daemon"]).to be == "service"
         end
       end
@@ -1380,7 +1467,7 @@ describe Chef::Knife::AzurermServerCreate do
             extension = resource if resource["type"] == "Microsoft.Compute/virtualMachines/extensions"
           end
 
-          expect(extension["properties"]["settings"].key? "daemon").to be == false
+          expect(extension["properties"]["settings"].key?("daemon")).to be == false
         end
       end
     end
@@ -1410,7 +1497,7 @@ describe Chef::Knife::AzurermServerCreate do
         azure_image_reference_sku: "6.5",
         azure_image_reference_version: "latest",
         connection_user: "connection_user",
-        admin_password: "admin_password",
+        connection_password: "connection_password",
         server_count: 3,
         client_rb: "contents_of_client_rb",
         custom_json_attr: '"{name: test}"',
@@ -1420,9 +1507,9 @@ describe Chef::Knife::AzurermServerCreate do
     end
 
     it "sets the parameters which are passed in the template" do
-      parameters = @service.create_deployment_parameters(@params, "Windows")
-      expect(parameters["adminUserName"]["value"]).to be == "--connection-user"
-      expect(parameters["adminPassword"]["value"]).to be == "admin_password"
+      parameters = @service.create_deployment_parameters(@params)
+      expect(parameters["adminUserName"]["value"]).to be == "connection_user"
+      expect(parameters["adminPassword"]["value"]).to be == "connection_password"
       expect(parameters["dnsLabelPrefix"]["value"]).to be == "test-vm"
       expect(parameters["imageSKU"]["value"]).to be == "6.5"
       expect(parameters["numberOfInstances"]["value"]).to be == 3
@@ -1440,18 +1527,18 @@ describe Chef::Knife::AzurermServerCreate do
 
     context "--ssh-public-key option is provided " do
       before do
-        @params[:ssh_key] = "foo"
+        @params[:ssh_public_key] = "foo"
         @params[:disablePasswordAuthentication] = "true"
       end
 
       it "sets ssh-key data and sets disablePasswordAuthentication to true" do
-        parameters = @service.create_deployment_parameters(@params, "Linux")
+        parameters = @service.create_deployment_parameters(@params)
         expect(parameters["sshKeyData"]["value"]).to be == "foo"
         expect(parameters["disablePasswordAuthentication"]["value"]).to be == "true"
       end
 
       it "not sets the ssh_key and disablePasswordAuthentication param if windows" do
-        parameters = @service.create_deployment_parameters(@params, "Windows")
+        parameters = @service.create_deployment_parameters(@params)
         expect(parameters["sshKeyData"]["value"]).to be == "foo"
         expect(parameters["disablePasswordAuthentication"]["value"]).to be == "true"
       end
@@ -1540,7 +1627,8 @@ describe Chef::Knife::AzurermServerCreate do
 
       it "do raise error" do
         expect { @arm_server_instance.validate_ohai_hints }.to raise_error(
-          ArgumentError)
+          ArgumentError
+        )
       end
     end
   end
@@ -1605,14 +1693,14 @@ describe Chef::Knife::AzurermServerCreate do
     context "no substatuses returned" do
       before do
         allow(@service).to receive(:compute_management_client).and_return(
-          stub_compute_management_client("substatuses_not_found"))
+          stub_compute_management_client("substatuses_not_found")
+        )
       end
 
       it "returns nil" do
         response = @service.fetch_substatus(@params[:azure_resource_group_name],
-          @params[:azure_vm_name],
-          @params[:chef_extension]
-        )
+                                            @params[:azure_vm_name],
+                                            @params[:chef_extension])
 
         expect(response).to be_nil
       end
@@ -1622,14 +1710,14 @@ describe Chef::Knife::AzurermServerCreate do
       context "but it does not contain chef-client run logs substatus" do
         before do
           allow(@service).to receive(:compute_management_client).and_return(
-            stub_compute_management_client("substatuses_found_with_no_chef_client_run_logs"))
+            stub_compute_management_client("substatuses_found_with_no_chef_client_run_logs")
+          )
         end
 
         it "returns nil" do
           response = @service.fetch_substatus(@params[:azure_resource_group_name],
-            @params[:azure_vm_name],
-            @params[:chef_extension]
-          )
+                                              @params[:azure_vm_name],
+                                              @params[:chef_extension])
 
           expect(response).to be_nil
         end
@@ -1638,21 +1726,20 @@ describe Chef::Knife::AzurermServerCreate do
       context "and it do not contain chef-client run logs substatus" do
         before do
           allow(@service).to receive(:compute_management_client).and_return(
-            stub_compute_management_client("substatuses_found_with_chef_client_run_logs"))
+            stub_compute_management_client("substatuses_found_with_chef_client_run_logs")
+          )
         end
 
         it "returns substatus hash for chef-client run logs" do
           response = @service.fetch_substatus(@params[:azure_resource_group_name],
-            @params[:azure_vm_name],
-            @params[:chef_extension]
-          )
+                                              @params[:azure_vm_name],
+                                              @params[:chef_extension])
 
           expect(response).to_not be_nil
           expect(response.code).to be == "ComponentStatus/Chef Client run logs/succeeded"
           expect(response.message).to be == "chef_client_run_logs"
         end
       end
-
     end
   end
 
@@ -1667,36 +1754,35 @@ describe Chef::Knife::AzurermServerCreate do
         it "sleeps for some time and re-invokes the fetch_chef_client_logs method recursively" do
           @service.instance_eval do
             class << self
-              alias_method :fetch_chef_client_logs_mocked, :fetch_chef_client_logs
+              alias fetch_chef_client_logs_mocked fetch_chef_client_logs
             end
           end
 
           expect(@service).to receive(:print).exactly(1).times
           expect(@service).to receive(:sleep).with(30)
           expect(@service).to receive(:fetch_chef_client_logs).with(@params[:azure_resource_group_name],
-            @params[:azure_vm_name],
-            @params[:chef_extension],
-            @start_time,
-            30)
+                                                                    @params[:azure_vm_name],
+                                                                    @params[:chef_extension],
+                                                                    @start_time,
+                                                                    30)
 
           @service.fetch_chef_client_logs_mocked(@params[:azure_resource_group_name],
-            @params[:azure_vm_name],
-            @params[:chef_extension],
-            @start_time
-          )
+                                                 @params[:azure_vm_name],
+                                                 @params[:chef_extension],
+                                                 @start_time)
         end
       end
 
       context "wait time has exceeded wait timeout limit" do
         it "displays wait timeout exceeded message" do
           expect(@service.ui).to receive(:error).with(
-            "\nchef-client run logs could not be fetched since fetch process exceeded wait timeout of -1 minutes.\n")
-          @service.fetch_chef_client_logs(@params[:azure_resource_group_name],
-            @params[:azure_vm_name],
-            @params[:chef_extension],
-            @start_time,
-            -1
+            "\nchef-client run logs could not be fetched since fetch process exceeded wait timeout of -1 minutes.\n"
           )
+          @service.fetch_chef_client_logs(@params[:azure_resource_group_name],
+                                          @params[:azure_vm_name],
+                                          @params[:chef_extension],
+                                          @start_time,
+                                          -1)
         end
       end
     end
@@ -1718,9 +1804,9 @@ describe Chef::Knife::AzurermServerCreate do
         expect(@service).to receive(:puts).exactly(4).times
         expect(@service).to receive(:print).exactly(1).times
         @service.fetch_chef_client_logs(@params[:azure_resource_group_name],
-          @params[:azure_vm_name],
-          @params[:chef_extension],
-          @start_time)
+                                        @params[:azure_vm_name],
+                                        @params[:chef_extension],
+                                        @start_time)
       end
     end
   end
@@ -1731,5 +1817,16 @@ describe Chef::Knife::AzurermServerCreate do
       public_fqdn
       platform
     }
+  end
+
+  def stub_client_builder
+    client_builder_mock = double("ClientBuilder")
+    key = "/key.pem"
+    allow(@arm_server_instance).to receive(:client_builder).and_return client_builder_mock
+    allow(client_builder_mock).to receive(:run).and_return "client"
+    allow(client_builder_mock).to receive(:client_path).and_return key
+    allow(@arm_server_instance).to receive(:create_node_and_client_pem).and_return key
+    allow(File).to receive(:exist?).and_call_original
+    allow(File).to receive(:exist?).with(key).and_return(true)
   end
 end

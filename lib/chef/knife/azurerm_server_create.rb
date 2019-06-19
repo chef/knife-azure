@@ -20,6 +20,7 @@
 require "chef/knife/azurerm_base"
 require "securerandom"
 require "chef/knife/bootstrap"
+require "chef/knife/bootstrap/client_builder"
 require "chef/knife/bootstrap/common_bootstrap_options"
 require "chef/knife/bootstrap/bootstrapper"
 
@@ -197,7 +198,7 @@ class Chef
         server_def[:auto_upgrade_minor_version] = false
         server_def[:connection_user] = locate_config_value(:connection_user)
         server_def[:disablePasswordAuthentication] = if locate_config_value(:ssh_public_key)
-                                                       server_def[:ssh_key] = File.read(locate_config_value(:ssh_public_key))
+                                                       server_def[:ssh_public_key] = File.read(locate_config_value(:ssh_public_key))
                                                        "true"
                                                      else
                                                        server_def[:connection_password] = locate_config_value(:connection_password)

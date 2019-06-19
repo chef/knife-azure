@@ -427,18 +427,20 @@ class Chef
         end
 
         def create_node_and_client_pem
-          client_builder = Chef::Knife::Bootstrap::ClientBuilder.new(
-            chef_config: Chef::Config,
-            knife_config: config,
-            ui: ui
-          )
+          client_builder ||= begin
+            require "chef/knife/bootstrap/client_builder"
+            Chef::Knife::Bootstrap::ClientBuilder.new(
+              chef_config: Chef::Config,
+              knife_config: config,
+              ui: ui
+            )
+          end
           client_builder.run
           client_builder.client_path
         end
 
         def get_chef_extension_private_params
           pri_config = {}
-
           # validator less bootstrap support for bootstrap protocol cloud-api
           if Chef::Config[:validation_key] && File.exist?(File.expand_path(Chef::Config[:validation_key]))
             pri_config[:validation_key] = File.read(File.expand_path(Chef::Config[:validation_key]))

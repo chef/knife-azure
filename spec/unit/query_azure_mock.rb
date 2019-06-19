@@ -31,7 +31,6 @@ module QueryAzureMock
       azure_service_location: "West Europe",
       connection_user: "test-user",
       validation_key: "/tmp/validation_key",
-      connection_password: "admin_password",
     }.each do |key, value|
       Chef::Config[:knife][key] = value
     end

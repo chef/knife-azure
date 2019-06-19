@@ -65,7 +65,7 @@ class Chef
       def locate_config_value(key)
         key = key.to_sym
         if defined?(config_value) # Inherited by bootstrap
-          config_value(key)
+          config_value(key) || default_config[key]
         else
           config[key] || Chef::Config[:knife][key] || default_config[key]
         end

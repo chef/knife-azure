@@ -651,7 +651,7 @@ module Azure::ARM
           "value" => "#{params[:chef_extension_public_param][:custom_json_attr]}",
         },
         "sshKeyData" => {
-          "value" => "#{params[:ssh_key]}",
+          "value" => "#{params[:ssh_public_key]}",
         },
         "disablePasswordAuthentication" => {
           "value" => "#{params[:disablePasswordAuthentication]}",
