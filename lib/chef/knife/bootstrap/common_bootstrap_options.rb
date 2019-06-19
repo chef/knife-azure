@@ -1,5 +1,5 @@
 #
-# Author:: Nimesh Patni (nimesh.patni@msystechnologies.com)
+# Author:: Aliasgar Batterywala (aliasgar.batterywala@clogeny.com)
 #
 # Copyright:: Copyright 2008-2019, Chef Software, Inc.
 # License:: Apache License, Version 2.0
