@@ -105,10 +105,11 @@ class Chef
                                      Default value is 'default' which corresponds to the supported values list mentioned here.",
         default: "default"
 
-# run() would be executing from parent class
-# Chef::Knife::Bootstrap, defined in core.
-# Required methods have been overridden here
-#### run() execution begins ####
+
+      # run() would be executing from parent class
+      # Chef::Knife::Bootstrap, defined in core.
+      # Required methods have been overridden here
+      #### run() execution begins ####
 
       def plugin_setup!
         # Check azure cli version due to azure changed `azure` to `az` in azure-cli2.0

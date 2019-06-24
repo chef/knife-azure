@@ -73,13 +73,9 @@ class Chef
               default: "Standard_A1_v2",
               proc: Proc.new { |si| Chef::Config[:knife][:azure_vm_size] = si }
 
-            option :bootstrap_protocol,
-              long: "--bootstrap-protocol PROTOCOL",
-              description: "This flag is deprecated. Please use '--connection-protocol' instead.",
-              default: "winrm",
-              proc: Proc.new { |proto| Chef::Config[:knife][:connection_protocol] = proto },
-              deprecated: true,
-              on: :tail
+            deprecated_option :bootstrap_protocol,
+              replacement: :connection_protocol,
+              long: "--bootstrap-protocol PROTOCOL"
 
             option :cert_passphrase,
               long: "--cert-passphrase PASSWORD",
@@ -91,13 +87,13 @@ class Chef
 
             option :chef_daemon_interval,
               long: "--chef-daemon-interval INTERVAL",
-              description: "Optional. Provide this option when --bootstrap-protocol is set to 'cloud-api'.
+              description: "Optional. Provide this option when --connection-protocol is set to 'cloud-api'.
                             It specifies the frequency (in minutes) at which the chef-service runs.
                             Pass 0 if you don't want the chef-service to be installed on the target machine."
 
             option :daemon,
               long: "--daemon DAEMON",
-              description: "Optional. Configures the chef-client service for unattended execution. Requires --bootstrap-protocol to be 'cloud-api' and the node platform to be Windows.
+              description: "Optional. Configures the chef-client service for unattended execution. Requires --connection-protocol to be 'cloud-api' and the node platform to be Windows.
                             Options: 'none' or 'service' or 'task'.
                             none - Currently prevents the chef-client service from being configured as a service.
                             service - Configures the chef-client to run automatically in the background as a service.
@@ -107,7 +103,7 @@ class Chef
               long: "--extended-logs",
               boolean: true,
               default: false,
-              description: "Optional. Provide this option when --bootstrap-protocol is set to 'cloud-api'. It shows chef converge logs in detail."
+              description: "Optional. Provide this option when --connection-protocol is set to 'cloud-api'. It shows chef converge logs in detail."
 
             option :tcp_endpoints,
               short: "-t PORT_LIST",

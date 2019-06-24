@@ -32,7 +32,7 @@ describe Chef::Knife::AzureServerCreate do
       Chef::Config[:knife][key] = value
     end
 
-    stub_query_azure (@server_instance.service.connection)
+    stub_query_azure @server_instance.service.connection
     @connection = @server_instance.service.connection
     allow(@server_instance).to receive(:tcp_test_ssh).and_return(true)
     allow(@server_instance).to receive(:tcp_test_winrm).and_return(true)
@@ -124,7 +124,8 @@ describe Chef::Knife::AzureServerCreate do
       it "raise error if daemon option is not provided for windows node" do
         Chef::Config[:knife][:daemon] = "service"
         expect { @server_instance.run }.to raise_error(
-          ArgumentError, "The daemon option is only supported for Windows nodes.")
+          ArgumentError, "The daemon option is only supported for Windows nodes."
+        )
       end
 
       it "raises error if invalid value is provided for daemon option" do
@@ -133,7 +134,7 @@ describe Chef::Knife::AzureServerCreate do
         Chef::Config[:knife][:bootstrap_protocol] = "cloud-api"
         expect { @server_instance.run }.to raise_error(
           ArgumentError, "Invalid value for --daemon option. Valid values are 'none', 'service' and 'task'."
-          )
+        )
       end
 
       it "raises error if bootstrap_protocol is not cloud-api for daemon option" do
@@ -210,7 +211,7 @@ describe Chef::Knife::AzureServerCreate do
         expect(xml_content(testxml, "MediaLink")).to_not be nil
         expect(xml_content(testxml, "DiskName")).to_not be nil
         test_params(testxml, Chef::Config[:knife], Chef::Config[:knife][:azure_dns_name],
-        Chef::Config[:knife][:azure_dns_name])
+                    Chef::Config[:knife][:azure_dns_name])
       end
 
       it "quick create with wirm - API check" do
@@ -268,7 +269,7 @@ describe Chef::Knife::AzureServerCreate do
         expect(xml_content(testxml, "MediaLink")).to be == "http://ka001testeurope.blob.core.windows-int.net/vhds/os-disk.vhd"
         expect(xml_content(testxml, "DiskName")).to be == Chef::Config[:knife][:azure_os_disk_name]
         test_params(testxml, Chef::Config[:knife], Chef::Config[:knife][:azure_vm_name],
-        Chef::Config[:knife][:azure_vm_name])
+                    Chef::Config[:knife][:azure_vm_name])
       end
 
       it "create with availability set" do
@@ -294,7 +295,7 @@ describe Chef::Knife::AzureServerCreate do
 
       it "creates new load balanced endpoints" do
         Chef::Config[:knife][:azure_dns_name] = "vmname"
-        @server_instance.config[:tcp_endpoints] = "80:80:EXTERNAL:lb_set,443:443:EXTERNAL:lb_set_ssl:/healthcheck" # TODO is this a good way of specifying this?
+        @server_instance.config[:tcp_endpoints] = "80:80:EXTERNAL:lb_set,443:443:EXTERNAL:lb_set_ssl:/healthcheck" # TODO: is this a good way of specifying this?
         expect(@server_instance).to receive(:is_image_windows?).at_least(:twice).and_return(false)
         @server_instance.run
         testxml = Nokogiri::XML(@receivedXML)
@@ -355,12 +356,11 @@ describe Chef::Knife::AzureServerCreate do
         expect(lb_set2_ep["LoadBalancerProbe"]["Path"]).to be == "/healthcheck2" # The existing one wins. The 'healthcheck2' value is defined in the stub.
         expect(lb_set2_ep["LoadBalancerProbe"]["Port"]).to be == "443"
         expect(lb_set2_ep["LoadBalancerProbe"]["Protocol"]).to be == "http"
-
       end
 
       it "allows internal load balancer to be specified" do
         Chef::Config[:knife][:azure_dns_name] = "vmname"
-        @server_instance.config[:tcp_endpoints] = "80:80:internal-lb-name:lb_set" # TODO is this a good way of specifying this?
+        @server_instance.config[:tcp_endpoints] = "80:80:internal-lb-name:lb_set" # TODO: is this a good way of specifying this?
         expect(@server_instance).to receive(:is_image_windows?).at_least(:twice).and_return(false)
 
         @server_instance.run
@@ -423,7 +423,7 @@ describe Chef::Knife::AzureServerCreate do
           expect(xml_content(testxml, "JoinDomain")).to eq("testad.com")
         end
 
-        it "server create with domain join options in fully-qualified-DNS-domain\\username format" do
+        it 'server create with domain join options in fully-qualified-DNS-domain\\username format' do
           Chef::Config[:knife][:azure_domain_user] = 'testad.com\\domainuser'
           Chef::Config[:knife][:azure_domain_passwd] = "domainuserpass"
           @server_instance.run
@@ -684,7 +684,7 @@ describe Chef::Knife::AzureServerCreate do
       @server_params = @server_instance.create_server_def
       expect(@server_params[:os_type]).to be == "Windows"
       expect(@server_params[:admin_password]).to be == "connection_password"
-      expect(@server_params[:bootstrap_proto]).to be == "winrm"
+      expect(@server_params[:connection_protocol]).to be == "winrm"
       expect(@server_params[:azure_dns_name]).to be == "service001"
       expect(@server_params[:azure_vm_name]).to be == "vm002"
       expect(@server_params[:connection_user]).to be == "testuser"
@@ -781,7 +781,7 @@ describe Chef::Knife::AzureServerCreate do
         expect(@server_params[:os_type]).to be == "Linux"
         expect(@server_params[:connection_user]).to be == "connection_user"
         expect(@server_params[:connection_password]).to be == "connection_password"
-        expect(@server_params[:bootstrap_proto]).to be == "ssh"
+        expect(@server_params[:connection_protocol]).to be == "ssh"
         expect(@server_params[:azure_dns_name]).to be == "service001"
         expect(@server_params[:azure_vm_name]).to be == "vm002"
         expect(@server_params[:port]).to be == "22"
@@ -808,7 +808,7 @@ describe Chef::Knife::AzureServerCreate do
           expect(@server_params[:os_type]).to be == "Linux"
           expect(@server_params[:ssh_identity_file]).to be == "path_to_rsa_private_key"
           expect(@server_params[:connection_user]).to be == "connection_user"
-          expect(@server_params[:bootstrap_proto]).to be == "ssh"
+          expect(@server_params[:connection_protocol]).to be == "ssh"
           expect(@server_params[:azure_dns_name]).to be == "service001"
         end
 
@@ -905,16 +905,16 @@ describe Chef::Knife::AzureServerCreate do
 
       let(:public_config) do
         {
-        client_rb: "chef_server_url \t \"https://localhost:443\"\nvalidation_client_name\t\"chef-validator\"",
-        runlist: "\"getting-started\"",
-        extendedLogs: "true",
-        custom_json_attr: {},
-        chef_daemon_interval: "16",
-        bootstrap_options: { chef_server_url: "https://localhost:443",
-                             validation_client_name: "chef-validator",
-                             bootstrap_version: "12.4.2",
-        },
-      } end
+          client_rb: "chef_server_url \t \"https://localhost:443\"\nvalidation_client_name\t\"chef-validator\"",
+          runlist: '"getting-started"',
+          extendedLogs: "true",
+          custom_json_attr: {},
+          chef_daemon_interval: "16",
+          bootstrap_options: { chef_server_url: "https://localhost:443",
+                               validation_client_name: "chef-validator",
+                               bootstrap_version: "12.4.2" },
+        }
+      end
 
       it "should set public config properly" do
         expect(@server_instance).to receive(:get_chef_extension_name)
@@ -935,7 +935,6 @@ describe Chef::Knife::AzureServerCreate do
         response = @server_instance.create_server_def
         expect(response[:chef_extension_public_param]).to be == public_config
       end
-
     end
 
     context "get azure chef extension version" do
@@ -1033,8 +1032,8 @@ describe Chef::Knife::AzureServerCreate do
       context "when encrypted_data_bag_secret option is passed" do
         let(:private_config) do
           { client_pem: "my_client_pem",
-            encrypted_data_bag_secret: "my_encrypted_data_bag_secret",
-        } end
+            encrypted_data_bag_secret: "my_encrypted_data_bag_secret" }
+        end
 
         before do
           @server_instance.config[:encrypted_data_bag_secret] = "my_encrypted_data_bag_secret"
@@ -1046,8 +1045,8 @@ describe Chef::Knife::AzureServerCreate do
       context "when encrypted_data_bag_secret_file option is passed" do
         let(:private_config) do
           { client_pem: "my_client_pem",
-            encrypted_data_bag_secret: "PgIxStCmMDsuIw3ygRhmdMtStpc9EMiWisQXoP",
-        } end
+            encrypted_data_bag_secret: "PgIxStCmMDsuIw3ygRhmdMtStpc9EMiWisQXoP" }
+        end
 
         before do
           @server_instance.config[:encrypted_data_bag_secret_file] = File.dirname(__FILE__) + "/assets/secret_file"
@@ -1143,12 +1142,14 @@ describe Chef::Knife::AzureServerCreate do
       context "role not found" do
         before do
           allow(@server_instance).to receive(
-            :fetch_role).and_return(nil)
+            :fetch_role
+          ).and_return(nil)
         end
 
         it "displays role not found error" do
           expect(@server_instance.ui).to receive(:error).with(
-            "chef-client run logs could not be fetched since role vm002 could not be found.")
+            "chef-client run logs could not be fetched since role vm002 could not be found."
+          )
           @server_instance.fetch_chef_client_logs(nil, nil)
         end
       end
@@ -1156,14 +1157,17 @@ describe Chef::Knife::AzureServerCreate do
       context "extension not found" do
         before do
           allow(@server_instance).to receive(
-            :fetch_role).and_return("vm002")
+            :fetch_role
+          ).and_return("vm002")
           allow(@server_instance).to receive(
-            :fetch_extension).and_return(nil)
+            :fetch_extension
+          ).and_return(nil)
         end
 
         it "displays extension not found error" do
           expect(@server_instance.ui).to receive(:error).with(
-            "Unable to find Chef extension under role vm002.")
+            "Unable to find Chef extension under role vm002."
+          )
           @server_instance.fetch_chef_client_logs(nil, nil)
         end
       end
@@ -1171,11 +1175,14 @@ describe Chef::Knife::AzureServerCreate do
       context "substatus not found in server role response" do
         before do
           allow(@server_instance).to receive(
-            :fetch_role).and_return("vm002")
+            :fetch_role
+          ).and_return("vm002")
           allow(@server_instance).to receive(
-            :fetch_extension).and_return("extension")
+            :fetch_extension
+          ).and_return("extension")
           allow(@server_instance).to receive(
-            :fetch_substatus).and_return(nil)
+            :fetch_substatus
+          ).and_return(nil)
           @start_time = Time.now
         end
 
@@ -1183,13 +1190,14 @@ describe Chef::Knife::AzureServerCreate do
           it "displays wait messages and re-invokes fetch_chef_client_logs method recursively" do
             @server_instance.instance_eval do
               class << self
-                alias_method :fetch_chef_client_logs_mocked, :fetch_chef_client_logs
+                alias fetch_chef_client_logs_mocked fetch_chef_client_logs
               end
             end
             expect(@server_instance).to receive(:print).exactly(1).times
             expect(@server_instance).to receive(:sleep).with(30)
             expect(@server_instance).to receive(
-              :fetch_chef_client_logs).with(@start_time, 30)
+              :fetch_chef_client_logs
+            ).with(@start_time, 30)
             @server_instance.fetch_chef_client_logs_mocked(@start_time, 30)
           end
         end
@@ -1197,7 +1205,8 @@ describe Chef::Knife::AzureServerCreate do
         context "wait time has exceeded wait timeout limit" do
           it "displays wait timeout exceeded message" do
             expect(@server_instance.ui).to receive(:error).with(
-              "\nchef-client run logs could not be fetched since fetch process exceeded wait timeout of -1 minutes.\n")
+              "\nchef-client run logs could not be fetched since fetch process exceeded wait timeout of -1 minutes.\n"
+            )
             @server_instance.fetch_chef_client_logs(@start_time, -1)
           end
         end
@@ -1207,15 +1216,18 @@ describe Chef::Knife::AzureServerCreate do
         before do
           Chef::Config[:knife][:azure_vm_name] = "vm04"
           allow(@server_instance.service).to receive(
-            :deployment_name).and_return("deploymentExtension")
+            :deployment_name
+          ).and_return("deploymentExtension")
           deployment = Nokogiri::XML readFile("extension_deployment_xml.xml")
           allow(@server_instance.service).to receive(
-            :deployment).and_return(deployment)
+            :deployment
+          ).and_return(deployment)
         end
 
         it "displays chef-client run logs and exit status to the user" do
           expect(@server_instance).to receive(
-            :puts).exactly(4).times
+            :puts
+          ).exactly(4).times
           expect(@server_instance).to receive(:print)
           @server_instance.fetch_chef_client_logs(@start_time, 30)
         end
@@ -1523,10 +1535,12 @@ describe Chef::Knife::AzureServerCreate do
 
   def fetch_role_from_xml
     allow(@server_instance.service).to receive(
-      :deployment_name).and_return("deploymentExtension")
+      :deployment_name
+    ).and_return("deploymentExtension")
     deployment = Nokogiri::XML readFile("extension_deployment_xml.xml")
     allow(@server_instance.service).to receive(
-      :deployment).and_return(deployment)
+      :deployment
+    ).and_return(deployment)
     @server_instance.fetch_role
   end
 end

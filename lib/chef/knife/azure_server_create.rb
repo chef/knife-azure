@@ -21,13 +21,13 @@
 require "chef/knife/azure_base"
 require "securerandom"
 require "chef/knife/bootstrap"
+require "chef/knife/bootstrap/client_builder"
 require "chef/knife/bootstrap/common_bootstrap_options"
 require "chef/knife/bootstrap/bootstrapper"
 
 class Chef
   class Knife
     class AzureServerCreate < Knife::Bootstrap
-
       include Knife::AzureBase
       include Knife::Bootstrap::CommonBootstrapOptions
       include Knife::Bootstrap::Bootstrapper
@@ -42,93 +42,188 @@ class Chef
 
       banner "knife azure server create (options)"
 
+      SUPPORTED_CONNECTION_PROTOCOLS = %w{ssh winrm cloud-api}.freeze
+
       attr_accessor :initial_sleep_delay
 
       option :azure_affinity_group,
-        short: "-a GROUP",
-        long: "--azure-affinity-group GROUP",
-        description: "Required if not using a Service Location. Specifies Affinity Group the VM should belong to."
+             short: "-a GROUP",
+             long: "--azure-affinity-group GROUP",
+             description: "Required if not using a Service Location. Specifies Affinity Group the VM should belong to."
 
       option :azure_dns_name,
-        short: "-d DNS_NAME",
-        long: "--azure-dns-name DNS_NAME",
-        description: "The DNS prefix name that can be used to access the cloud service which is unique within Windows Azure. Default is 'azure-dns-any_random_text'(e.g: azure-dns-be9b0f6f-7dda-456f-b2bf-4e28a3bc0add).
-                                      If you want to add new VM to an existing service/deployment, specify an exiting dns-name,
-                                      along with --azure-connect-to-existing-dns option.
-                                      Otherwise a new deployment is created. For example, if the DNS of cloud service is MyService you could access the cloud service
-                                      by calling: http://DNS_NAME.cloudapp.net"
+             short: "-d DNS_NAME",
+             long: "--azure-dns-name DNS_NAME",
+             description: "The DNS prefix name that can be used to access the cloud service which is unique within Windows Azure. Default is 'azure-dns-any_random_text'(e.g: azure-dns-be9b0f6f-7dda-456f-b2bf-4e28a3bc0add).
+                                           If you want to add new VM to an existing service/deployment, specify an exiting dns-name,
+                                           along with --azure-connect-to-existing-dns option.
+                                           Otherwise a new deployment is created. For example, if the DNS of cloud service is MyService you could access the cloud service
+                                           by calling: http://DNS_NAME.cloudapp.net"
 
       option :azure_source_image,
-        short: "-I IMAGE",
-        long: "--azure-source-image IMAGE",
-        description: "Required. Specifies the name of the disk image to use to create the virtual machine.
-                                      Do a \"knife azure image list\" to see a list of available images."
+             short: "-I IMAGE",
+             long: "--azure-source-image IMAGE",
+             description: "Required. Specifies the name of the disk image to use to create the virtual machine.
+                                           Do a \"knife azure image list\" to see a list of available images."
 
       option :udp_endpoints,
-        short: "-u PORT_LIST",
-        long: "--udp-endpoints PORT_LIST",
-        description: "Comma-separated list of UDP local and public ports to open e.g. '80:80,433:5000'"
+             short: "-u PORT_LIST",
+             long: "--udp-endpoints PORT_LIST",
+             description: "Comma-separated list of UDP local and public ports to open e.g. '80:80,433:5000'"
 
       option :azure_connect_to_existing_dns,
-        short: "-c",
-        long: "--azure-connect-to-existing-dns",
-        boolean: true,
-        default: false,
-        description: "Set this flag to add the new VM to an existing deployment/service. Must give the name of the existing
-                                        DNS correctly in the --dns-name option"
+             short: "-c",
+             long: "--azure-connect-to-existing-dns",
+             boolean: true,
+             default: false,
+             description: "Set this flag to add the new VM to an existing deployment/service. Must give the name of the existing
+                                             DNS correctly in the --dns-name option"
 
       option :azure_network_name,
-        long: "--azure-network-name NETWORK_NAME",
-        description: "Optional. Specifies the network of virtual machine"
+             long: "--azure-network-name NETWORK_NAME",
+             description: "Optional. Specifies the network of virtual machine"
 
       option :azure_subnet_name,
-        long: "--azure-subnet-name SUBNET_NAME",
-        description: "Optional. Specifies the subnet of virtual machine"
+             long: "--azure-subnet-name SUBNET_NAME",
+             description: "Optional. Specifies the subnet of virtual machine"
 
       option :azure_vm_startup_timeout,
-        long: "--azure-vm-startup-timeout TIMEOUT",
-        description: "The number of minutes that knife-azure will wait for the virtual machine to reach the 'provisioning' state. Default is 10.",
-        default: 10
+             long: "--azure-vm-startup-timeout TIMEOUT",
+             description: "The number of minutes that knife-azure will wait for the virtual machine to reach the 'provisioning' state. Default is 10.",
+             default: 10
 
       option :azure_vm_ready_timeout,
-        long: "--azure-vm-ready-timeout TIMEOUT",
-        description: "The number of minutes that knife-azure will wait for the virtual machine state to transition from 'provisioning' to 'ready'. Default is 15.",
-        default: 15
+             long: "--azure-vm-ready-timeout TIMEOUT",
+             description: "The number of minutes that knife-azure will wait for the virtual machine state to transition from 'provisioning' to 'ready'. Default is 15.",
+             default: 15
 
       option :auth_timeout,
-        long: "--windows-auth-timeout MINUTES",
-        description: "The maximum time in minutes to wait to for authentication over the transport to the node to succeed. The default value is 25 minutes.",
-        default: 25
+             long: "--windows-auth-timeout MINUTES",
+             description: "The maximum time in minutes to wait to for authentication over the transport to the node to succeed. The default value is 25 minutes.",
+             default: 25
 
       option :identity_file_passphrase,
-        long: "--identity-file-passphrase PASSWORD",
-        description: "SSH key passphrase. Optional, specify if passphrase for identity-file exists"
+             long: "--identity-file-passphrase PASSWORD",
+             description: "SSH key passphrase. Optional, specify if passphrase for identity-file exists"
 
       option :winrm_max_timeout,
-        long: "--winrm-max-timeout MINUTES",
-        description: "Set winrm maximum command timeout in minutes, useful for long bootstraps"
+             long: "--winrm-max-timeout MINUTES",
+             description: "Set winrm maximum command timeout in minutes, useful for long bootstraps"
 
-      option :winrm_max_memorypershell,
-        long: "--winrm-max-memory-per-shell",
-        description: "Set winrm max memory per shell in MB"
+      option :winrm_max_memory_per_shell,
+             long: "--winrm-max-memory-per-shell",
+             description: "Set winrm max memory per shell in MB"
 
       option :azure_domain_name,
-        long: "--azure-domain-name DOMAIN_NAME",
-        description: "Optional. Specifies the domain name to join. If the domains name is not specified, --azure-domain-user must specify the user principal name (UPN) format (user@fully-qualified-DNS-domain) or the fully-qualified-DNS-domain\\username format"
+             long: "--azure-domain-name DOMAIN_NAME",
+             description: 'Optional. Specifies the domain name to join. If the domains name is not specified, --azure-domain-user must specify the user principal name (UPN) format (user@fully-qualified-DNS-domain) or the fully-qualified-DNS-domain\\username format'
 
       option :azure_domain_ou_dn,
-        long: "--azure-domain-ou-dn DOMAIN_OU_DN",
-        description: "Optional. Specifies the (LDAP) X 500-distinguished name of the organizational unit (OU) in which the computer account is created. This account is in Active Directory on a domain controller in the domain to which the computer is being joined. Example: OU=HR,dc=opscode,dc=com"
+             long: "--azure-domain-ou-dn DOMAIN_OU_DN",
+             description: "Optional. Specifies the (LDAP) X 500-distinguished name of the organizational unit (OU) in which the computer account is created. This account is in Active Directory on a domain controller in the domain to which the computer is being joined. Example: OU=HR,dc=opscode,dc=com"
 
       option :azure_domain_user,
-        long: "--azure-domain-user DOMAIN_USER_NAME",
-        description: 'Optional. Specifies the username who has access to join the domain.
-          Supported format: username(if domain is already specified in --azure-domain-name option),
-          fully-qualified-DNS-domain\username, user@fully-qualified-DNS-domain'
+             long: "--azure-domain-user DOMAIN_USER_NAME",
+             description: 'Optional. Specifies the username who has access to join the domain.
+               Supported format: username(if domain is already specified in --azure-domain-name option),
+               fully-qualified-DNS-domain\username, user@fully-qualified-DNS-domain'
 
       option :azure_domain_passwd,
-        long: "--azure-domain-passwd DOMAIN_PASSWD",
-        description: "Optional. Specifies the password for domain user who has access to join the domain."
+             long: "--azure-domain-passwd DOMAIN_PASSWD",
+             description: "Optional. Specifies the password for domain user who has access to join the domain."
+
+      # Overriding this option to provide "cloud-api" in SUPPORTED_CONNECTION_PROTOCOLS
+      option :connection_protocol,
+        short: "-o PROTOCOL",
+        long: "--connection-protocol PROTOCOL",
+        description: "The protocol to use to connect to the target node.",
+        in: SUPPORTED_CONNECTION_PROTOCOLS
+
+      # run() would be executing from parent class
+      # Chef::Knife::Bootstrap, defined in core.
+      # Required methods have been overridden here
+      #### run() execution begins ####
+
+      def plugin_setup!; end
+
+      def validate_name_args!; end
+
+      # Ensure a valid protocol is provided for target host connection
+      #
+      # The method call will cause the program to exit(1) if:
+      #   * Conflicting protocols are given via the target URI and the --protocol option
+      #   * The protocol is not a supported protocol
+      #
+      # @note we are overriding this method here to consider "cloud-api" as valid protocol
+      #
+      # @return [TrueClass] If options are valid.
+      def validate_protocol!
+        from_cli = config[:connection_protocol]
+        if from_cli && connection_protocol != from_cli
+          # Hanging indent to align with the ERROR: prefix
+          ui.error <<~EOM
+            The URL '#{host_descriptor}' indicates protocol is '#{connection_protocol}'
+            while the --protocol flag specifies '#{from_cli}'.  Please include
+            only one or the other.
+          EOM
+          exit 1
+        end
+
+        unless SUPPORTED_CONNECTION_PROTOCOLS.include?(connection_protocol)
+          ui.error <<~EOM
+            Unsupported protocol '#{connection_protocol}'.
+
+            Supported protocols are: #{SUPPORTED_CONNECTION_PROTOCOLS.join(" ")}
+          EOM
+          exit 1
+        end
+        true
+      end
+
+      def plugin_validate_options!
+        Chef::Log.info("Validating...")
+        validate_asm_keys!(:azure_source_image)
+        validate_params!
+      end
+
+      def plugin_create_instance!
+        Chef::Log.info("Creating...")
+        set_defaults
+        server_def = create_server_def
+        vm_details = service.create_server(server_def)
+
+        wait_until_virtual_machine_ready
+
+        config[:connection_port] = server_def[:port]
+        config[:connection_protocol] = server_def[:connection_protocol]
+        config[:chef_node_name] = locate_config_value(:chef_node_name) || server_name
+      rescue => error
+        ui.error("Something went wrong. Please use -VV option for more details.")
+        Chef::Log.debug(error.backtrace.join("\n").to_s)
+        exit 1
+      end
+
+      def server_name
+        @server_name ||= if @server.nil?
+                           nil
+                         elsif !@server.hostedservicename.nil?
+                           @server.hostedservicename + ".cloudapp.net"
+                         else
+                           @server.ipaddress
+                         end
+      end
+
+      alias host_descriptor server_name
+
+      def plugin_finalize
+        if locate_config_value(:connection_protocol) == "cloud-api" && locate_config_value(:extended_logs)
+          print "\nWaiting for the first chef-client run"
+          fetch_chef_client_logs(Time.now, 30)
+        end
+        msg_server_summary(@server)
+      end
+
+      #### run() execution ends ####
 
       def wait_until_virtual_machine_ready(retry_interval_in_seconds = 30)
         vm_status = nil
@@ -145,9 +240,9 @@ class Chef
             end
           end
 
-          msg_server_summary(service.get_role_server(locate_config_value(:azure_dns_name), locate_config_value(:azure_vm_name)))
+          msg_server_summary(@server)
 
-          if locate_config_value(:bootstrap_protocol) == "cloud-api"
+          if locate_config_value(:connection_protocol) == "cloud-api"
             extension_status = wait_for_resource_extension_state(:wagent_provisioning, 5, retry_interval_in_seconds)
 
             if extension_status != :extension_installing
@@ -172,7 +267,7 @@ class Chef
         vm_status_ordering = { vm_status_not_detected: 0, vm_status_provisioning: 1, vm_status_ready: 2 }
         vm_status_description = { vm_status_not_detected: "any", vm_status_provisioning: "provisioning", vm_status_ready: "ready" }
 
-        print ui.color("Waiting for virtual machine to reach status '#{vm_status_description[vm_status_goal]}'", :magenta)
+        print ui.color("\nWaiting for virtual machine to reach status '#{vm_status_description[vm_status_goal]}'\n", :magenta)
 
         total_wait_time_in_seconds = total_wait_time_in_minutes * 60
         max_polling_attempts = total_wait_time_in_seconds / retry_interval_in_seconds
@@ -181,19 +276,19 @@ class Chef
         wait_start_time = Time.now
 
         begin
-          vm_status = get_virtual_machine_status()
+          vm_status = get_virtual_machine_status
           vm_ready = vm_status_ordering[vm_status] >= vm_status_ordering[vm_status_goal]
           print "."
-          sleep retry_interval_in_seconds if !vm_ready
+          sleep retry_interval_in_seconds unless vm_ready
           polling_attempts += 1
         end until vm_ready || polling_attempts >= max_polling_attempts
 
-        if ! vm_ready
+        unless vm_ready
           raise Chef::Exceptions::CommandTimeout, "Virtual machine state '#{vm_status_description[vm_status_goal]}' not reached after #{total_wait_time_in_minutes} minutes."
         end
 
         elapsed_time_in_minutes = ((Time.now - wait_start_time) / 60).round(2)
-        print ui.color("vm state '#{vm_status_description[vm_status_goal]}' reached after #{elapsed_time_in_minutes} minutes.\n", :cyan)
+        print ui.color("\nvm state '#{vm_status_description[vm_status_goal]}' reached after #{elapsed_time_in_minutes} minutes.\n", :cyan)
         vm_status
       end
 
@@ -202,7 +297,7 @@ class Chef
 
         status_description = { extension_status_not_detected: "any", wagent_provisioning: "wagent provisioning", extension_installing: "installing", extension_provisioning: "provisioning", extension_ready: "ready" }
 
-        print ui.color("Waiting for Resource Extension to reach status '#{status_description[extension_status_goal]}'", :magenta)
+        print ui.color("\nWaiting for Resource Extension to reach status '#{status_description[extension_status_goal]}'\n", :magenta)
 
         max_polling_attempts = (total_wait_time_in_minutes * 60) / retry_interval_in_seconds
         polling_attempts = 0
@@ -210,42 +305,44 @@ class Chef
         wait_start_time = Time.now
 
         begin
-          extension_status = get_extension_status()
+          extension_status = get_extension_status
           extension_ready = extension_status_ordering[extension_status[:status]] >= extension_status_ordering[extension_status_goal]
           print "."
-          sleep retry_interval_in_seconds if !extension_ready
+          sleep retry_interval_in_seconds unless extension_ready
           polling_attempts += 1
         end until extension_ready || polling_attempts >= max_polling_attempts
 
-        if ! extension_ready
+        unless extension_ready
           raise Chef::Exceptions::CommandTimeout, "Resource extension state '#{status_description[extension_status_goal]}' not reached after #{total_wait_time_in_minutes} minutes. #{extension_status[:message]}"
         end
 
         elapsed_time_in_minutes = ((Time.now - wait_start_time) / 60).round(2)
-        print ui.color("Resource extension state '#{status_description[extension_status_goal]}' reached after #{elapsed_time_in_minutes} minutes.\n", :cyan)
+        print ui.color("\nResource extension state '#{status_description[extension_status_goal]}' reached after #{elapsed_time_in_minutes} minutes.\n", :cyan)
 
         extension_status[:status]
       end
 
       def get_virtual_machine_status
-        role = service.get_role_server(locate_config_value(:azure_dns_name), locate_config_value(:azure_vm_name))
-        unless role.nil?
-          Chef::Log.debug("Role status is #{role.status}")
-          if "ReadyRole".eql? role.status.to_s
-            return :vm_status_ready
-          elsif "Provisioning".eql? role.status.to_s
-            return :vm_status_provisioning
+        @server = service.get_role_server(locate_config_value(:azure_dns_name), locate_config_value(:azure_vm_name))
+        if @server.nil?
+          :vm_status_not_detected
+        else
+          Chef::Log.debug("Role status is #{@server.status}")
+          case @server.status.to_s
+          when "ReadyRole"
+            :vm_status_ready
+          when "Provisioning"
+            :vm_status_provisioning
           else
-            return :vm_status_not_detected
+            :vm_status_not_detected
           end
         end
-        :vm_status_not_detected
       end
 
       def get_extension_status
         deployment_name = service.deployment_name(locate_config_value(:azure_dns_name))
         deployment = service.deployment("hostedservices/#{locate_config_value(:azure_dns_name)}/deployments/#{deployment_name}")
-        extension_status = Hash.new
+        extension_status = {}
 
         if deployment.at_css("Deployment Name") != nil
           role_list_xml = deployment.css("RoleInstanceList RoleInstance")
@@ -285,29 +382,6 @@ class Chef
         extension_status
       end
 
-      def run
-        $stdout.sync = true
-        storage = nil
-        Chef::Log.info("validating...")
-        validate_asm_keys!(:azure_source_image)
-        validate_params!
-        ssh_override_winrm if !is_image_windows?
-        Chef::Log.info("creating...")
-        config[:azure_dns_name] = get_dns_name(locate_config_value(:azure_dns_name))
-        config[:azure_vm_name] = locate_config_value(:azure_dns_name) unless locate_config_value(:azure_vm_name)
-        config[:chef_node_name] = locate_config_value(:azure_vm_name) unless locate_config_value(:chef_node_name)
-        service.create_server(create_server_def)
-        wait_until_virtual_machine_ready()
-        if locate_config_value(:bootstrap_protocol) == "cloud-api" && locate_config_value(:extended_logs)
-          print "\n\nWaiting for the first chef-client run"
-          fetch_chef_client_logs(Time.now, 30)
-        end
-        server = service.get_role_server(locate_config_value(:azure_dns_name), locate_config_value(:azure_vm_name))
-        msg_server_summary(server)
-
-        bootstrap_exec(server) unless locate_config_value(:bootstrap_protocol) == "cloud-api"
-      end
-
       def create_server_def
         server_def = {
           azure_storage_account: locate_config_value(:azure_storage_account),
@@ -320,7 +394,7 @@ class Chef
           azure_vm_size: locate_config_value(:azure_vm_size),
           tcp_endpoints: locate_config_value(:tcp_endpoints),
           udp_endpoints: locate_config_value(:udp_endpoints),
-          bootstrap_proto: locate_config_value(:bootstrap_protocol),
+          connection_protocol: locate_config_value(:connection_protocol),
           azure_connect_to_existing_dns: locate_config_value(:azure_connect_to_existing_dns),
           connection_user: locate_config_value(:connection_user),
           azure_availability_set: locate_config_value(:azure_availability_set),
@@ -332,10 +406,10 @@ class Chef
           cert_password: locate_config_value(:cert_passphrase),
           winrm_ssl: locate_config_value(:winrm_ssl),
           winrm_max_timeout: locate_config_value(:winrm_max_timeout).to_i * 60 * 1000, # converting minutes to milliseconds
-          winrm_max_memoryPerShell: locate_config_value(:winrm_max_memory_per_shell),
+          winrm_max_memory_per_shell: locate_config_value(:winrm_max_memory_per_shell),
         }
 
-        if locate_config_value(:bootstrap_protocol) == "cloud-api"
+        if locate_config_value(:connection_protocol) == "cloud-api"
           server_def[:chef_extension] = get_chef_extension_name
           server_def[:chef_extension_publisher] = get_chef_extension_publisher
           server_def[:chef_extension_version] = get_chef_extension_version
@@ -343,25 +417,20 @@ class Chef
           server_def[:chef_extension_private_param] = get_chef_extension_private_params
         else
           if is_image_windows?
-            if (not locate_config_value(:connection_password)) || (not locate_config_value(:bootstrap_protocol))
-              ui.error("WinRM Password and Bootstrapping Protocol are compulsory parameters")
-              exit 1
-            end
             # We can specify the AdminUsername after API version 2013-03-01. However, in this API version,
             # the AdminUsername is a required parameter.
             # Also, the user name cannot be Administrator, Admin, Admin1 etc, for enhanced security (provided by Azure)
             if locate_config_value(:connection_user).nil? || locate_config_value(:connection_user).downcase =~ /admin*/
-              ui.error("WinRM User is compulsory parameter and it cannot be named 'admin*'")
+              ui.error("Connection User is compulsory parameter and it cannot be named 'admin*'")
               exit 1
-            end
             # take cares of when user name contains domain
             # azure add role api doesn't support '\\' in user name
-            if locate_config_value(:connection_user) && locate_config_value(:connection_user).split("\\").length.eql?(2)
-              server_def[:connection_user] = locate_config_value(:connection_user).split("\\")[1]
+            elsif locate_config_value(:connection_user).split('\\').length.eql?(2)
+              server_def[:connection_user] = locate_config_value(:connection_user).split('\\')[1]
             end
           else
-            if not locate_config_value(:connection_user)
-              ui.error("SSH User is compulsory parameter")
+            unless locate_config_value(:connection_user)
+              ui.error("Connection User is compulsory parameter")
               exit 1
             end
             unless locate_config_value(:connection_password) || locate_config_value(:ssh_identity_file)
@@ -374,10 +443,10 @@ class Chef
         if is_image_windows?
           server_def[:os_type] = "Windows"
           server_def[:admin_password] = locate_config_value(:connection_password)
-          server_def[:bootstrap_proto] = locate_config_value(:bootstrap_protocol)
+          server_def[:connection_protocol] = locate_config_value(:connection_protocol) || "winrm"
         else
           server_def[:os_type] = "Linux"
-          server_def[:bootstrap_proto] = (locate_config_value(:bootstrap_protocol) == "winrm") ? "ssh" : locate_config_value(:bootstrap_protocol)
+          server_def[:connection_protocol] = locate_config_value(:connection_protocol).nil? || locate_config_value(:connection_protocol) == "winrm" ? "ssh" : locate_config_value(:connection_protocol)
           server_def[:connection_user] = locate_config_value(:connection_user)
           server_def[:connection_password] = locate_config_value(:connection_password)
           server_def[:ssh_identity_file] = locate_config_value(:ssh_identity_file)
@@ -385,10 +454,10 @@ class Chef
         end
 
         azure_connect_to_existing_dns = locate_config_value(:azure_connect_to_existing_dns)
-        if is_image_windows? && server_def[:bootstrap_proto] == "winrm"
+        if is_image_windows? && server_def[:connection_protocol] == "winrm"
           port = locate_config_value(:connection_port) || "5985"
           port = locate_config_value(:connection_port) || Random.rand(64000) + 1000 if azure_connect_to_existing_dns
-        elsif server_def[:bootstrap_proto] == "ssh"
+        elsif server_def[:connection_protocol] == "ssh"
           port = locate_config_value(:connection_port) || "22"
           port = locate_config_value(:connection_port) || Random.rand(64000) + 1000 if azure_connect_to_existing_dns
         end
@@ -425,27 +494,22 @@ class Chef
 
       private
 
-      def ssh_override_winrm
-        # unchanged connection_user and changed --connection-user, override connection_user
-        if locate_config_value(:connection_user).eql?(options[:connection_user][:default]) &&
-            !locate_config_value(:connection_user).eql?(options[:connection_user][:default])
+      def set_defaults
+        set_configs
+      end
+
+      def set_configs
+        unless locate_config_value(:connection_user).nil?
           config[:connection_user] = locate_config_value(:connection_user)
         end
-        # unchanged connection_port and changed connection_port, override connection_port
-        if locate_config_value(:connection_port).eql?(options[:connection_port][:default]) &&
-            !locate_config_value(:connection_port).eql?(options[:connection_port][:default])
-          config[:connection_port] = locate_config_value(:connection_port)
-        end
-        # unset connection_password and set connection_password, override connection_password
-        if locate_config_value(:connection_password).nil? &&
-            !locate_config_value(:connection_password).nil?
+
+        unless locate_config_value(:connection_password).nil?
           config[:connection_password] = locate_config_value(:connection_password)
         end
-        # unset ssh_identity_file and set _file, override ssh_identity_file
-        if locate_config_value(:ssh_identity_file).nil? &&
-            !locate_config_value(:kerberos_keytab_file).nil?
-          config[:ssh_identity_file] = locate_config_value(:kerberos_keytab_file)
-        end
+
+        config[:azure_dns_name] = get_dns_name(locate_config_value(:azure_dns_name))
+        config[:azure_vm_name] = locate_config_value(:azure_dns_name) unless locate_config_value(:azure_vm_name)
+        config[:chef_node_name] = locate_config_value(:azure_vm_name) unless locate_config_value(:chef_node_name)
       end
 
       # This is related to Windows VM's specifically and computer name
@@ -455,10 +519,11 @@ class Chef
       # generate a random dns_name if azure_dns_name is empty
       def get_dns_name(azure_dns_name, prefix = "az-")
         return azure_dns_name unless azure_dns_name.nil?
+
         if locate_config_value(:azure_vm_name).nil?
-          azure_dns_name = prefix + SecureRandom.hex(( MAX_VM_NAME_CHARACTERS - prefix.length) / 2)
+          (prefix + SecureRandom.hex((MAX_VM_NAME_CHARACTERS - prefix.length) / 2))
         else
-          azure_dns_name = locate_config_value(:azure_vm_name)
+          locate_config_value(:azure_vm_name)
         end
       end
     end

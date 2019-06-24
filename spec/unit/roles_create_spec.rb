@@ -4,7 +4,7 @@ require File.expand_path(File.dirname(__FILE__) + "/query_azure_mock")
 module Azure
   class Certificate
     class Random
-      def self.rand(var)
+      def self.rand(_var)
         1
       end
     end
@@ -29,14 +29,14 @@ describe "roles" do
       Chef::Config[:knife][key] = value
     end
 
-    stub_query_azure (@server_instance.service.connection)
+    stub_query_azure @server_instance.service.connection
     @connection = @server_instance.service.connection
   end
 
   context "delete a role" do
     context "when the role is not the only one in a deployment" do
       it "should pass in correct name, verb, and body" do
-        @connection.roles.delete({ name: "vm002", preserve_azure_os_disk: true })
+        @connection.roles.delete(name: "vm002", preserve_azure_os_disk: true)
         expect(@deletename).to be == "hostedservices/service001/deployments/deployment001/roles/vm002"
         expect(@deleteverb).to be == "delete"
         expect(@deletebody).to be nil
@@ -47,7 +47,7 @@ describe "roles" do
   context "delete a role" do
     context "when the role is the only one in a deployment" do
       it "should pass in correct name, verb, and body" do
-        @connection.roles.delete({ name: "vm01", preserve_azure_os_disk: true })
+        @connection.roles.delete(name: "vm01", preserve_azure_os_disk: true)
         expect(@deletename).to be == "hostedservices/service002/deployments/testrequest"
         expect(@deleteverb).to be == "delete"
         expect(@deletebody).to be nil
@@ -70,7 +70,7 @@ describe "roles" do
         tcp_endpoints: "80:80, 3389:3389, 993:993, 44: 45",
         udp_endpoints: "65:65,75",
         azure_storage_account: "storageaccount001",
-        bootstrap_proto: "ssh",
+        connection_protocol: "ssh",
         os_type: "Linux",
         port: "22",
 
@@ -93,7 +93,7 @@ describe "roles" do
         azure_source_image: "SUSE__OpenSUSE64121-03192012-en-us-15GB",
         azure_vm_size: "ExtraSmall",
         azure_storage_account: "storageaccount001",
-        bootstrap_proto: "ssh",
+        connection_protocol: "ssh",
       }
     end
 
@@ -137,7 +137,7 @@ describe "roles" do
         azure_source_image: "SUSE__OpenSUSE64121-03192012-en-us-15GB",
         azure_vm_size: "ExtraSmall",
         azure_storage_account: "storageaccount001",
-        bootstrap_proto: "ssh",
+        connection_protocol: "ssh",
         os_type: "Linux",
         port: "22",
       }
@@ -157,7 +157,7 @@ describe "roles" do
         azure_source_image: "SUSE__OpenSUSE64121-03192012-en-us-15GB",
         azure_vm_size: "ExtraSmall",
         azure_storage_account: "storageaccount001",
-        bootstrap_proto: "ssh",
+        connection_protocol: "ssh",
         os_type: "Linux",
         port: "22",
         azure_network_name: "test-network",
@@ -180,7 +180,7 @@ describe "roles" do
         azure_source_image: "SUSE__OpenSUSE64121-03192012-en-us-15GB",
         azure_vm_size: "ExtraSmall",
         azure_storage_account: "storageaccount001",
-        bootstrap_proto: "ssh",
+        connection_protocol: "ssh",
         os_type: "Linux",
         port: "22",
       }
@@ -203,10 +203,10 @@ describe "roles" do
           azure_vm_size: "Medium",
           azure_storage_account: "chefci",
           os_type: "Windows",
-          bootstrap_proto: "winrm",
+          connection_protocol: "winrm",
           winrm_ssl: "ssl",
-          winrm_max_timeout: 1800000,
-          winrm_max_memoryPerShell: 600,
+          winrm_max_timeout: 1_800_000,
+          winrm_max_memory_per_shell: 600,
         }
 
         deploy = @connection.deploys.create(params)
