@@ -1,3 +1,20 @@
+#
+# Copyright:: Copyright 2010-2019, Chef Software Inc.
+# License:: Apache License, Version 2.0
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
 require File.expand_path(File.dirname(__FILE__) + "/../spec_helper")
 require File.expand_path(File.dirname(__FILE__) + "/../unit/query_azure_mock")
 
@@ -11,21 +28,21 @@ describe Chef::Knife::AzurermServerList do
 
     @compute_client = double("ComputeManagementClient")
 
-    @server1 = double("server1", :name => "MyVM1", :id => double, :location => "west-us")
+    @server1 = double("server1", name: "MyVM1", id: double, location: "west-us")
     allow(@server1.id).to receive(:split).and_return(["", "subscriptions", "subscription_id", "resourcegroups", "myresourcegroup1", "Microsoft.compute", "virtualmachines", "MyVM1"])
     allow(@server1.id.split[4]).to receive(:downcase).and_return("myresourcegroup1")
     allow(@server1).to receive(:provisioning_state).and_return("running")
     allow(@server1).to receive_message_chain(
       :storage_profile, :os_disk, :os_type).and_return("linux")
 
-    @server2 = double("server2", :name => "MyVM2", :id => double, :location => "west-us")
+    @server2 = double("server2", name: "MyVM2", id: double, location: "west-us")
     allow(@server2.id).to receive(:split).and_return(["", "subscriptions", "subscription_id", "resourcegroups", "myresourcegroup2", "Microsoft.compute", "virtualmachines", "MyVM2"])
     allow(@server2.id.split[4]).to receive(:downcase).and_return("myresourcegroup2")
     allow(@server2).to receive(:provisioning_state).and_return("running")
     allow(@server2).to receive_message_chain(
       :storage_profile, :os_disk, :os_type).and_return("linux")
 
-    @server3 = double("server3", :name => "MyVM3", :id => double, :location => "west-us")
+    @server3 = double("server3", name: "MyVM3", id: double, location: "west-us")
     allow(@server3.id).to receive(:split).and_return(["", "subscriptions", "subscription_id", "resourcegroups", "myresourcegroup1", "Microsoft.compute", "virtualmachines", "MyVM3"])
     allow(@server3.id.split[4]).to receive(:downcase).and_return("myresourcegroup1")
     allow(@server3).to receive(:provisioning_state).and_return("running")

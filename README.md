@@ -56,7 +56,7 @@ For information on contributing to this project see <https://github.com/chef/che
 
 ## License
 
-Copyright:: Copyright (c) 2012-2016 Chef Software, Inc.
+Copyright:: Copyright 2010-2019, Chef Software, Inc.
 
 License:: Apache License, Version 2.0
 

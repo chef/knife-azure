@@ -42,7 +42,7 @@ RSpec.configure do |c|
   end
 
   c.before(:all) do
-    #Create an empty mock certificate file
+    # Create an empty mock certificate file
     @cert_file = tmpFile("AzureLinuxCert.pem")
     FileUtils.touch(@cert_file)
     Chef::Log.init(tmpFile("debug.log"))
@@ -50,16 +50,16 @@ RSpec.configure do |c|
   end
 
   c.after(:all) do
-    #Cleanup files and dirs
+    # Cleanup files and dirs
     FileUtils.rm_rf("#{temp_dir}")
   end
 end
 
 TEST_PARAMS = {
-  :azure_subscription_id => "YOUR_SUBSCRIPTION_ID_HERE",
-  :azure_mgmt_cert => @cert_file,
-  :azure_api_host_name => "management-preview.core.windows-int.net",
-}
+  azure_subscription_id: "YOUR_SUBSCRIPTION_ID_HERE",
+  azure_mgmt_cert: @cert_file,
+  azure_api_host_name: "management-preview.core.windows-int.net",
+}.freeze
 
 module AzureSpecHelper
   def readFile(filename)
@@ -162,7 +162,7 @@ def is_windows?
 end
 
 RSpec.configure do |config|
-  config.filter_run_excluding :chef_gte_12_only => true unless chef_gte_12?
-  config.filter_run_excluding :chef_lt_12_only => true unless chef_lt_12?
-  config.filter_run_excluding :windows_only => true unless is_windows?
+  config.filter_run_excluding chef_gte_12_only: true unless chef_gte_12?
+  config.filter_run_excluding chef_lt_12_only: true unless chef_lt_12?
+  config.filter_run_excluding windows_only: true unless is_windows?
 end

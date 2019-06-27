@@ -1,7 +1,6 @@
 #
 # Author:: Aliasgar Batterywala (aliasgar.batterywala@clogeny.com)
-#
-# Copyright:: Copyright 2016-2018 Chef Software, Inc.
+# Copyright:: Copyright 2010-2019, Chef Software Inc.
 # License:: Apache License, Version 2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -60,8 +59,8 @@ module Azure::ARM
       {
         "name" => subnet_name,
         "properties" => {
-          "addressPrefix" => subnet_prefix
-        }
+          "addressPrefix" => subnet_prefix,
+        },
       }
     end
 

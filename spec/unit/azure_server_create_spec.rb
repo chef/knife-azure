@@ -1,6 +1,19 @@
 #
 # Author:: Mukta Aphale (<mukta.aphale@clogeny.com>)
-# Copyright:: Copyright 2013-2018 Chef Software, Inc.
+# Copyright:: Copyright 2010-2019, Chef Software Inc.
+# License:: Apache License, Version 2.0
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 #
 
 require File.expand_path(File.dirname(__FILE__) + "/../spec_helper")
@@ -116,9 +129,9 @@ describe Chef::Knife::AzureServerCreate do
       end
 
       context "when winrm-ssl ssl and missing thumbprint" do
-        it "raise error on :winrm_no_verify_cert verify_peer" do
+        it "raise error if :winrm_no_verify_cert is not set" do
           Chef::Config[:knife][:winrm_ssl] = "ssl"
-          Chef::Config[:knife][:winrm_no_verify_cert] = :verify_peer
+          Chef::Config[:knife][:winrm_no_verify_cert] = true
           expect(@server_instance.ui).to receive(:error)
           expect { @server_instance.run }.to raise_error(SystemExit)
         end

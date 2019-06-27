@@ -1,6 +1,6 @@
 #
 # Author:: Jeff Mendoza (jeffmendoza@live.com)
-# Copyright:: Copyright 2013-2018 Chef Software, Inc.
+# Copyright:: Copyright 2010-2019, Chef Software Inc.
 # License:: Apache License, Version 2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,18 +26,18 @@ class Chef
       banner "knife azure ag create (options)"
 
       option :azure_affinity_group,
-        :short => "-a GROUP",
-        :long => "--azure-affinity-group GROUP",
-        :description => "Specifies new affinity group name."
+        short: "-a GROUP",
+        long: "--azure-affinity-group GROUP",
+        description: "Specifies new affinity group name."
 
       option :azure_ag_desc,
-        :long => "--azure-ag-desc DESC",
-        :description => "Optional. Description for new affinity group."
+        long: "--azure-ag-desc DESC",
+        description: "Optional. Description for new affinity group."
 
       option :azure_service_location,
-        :short => "-m LOCATION",
-        :long => "--azure-service-location LOCATION",
-        :description => "Specifies the geographic location - the name of "\
+        short: "-m LOCATION",
+        long: "--azure-service-location LOCATION",
+        description: "Specifies the geographic location - the name of "\
                         "the data center location that is valid for your "\
                         "subscription. Eg: West US, East US, "\
                         "East Asia, Southeast Asia, North Europe, West Europe"

@@ -1,6 +1,20 @@
 #
 # Author:: Nimisha Sharad (<nimisha.sharad@msystechnologies.com>)
-# Copyright:: Copyright 2013-2018 Chef Software, Inc.
+# Copyright:: Copyright 2010-2019, Chef Software Inc.
+# License:: Apache License, Version 2.0
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
 
 require File.expand_path(File.dirname(__FILE__) + "/../spec_helper")
 require File.expand_path(File.dirname(__FILE__) + "/../unit/query_azure_mock")
@@ -31,8 +45,8 @@ describe Chef::Knife::AzurermBase, :windows_only do
     it "should raise error if target is not in proper format" do
       # removing expiresOn field from target
       target = "AzureXplatCli:target=_authority:https\\://login.microsoftonline.com/common::_clientId:abc123::expiresIn:3599::identityProvider:live.com::isMRRT:true::resource:https\\://management.core.windows.net/::tokenType:Bearer::userId:abc@outlook.com--0-2"
-      translated_cred = { :TargetName => double(:read_wstring => target),
-                          :CredentialBlob => double(:get_bytes => "a:access_token::r:refresh_token") }
+      translated_cred = { TargetName: double(read_wstring: target),
+                          CredentialBlob: double(get_bytes: "a:access_token::r:refresh_token") }
       allow(@windows_credentials).to receive(:target_name).and_return(target)
       allow(FFI::MemoryPointer).to receive(:new)
       allow(Azure::ARM::ReadCred::CREDENTIAL_OBJECT).to receive(:new).exactly(2).and_return(translated_cred)
@@ -44,8 +58,8 @@ describe Chef::Knife::AzurermBase, :windows_only do
 
     it "should parse the target and return a hash if target exists" do
       target = "AzureXplatCli:target=_authority:https\\://login.microsoftonline.com/common::_clientId:abc123::expiresIn:3599::expiresOn:2016-06-07T13\\:16\\:34.877Z::identityProvider:live.com::isMRRT:true::resource:https\\://management.core.windows.net/::tokenType:Bearer::userId:abc@outlook.com--0-2"
-      translated_cred = { :TargetName => double(:read_wstring => target),
-                          :CredentialBlob => double(:get_bytes => "a:access_token::r:refresh_token") }
+      translated_cred = { TargetName: double(read_wstring: target),
+                          CredentialBlob: double(get_bytes: "a:access_token::r:refresh_token") }
       allow(@windows_credentials).to receive(:target_name).and_return(target)
       allow(FFI::MemoryPointer).to receive(:new)
       allow(Azure::ARM::ReadCred::CREDENTIAL_OBJECT).to receive(:new).exactly(2).and_return(translated_cred)
@@ -64,16 +78,16 @@ describe Chef::Knife::AzurermBase, :windows_only do
 
   context "target_name" do
     it "should raise error if Azure credentials are not found" do
-      cmdkey_output = double(:stdout => "")
+      cmdkey_output = double(stdout: "")
       allow_any_instance_of(Mixlib::ShellOut).to receive(:run_command).and_return(cmdkey_output)
       expect { @windows_credentials.target_name }.to raise_error("Azure Credentials not found. Please run xplat's 'azure login' command")
     end
 
     it "should fetch the credential ending with --0-" do
       targets = "    Target: AzureXplatCli:target=_authority:https\\://login.microsoftonline.com/subscription_id::_clientId:abc123::expiresIn:3599::expiresOn:2016-06-09T13\\:53\\:07.510Z::identityProvider:live.com::isMRRT:true::resource:https\\://management.core.windows.net/::tokenType:Bearer::userId:abc@opscode.com--0-2\n   Target:AzureXplatCli:target=_authority:https\\://login.microsoftonline.com/subscription_id::_clientId:def::expiresIn:3600::expiresOn:2016-06-09T13\\:51\\:56.271Z::identityProvider:live.com::isMRRT:true::resource:https\\://management.core.windows.net/::tokenType:Bearer::userId:def@outlook.com--0-2\n"
-      cmdkey_output = double(:stdout => targets)
+      cmdkey_output = double(stdout: targets)
       allow_any_instance_of(Mixlib::ShellOut).to receive(:run_command).and_return(cmdkey_output)
-      #target ending with --0-2
+      # target ending with --0-2
       latest_target = "AzureXplatCli:target=_authority:https\\://login.microsoftonline.com/subscription_id::_clientId:abc123::expiresIn:3599::expiresOn:2016-06-09T13\\:53\\:07.510Z::identityProvider:live.com::isMRRT:true::resource:https\\://management.core.windows.net/::tokenType:Bearer::userId:abc@opscode.com--0-2"
       target_name = @windows_credentials.target_name
       expect(target_name).to be == latest_target
@@ -81,7 +95,7 @@ describe Chef::Knife::AzurermBase, :windows_only do
 
     it "fetches any credential if --0- pattern is not found in the available credentials" do
       targets = "    Target: AzureXplatCli:target=_authority:https\\://login.microsoftonline.com/subscription_id::_clientId:abc123::expiresIn:3599::expiresOn:2016-06-09T13\\:53\\:07.510Z::identityProvider:live.com::isMRRT:true::resource:https\\://management.core.windows.net/::tokenType:Bearer::userId:abc@opscode.com\n"
-      cmdkey_output = double(:stdout => targets)
+      cmdkey_output = double(stdout: targets)
       allow_any_instance_of(Mixlib::ShellOut).to receive(:run_command).and_return(cmdkey_output)
       latest_target = "AzureXplatCli:target=_authority:https\\://login.microsoftonline.com/subscription_id::_clientId:abc123::expiresIn:3599::expiresOn:2016-06-09T13\\:53\\:07.510Z::identityProvider:live.com::isMRRT:true::resource:https\\://management.core.windows.net/::tokenType:Bearer::userId:abc@opscode.com"
       target_name = @windows_credentials.target_name

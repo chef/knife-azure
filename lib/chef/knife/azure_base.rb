@@ -1,6 +1,6 @@
 # Author:: Barry Davis (barryd@jetstreamsoftware.com)
 # Author:: Seth Chisamore (<schisamo@chef.io>)
-# Copyright:: Copyright 2008-2019, Chef Software, Inc.
+# Copyright:: Copyright 2010-2019, Chef Software Inc.
 # License:: Apache License, Version 2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -151,8 +151,8 @@ class Chef
           end
         end
 
-        if locate_config_value(:winrm_ssl) == "ssl" && locate_config_value(:thumbprint).nil? && (locate_config_value(:winrm_no_verify_cert).nil? || locate_config_value(:winrm_no_verify_cert) == :verify_peer)
-          ui.error("The SSL transport was specified without the --thumbprint option. Specify a thumbprint, or alternatively set the --winrm-no-verify-cert option to 'verify_none' to skip verification.")
+        if locate_config_value(:winrm_ssl) == "ssl" && locate_config_value(:thumbprint).nil? && locate_config_value(:winrm_no_verify_cert).nil?
+          ui.error("The SSL transport was specified without the --thumbprint option. Specify a thumbprint, or alternatively set the --winrm-no-verify-cert option to skip verification.")
           exit 1
         end
 

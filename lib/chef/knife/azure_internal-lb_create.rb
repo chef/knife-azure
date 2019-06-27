@@ -1,6 +1,6 @@
 #
 # Author:: Aiman Alsari (aiman.alsari@gmail.com)
-# Copyright:: Copyright 2013-2018 Chef Software, Inc.
+# Copyright:: Copyright 2010-2019, Chef Software Inc.
 # License:: Apache License, Version 2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,22 +26,22 @@ class Chef
       banner "knife azure internal lb create (options)"
 
       option :azure_load_balancer,
-        :short => "-n NAME",
-        :long => "--azure-load-balancer NAME",
-        :description => "Required. Specifies new load balancer name."
+        short: "-n NAME",
+        long: "--azure-load-balancer NAME",
+        description: "Required. Specifies new load balancer name."
 
       option :azure_lb_static_vip,
-        :long => "--azure-lb-static-vip VIP",
-        :description => "Optional. The Virtual IP that will be used for the load balancer."
+        long: "--azure-lb-static-vip VIP",
+        description: "Optional. The Virtual IP that will be used for the load balancer."
 
       option :azure_subnet_name,
-        :long => "--azure-subnet-name SUBNET_NAME",
-        :description => "Required if static VIP is set. Specifies the subnet name "\
+        long: "--azure-subnet-name SUBNET_NAME",
+        description: "Required if static VIP is set. Specifies the subnet name "\
                         "the load balancer is located in."
 
       option :azure_dns_name,
-        :long => "--azure-dns-name DNS_NAME",
-        :description => "The DNS prefix name that will be used to add this load balancer to. This must be an existing service/deployment."
+        long: "--azure-dns-name DNS_NAME",
+        description: "The DNS prefix name that will be used to add this load balancer to. This must be an existing service/deployment."
 
       def run
         $stdout.sync = true
@@ -53,7 +53,7 @@ class Chef
           azure_load_balancer: locate_config_value(:azure_load_balancer),
           azure_lb_static_vip: locate_config_value(:azure_lb_static_vip),
           azure_subnet_name: locate_config_value(:azure_subnet_name),
-          azure_dns_name: locate_config_value(:azure_dns_name)
+          azure_dns_name: locate_config_value(:azure_dns_name),
         }
 
         rsp = service.create_internal_lb(params)

@@ -1,3 +1,20 @@
+#
+# Copyright:: Cop#yright 2010-2019, Chef Software Inc.
+# License:: Apache License, Version 2.0
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
 require File.expand_path(File.dirname(__FILE__) + "/../spec_helper")
 require File.expand_path(File.dirname(__FILE__) + "/../unit/query_azure_mock")
 
@@ -23,10 +40,10 @@ describe Chef::Knife::AzurermServerShow do
   end
 
   it "displays Server Name, Size, Provisioning State, Location, Publisher, Offer, Sku, Version, OS Type, Public IP address & FQDN" do
-    @server = double("Promise", :name => "vmname", :location => "westus")
+    @server = double("Promise", name: "vmname", location: "westus")
     @network_interface_data = double
     @public_ip_data =  double
-    @public_ip_id_data = double(:id => double)
+    @public_ip_id_data = double(id: double)
     network_interface_id = "/subscriptions/xxx-xx-xxx-xxxxx/resourceGroups/xxxxxxx/providers/Microsoft.Network/networkInterfaces/myVMNic"
     network_interface_name = "myVMNIC"
     public_ip_id = "/subscriptions/xxx-xx-xxx-xxxxx/resourceGroups/xxxxxxx/providers/Microsoft.Network/publicIPAddresses/myPublicIP"
@@ -68,7 +85,7 @@ describe Chef::Knife::AzurermServerShow do
   end
 
   it "displays empty Public IP address and FQDN when Public IP address is not allocated to the VM" do
-    @server = double("Promise", :name => "vmname", :location => "westus")
+    @server = double("Promise", name: "vmname", location: "westus")
     @network_interface_data = double
     public_ip_data = nil
     public_ip_id_data = nil
@@ -106,10 +123,10 @@ describe Chef::Knife::AzurermServerShow do
   end
 
   it "displays empty FQDN when DNS name is not defined for the VM" do
-    @server = double("Promise", :name => "vmname", :location => "westus")
+    @server = double("Promise", name: "vmname", location: "westus")
     @network_interface_data = double
     @public_ip_data =  double
-    @public_ip_id_data = double(:id => double)
+    @public_ip_id_data = double(id: double)
     network_interface_id = "/subscriptions/xxx-xx-xxx-xxxxx/resourceGroups/xxxxxxx/providers/Microsoft.Network/networkInterfaces/myVMNic"
     network_interface_name = "myVMNIC"
     public_ip_id = "/subscriptions/xxx-xx-xxx-xxxxx/resourceGroups/xxxxxxx/providers/Microsoft.Network/publicIPAddresses/myPublicIP"

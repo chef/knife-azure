@@ -2,7 +2,7 @@
 # Author:: Barry Davis (barryd@jetstreamsoftware.com)
 # Author:: Adam Jacob (<adam@chef.io>)
 # Author:: Seth Chisamore (<schisamo@chef.io>)
-# Copyright:: Copyright 2009-2018 Chef Software, Inc.
+# Copyright:: Copyright 2010-2019, Chef Software Inc.
 # License:: Apache License, Version 2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -33,50 +33,50 @@ class Chef
       banner "knife azure server delete SERVER [SERVER] (options)"
 
       option :preserve_azure_os_disk,
-        :long => "--preserve-azure-os-disk",
-        :boolean => true,
-        :default => false,
-        :description => "Preserve corresponding OS Disk"
+        long: "--preserve-azure-os-disk",
+        boolean: true,
+        default: false,
+        description: "Preserve corresponding OS Disk"
 
       option :preserve_azure_vhd,
-       :long => "--preserve-azure-vhd",
-       :boolean => true,
-       :default => false,
-       :description => "Preserve underlying VHD"
+       long: "--preserve-azure-vhd",
+       boolean: true,
+       default: false,
+       description: "Preserve underlying VHD"
 
       option :purge,
-        :short => "-P",
-        :long => "--purge",
-        :boolean => true,
-        :default => false,
-        :description => "Destroy corresponding node and client on the Chef Server, in addition to destroying the Windows Azure node itself.  Assumes node and client have the same name as the server (if not, add the '--node-name' option)."
+        short: "-P",
+        long: "--purge",
+        boolean: true,
+        default: false,
+        description: "Destroy corresponding node and client on the Chef Server, in addition to destroying the Windows Azure node itself.  Assumes node and client have the same name as the server (if not, add the '--node-name' option)."
 
       option :chef_node_name,
-        :short => "-N NAME",
-        :long => "--node-name NAME",
-        :description => "The name of the node and client to delete, if it differs from the server name.  Only has meaning when used with the '--purge' option."
+        short: "-N NAME",
+        long: "--node-name NAME",
+        description: "The name of the node and client to delete, if it differs from the server name.  Only has meaning when used with the '--purge' option."
 
       option :preserve_azure_dns_name,
-        :long => "--preserve-azure-dns-name",
-        :boolean => true,
-        :default => false,
-        :description => "Preserve corresponding cloud service (DNS). If the option is not set, it deletes the service not used by any VMs."
+        long: "--preserve-azure-dns-name",
+        boolean: true,
+        default: false,
+        description: "Preserve corresponding cloud service (DNS). If the option is not set, it deletes the service not used by any VMs."
 
       option :delete_azure_storage_account,
-        :long => "--delete-azure-storage-account",
-        :boolean => true,
-        :default => false,
-        :description => "Delete corresponding storage account. If the option is set, it deletes the storage account not used by any VMs."
+        long: "--delete-azure-storage-account",
+        boolean: true,
+        default: false,
+        description: "Delete corresponding storage account. If the option is set, it deletes the storage account not used by any VMs."
 
       option :azure_dns_name,
-        :long => "--azure-dns-name NAME",
-        :description => "specifies the DNS name (also known as hosted service name)"
+        long: "--azure-dns-name NAME",
+        description: "specifies the DNS name (also known as hosted service name)"
 
       option :wait,
-        :long => "--wait",
-        :boolean => true,
-        :default => false,
-        :description => "Wait for server deletion. Default is false"
+        long: "--wait",
+        boolean: true,
+        default: false,
+        description: "Wait for server deletion. Default is false"
 
       # Extracted from Chef::Knife.delete_object, because it has a
       # confirmation step built in... By specifying the '--purge'
