@@ -5,6 +5,7 @@
 
 require File.expand_path(File.dirname(__FILE__) + "/../spec_helper")
 require File.expand_path(File.dirname(__FILE__) + "/../unit/query_azure_mock")
+require "chef/knife/bootstrap"
 
 describe Chef::Knife::BootstrapAzure do
   include AzureSpecHelper
@@ -41,12 +42,12 @@ describe Chef::Knife::BootstrapAzure do
     end
 
     it "raises error when server name is not specified" do
-      allow(@bootstrap_azure_instance.name_args).to receive(
-        :length).and_return(0)
+      @bootstrap_azure_instance.name_args = []
       expect(@service).to_not receive(:add_extension)
       expect(@bootstrap_azure_instance.ui).to receive(
-        :error).with("Please specify the SERVER name which needs to be bootstrapped via the Chef Extension.")
-      expect(Chef::Log).to receive(:debug)
+        :error
+      ).with("Please specify the SERVER name which needs to be bootstrapped via the Chef Extension.")
+      expect(Chef::Log).to receive(:debug).at_least(:once)
       expect { @bootstrap_azure_instance.run }.to raise_error(SystemExit)
     end
 
@@ -55,8 +56,9 @@ describe Chef::Knife::BootstrapAzure do
       expect(@bootstrap_azure_instance.name_args.length).to be == 3
       expect(@service).to_not receive(:add_extension)
       expect(@bootstrap_azure_instance.ui).to receive(
-        :error).with("Please specify only one SERVER name which needs to be bootstrapped via the Chef Extension.")
-      expect(Chef::Log).to receive(:debug)
+        :error
+      ).with("Please specify only one SERVER name which needs to be bootstrapped via the Chef Extension.")
+      expect(Chef::Log).to receive(:debug).at_least(:once)
       expect { @bootstrap_azure_instance.run }.to raise_error(SystemExit)
     end
 
@@ -64,10 +66,12 @@ describe Chef::Knife::BootstrapAzure do
       expect(@bootstrap_azure_instance.name_args.length).to be == 1
       expect(@service).to_not receive(:add_extension)
       expect(@service).to receive(
-        :find_server).and_return(Array.new)
+        :find_server
+      ).and_return([])
       expect(@bootstrap_azure_instance.ui).to receive(
-        :error).with("Server test-vm-01 does not exist under the hosted service test-dns-01.")
-      expect(Chef::Log).to receive(:debug)
+        :error
+      ).with("Server test-vm-01 does not exist under the hosted service test-dns-01.")
+      expect(Chef::Log).to receive(:debug).at_least(:once)
       expect { @bootstrap_azure_instance.run }.to raise_error(SystemExit)
     end
 
@@ -75,10 +79,12 @@ describe Chef::Knife::BootstrapAzure do
       expect(@bootstrap_azure_instance.name_args.length).to be == 1
       expect(@service).to_not receive(:add_extension)
       expect(@service).to receive(
-        :find_server).and_return(nil)
+        :find_server
+      ).and_return(nil)
       expect(@bootstrap_azure_instance.ui).to receive(
-        :error).with("Hosted service test-dns-01 does not exist.")
-      expect(Chef::Log).to receive(:debug)
+        :error
+      ).with("Hosted service test-dns-01 does not exist.")
+      expect(Chef::Log).to receive(:debug).at_least(:once)
       expect { @bootstrap_azure_instance.run }.to raise_error(SystemExit)
     end
 
@@ -87,10 +93,12 @@ describe Chef::Knife::BootstrapAzure do
       expect(@bootstrap_azure_instance.name_args.length).to be == 1
       expect(@service).to_not receive(:add_extension)
       expect(@service).to receive(
-        :find_server).and_return(nil)
+        :find_server
+      ).and_return(nil)
       expect(@bootstrap_azure_instance.ui).to receive(
-        :error).with("Server test-vm-01 does not exist.")
-      expect(Chef::Log).to receive(:debug)
+        :error
+      ).with("Server test-vm-01 does not exist.")
+      expect(Chef::Log).to receive(:debug).at_least(:once)
       expect { @bootstrap_azure_instance.run }.to raise_error(SystemExit)
     end
 
@@ -99,23 +107,29 @@ describe Chef::Knife::BootstrapAzure do
         before do
           @server_role.hostedservicename = "my_new_dns"
           allow(@server_role).to receive_message_chain(
-            :os_type, :downcase).and_return("windows")
+            :os_type, :downcase
+          ).and_return("windows")
           allow(@server_role).to receive(
-            :deployname).and_return("")
+            :deployname
+          ).and_return("")
           allow(@server_role).to receive(:role_xml).and_return("")
           allow(@bootstrap_azure_instance).to receive(
-            :get_chef_extension_version)
+            :get_chef_extension_version
+          )
           allow(@bootstrap_azure_instance).to receive(
-            :get_chef_extension_public_params)
+            :get_chef_extension_public_params
+          )
           allow(@bootstrap_azure_instance).to receive(
-            :get_chef_extension_private_params)
+            :get_chef_extension_private_params
+          )
         end
 
         it "does not raise error when server name do exist and does not re-initializes azure_dns_name in bootstrap_azure_instance's config using server object" do
           expect(@bootstrap_azure_instance.name_args.length).to be == 1
           expect(@service).to receive(:add_extension)
           expect(@service).to receive(
-            :find_server).and_return(@server_role)
+            :find_server
+          ).and_return(@server_role)
           expect { @bootstrap_azure_instance.run }.not_to raise_error
           expect(Chef::Config[:knife][:azure_dns_name]).to be == "test-dns-01"
           expect(@bootstrap_azure_instance.config[:azure_dns_name]).to be_nil
@@ -127,23 +141,29 @@ describe Chef::Knife::BootstrapAzure do
           Chef::Config[:knife].delete(:azure_dns_name)
           @server_role.hostedservicename = "my_new_dns"
           allow(@server_role).to receive_message_chain(
-            :os_type, :downcase).and_return("windows")
+            :os_type, :downcase
+          ).and_return("windows")
           allow(@server_role).to receive(
-            :deployname).and_return("")
+            :deployname
+          ).and_return("")
           allow(@server_role).to receive(:role_xml).and_return("")
           allow(@bootstrap_azure_instance).to receive(
-            :get_chef_extension_version)
+            :get_chef_extension_version
+          )
           allow(@bootstrap_azure_instance).to receive(
-            :get_chef_extension_public_params)
+            :get_chef_extension_public_params
+          )
           allow(@bootstrap_azure_instance).to receive(
-            :get_chef_extension_private_params)
+            :get_chef_extension_private_params
+          )
         end
 
         it "does not raise error when server name do exist and initializes azure_dns_name in bootstrap_azure_instance's config using server object" do
           expect(@bootstrap_azure_instance.name_args.length).to be == 1
           expect(@service).to receive(:add_extension)
           expect(@service).to receive(
-            :find_server).and_return(@server_role)
+            :find_server
+          ).and_return(@server_role)
           expect { @bootstrap_azure_instance.run }.not_to raise_error
           expect(@bootstrap_azure_instance.config[:azure_dns_name]).to be == "my_new_dns"
           expect(Chef::Config[:knife][:azure_dns_name]).to be_nil
@@ -199,9 +219,10 @@ describe Chef::Knife::BootstrapAzure do
           expect(@service).to receive(:add_extension)
           expect(@bootstrap_azure_instance).to receive(:print).exactly(1).times
           allow(@bootstrap_azure_instance).to receive(
-            :wait_until_extension_available).and_raise(
-              "\nUnable to fetch chef-client run logs as Chef Extension seems to be unavailable even after 11 minutes of its deployment.\n"
-            )
+            :wait_until_extension_available
+          ).and_raise(
+            "\nUnable to fetch chef-client run logs as Chef Extension seems to be unavailable even after 11 minutes of its deployment.\n"
+          )
           expect(@bootstrap_azure_instance).to_not receive(:fetch_chef_client_logs)
           expect(@bootstrap_azure_instance.ui).to receive(:error).with(
             "\nUnable to fetch chef-client run logs as Chef Extension seems to be unavailable even after 11 minutes of its deployment.\n"
@@ -216,15 +237,18 @@ describe Chef::Knife::BootstrapAzure do
     context "invalid os_type for the given server" do
       before do
         allow(@server_role).to receive(
-          :os_type).and_return("Abc")
+          :os_type
+        ).and_return("Abc")
       end
 
       it "raises an error" do
         expect(@service).to receive(
-          :find_server).and_return(@server_role)
+          :find_server
+        ).and_return(@server_role)
         expect(@bootstrap_azure_instance.ui).to receive(
-          :error).with("OS type Abc is not supported.")
-        expect(Chef::Log).to receive(:debug)
+          :error
+        ).with("OS type Abc is not supported.")
+        expect(Chef::Log).to receive(:debug).at_least(:once)
         expect { @bootstrap_azure_instance.run }.to raise_error(SystemExit)
       end
     end
@@ -232,17 +256,21 @@ describe Chef::Knife::BootstrapAzure do
     context "invalid os_version for the given Linux server" do
       before do
         allow(@server_role).to receive(
-          :os_type).and_return("Linux")
+          :os_type
+        ).and_return("Linux")
         allow(@server_role).to receive(
-          :os_version).and_return("Suse")
+          :os_version
+        ).and_return("Suse")
       end
 
       it "raises an error" do
         expect(@service).to receive(
-          :find_server).and_return(@server_role)
+          :find_server
+        ).and_return(@server_role)
         expect(@bootstrap_azure_instance.ui).to receive(
-          :error).with("OS version Suse for OS type Linux is not supported.")
-        expect(Chef::Log).to receive(:debug)
+          :error
+        ).with("OS version Suse for OS type Linux is not supported.")
+        expect(Chef::Log).to receive(:debug).at_least(:once)
         expect { @bootstrap_azure_instance.run }.to raise_error(SystemExit)
       end
     end
@@ -250,30 +278,40 @@ describe Chef::Knife::BootstrapAzure do
     context "valid os_type and valid os_version" do
       before do
         allow(@server_role).to receive(
-          :deployname).and_return("test-deploy-01")
+          :deployname
+        ).and_return("test-deploy-01")
         allow(@server_role).to receive(
-          :role_xml).and_return("vm-role-xml")
+          :role_xml
+        ).and_return("vm-role-xml")
         allow(@bootstrap_azure_instance).to receive(
-          :get_chef_extension_version).and_return("1210.*")
+          :get_chef_extension_version
+        ).and_return("1210.*")
         allow(@bootstrap_azure_instance).to receive(
-          :get_chef_extension_public_params).and_return(
-            "chef_ext_public_params")
+          :get_chef_extension_public_params
+        ).and_return(
+          "chef_ext_public_params"
+        )
         allow(@bootstrap_azure_instance).to receive(
-          :get_chef_extension_private_params).and_return(
-            "chef_ext_private_params")
+          :get_chef_extension_private_params
+        ).and_return(
+          "chef_ext_private_params"
+        )
       end
 
       context "for Linux" do
         before do
           allow(@server_role).to receive(
-            :os_type).and_return("Linux")
+            :os_type
+          ).and_return("Linux")
           allow(@server_role).to receive(
-            :os_version).and_return("CentOS")
+            :os_version
+          ).and_return("CentOS")
         end
 
         it "sets the extension parameters for Linux platform" do
           expect(@service).to receive(
-            :find_server).and_return(@server_role)
+            :find_server
+          ).and_return(@server_role)
           response = @bootstrap_azure_instance.set_ext_params
           expect(response[:chef_extension]).to be == "LinuxChefClient"
           expect(response[:azure_dns_name]).to be == "test-dns-01"
@@ -290,12 +328,14 @@ describe Chef::Knife::BootstrapAzure do
       context "for Windows" do
         before do
           allow(@server_role).to receive(
-            :os_type).and_return("Windows")
+            :os_type
+          ).and_return("Windows")
         end
 
         it "sets the extension parameters for Windows platform" do
           expect(@service).to receive(
-            :find_server).and_return(@server_role)
+            :find_server
+          ).and_return(@server_role)
           response = @bootstrap_azure_instance.set_ext_params
           expect(response[:chef_extension]).to be == "ChefClient"
           expect(response[:azure_dns_name]).to be == "test-dns-01"
@@ -334,19 +374,23 @@ describe Chef::Knife::BootstrapAzure do
   describe "add_extension" do
     it "calls role update and prints success message on successful completion" do
       expect(@service.ui).to receive(:info).with(
-        "Started with Chef Extension deployment on the server test-vm-01...")
+        "Started with Chef Extension deployment on the server test-vm-01..."
+      )
       expect(@service).to receive_message_chain(
-        :connection, :roles, :update)
+        :connection, :roles, :update
+      )
       expect(@service.ui).to receive(:info).with(
-        "\nSuccessfully deployed Chef Extension on the server test-vm-01.")
+        "\nSuccessfully deployed Chef Extension on the server test-vm-01."
+      )
       @service.add_extension(@bootstrap_azure_instance.name_args[0])
     end
 
     it "calls role update and raises error on unsuccessful completion" do
       expect(@service).to receive_message_chain(
-        :connection, :roles, :update).and_raise
+        :connection, :roles, :update
+      ).and_raise
       expect(Chef::Log).to receive(:error)
-      expect(Chef::Log).to receive(:debug)
+      expect(Chef::Log).to receive(:debug).at_least(:once)
       @service.add_extension(@bootstrap_azure_instance.name_args[0])
     end
   end
@@ -360,9 +404,11 @@ describe Chef::Knife::BootstrapAzure do
 
     it "calls setup_extension and update methods of Role class" do
       expect(@role).to receive(
-        :setup_extension).with({}).and_return(nil)
+        :setup_extension
+      ).with({}).and_return(nil)
       expect(@role).to receive(:update).with(
-        @bootstrap_azure_instance.name_args[0], {}, nil)
+        @bootstrap_azure_instance.name_args[0], {}, nil
+      )
       @roles.update(@bootstrap_azure_instance.name_args[0], {})
     end
   end
@@ -385,11 +431,11 @@ describe Chef::Knife::BootstrapAzure do
   describe "update_role_xml_for_extension" do
     before do
       @params = {
-        :chef_extension_publisher => "Chef.Bootstrap.WindowsAzure",
-        :chef_extension_version => "1210.12",
-        :chef_extension_public_param => "MyPublicParamsValue",
-        :chef_extension_private_param => "MyPrivateParamsValue",
-        :azure_dns_name => Chef::Config[:knife][:azure_dns_name]
+        chef_extension_publisher: "Chef.Bootstrap.WindowsAzure",
+        chef_extension_version: "1210.12",
+        chef_extension_public_param: "MyPublicParamsValue",
+        chef_extension_private_param: "MyPrivateParamsValue",
+        azure_dns_name: Chef::Config[:knife][:azure_dns_name],
       }
       @role = Azure::Role.new("connection")
     end
@@ -462,9 +508,9 @@ describe Chef::Knife::BootstrapAzure do
 
     it "raises an error on update role failure" do
       expect(@role.connection).to receive(:query_azure)
-      expect(@role).to receive(:error_from_response_xml).
-        and_return(["InvalidXmlRequest", "The request body's XML was invalid or not correctly specified."])
-      expect(Chef::Log).to receive(:debug)
+      expect(@role).to receive(:error_from_response_xml)
+        .and_return(["InvalidXmlRequest", "The request body's XML was invalid or not correctly specified."])
+      expect(Chef::Log).to receive(:debug).at_least(:once)
       expect { @role.update(@bootstrap_azure_instance.name_args[0], {}, "") }.to raise_error("Unable to update role:InvalidXmlRequest : The request body's XML was invalid or not correctly specified.")
     end
   end
@@ -472,9 +518,11 @@ describe Chef::Knife::BootstrapAzure do
   describe "get_chef_extension_version" do
     before do
       allow(@service).to receive(:instance_of?).with(
-        Azure::ResourceManagement::ARMInterface).and_return(false)
+        Azure::ResourceManagement::ARMInterface
+      ).and_return(false)
       allow(@service).to receive(:instance_of?).with(
-        Azure::ServiceManagement::ASMInterface).and_return(true)
+        Azure::ServiceManagement::ASMInterface
+      ).and_return(true)
     end
 
     context "when extension version is set in knife.rb" do
@@ -493,7 +541,8 @@ describe Chef::Knife::BootstrapAzure do
         Chef::Config[:knife].delete(:azure_chef_extension_version)
         extensions_list_xml = Nokogiri::XML(readFile("bootstrap_azure_role_xmls/extensions_list.xml"))
         allow(@service).to receive(
-          :get_extension).and_return(extensions_list_xml)
+          :get_extension
+        ).and_return(extensions_list_xml)
       end
 
       it "will pick up the latest version of the extension" do
@@ -530,7 +579,8 @@ describe Chef::Knife::BootstrapAzure do
           expect(@bootstrap_azure_instance).to receive(:print).exactly(1).times
           expect(@bootstrap_azure_instance).to receive(:sleep).with(30)
           expect(@bootstrap_azure_instance).to receive(
-            :wait_until_extension_available).with(@start_time, 10)
+            :wait_until_extension_available
+          ).with(@start_time, 10)
           @bootstrap_azure_instance.wait_until_extension_available_mocked(@start_time, 10)
         end
       end
@@ -548,7 +598,8 @@ describe Chef::Knife::BootstrapAzure do
             expect(@bootstrap_azure_instance).to receive(:print).exactly(1).times
             expect(@bootstrap_azure_instance).to receive(:sleep).with(30)
             expect(@bootstrap_azure_instance).to receive(
-              :wait_until_extension_available).with(@start_time, 10)
+              :wait_until_extension_available
+            ).with(@start_time, 10)
             @bootstrap_azure_instance.wait_until_extension_available_mocked(@start_time, 10)
           end
         end
@@ -556,7 +607,7 @@ describe Chef::Knife::BootstrapAzure do
         context "given role available" do
           context "GuestAgent not ready" do
             before do
-              @bootstrap_azure_instance.name_args = [ "vm05" ]
+              @bootstrap_azure_instance.name_args = ["vm05"]
               @start_time = Time.now
               deployment = Nokogiri::XML readFile("extension_deployment_xml.xml")
               allow(@bootstrap_azure_instance).to receive(:fetch_deployment).and_return(deployment)
@@ -567,7 +618,8 @@ describe Chef::Knife::BootstrapAzure do
               expect(@bootstrap_azure_instance).to receive(:print).exactly(1).times
               expect(@bootstrap_azure_instance).to receive(:sleep).with(30)
               expect(@bootstrap_azure_instance).to receive(
-                :wait_until_extension_available).with(@start_time, 10)
+                :wait_until_extension_available
+              ).with(@start_time, 10)
               @bootstrap_azure_instance.wait_until_extension_available_mocked(@start_time, 10)
             end
           end
@@ -575,7 +627,7 @@ describe Chef::Knife::BootstrapAzure do
           context "GuestAgent ready" do
             context "none of the extension status available" do
               before do
-                @bootstrap_azure_instance.name_args = [ "vm06" ]
+                @bootstrap_azure_instance.name_args = ["vm06"]
                 @start_time = Time.now
                 deployment = Nokogiri::XML readFile("extension_deployment_xml.xml")
                 allow(@bootstrap_azure_instance).to receive(:fetch_deployment).and_return(deployment)
@@ -586,7 +638,8 @@ describe Chef::Knife::BootstrapAzure do
                 expect(@bootstrap_azure_instance).to receive(:print).exactly(1).times
                 expect(@bootstrap_azure_instance).to receive(:sleep).with(30)
                 expect(@bootstrap_azure_instance).to receive(
-                  :wait_until_extension_available).with(@start_time, 10)
+                  :wait_until_extension_available
+                ).with(@start_time, 10)
                 @bootstrap_azure_instance.wait_until_extension_available_mocked(@start_time, 10)
               end
             end
@@ -594,7 +647,7 @@ describe Chef::Knife::BootstrapAzure do
             context "extension status(es) available apart from extension status for Chef Extension" do
               context "example-1" do
                 before do
-                  @bootstrap_azure_instance.name_args = [ "vm01" ]
+                  @bootstrap_azure_instance.name_args = ["vm01"]
                   @start_time = Time.now
                   deployment = Nokogiri::XML readFile("extension_deployment_xml.xml")
                   allow(@bootstrap_azure_instance).to receive(:fetch_deployment).and_return(deployment)
@@ -605,14 +658,15 @@ describe Chef::Knife::BootstrapAzure do
                   expect(@bootstrap_azure_instance).to receive(:print).exactly(1).times
                   expect(@bootstrap_azure_instance).to receive(:sleep).with(30)
                   expect(@bootstrap_azure_instance).to receive(
-                    :wait_until_extension_available).with(@start_time, 10)
+                    :wait_until_extension_available
+                  ).with(@start_time, 10)
                   @bootstrap_azure_instance.wait_until_extension_available_mocked(@start_time, 10)
                 end
               end
 
               context "example-2" do
                 before do
-                  @bootstrap_azure_instance.name_args = [ "vm07" ]
+                  @bootstrap_azure_instance.name_args = ["vm07"]
                   @start_time = Time.now
                   deployment = Nokogiri::XML readFile("extension_deployment_xml.xml")
                   allow(@bootstrap_azure_instance).to receive(:fetch_deployment).and_return(deployment)
@@ -623,7 +677,8 @@ describe Chef::Knife::BootstrapAzure do
                   expect(@bootstrap_azure_instance).to receive(:print).exactly(1).times
                   expect(@bootstrap_azure_instance).to receive(:sleep).with(30)
                   expect(@bootstrap_azure_instance).to receive(
-                    :wait_until_extension_available).with(@start_time, 10)
+                    :wait_until_extension_available
+                  ).with(@start_time, 10)
                   @bootstrap_azure_instance.wait_until_extension_available_mocked(@start_time, 10)
                 end
               end
@@ -632,7 +687,7 @@ describe Chef::Knife::BootstrapAzure do
             context "extension status(es) available including extension status for Chef Extension" do
               context "example-1" do
                 before do
-                  @bootstrap_azure_instance.name_args = [ "vm02" ]
+                  @bootstrap_azure_instance.name_args = ["vm02"]
                   @start_time = Time.now
                   deployment = Nokogiri::XML readFile("extension_deployment_xml.xml")
                   allow(@bootstrap_azure_instance).to receive(:fetch_deployment).and_return(deployment)
@@ -643,14 +698,15 @@ describe Chef::Knife::BootstrapAzure do
                   expect(@bootstrap_azure_instance).to_not receive(:print)
                   expect(@bootstrap_azure_instance).to_not receive(:sleep).with(30)
                   expect(@bootstrap_azure_instance).to_not receive(
-                    :wait_until_extension_available).with(@start_time, 10)
+                    :wait_until_extension_available
+                  ).with(@start_time, 10)
                   @bootstrap_azure_instance.wait_until_extension_available_mocked(@start_time, 10)
                 end
               end
 
               context "example-2" do
                 before do
-                  @bootstrap_azure_instance.name_args = [ "vm03" ]
+                  @bootstrap_azure_instance.name_args = ["vm03"]
                   @start_time = Time.now
                   deployment = Nokogiri::XML readFile("extension_deployment_xml.xml")
                   allow(@bootstrap_azure_instance).to receive(:fetch_deployment).and_return(deployment)
@@ -661,14 +717,15 @@ describe Chef::Knife::BootstrapAzure do
                   expect(@bootstrap_azure_instance).to_not receive(:print)
                   expect(@bootstrap_azure_instance).to_not receive(:sleep).with(30)
                   expect(@bootstrap_azure_instance).to_not receive(
-                    :wait_until_extension_available).with(@start_time, 10)
+                    :wait_until_extension_available
+                  ).with(@start_time, 10)
                   @bootstrap_azure_instance.wait_until_extension_available_mocked(@start_time, 10)
                 end
               end
 
               context "example-3" do
                 before do
-                  @bootstrap_azure_instance.name_args = [ "vm08" ]
+                  @bootstrap_azure_instance.name_args = ["vm08"]
                   @start_time = Time.now
                   deployment = Nokogiri::XML readFile("extension_deployment_xml.xml")
                   allow(@bootstrap_azure_instance).to receive(:fetch_deployment).and_return(deployment)
@@ -679,7 +736,8 @@ describe Chef::Knife::BootstrapAzure do
                   expect(@bootstrap_azure_instance).to_not receive(:print)
                   expect(@bootstrap_azure_instance).to_not receive(:sleep).with(30)
                   expect(@bootstrap_azure_instance).to_not receive(
-                    :wait_until_extension_available).with(@start_time, 10)
+                    :wait_until_extension_available
+                  ).with(@start_time, 10)
                   @bootstrap_azure_instance.wait_until_extension_available_mocked(@start_time, 10)
                 end
               end
@@ -693,10 +751,12 @@ describe Chef::Knife::BootstrapAzure do
   describe "fetch_deployment" do
     before do
       allow(@bootstrap_azure_instance.service).to receive(
-        :deployment_name).and_return("deploymentExtension")
+        :deployment_name
+      ).and_return("deploymentExtension")
       deployment = Nokogiri::XML readFile("extension_deployment_xml.xml")
       allow(@bootstrap_azure_instance.service).to receive(
-        :deployment).and_return(deployment)
+        :deployment
+      ).and_return(deployment)
     end
 
     it "returns the deployment" do
@@ -711,7 +771,7 @@ describe Chef::Knife::BootstrapAzure do
   def mock_recursive_call
     @bootstrap_azure_instance.instance_eval do
       class << self
-        alias_method :wait_until_extension_available_mocked, :wait_until_extension_available
+        alias wait_until_extension_available_mocked wait_until_extension_available
       end
     end
   end

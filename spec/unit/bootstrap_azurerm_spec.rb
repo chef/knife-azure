@@ -5,6 +5,7 @@
 
 require File.expand_path(File.dirname(__FILE__) + "/../spec_helper")
 require File.expand_path(File.dirname(__FILE__) + "/../unit/query_azure_mock")
+require "chef/knife/bootstrap"
 
 describe Chef::Knife::BootstrapAzurerm do
   include AzureSpecHelper
@@ -20,18 +21,18 @@ describe Chef::Knife::BootstrapAzurerm do
 
     @compute_client = double("ComputeManagementClient")
     allow(@bootstrap_azurerm_instance.service).to receive(
-      :compute_management_client).and_return(@compute_client)
+      :compute_management_client
+    ).and_return(@compute_client)
   end
 
   context "parameters validation" do
     it "raises error when server name is not given in the args" do
-      allow(@bootstrap_azurerm_instance.name_args).to receive(:length).and_return(0)
+      @bootstrap_azurerm_instance.name_args = []
       expect(@bootstrap_azurerm_instance.ui).to receive(:log).with("Validating...")
       expect(@bootstrap_azurerm_instance).to receive(:validate_arm_keys!)
       expect(@service).to_not receive(:create_vm_extension)
-      expect(@bootstrap_azurerm_instance.ui).to receive(
-        :error).twice
-      expect(Chef::Log).to receive(:debug)
+      expect(@bootstrap_azurerm_instance.ui).to receive(:error).twice
+      expect(Chef::Log).to receive(:debug).at_least(:once)
       @bootstrap_azurerm_instance.run
     end
 
@@ -55,8 +56,9 @@ describe Chef::Knife::BootstrapAzurerm do
       expect(@bootstrap_azurerm_instance.ui).to receive(:log).with("Validating...")
       expect(@service).to_not receive(:create_vm_extension)
       expect(@bootstrap_azurerm_instance.ui).to receive(
-        :error).twice
-      expect(Chef::Log).to receive(:debug)
+        :error
+      ).twice
+      expect(Chef::Log).to receive(:debug).at_least(:once)
       @bootstrap_azurerm_instance.run
     end
 
@@ -66,19 +68,20 @@ describe Chef::Knife::BootstrapAzurerm do
       expect(@service).to receive(:find_server).and_return(nil)
       expect(@bootstrap_azurerm_instance.ui).to receive(:log).twice
       expect(@bootstrap_azurerm_instance.ui).to receive(
-        :error).twice
-      expect(Chef::Log).to receive(:debug)
+        :error
+      ).twice
+      expect(Chef::Log).to receive(:debug).at_least(:once)
       @bootstrap_azurerm_instance.run
     end
 
     it "raises error if the extension is already installed on the server" do
-      @server = double("server", :name => "foo")
+      @server = double("server", name: "foo")
       expect(@bootstrap_azurerm_instance.name_args.length).to be == 1
       expect(@bootstrap_azurerm_instance.ui).to receive(:log).twice
       allow(@service).to receive(:find_server).and_return(@server)
       allow(@service).to receive(:extension_already_installed?).and_return(true)
       expect(@bootstrap_azurerm_instance.ui).to receive(:error).twice
-      expect(Chef::Log).to receive(:debug)
+      expect(Chef::Log).to receive(:debug).at_least(:once)
       @bootstrap_azurerm_instance.run
     end
   end
@@ -131,16 +134,16 @@ describe Chef::Knife::BootstrapAzurerm do
       allow(@server).to receive_message_chain(:storage_profile, :image_reference, :offer).and_return("abc")
       expect(@bootstrap_azurerm_instance.ui).to receive(:log).twice
       expect(@bootstrap_azurerm_instance.ui).to receive(:error).twice
-      expect(Chef::Log).to receive(:debug)
+      expect(Chef::Log).to receive(:debug).at_least(:once)
       @bootstrap_azurerm_instance.run
     end
   end
 
   context "when correct parameters are given" do
     it "creates VM extension with no extended log option passed" do
-      @server = double("server", :name => "foo", :id => 1)
-      vm_extension = double("vm_extension", :name => "foo", :id => 1)
-      public_params = { :extendedLogs => "false" }
+      @server = double("server", name: "foo", id: 1)
+      vm_extension = double("vm_extension", name: "foo", id: 1)
+      public_params = { extendedLogs: "false" }
       allow(@service).to receive(:find_server).and_return(@server)
       allow(@service).to receive(:extension_already_installed?).and_return(false)
       allow(@server).to receive_message_chain(:storage_profile, :os_disk, :os_type).and_return("linux")
@@ -155,9 +158,9 @@ describe Chef::Knife::BootstrapAzurerm do
     end
 
     it "creates VM extension with extended log option passed" do
-      @server = double("server", :name => "foo", :id => 1)
-      vm_extension = double("vm_extension", :name => "foo", :id => 1)
-      public_params = { :extendedLogs => "true" }
+      @server = double("server", name: "foo", id: 1)
+      vm_extension = double("vm_extension", name: "foo", id: 1)
+      public_params = { extendedLogs: "true" }
       allow(@service).to receive(:find_server).and_return(@server)
       allow(@service).to receive(:extension_already_installed?).and_return(false)
       allow(@server).to receive_message_chain(:storage_profile, :os_disk, :os_type).and_return("linux")
@@ -170,7 +173,6 @@ describe Chef::Knife::BootstrapAzurerm do
       expect(@service).to receive(:fetch_chef_client_logs).exactly(1).times
       @bootstrap_azurerm_instance.run
     end
-
   end
 
   context "find_server" do
@@ -183,22 +185,22 @@ describe Chef::Knife::BootstrapAzurerm do
 
   context "extension_already_installed?" do
     it "returns true if the VM has ChefClient extension installed" do
-      extension = double(:virtual_machine_extension_type => "ChefClient")
-      @server = double("server", :resources => [extension])
+      extension = double(virtual_machine_extension_type: "ChefClient")
+      @server = double("server", resources: [extension])
       extension_installed = @service.extension_already_installed?(@server)
       expect(extension_installed).to be(true)
     end
 
     it "returns true if the VM has LinuxChefClient extension installed" do
-      extension = double(:virtual_machine_extension_type => "LinuxChefClient")
-      @server = double("server", :resources => [extension])
+      extension = double(virtual_machine_extension_type: "LinuxChefClient")
+      @server = double("server", resources: [extension])
       extension_installed = @service.extension_already_installed?(@server)
       expect(extension_installed).to be(true)
     end
 
     it "returns false if the VM doesn't have chef extension installed" do
-      extension = double(:virtual_machine_extension_type => "some_type")
-      @server = double("server", :resources => [extension])
+      extension = double(virtual_machine_extension_type: "some_type")
+      @server = double("server", resources: [extension])
       extension_installed = @service.extension_already_installed?(@server)
       expect(extension_installed).to be(false)
     end
@@ -207,7 +209,8 @@ describe Chef::Knife::BootstrapAzurerm do
   describe "get_chef_extension_version" do
     before do
       allow(@service).to receive(:instance_of?).with(
-        Azure::ResourceManagement::ARMInterface).and_return(true)
+        Azure::ResourceManagement::ARMInterface
+      ).and_return(true)
     end
 
     context "when extension version is set in knife.rb" do
@@ -225,7 +228,8 @@ describe Chef::Knife::BootstrapAzurerm do
       before do
         Chef::Config[:knife].delete(:azure_chef_extension_version)
         allow(@service).to receive(
-          :get_latest_chef_extension_version).and_return("1213.14")
+          :get_latest_chef_extension_version
+        ).and_return("1213.14")
       end
 
       it "will pick up the latest version of the extension" do
@@ -244,7 +248,7 @@ describe Chef::Knife::BootstrapAzurerm do
 
       it "does not set hints in extension's public config parameters" do
         response = @bootstrap_azurerm_instance.get_chef_extension_public_params
-        expect(response.has_key? :hints).to be == false
+        expect(response.key?(:hints)).to be == false
       end
     end
 
@@ -255,7 +259,7 @@ describe Chef::Knife::BootstrapAzurerm do
 
       it "does not set hints in extension's public config parameters" do
         response = @bootstrap_azurerm_instance.get_chef_extension_public_params
-        expect(response.has_key? :hints).to be == false
+        expect(response.key?(:hints)).to be == false
       end
     end
   end
