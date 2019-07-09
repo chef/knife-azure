@@ -43,7 +43,7 @@ class Chef
         image_labels = !locate_config_value(:show_all_fields) ? %w{Name OS Location} : %w{Name Category Label OS Location}
         image_list =  image_labels.map { |label| ui.color(label, :bold) }
 
-        image_items = image_labels.map { |item| item.downcase }
+        image_items = image_labels.map(&:downcase)
         items.each do |image|
           image_items.each { |item| image_list << image.send(item).to_s }
         end

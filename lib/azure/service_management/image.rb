@@ -37,7 +37,7 @@ module Azure
 
     # img_type = OSImages or VMImage
     def get_images(img_type)
-      images = Hash.new
+      images = {}
 
       if img_type == "OSImage"
         response = @connection.query_azure("images")

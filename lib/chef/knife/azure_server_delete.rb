@@ -39,10 +39,10 @@ class Chef
         description: "Preserve corresponding OS Disk"
 
       option :preserve_azure_vhd,
-       long: "--preserve-azure-vhd",
-       boolean: true,
-       default: false,
-       description: "Preserve underlying VHD"
+        long: "--preserve-azure-vhd",
+        boolean: true,
+        default: false,
+        description: "Preserve underlying VHD"
 
       option :purge,
         short: "-P",

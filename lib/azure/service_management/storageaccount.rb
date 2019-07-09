@@ -26,9 +26,9 @@ module Azure
     # force_load should be true when there is something in local cache and we want to reload
     # first call is always load.
     def load(force_load = false)
-      if not @azure_storage_accounts || force_load
+      unless @azure_storage_accounts || force_load
         @azure_storage_accounts = begin
-          azure_storage_accounts = Hash.new
+          azure_storage_accounts = {}
           responseXML = @connection.query_azure("storageservices")
           servicesXML = responseXML.css("StorageServices StorageService")
           servicesXML.each do |serviceXML|
@@ -48,6 +48,7 @@ module Azure
     # first look up local cache if we have already loaded list.
     def exists?(name)
       return @azure_storage_accounts.key?(name) if @azure_storage_accounts
+
       exists_on_cloud?(name)
     end
 
@@ -71,6 +72,7 @@ module Azure
     def clear_unattached
       all.each do |storage|
         next unless storage.attached == false
+
         @connection.query_azure("storageaccounts/" + storage.name, "delete")
       end
     end

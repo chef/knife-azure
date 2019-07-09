@@ -67,7 +67,7 @@ describe Chef::Knife::AzureImageList do
   it "should display Name, Category, Label and OS columns when show_all_fields set to true." do
     Chef::Config[:knife][:show_all_fields] = true
     expect(@server_instance.ui).to receive(:list)
-        .with(["Name", "Category", "Label", "OS", "Location",
+      .with(["Name", "Category", "Label", "OS", "Location",
           "CANONICAL__Canonical-Ubuntu-12-04-20120519-2012-05-19-en-us-30GB.vhd", "Canonical",
           "Ubuntu Server 12.04 20120519", "Linux", "East Asia", "MSFT__Windows-Server-2008-R2-SP1.11-29-2011",
           "Microsoft", "Windows Server 2008 R2 SP1, Nov 2011",

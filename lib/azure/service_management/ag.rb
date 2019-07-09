@@ -26,11 +26,11 @@ module Azure
       @ags ||= begin
         @ags = {}
         response = @connection.query_azure("affinitygroups",
-                                           "get",
-                                           "",
-                                           "",
-                                           true,
-                                           false)
+          "get",
+          "",
+          "",
+          true,
+          false)
         response.css("AffinityGroup").each do |ag|
           item = AG.new(@connection).parse(ag)
           @ags[item.name] = item
@@ -89,11 +89,11 @@ module Azure
         end
       end
       @connection.query_azure("affinitygroups",
-                              "post",
-                              builder.to_xml,
-                              "",
-                              true,
-                              false)
+        "post",
+        builder.to_xml,
+        "",
+        true,
+        false)
     end
   end
 end

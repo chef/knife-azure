@@ -23,7 +23,7 @@ module Azure
     end
 
     def all
-      disks = Array.new
+      disks = []
       response = @connection.query_azure("disks")
       founddisks = response.css("Disk")
       founddisks.each do |disk|
@@ -37,6 +37,7 @@ module Azure
       founddisk = nil
       all.each do |disk|
         next unless disk.name == name
+
         founddisk = disk
       end
       founddisk
@@ -49,6 +50,7 @@ module Azure
     def clear_unattached
       all.each do |disk|
         next unless disk.attached == false
+
         @connection.query_azure("disks/" + disk.name, "delete")
       end
     end

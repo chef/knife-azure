@@ -64,7 +64,7 @@ describe Chef::Knife::BootstrapAzurerm do
     end
 
     it "raises error when more than one server name is specified" do
-      @bootstrap_azurerm_instance.name_args = ["test-vm-01", "test-vm-02", "test-vm-03"]
+      @bootstrap_azurerm_instance.name_args = %w{test-vm-01 test-vm-02 test-vm-03}
       expect(@bootstrap_azurerm_instance.name_args.length).to be == 3
       expect(@bootstrap_azurerm_instance.ui).to receive(:log).with("Validating...")
       expect(@service).to_not receive(:create_vm_extension)

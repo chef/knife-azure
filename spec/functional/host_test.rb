@@ -31,6 +31,7 @@ describe "Connection" do
     foundNamedHost = false
     @items.each do |host|
       next unless host.name == "service002"
+
       foundNamedHost = true
     end
     foundNamedHost.should == true

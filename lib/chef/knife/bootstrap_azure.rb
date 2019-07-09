@@ -31,9 +31,9 @@ class Chef
       banner "knife bootstrap azure SERVER (options)"
 
       option :azure_dns_name,
-             short: "-d DNS_NAME",
-             long: "--azure-dns-name DNS_NAME",
-             description: "Optional. The DNS prefix name that is used to access the cloud service."
+        short: "-d DNS_NAME",
+        long: "--azure-dns-name DNS_NAME",
+        description: "Optional. The DNS prefix name that is used to access the cloud service."
 
       # run() would be executing from parent class
       # Chef::Knife::Bootstrap, defined in core.
@@ -174,7 +174,7 @@ class Chef
 
           ## wait for some time and then re-fetch the status ##
           if sleep_and_wait == true
-            print "#{ui.color('.', :bold)}"
+            print "#{ui.color(".", :bold)}"
             sleep 30
             wait_until_extension_available(
               extension_deploy_start_time,

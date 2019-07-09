@@ -47,90 +47,90 @@ class Chef
       attr_accessor :initial_sleep_delay
 
       option :azure_affinity_group,
-             short: "-a GROUP",
-             long: "--azure-affinity-group GROUP",
-             description: "Required if not using a Service Location. Specifies Affinity Group the VM should belong to."
+        short: "-a GROUP",
+        long: "--azure-affinity-group GROUP",
+        description: "Required if not using a Service Location. Specifies Affinity Group the VM should belong to."
 
       option :azure_dns_name,
-             short: "-d DNS_NAME",
-             long: "--azure-dns-name DNS_NAME",
-             description: "The DNS prefix name that can be used to access the cloud service which is unique within Windows Azure. Default is 'azure-dns-any_random_text'(e.g: azure-dns-be9b0f6f-7dda-456f-b2bf-4e28a3bc0add).
-                                           If you want to add new VM to an existing service/deployment, specify an exiting dns-name,
-                                           along with --azure-connect-to-existing-dns option.
-                                           Otherwise a new deployment is created. For example, if the DNS of cloud service is MyService you could access the cloud service
-                                           by calling: http://DNS_NAME.cloudapp.net"
+        short: "-d DNS_NAME",
+        long: "--azure-dns-name DNS_NAME",
+        description: "The DNS prefix name that can be used to access the cloud service which is unique within Windows Azure. Default is 'azure-dns-any_random_text'(e.g: azure-dns-be9b0f6f-7dda-456f-b2bf-4e28a3bc0add).
+                                      If you want to add new VM to an existing service/deployment, specify an exiting dns-name,
+                                      along with --azure-connect-to-existing-dns option.
+                                      Otherwise a new deployment is created. For example, if the DNS of cloud service is MyService you could access the cloud service
+                                      by calling: http://DNS_NAME.cloudapp.net"
 
       option :azure_source_image,
-             short: "-I IMAGE",
-             long: "--azure-source-image IMAGE",
-             description: "Required. Specifies the name of the disk image to use to create the virtual machine.
-                                           Do a \"knife azure image list\" to see a list of available images."
+        short: "-I IMAGE",
+        long: "--azure-source-image IMAGE",
+        description: "Required. Specifies the name of the disk image to use to create the virtual machine.
+                                      Do a \"knife azure image list\" to see a list of available images."
 
       option :udp_endpoints,
-             short: "-u PORT_LIST",
-             long: "--udp-endpoints PORT_LIST",
-             description: "Comma-separated list of UDP local and public ports to open e.g. '80:80,433:5000'"
+        short: "-u PORT_LIST",
+        long: "--udp-endpoints PORT_LIST",
+        description: "Comma-separated list of UDP local and public ports to open e.g. '80:80,433:5000'"
 
       option :azure_connect_to_existing_dns,
-             short: "-c",
-             long: "--azure-connect-to-existing-dns",
-             boolean: true,
-             default: false,
-             description: "Set this flag to add the new VM to an existing deployment/service. Must give the name of the existing
-                                             DNS correctly in the --dns-name option"
+        short: "-c",
+        long: "--azure-connect-to-existing-dns",
+        boolean: true,
+        default: false,
+        description: "Set this flag to add the new VM to an existing deployment/service. Must give the name of the existing
+                                        DNS correctly in the --dns-name option"
 
       option :azure_network_name,
-             long: "--azure-network-name NETWORK_NAME",
-             description: "Optional. Specifies the network of virtual machine"
+        long: "--azure-network-name NETWORK_NAME",
+        description: "Optional. Specifies the network of virtual machine"
 
       option :azure_subnet_name,
-             long: "--azure-subnet-name SUBNET_NAME",
-             description: "Optional. Specifies the subnet of virtual machine"
+        long: "--azure-subnet-name SUBNET_NAME",
+        description: "Optional. Specifies the subnet of virtual machine"
 
       option :azure_vm_startup_timeout,
-             long: "--azure-vm-startup-timeout TIMEOUT",
-             description: "The number of minutes that knife-azure will wait for the virtual machine to reach the 'provisioning' state. Default is 10.",
-             default: 10
+        long: "--azure-vm-startup-timeout TIMEOUT",
+        description: "The number of minutes that knife-azure will wait for the virtual machine to reach the 'provisioning' state. Default is 10.",
+        default: 10
 
       option :azure_vm_ready_timeout,
-             long: "--azure-vm-ready-timeout TIMEOUT",
-             description: "The number of minutes that knife-azure will wait for the virtual machine state to transition from 'provisioning' to 'ready'. Default is 15.",
-             default: 15
+        long: "--azure-vm-ready-timeout TIMEOUT",
+        description: "The number of minutes that knife-azure will wait for the virtual machine state to transition from 'provisioning' to 'ready'. Default is 15.",
+        default: 15
 
       option :auth_timeout,
-             long: "--windows-auth-timeout MINUTES",
-             description: "The maximum time in minutes to wait to for authentication over the transport to the node to succeed. The default value is 25 minutes.",
-             default: 25
+        long: "--windows-auth-timeout MINUTES",
+        description: "The maximum time in minutes to wait to for authentication over the transport to the node to succeed. The default value is 25 minutes.",
+        default: 25
 
       option :identity_file_passphrase,
-             long: "--identity-file-passphrase PASSWORD",
-             description: "SSH key passphrase. Optional, specify if passphrase for identity-file exists"
+        long: "--identity-file-passphrase PASSWORD",
+        description: "SSH key passphrase. Optional, specify if passphrase for identity-file exists"
 
       option :winrm_max_timeout,
-             long: "--winrm-max-timeout MINUTES",
-             description: "Set winrm maximum command timeout in minutes, useful for long bootstraps"
+        long: "--winrm-max-timeout MINUTES",
+        description: "Set winrm maximum command timeout in minutes, useful for long bootstraps"
 
       option :winrm_max_memory_per_shell,
-             long: "--winrm-max-memory-per-shell",
-             description: "Set winrm max memory per shell in MB"
+        long: "--winrm-max-memory-per-shell",
+        description: "Set winrm max memory per shell in MB"
 
       option :azure_domain_name,
-             long: "--azure-domain-name DOMAIN_NAME",
-             description: 'Optional. Specifies the domain name to join. If the domains name is not specified, --azure-domain-user must specify the user principal name (UPN) format (user@fully-qualified-DNS-domain) or the fully-qualified-DNS-domain\\username format'
+        long: "--azure-domain-name DOMAIN_NAME",
+        description: 'Optional. Specifies the domain name to join. If the domains name is not specified, --azure-domain-user must specify the user principal name (UPN) format (user@fully-qualified-DNS-domain) or the fully-qualified-DNS-domain\\username format'
 
       option :azure_domain_ou_dn,
-             long: "--azure-domain-ou-dn DOMAIN_OU_DN",
-             description: "Optional. Specifies the (LDAP) X 500-distinguished name of the organizational unit (OU) in which the computer account is created. This account is in Active Directory on a domain controller in the domain to which the computer is being joined. Example: OU=HR,dc=opscode,dc=com"
+        long: "--azure-domain-ou-dn DOMAIN_OU_DN",
+        description: "Optional. Specifies the (LDAP) X 500-distinguished name of the organizational unit (OU) in which the computer account is created. This account is in Active Directory on a domain controller in the domain to which the computer is being joined. Example: OU=HR,dc=opscode,dc=com"
 
       option :azure_domain_user,
-             long: "--azure-domain-user DOMAIN_USER_NAME",
-             description: 'Optional. Specifies the username who has access to join the domain.
-               Supported format: username(if domain is already specified in --azure-domain-name option),
-               fully-qualified-DNS-domain\username, user@fully-qualified-DNS-domain'
+        long: "--azure-domain-user DOMAIN_USER_NAME",
+        description: 'Optional. Specifies the username who has access to join the domain.
+          Supported format: username(if domain is already specified in --azure-domain-name option),
+          fully-qualified-DNS-domain\username, user@fully-qualified-DNS-domain'
 
       option :azure_domain_passwd,
-             long: "--azure-domain-passwd DOMAIN_PASSWD",
-             description: "Optional. Specifies the password for domain user who has access to join the domain."
+        long: "--azure-domain-passwd DOMAIN_PASSWD",
+        description: "Optional. Specifies the password for domain user who has access to join the domain."
 
       # Overriding this option to provide "cloud-api" in SUPPORTED_CONNECTION_PROTOCOLS
       option :connection_protocol,

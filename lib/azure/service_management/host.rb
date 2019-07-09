@@ -26,9 +26,9 @@ module Azure
     # force_load should be true when there is something in local cache and we want to reload
     # first call is always load.
     def load(force_load = false)
-      if not @hosted_services || force_load
+      unless @hosted_services || force_load
         @hosted_services = begin
-          hosted_services = Hash.new
+          hosted_services = {}
           responseXML = @connection.query_azure("hostedservices")
           servicesXML = responseXML.css("HostedServices HostedService")
           servicesXML.each do |serviceXML|
@@ -48,6 +48,7 @@ module Azure
     # first look up local cache if we have already loaded list.
     def exists?(name)
       return @hosted_services.key?(name) if @hosted_services
+
       exists_on_cloud?(name)
     end
 
@@ -66,6 +67,7 @@ module Azure
     # first look up local cache if we have already loaded list.
     def find(name)
       return @hosted_services[name] if @hosted_services && @hosted_services.key?(name)
+
       fetch_from_cloud(name)
     end
 
@@ -105,7 +107,7 @@ module Azure
     def initialize(connection)
       @connection = connection
       @deploys_loaded = false
-      @deploys = Hash.new
+      @deploys = {}
     end
 
     def parse(serviceXML)
@@ -171,6 +173,7 @@ module Azure
 
     def find_role(role_name, deploy_name = nil)
       return @deploys[deploy_name].find_role(role_name) if deploy_name && deploys
+
       # else lookup all deploys within hostedservice
       deploys.each do |deploy|
         role = deploy.find_role(role_name)

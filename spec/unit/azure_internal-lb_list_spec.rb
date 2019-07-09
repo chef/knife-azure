@@ -47,7 +47,8 @@ describe Chef::Knife::AzureInternalLbList do
        "lb_name", "service001", "vnet1", "10.4.4.4"
       ],
       :uneven_columns_across,
-      4)
+      4
+    )
     @server_instance.run
   end
 

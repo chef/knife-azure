@@ -47,7 +47,7 @@ class Chef
 
         Chef::Log.info("validating...")
         validate_asm_keys!(:azure_affinity_group,
-                   :azure_service_location)
+          :azure_service_location)
 
         params = {
           azure_ag_name: locate_config_value(:azure_affinity_group),
@@ -61,11 +61,11 @@ class Chef
           if rsp.at_css("Code").nil? || rsp.at_css("Message").nil?
             puts "Unknown Error. try -VV"
           else
-            puts "#{rsp.at_css('Code').content}: "\
-                 "#{rsp.at_css('Message').content}"
+            puts "#{rsp.at_css("Code").content}: "\
+                 "#{rsp.at_css("Message").content}"
           end
         else
-          puts "Creation status: #{rsp.at_css('Status').content}"
+          puts "Creation status: #{rsp.at_css("Status").content}"
         end
       end
     end

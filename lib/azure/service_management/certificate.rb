@@ -111,7 +111,7 @@ module Azure
       for attempt in 0..4
         Chef::Log.info "Waiting to get certificate ..."
         res = get_certificate(dns_name, @fingerprint)
-        break if !res.empty?
+        break unless res.empty?
         if attempt == 4
           raise "The certificate with thumbprint #{fingerprint} was not found."
         else
@@ -159,6 +159,7 @@ module Azure
         print "Enter certificate passphrase (empty for no passphrase):"
         passphrase = STDIN.gets
         return passphrase.strip if passphrase == "\n"
+
         print "Enter same passphrase again:"
         confirm_passphrase = STDIN.gets
       end until passphrase == confirm_passphrase
@@ -174,6 +175,7 @@ module Azure
         file_path = STDIN.gets
         stripped_file_path = file_path.strip
         return stripped_file_path if file_path == "\n"
+
         counter += 1
         exit(1) if counter == 3
       end until File.directory?(stripped_file_path)

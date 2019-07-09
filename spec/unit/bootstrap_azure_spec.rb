@@ -65,7 +65,7 @@ describe Chef::Knife::BootstrapAzure do
     end
 
     it "raises error when more than one server name is specified" do
-      @bootstrap_azure_instance.name_args = ["test-vm-01", "test-vm-02", "test-vm-03"]
+      @bootstrap_azure_instance.name_args = %w{test-vm-01 test-vm-02 test-vm-03}
       expect(@bootstrap_azure_instance.name_args.length).to be == 3
       expect(@service).to_not receive(:add_extension)
       expect(@bootstrap_azure_instance.ui).to receive(

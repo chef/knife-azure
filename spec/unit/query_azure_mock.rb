@@ -68,12 +68,13 @@ module QueryAzureMock
     resource_management_client = double("ResourceManagementClient",
       resource_groups: double, deployments: double)
     allow(resource_management_client.resource_groups).to receive(
-      :create_or_update).and_return(stub_resource_group_create_response)
+      :create_or_update
+    ).and_return(stub_resource_group_create_response)
     allow(resource_management_client.deployments).to receive_message_chain(
       create_or_update: "create_or_update",
       value!: nil,
       body: nil
-      ).and_return(stub_deployments_response)
+    ).and_return(stub_deployments_response)
     resource_management_client
   end
 
@@ -101,7 +102,8 @@ module QueryAzureMock
     allow(compute_management_client.virtual_machine_extensions).to receive_message_chain(
       :get,
       :instance_view,
-      :substatuses).and_return(stub_substatuses(user_supplied_value))
+      :substatuses
+    ).and_return(stub_substatuses(user_supplied_value))
 
     compute_management_client
   end
@@ -110,43 +112,43 @@ module QueryAzureMock
     if user_supplied_value == "substatuses_found_with_no_chef_client_run_logs"
       [
        OpenStruct.new(
-        code: "code1",
-        level: "Info",
-        display_status: "my_code1",
-        message: "my_message1",
-        time: "my_time1"
+         code: "code1",
+         level: "Info",
+         display_status: "my_code1",
+         message: "my_message1",
+         time: "my_time1"
        ),
        OpenStruct.new(
-        code: "code2",
-        level: "Warning",
-        display_status: "my_code2",
-        message: "my_message2",
-        time: "my_time2"
-       )
+         code: "code2",
+         level: "Warning",
+         display_status: "my_code2",
+         message: "my_message2",
+         time: "my_time2"
+       ),
       ]
     elsif user_supplied_value == "substatuses_found_with_chef_client_run_logs"
       [
        OpenStruct.new(
-        code: "code1",
-        level: "Info",
-        display_status: "my_code1",
-        message: "my_message1",
-        time: "my_time1"
+         code: "code1",
+         level: "Info",
+         display_status: "my_code1",
+         message: "my_message1",
+         time: "my_time1"
        ),
        OpenStruct.new(
-        code: "ComponentStatus/Chef Client run logs/succeeded",
-        level: "Info",
-        display_status: "Provisioning succeeded",
-        message: "chef_client_run_logs",
-        time: "chef_client_run_logs_write_time"
+         code: "ComponentStatus/Chef Client run logs/succeeded",
+         level: "Info",
+         display_status: "Provisioning succeeded",
+         message: "chef_client_run_logs",
+         time: "chef_client_run_logs_write_time"
        ),
        OpenStruct.new(
-        code: "code2",
-        level: "Warning",
-        display_status: "my_code2",
-        message: "my_message2",
-        time: "my_time2"
-       )
+         code: "code2",
+         level: "Warning",
+         display_status: "my_code2",
+         message: "my_message2",
+         time: "my_time2"
+       ),
       ]
     elsif user_supplied_value == "substatuses_not_found"
       nil
@@ -166,47 +168,57 @@ module QueryAzureMock
       value!: nil,
       body: nil,
       properties: nil,
-      ip_address: nil).and_return(stub_vm_public_ip_get_response)
+      ip_address: nil
+    ).and_return(stub_vm_public_ip_get_response)
     allow(network_resource_client.network_security_groups).to receive(
-      :get).and_return("security_group")
+      :get
+    ).and_return("security_group")
     allow(network_resource_client.network_security_groups).to receive_message_chain(
       :get,
       :value!,
       :body,
       :properties,
-      :security_rules).and_return(["default_security_rule"])
+      :security_rules
+    ).and_return(["default_security_rule"])
     if resource_group_name.nil? && vnet_name.nil?
       allow(network_resource_client.virtual_networks).to receive(
-        :get).and_return(nil)
+        :get
+      ).and_return(nil)
     else
       allow(network_resource_client.virtual_networks).to receive(
-        :get).and_return(stub_vnet_get_response(resource_group_name, vnet_name))
+        :get
+      ).and_return(stub_vnet_get_response(resource_group_name, vnet_name))
     end
     if platform == "Windows"
       allow(network_resource_client.network_security_groups.get.value!.body.properties.security_rules[0]).to receive_message_chain(
         :properties,
-        :destination_port_range).and_return("3389")
+        :destination_port_range
+      ).and_return("3389")
     else
       allow(network_resource_client.network_security_groups.get.value!.body.properties.security_rules[0]).to receive_message_chain(
         :properties,
-        :destination_port_range).and_return("22")
+        :destination_port_range
+      ).and_return("22")
     end
     allow(network_resource_client.network_security_groups).to receive_message_chain(
       create_or_update: "create_or_update",
       value!: nil,
-      body: nil).and_return(stub_network_security_group_create_response)
+      body: nil
+    ).and_return(stub_network_security_group_create_response)
     allow(network_resource_client.security_rules).to receive_message_chain(
       create_or_update: "create_or_update",
       value!: nil,
-      body: nil).and_return(stub_default_security_rule_add_response(platform))
+      body: nil
+    ).and_return(stub_default_security_rule_add_response(platform))
     if resource_group_name.nil? && vnet_name.nil?
       allow(network_resource_client.subnets).to receive_message_chain(
         :list,
-        :value).and_return(nil)
+        :value
+      ).and_return(nil)
     else
       allow(network_resource_client.subnets).to receive_message_chain(
         :list
-        ).and_return(stub_subnets_list_response(resource_group_name, vnet_name))
+      ).and_return(stub_subnets_list_response(resource_group_name, vnet_name))
     end
 
     network_resource_client
@@ -251,9 +263,11 @@ module QueryAzureMock
       id: "id",
       properties: double)
     allow(deployment.properties).to receive_message_chain(
-      :dependencies).and_return([deploy])
+      :dependencies
+    ).and_return([deploy])
     allow(deployment.properties).to receive(
-      :provisioning_state).and_return("Succeeded")
+      :provisioning_state
+    ).and_return("Succeeded")
     deployment
   end
 
@@ -278,21 +292,27 @@ module QueryAzureMock
       properties: double,
       location: "West Europe")
     allow(vm_extension.properties).to receive(
-      :publisher).and_return("Ext_Publisher")
+      :publisher
+    ).and_return("Ext_Publisher")
     allow(vm_extension.properties).to receive(
-      :type).and_return("Ext_Type")
+      :type
+    ).and_return("Ext_Type")
     if user_supplied_value == "yes"
       allow(vm_extension.properties).to receive(
-        :type_handler_version).and_return("11.10.1")
+        :type_handler_version
+      ).and_return("11.10.1")
     elsif user_supplied_value == "no"
       allow(vm_extension.properties).to receive(
-        :type_handler_version).and_return("1210.12")
+        :type_handler_version
+      ).and_return("1210.12")
     else
       allow(vm_extension.properties).to receive(
-        :type_handler_version).and_return("")
+        :type_handler_version
+      ).and_return("")
     end
     allow(vm_extension.properties).to receive(
-      :provisioning_state).and_return("Succeeded")
+      :provisioning_state
+    ).and_return("Succeeded")
     vm_extension
   end
 
@@ -391,16 +411,16 @@ module QueryAzureMock
           retval = Nokogiri::XML readFile("list_disks_for_role002.xml")
         elsif name == "hostedservices"
           retval = Nokogiri::XML readFile("list_hosts.xml")
-        elsif name =~ /hostedservices\/([-\w]*)$/ && params == "embed-detail=true"
+        elsif name =~ %r{hostedservices/([-\w]*)$} && params == "embed-detail=true"
           retval = Nokogiri::XML readFile("list_deployments_for_service001.xml")
-        elsif name =~ /hostedservices\/([-\w]*)$/
-          service_name = /hostedservices\/([-\w]*)/.match(name)[1]
+        elsif name =~ %r{hostedservices/([-\w]*)$}
+          service_name = %r{hostedservices/([-\w]*)}.match(name)[1]
           retval = lookup_resource_in_test_xml(service_name, "ServiceName", "HostedServices HostedService", "list_hosts.xml")
         elsif name == "hostedservices/service001/deploymentslots/Production"
           retval = Nokogiri::XML readFile("list_deployments_for_service001.xml")
         elsif name == "hostedservices/service001/deployments/deployment001/roles/role001"
           retval = Nokogiri::XML readFile("list_deployments_for_service001.xml")
-        elsif name =~ /hostedservices\/[-\w]*\/deployments\/[-\w]*\/roles\/[-\w]*/
+        elsif name =~ %r{hostedservices/[-\w]*/deployments/[-\w]*/roles/[-\w]*}
           retval = Nokogiri::XML readFile("list_deployments_for_service005.xml")
         elsif name == "hostedservices/service002/deploymentslots/Production"
           retval = Nokogiri::XML readFile("list_deployments_for_service002.xml")
@@ -414,8 +434,8 @@ module QueryAzureMock
           retval = Nokogiri::XML readFile("list_deployments_for_service004.xml")
         elsif name == "storageservices"
           retval = Nokogiri::XML readFile("list_storageaccounts.xml")
-        elsif name =~ /storageservices\/[-\w]*$/
-          service_name = /storageservices\/([-\w]*)/.match(name)[1]
+        elsif name =~ %r{storageservices/[-\w]*$}
+          service_name = %r{storageservices/([-\w]*)}.match(name)[1]
           retval = lookup_resource_in_test_xml(service_name, "ServiceName", "StorageServices StorageService", "list_storageaccounts.xml")
         elsif name == "hostedservices/unknown_yet/certificates/sha1-9dbcac68f670a27cf5d9a4e6c4a8d097bff645e2"
           retval = Nokogiri::XML readFile("get_service_certificate_error.xml")
@@ -443,10 +463,10 @@ module QueryAzureMock
         elsif name == "hostedservices/service004/deployments/deployment004/roles"
           retval = Nokogiri::XML readFile("post_success.xml")
           @receivedXML = body
-        elsif name =~ /hostedservices\/vm01.*\/deployments/
+        elsif name =~ %r{hostedservices/vm01.*/deployments}
           retval = Nokogiri::XML readFile("post_success.xml")
           @receivedXML = body
-        elsif name =~ /hostedservices\/vmname\/deployments/
+        elsif name =~ %r{hostedservices/vmname/deployments}
           # Case when vm name and service name are same.
           retval = Nokogiri::XML readFile("post_success.xml")
           @receivedXML = body

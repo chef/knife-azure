@@ -33,7 +33,7 @@ module Azure
     class Connection
       include AzureUtility
       attr_accessor :hosts, :rest, :images, :deploys, :roles,
-                    :disks, :storageaccounts, :certificates, :ags, :vnets, :lbs
+        :disks, :storageaccounts, :certificates, :ags, :vnets, :lbs
       def initialize(rest)
         @images = Images.new(self)
         @roles = Roles.new(self)
@@ -49,12 +49,12 @@ module Azure
       end
 
       def query_azure(service_name,
-                      verb = "get",
-                      body = "",
-                      params = "",
-                      wait = true,
-                      services = true,
-                      content_type = nil)
+        verb = "get",
+        body = "",
+        params = "",
+        wait = true,
+        services = true,
+        content_type = nil)
         Chef::Log.info "calling " + verb + " " + service_name + (wait ? " synchronously" : " asynchronously")
         Chef::Log.debug body unless body == ""
         response = @rest.query_azure(service_name, verb, body, params, services, content_type)
@@ -64,7 +64,7 @@ module Azure
           Chef::Log.debug "Request accepted in asynchronous mode"
           ret_val = Nokogiri::XML response.body
         elsif response.code.to_i >= 201 && response.code.to_i <= 299
-          ret_val = wait_for_completion()
+          ret_val = wait_for_completion
         else
           if response.body
             ret_val = Nokogiri::XML response.body
@@ -82,7 +82,7 @@ module Azure
         status = "InProgress"
         Chef::Log.info "Waiting while status returns InProgress"
         while status == "InProgress"
-          response = @rest.query_for_completion()
+          response = @rest.query_for_completion
           ret_val = Nokogiri::XML response.body
           status = xml_content(ret_val, "Status")
           if status == "InProgress"

@@ -137,8 +137,8 @@ module Azure::ARM
       else ## subnets exist in vnet, calculate new address_prefix for the new subnet based on the space taken by these existing subnets under the given address space of the virtual network ##
         vnet_network_address = IPAddress(vnet_address_prefix)
         subnets = sort_subnets_by_cidr_prefix(subnets)
-        available_networks_pool = Array.new
-        used_networks_pool = Array.new
+        available_networks_pool = []
+        used_networks_pool = []
         subnets.each do |subnet|
           ## in case the larger network is not divided into smaller subnets but
           ## divided into only 1 largest subnet of the complete network size ##
@@ -159,7 +159,8 @@ module Azure::ARM
 
           ## sort both the network pools before trimming the available_networks_pool ##
           available_networks_pool, used_networks_pool = sort_pools(
-            available_networks_pool, used_networks_pool)
+            available_networks_pool, used_networks_pool
+          )
 
           ## trim the available_networks_pool based on the networks already
           ## allocated to the existing subnets ##
@@ -171,7 +172,8 @@ module Azure::ARM
 
           ## sort both the network pools after trimming the available_networks_pool ##
           available_networks_pool, used_networks_pool = sort_pools(
-            available_networks_pool, used_networks_pool)
+            available_networks_pool, used_networks_pool
+          )
         end
 
         ## space available in the vnet_address_prefix network for the new subnet ##
@@ -224,7 +226,7 @@ module Azure::ARM
       vnet_config[:virtualNetworkName] = vnet_name
       if vnet ## handle resources in the existing virtual network ##
         vnet_config[:addressPrefixes] = vnet_address_spaces(vnet)
-        vnet_config[:subnets] = Array.new
+        vnet_config[:subnets] = []
         subnets = subnets_list(resource_group_name, vnet_name)
         if subnets
           subnets.each do |subnet|
@@ -237,7 +239,7 @@ module Azure::ARM
         end
       else ## create config for new vnet ##
         vnet_config[:addressPrefixes] = [ "10.0.0.0/16" ]
-        vnet_config[:subnets] = Array.new
+        vnet_config[:subnets] = []
         vnet_config[:subnets].push(
           subnet(vnet_subnet_name, "10.0.0.0/24")
         )

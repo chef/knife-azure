@@ -25,8 +25,7 @@ module Azure
 
     attr_accessor :ui
 
-    def initialize(options = {})
-    end
+    def initialize(options = {}); end
 
     def create_server(params = {})
       AzureInterface.api_not_implemented(self)

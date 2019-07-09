@@ -522,7 +522,7 @@ describe Chef::Knife::AzurermServerCreate do
           body = "MsRestAzure::AzureOperationError"
           error = MsRestAzure::AzureOperationError.new(request, response, body)
           network_resource_client = double("NetworkResourceClient",
-                                           network_security_groups: double)
+            network_security_groups: double)
           allow(network_resource_client.network_security_groups).to receive(
             :get
           ).and_raise(error)
@@ -548,7 +548,7 @@ describe Chef::Knife::AzurermServerCreate do
           body = "MsRestAzure::AzureOperationError"
           @error = MsRestAzure::AzureOperationError.new(request, response, body)
           network_resource_client = double("NetworkResourceClient",
-                                           network_security_groups: double)
+            network_security_groups: double)
           allow(network_resource_client.network_security_groups).to receive(
             :get
           ).and_raise(@error)
@@ -1712,8 +1712,8 @@ describe Chef::Knife::AzurermServerCreate do
 
       it "returns nil" do
         response = @service.fetch_substatus(@params[:azure_resource_group_name],
-                                            @params[:azure_vm_name],
-                                            @params[:chef_extension])
+          @params[:azure_vm_name],
+          @params[:chef_extension])
 
         expect(response).to be_nil
       end
@@ -1729,8 +1729,8 @@ describe Chef::Knife::AzurermServerCreate do
 
         it "returns nil" do
           response = @service.fetch_substatus(@params[:azure_resource_group_name],
-                                              @params[:azure_vm_name],
-                                              @params[:chef_extension])
+            @params[:azure_vm_name],
+            @params[:chef_extension])
 
           expect(response).to be_nil
         end
@@ -1745,8 +1745,8 @@ describe Chef::Knife::AzurermServerCreate do
 
         it "returns substatus hash for chef-client run logs" do
           response = @service.fetch_substatus(@params[:azure_resource_group_name],
-                                              @params[:azure_vm_name],
-                                              @params[:chef_extension])
+            @params[:azure_vm_name],
+            @params[:chef_extension])
 
           expect(response).to_not be_nil
           expect(response.code).to be == "ComponentStatus/Chef Client run logs/succeeded"
@@ -1774,15 +1774,15 @@ describe Chef::Knife::AzurermServerCreate do
           expect(@service).to receive(:print).exactly(1).times
           expect(@service).to receive(:sleep).with(30)
           expect(@service).to receive(:fetch_chef_client_logs).with(@params[:azure_resource_group_name],
-                                                                    @params[:azure_vm_name],
-                                                                    @params[:chef_extension],
-                                                                    @start_time,
-                                                                    30)
+            @params[:azure_vm_name],
+            @params[:chef_extension],
+            @start_time,
+            30)
 
           @service.fetch_chef_client_logs_mocked(@params[:azure_resource_group_name],
-                                                 @params[:azure_vm_name],
-                                                 @params[:chef_extension],
-                                                 @start_time)
+            @params[:azure_vm_name],
+            @params[:chef_extension],
+            @start_time)
         end
       end
 
@@ -1792,10 +1792,10 @@ describe Chef::Knife::AzurermServerCreate do
             "\nchef-client run logs could not be fetched since fetch process exceeded wait timeout of -1 minutes.\n"
           )
           @service.fetch_chef_client_logs(@params[:azure_resource_group_name],
-                                          @params[:azure_vm_name],
-                                          @params[:chef_extension],
-                                          @start_time,
-                                          -1)
+            @params[:azure_vm_name],
+            @params[:chef_extension],
+            @start_time,
+            -1)
         end
       end
     end
@@ -1817,9 +1817,9 @@ describe Chef::Knife::AzurermServerCreate do
         expect(@service).to receive(:puts).exactly(4).times
         expect(@service).to receive(:print).exactly(1).times
         @service.fetch_chef_client_logs(@params[:azure_resource_group_name],
-                                        @params[:azure_vm_name],
-                                        @params[:chef_extension],
-                                        @start_time)
+          @params[:azure_vm_name],
+          @params[:chef_extension],
+          @start_time)
       end
     end
   end

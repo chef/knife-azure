@@ -64,9 +64,10 @@ module Azure
       end
 
       def rdp_port(arr_ports)
-        if !arr_ports
+        unless arr_ports
           return ""
         end
+
         if arr_ports.length > 0
           arr_ports.each do |port|
             if port["Name"] == "Remote Desktop"
@@ -117,7 +118,7 @@ module Azure
 
         puts ""
         if role
-          details = Array.new
+          details = []
           details << ui.color("Role name", :bold, :cyan)
           details << role.name
           details << ui.color("Status", :bold, :cyan)

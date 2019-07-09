@@ -33,24 +33,28 @@ describe Chef::Knife::AzurermServerList do
     allow(@server1.id.split[4]).to receive(:downcase).and_return("myresourcegroup1")
     allow(@server1).to receive(:provisioning_state).and_return("running")
     allow(@server1).to receive_message_chain(
-      :storage_profile, :os_disk, :os_type).and_return("linux")
+      :storage_profile, :os_disk, :os_type
+    ).and_return("linux")
 
     @server2 = double("server2", name: "MyVM2", id: double, location: "west-us")
     allow(@server2.id).to receive(:split).and_return(["", "subscriptions", "subscription_id", "resourcegroups", "myresourcegroup2", "Microsoft.compute", "virtualmachines", "MyVM2"])
     allow(@server2.id.split[4]).to receive(:downcase).and_return("myresourcegroup2")
     allow(@server2).to receive(:provisioning_state).and_return("running")
     allow(@server2).to receive_message_chain(
-      :storage_profile, :os_disk, :os_type).and_return("linux")
+      :storage_profile, :os_disk, :os_type
+    ).and_return("linux")
 
     @server3 = double("server3", name: "MyVM3", id: double, location: "west-us")
     allow(@server3.id).to receive(:split).and_return(["", "subscriptions", "subscription_id", "resourcegroups", "myresourcegroup1", "Microsoft.compute", "virtualmachines", "MyVM3"])
     allow(@server3.id.split[4]).to receive(:downcase).and_return("myresourcegroup1")
     allow(@server3).to receive(:provisioning_state).and_return("running")
     allow(@server3).to receive_message_chain(
-      :storage_profile, :os_disk, :os_type).and_return("windows")
+      :storage_profile, :os_disk, :os_type
+    ).and_return("windows")
 
     allow(@arm_server_instance.service).to receive(
-      :compute_management_client).and_return(@compute_client)
+      :compute_management_client
+    ).and_return(@compute_client)
     allow_any_instance_of(Chef::Knife::AzurermBase).to receive(:get_azure_cli_version).and_return("1.0.0")
   end
 
@@ -61,7 +65,8 @@ describe Chef::Knife::AzurermServerList do
 
     it "should display only labels if there are no servers" do
       expect(@compute_client).to receive_message_chain(
-        :virtual_machines, :list_all).and_return([])
+        :virtual_machines, :list_all
+      ).and_return([])
       expect(@arm_server_instance.service).to receive(:display_list).with(
         @arm_server_instance.service.ui,
         ["VM Name", "Resource Group Name", "Location", "Provisioning State", "OS Type"],
@@ -76,8 +81,10 @@ describe Chef::Knife::AzurermServerList do
                     @server3.name, @server3.id.split[4], @server3.location, @server3.provisioning_state, @server3.storage_profile.os_disk.os_type
                    ]
       expect(@compute_client).to receive_message_chain(
-        :virtual_machines, :list_all).and_return(
-          [@server1, @server2, @server3])
+        :virtual_machines, :list_all
+      ).and_return(
+        [@server1, @server2, @server3]
+      )
       expect(@arm_server_instance.service).to receive(:display_list).with(
         @arm_server_instance.service.ui,
         ["VM Name", "Resource Group Name", "Location", "Provisioning State", "OS Type"],
@@ -94,7 +101,8 @@ describe Chef::Knife::AzurermServerList do
 
     it "should display only labels if there are no servers under the given resource_group" do
       expect(@compute_client).to receive_message_chain(
-        :virtual_machines, :list).and_return([])
+        :virtual_machines, :list
+      ).and_return([])
       expect(@arm_server_instance.service).to receive(:display_list).with(
         @arm_server_instance.service.ui,
         ["VM Name", "Resource Group Name", "Location", "Provisioning State", "OS Type"],
@@ -108,8 +116,10 @@ describe Chef::Knife::AzurermServerList do
                     @server3.name, @server3.id.split[4], @server3.location, @server3.provisioning_state, @server3.storage_profile.os_disk.os_type
                    ]
       expect(@compute_client).to receive_message_chain(
-        :virtual_machines, :list).and_return(
-          [@server1, @server3])
+        :virtual_machines, :list
+      ).and_return(
+        [@server1, @server3]
+      )
       expect(@arm_server_instance.service).to receive(:display_list).with(
         @arm_server_instance.service.ui,
         ["VM Name", "Resource Group Name", "Location", "Provisioning State", "OS Type"],

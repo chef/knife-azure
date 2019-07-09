@@ -28,7 +28,8 @@ describe "vnets" do
     rsp = @connection.vnets.create(
       azure_vnet_name: "func-test-new-vnet",
       azure_ag_name: "func-test-agforvnet",
-      azure_address_space: "10.0.0.0/16")
+      azure_address_space: "10.0.0.0/16"
+    )
     rsp.at_css("Status").should_not be_nil
     rsp.at_css("Status").content.should eq("Succeeded")
   end

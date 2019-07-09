@@ -366,9 +366,9 @@ module Azure
               if params[:chef_extension_public_param][:extendedLogs] == "true"
                 print "\n\nWaiting for the first chef-client run on virtual machine #{deploy.resource_name}"
                 fetch_chef_client_logs(params[:azure_resource_group_name],
-                                       deploy.resource_name,
-                                       params[:chef_extension],
-                                       Time.now)
+                  deploy.resource_name,
+                  params[:chef_extension],
+                  Time.now)
               end
 
               ui.log("VM Details ...")
@@ -464,7 +464,8 @@ module Azure
         ext_version = compute_management_client.virtual_machine_extension_images.list_versions(
           params[:azure_service_location],
           params[:chef_extension_publisher],
-          params[:chef_extension]).last.name
+          params[:chef_extension]
+        ).last.name
         ext_version_split_values = ext_version.split(".")
         ext_version = ext_version_split_values[0] + "." + ext_version_split_values[1]
         ext_version

@@ -40,35 +40,35 @@ module Azure::ARM
     # Ref: https://msdn.microsoft.com/en-us/library/windows/desktop/ms724284(v=vs.85).aspx
     class FILETIME < FFI::Struct
       layout :dwLowDateTime, :DWORD,
-             :dwHighDateTime, :DWORD
+        :dwHighDateTime, :DWORD
     end
 
     # Ref: https://msdn.microsoft.com/en-us/library/windows/desktop/aa374790(v=vs.85).aspx
     class CREDENTIAL_ATTRIBUTE < FFI::Struct
       layout :Keyword, :LPTSTR,
-             :Flags, :DWORD,
-             :ValueSize, :DWORD,
-             :Value, :LPBYTE
+        :Flags, :DWORD,
+        :ValueSize, :DWORD,
+        :Value, :LPBYTE
     end
 
     # Ref: https://msdn.microsoft.com/en-us/library/windows/desktop/aa374788(v=vs.85).aspx
     class CREDENTIAL_OBJECT < FFI::Struct
       layout :Flags, :DWORD,
-             :Type, :DWORD,
-             :TargetName, :LPTSTR,
-             :Comment, :LPTSTR,
-             :LastWritten, FILETIME,
-             :CredentialBlobSize, :DWORD,
-             :CredentialBlob, :LPBYTE,
-             :Persist, :DWORD,
-             :AttributeCount, :DWORD,
-             :Attributes, CREDENTIAL_ATTRIBUTE,
-             :TargetAlias, :LPTSTR,
-             :UserName, :LPTSTR
+        :Type, :DWORD,
+        :TargetName, :LPTSTR,
+        :Comment, :LPTSTR,
+        :LastWritten, FILETIME,
+        :CredentialBlobSize, :DWORD,
+        :CredentialBlob, :LPBYTE,
+        :Persist, :DWORD,
+        :AttributeCount, :DWORD,
+        :Attributes, CREDENTIAL_ATTRIBUTE,
+        :TargetAlias, :LPTSTR,
+        :UserName, :LPTSTR
       end
 
     # Ref: https://msdn.microsoft.com/en-us/library/windows/desktop/aa374804(v=vs.85).aspx
-    safe_attach_function :CredReadW, [:LPCTSTR, :DWORD, :DWORD, :pointer], :BOOL
+    safe_attach_function :CredReadW, %i{LPCTSTR DWORD DWORD pointer}, :BOOL
   end
 
   module WindowsCredentials

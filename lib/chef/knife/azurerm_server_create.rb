@@ -280,9 +280,9 @@ class Chef
         end
         # final verification for image reference parameters
         validate_arm_keys!(:azure_image_reference_publisher,
-            :azure_image_reference_offer,
-            :azure_image_reference_sku,
-            :azure_image_reference_version)
+          :azure_image_reference_offer,
+          :azure_image_reference_sku,
+          :azure_image_reference_version)
       end
 
       def set_os_image(publisher, img_offer, default_os_version)

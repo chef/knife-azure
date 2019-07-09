@@ -27,7 +27,7 @@ module Azure
 
     def load
       @lbs ||= begin
-        @lbs = Hash.new
+        @lbs = {}
         @connection.deploys.all.each do |deploy|
           @lbs.merge!(deploy.loadbalancers)
         end

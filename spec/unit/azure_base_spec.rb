@@ -62,21 +62,21 @@ describe Chef::Knife::AzureBase do
         @dummy.validate_asm_keys!
         expect(Chef::Config[:knife][:azure_api_host_name]).to be == "management.core.windows.net"
         expect(Chef::Config[:knife][:azure_subscription_id]).to be == "id1"
-        validate_cert()
+        validate_cert
       end
 
       it "- should validate parse method" do
         @dummy.parse_publish_settings_file(get_publish_settings_file_path("azureValid.publishsettings"))
         expect(Chef::Config[:knife][:azure_api_host_name]).to be == "management.core.windows.net"
         expect(Chef::Config[:knife][:azure_subscription_id]).to be == "id1"
-        validate_cert()
+        validate_cert
       end
 
       it "- should validate parse method for SchemaVersion2-0 publishsettings file" do
         @dummy.parse_publish_settings_file(get_publish_settings_file_path("azureValidSchemaVersion-2.0.publishsettings"))
         expect(Chef::Config[:knife][:azure_api_host_name]).to be == "management.core.windows.net"
         expect(Chef::Config[:knife][:azure_subscription_id]).to be == "id1"
-        validate_cert()
+        validate_cert
       end
 
       it "- should validate settings file and subscrition id" do
@@ -86,7 +86,7 @@ describe Chef::Knife::AzureBase do
         expect(Chef::Config[:knife][:azure_api_host_name]).to be == "management.core.windows.net"
         expect(@dummy.config[:azure_subscription_id]).to be == "azure_subscription_id"
         expect(Chef::Config[:knife][:azure_subscription_id]).to be == "id1"
-        validate_cert()
+        validate_cert
       end
 
       it "- should raise error if invalid publish settings provided" do

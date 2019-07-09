@@ -46,10 +46,11 @@ describe Chef::Knife::AzureAgList do
       ["Name", "Location", "Description",
        "agname", "West US", "agdesc",
        "jm-affinity-group", "West US", "",
-       "test", "West US", "testdesc",
+       "test", "West US", "testdesc"
       ],
       :uneven_columns_across,
-      3)
+      3
+    )
     @server_instance.run
   end
 

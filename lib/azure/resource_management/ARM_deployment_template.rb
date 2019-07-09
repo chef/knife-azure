@@ -24,11 +24,11 @@ module Azure::ARM
       hint_names.each do |hint_name|
         case hint_name
         when "vm_name"
-          hints_json["vm_name"] = "[reference(#{resource_ids['vmId']}).osProfile.computerName]" unless hints_json.key? "vm_name"
+          hints_json["vm_name"] = "[reference(#{resource_ids["vmId"]}).osProfile.computerName]" unless hints_json.key? "vm_name"
         when "public_fqdn"
-          hints_json["public_fqdn"] = "[reference(#{resource_ids['pubId']}).dnsSettings.fqdn]" unless hints_json.key? "public_fqdn"
+          hints_json["public_fqdn"] = "[reference(#{resource_ids["pubId"]}).dnsSettings.fqdn]" unless hints_json.key? "public_fqdn"
         when "platform"
-          hints_json["platform"] = "[concat(reference(#{resource_ids['vmId']}).storageProfile.imageReference.offer, concat(' ', reference(#{resource_ids['vmId']}).storageProfile.imageReference.sku))]" unless hints_json.key? "platform"
+          hints_json["platform"] = "[concat(reference(#{resource_ids["vmId"]}).storageProfile.imageReference.offer, concat(' ', reference(#{resource_ids["vmId"]}).storageProfile.imageReference.sku))]" unless hints_json.key? "platform"
         end
       end
 
@@ -371,7 +371,7 @@ module Azure::ARM
             },
             "dependsOn" => [
               depNic1,
-              "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+              "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
             ],
             "properties" => {
               "ipConfigurations" => [
@@ -386,7 +386,7 @@ module Azure::ARM
                       "id" => "[variables('subnetRef')]",
                     },
                   },
-                }
+                },
               ],
             },
           },
@@ -442,7 +442,7 @@ module Azure::ARM
                 "networkInterfaces" => [
                   {
                     "id" => netid,
-                  }
+                  },
                 ],
               },
               "diagnosticsProfile" => {
@@ -463,7 +463,7 @@ module Azure::ARM
               "count" => "[parameters('numberOfInstances')]",
             },
             "dependsOn" => [
-              depExt
+              depExt,
             ],
             "properties" => {
               "publisher" => "#{params[:chef_extension_publisher]}",
@@ -493,7 +493,7 @@ module Azure::ARM
                 "encrypted_data_bag_secret" => "[parameters('encrypted_data_bag_secret')]",
               },
             },
-          }
+          },
         ],
       }
 
