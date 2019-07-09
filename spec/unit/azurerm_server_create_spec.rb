@@ -204,42 +204,42 @@ describe Chef::Knife::AzurermServerCreate do
         it "azure_tenant_id not provided for Linux platform" do
           allow(Chef::Platform).to receive(:windows?).and_return(false)
           Chef::Config[:knife].delete(:azure_tenant_id)
-          allow(File).to receive(:exists?).and_return(false)
+          allow(File).to receive(:exist?).and_return(false)
           expect { @arm_server_instance.run }.to raise_error(SystemExit)
         end
 
         it "azure_client_id not provided for Linux platform" do
           allow(Chef::Platform).to receive(:windows?).and_return(false)
           Chef::Config[:knife].delete(:azure_client_id)
-          allow(File).to receive(:exists?).and_return(false)
+          allow(File).to receive(:exist?).and_return(false)
           expect { @arm_server_instance.run }.to raise_error(SystemExit)
         end
 
         it "azure_client_secret not provided for Linux platform" do
           allow(Chef::Platform).to receive(:windows?).and_return(false)
           Chef::Config[:knife].delete(:azure_client_secret)
-          allow(File).to receive(:exists?).and_return(false)
+          allow(File).to receive(:exist?).and_return(false)
           expect { @arm_server_instance.run }.to raise_error(SystemExit)
         end
 
         it "azure_tenant_id not provided for Windows platform" do
           allow(Chef::Platform).to receive(:windows?).and_return(true)
           Chef::Config[:knife].delete(:azure_tenant_id)
-          allow(File).to receive(:exists?).and_return(false)
+          allow(File).to receive(:exist?).and_return(false)
           expect { @arm_server_instance.run }.to raise_error(SystemExit)
         end
 
         it "azure_client_id not provided for Windows platform" do
           allow(Chef::Platform).to receive(:windows?).and_return(true)
           Chef::Config[:knife].delete(:azure_client_id)
-          allow(File).to receive(:exists?).and_return(false)
+          allow(File).to receive(:exist?).and_return(false)
           expect { @arm_server_instance.run }.to raise_error(SystemExit)
         end
 
         it "azure_client_secret not provided for windows platform" do
           allow(Chef::Platform).to receive(:windows?).and_return(true)
           Chef::Config[:knife].delete(:azure_client_secret)
-          allow(File).to receive(:exists?).and_return(false)
+          allow(File).to receive(:exist?).and_return(false)
           expect { @arm_server_instance.run }.to raise_error(SystemExit)
         end
 

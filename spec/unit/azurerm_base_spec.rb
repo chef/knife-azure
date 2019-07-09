@@ -106,12 +106,12 @@ describe Chef::Knife::AzurermBase do
           allow(Chef::Platform).to receive(:windows?).and_return(false)
         end
         it "Accesstoken file doesnt exist for Linux" do
-          allow(File).to receive(:exists?).and_return(false)
+          allow(File).to receive(:exist?).and_return(false)
           expect { @arm_server_instance.validate_azure_login }.to raise_error("Please run XPLAT's 'azure login' command OR specify azure_tenant_id, azure_subscription_id, azure_client_id, azure_client_secret in your knife.rb")
         end
 
         it "Accesstoken file exist for Linux" do
-          allow(File).to receive(:exists?).and_return(true)
+          allow(File).to receive(:exist?).and_return(true)
           allow(File).to receive(:size?).and_return(4)
           expect { @arm_server_instance.validate_azure_login }.not_to raise_error
         end
@@ -191,7 +191,7 @@ describe Chef::Knife::AzurermBase do
 
             context "token not present in accessTokens.json file" do
               before do
-                allow(File).to receive(:exists?).and_return(true)
+                allow(File).to receive(:exist?).and_return(true)
                 allow(File).to receive(:size?).and_return(2)
               end
 
@@ -204,14 +204,14 @@ describe Chef::Knife::AzurermBase do
 
             context "token present in accessTokens.json file" do
               before do
-                allow(File).to receive(:exists?).and_return(true)
+                allow(File).to receive(:exist?).and_return(true)
                 allow(File).to receive(:size?).and_return(4)
               end
 
               it "does not raise error" do
                 expect(Mixlib::ShellOut).to_not receive(:new)
                 expect(File).to receive(:expand_path).and_return("user_home_path")
-                expect { @arm_server_instance.validate_azure_login }.to raise_error("Please run XPLAT's 'azure login' command OR specify azure_tenant_id, azure_subscription_id, azure_client_id, azure_client_secret in your knife.rb")
+                expect { @arm_server_instance.validate_azure_login }.not_to raise_error
               end
             end
           end

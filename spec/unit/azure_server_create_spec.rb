@@ -21,8 +21,6 @@ require File.expand_path(File.dirname(__FILE__) + "/../unit/query_azure_mock")
 require "chef/knife/bootstrap"
 require "active_support/core_ext/hash/conversions"
 
-Chef::Knife::Bootstrap.load_deps
-
 describe Chef::Knife::AzureServerCreate do
   include AzureSpecHelper
   include QueryAzureMock
@@ -53,6 +51,7 @@ describe Chef::Knife::AzureServerCreate do
     allow(@server_instance).to receive(:sleep).and_return(0)
     allow(@server_instance).to receive(:puts)
     allow(@server_instance).to receive(:print)
+    allow(@server_instance).to receive(:check_license)
     allow(@server_instance).to receive(:connect!)
     allow(@server_instance).to receive(:register_client)
     allow(@server_instance).to receive(:render_template).and_return "content"

@@ -33,6 +33,7 @@ describe Chef::Knife::BootstrapAzure do
     @server_role = Azure::Role.new("connection")
     allow(@bootstrap_azure_instance.ui).to receive(:info)
     allow(@bootstrap_azure_instance).to receive(:puts)
+    allow(@bootstrap_azure_instance).to receive(:check_license)
   end
 
   describe "parameters validation" do

@@ -176,6 +176,7 @@ class Chef
           raise login_message if result.stdout.nil? || result.stdout.empty?
         else
           home_dir = File.expand_path("~")
+          puts "File.exist? = #{File.exist?("a")}"
           if !File.exist?(home_dir + "/.azure/accessTokens.json") || File.size?(home_dir + "/.azure/accessTokens.json") <= 2
             raise login_message
           end

@@ -36,6 +36,7 @@ describe Chef::Knife::BootstrapAzurerm do
     allow(@bootstrap_azurerm_instance.service).to receive(
       :compute_management_client
     ).and_return(@compute_client)
+    allow(@bootstrap_azurerm_instance).to receive(:check_license)
   end
 
   context "parameters validation" do
