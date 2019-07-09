@@ -287,7 +287,7 @@ module Azure
         end
 
         if ep["Port"] == params[:port] && ep["Protocol"].casecmp("tcp").zero?
-          puts("Skipping tcp-endpoints: #{ep['LocalPort']} because this port is already in use by ssh/winrm endpoint in current VM.")
+          puts("Skipping tcp-endpoints: #{ep["LocalPort"]} because this port is already in use by ssh/winrm endpoint in current VM.")
           next
         end
 
@@ -380,7 +380,7 @@ module Azure
                   end
                   xml.WinRM do
                     xml.Listeners do
-                      if params[:winrm_ssl] == "ssl" || params[:ssl_cert_fingerprint]
+                      if params[:winrm_ssl] || params[:ssl_cert_fingerprint]
                         xml.Listener do
                           xml.CertificateThumbprint params[:ssl_cert_fingerprint] if params[:ssl_cert_fingerprint]
                           xml.Protocol "Https"
@@ -461,7 +461,7 @@ module Azure
                 # 3. connection_protocol = 'cloud-api' for windows and linux => Set no port
                 if (params[:os_type] == "Windows") && params[:connection_protocol].casecmp("winrm").zero?
                   xml.InputEndpoint do
-                    if params[:winrm_ssl] == "ssl"
+                    if params[:winrm_ssl]
                       xml.LocalPort "5986"
                     else
                       xml.LocalPort "5985"
@@ -557,7 +557,7 @@ module Azure
 
     def create(params, roleXML)
       servicecall = "hostedservices/#{params[:azure_dns_name]}/deployments" \
-                    "/#{params['deploy_name']}/roles"
+                    "/#{params["deploy_name"]}/roles"
       @connection.query_azure(servicecall, "post", roleXML.to_xml)
     end
 

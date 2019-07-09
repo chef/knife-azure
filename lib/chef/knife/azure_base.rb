@@ -33,33 +33,33 @@ class Chef
           end
 
           option :azure_subscription_id,
-                 short: "-S ID",
-                 long: "--azure-subscription-id ID",
-                 description: "Your Azure subscription ID",
-                 proc: proc { |key| Chef::Config[:knife][:azure_subscription_id] = key }
+            short: "-S ID",
+            long: "--azure-subscription-id ID",
+            description: "Your Azure subscription ID",
+            proc: proc { |key| Chef::Config[:knife][:azure_subscription_id] = key }
 
           option :azure_mgmt_cert,
-                 short: "-p FILENAME",
-                 long: "--azure-mgmt-cert FILENAME",
-                 description: "Your Azure PEM file name",
-                 proc: proc { |key| Chef::Config[:knife][:azure_mgmt_cert] = key }
+            short: "-p FILENAME",
+            long: "--azure-mgmt-cert FILENAME",
+            description: "Your Azure PEM file name",
+            proc: proc { |key| Chef::Config[:knife][:azure_mgmt_cert] = key }
 
           option :azure_api_host_name,
-                 short: "-H HOSTNAME",
-                 long: "--azure-api-host-name HOSTNAME",
-                 description: "Your Azure host name",
-                 proc: proc { |key| Chef::Config[:knife][:azure_api_host_name] = key }
+            short: "-H HOSTNAME",
+            long: "--azure-api-host-name HOSTNAME",
+            description: "Your Azure host name",
+            proc: proc { |key| Chef::Config[:knife][:azure_api_host_name] = key }
 
           option :verify_ssl_cert,
-                 long: "--verify-ssl-cert",
-                 description: "Verify SSL Certificates for communication over HTTPS",
-                 boolean: true,
-                 default: false
+            long: "--verify-ssl-cert",
+            description: "Verify SSL Certificates for communication over HTTPS",
+            boolean: true,
+            default: false
 
           option :azure_publish_settings_file,
-                 long: "--azure-publish-settings-file FILENAME",
-                 description: "Your Azure Publish Settings File",
-                 proc: proc { |key| Chef::Config[:knife][:azure_publish_settings_file] = key }
+            long: "--azure-publish-settings-file FILENAME",
+            description: "Your Azure Publish Settings File",
+            proc: proc { |key| Chef::Config[:knife][:azure_publish_settings_file] = key }
         end
       end
 
@@ -151,7 +151,7 @@ class Chef
           end
         end
 
-        if locate_config_value(:winrm_ssl) == "ssl" && locate_config_value(:thumbprint).nil? && locate_config_value(:winrm_no_verify_cert).nil?
+        if locate_config_value(:winrm_ssl) && locate_config_value(:thumbprint).nil? && locate_config_value(:winrm_no_verify_cert).nil?
           ui.error("The SSL transport was specified without the --thumbprint option. Specify a thumbprint, or alternatively set the --winrm-no-verify-cert option to skip verification.")
           exit 1
         end
@@ -267,7 +267,7 @@ class Chef
         first_subscription_as_default = nil
         azure_profile["subscriptions"].each do |subscription|
           if subscription["isDefault"]
-            Chef::Log.info("Default subscription \'#{subscription['name']}\'' selected.")
+            Chef::Log.info("Default subscription \'#{subscription["name"]}\'' selected.")
             return subscription
           end
 
@@ -275,7 +275,7 @@ class Chef
         end
 
         if first_subscription_as_default
-          Chef::Log.info("First subscription \'#{subscription['name']}\' selected as default.")
+          Chef::Log.info("First subscription \'#{subscription["name"]}\' selected as default.")
         else
           Chef::Log.info("No subscriptions found.")
           exit 1
@@ -381,7 +381,7 @@ class Chef
               ## unavailability of the substatus field indicates that chef-client run is not completed yet on the server ##
               fetch_process_wait_time = ((Time.now - fetch_process_start_time) / 60).round
               if fetch_process_wait_time <= fetch_process_wait_timeout ## wait for maximum 30 minutes until chef-client run logs becomes available ##
-                print "#{ui.color('.', :bold)}"
+                print "#{ui.color(".", :bold)}"
                 sleep 30
                 fetch_chef_client_logs(fetch_process_start_time, fetch_process_wait_timeout)
               else

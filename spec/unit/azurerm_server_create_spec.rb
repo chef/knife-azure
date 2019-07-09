@@ -608,7 +608,7 @@ describe Chef::Knife::AzurermServerCreate do
 
           expect(@arm_server_instance).to receive(
             :is_image_windows?
-          ).at_least(3).and_return(false)
+          ).at_least(:twice).and_return(false)
 
           allow(@resource_client).to receive_message_chain(
             :resource_groups, :check_existence
@@ -669,7 +669,7 @@ describe Chef::Knife::AzurermServerCreate do
 
           expect(@arm_server_instance).to receive(
             :is_image_windows?
-          ).at_least(3).and_return(true)
+          ).at_least(:twice).and_return(true)
 
           allow(@resource_client).to receive_message_chain(
             :resource_groups, :check_existence
@@ -698,7 +698,7 @@ describe Chef::Knife::AzurermServerCreate do
 
           expect(@arm_server_instance).to receive(
             :is_image_windows?
-          ).at_least(3).and_return(false)
+          ).at_least(:twice).and_return(false)
 
           allow(@resource_client).to receive_message_chain(
             :resource_groups, :check_existence

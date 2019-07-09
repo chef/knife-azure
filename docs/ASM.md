@@ -13,7 +13,7 @@ location in your config.rb:
       $ knife azure server create --azure-dns-name MyNewServerName --azure-vm-size Standard_A2 -I a699494373c04fc0bc8f2bb1389d6106__Windows-Server-2012-R2-20150825-en.us-127GB.vhd --azure-service-location 'West US' --connection-user myuser --connection-password 'mypassword'
 
       # Create and bootstrap a Windows VM over winrm using SSL (winrm is the default for Windows)
-      $ knife azure server create --azure-dns-name MyNewServerName --azure-vm-size Standard_A2 -I a699494373c04fc0bc8f2bb1389d6106__Windows-Server-2012-R2-20150825-en.us-127GB.vhd --azure-service-location 'West US' --connection-user myuser --connection-password 'mypassword' --winrm-ssl ssl --winrm-no-verify-cert verify_none
+      $ knife azure server create --azure-dns-name MyNewServerName --azure-vm-size Standard_A2 -I a699494373c04fc0bc8f2bb1389d6106__Windows-Server-2012-R2-20150825-en.us-127GB.vhd --azure-service-location 'West US' --connection-user myuser --connection-password 'mypassword' --winrm-ssl --winrm-no-verify-cert
 
       # Create and bootstrap an Ubuntu VM over ssh
       $ knife azure server create -N MyNewNode --azure-vm-size Standard_A2 -I b39f27a8b8c64d52b05eac6a62ebad85__Ubuntu-14_04_1-LTS-amd64-server-20140927-en-us-30GB -m 'West US' --connection-user myuser --ssh-identity-file ~/.ssh/myprivatekey_rsa
@@ -54,9 +54,6 @@ Outputs a list of all linux images that are available to use for provisioning. Y
 This subcommand provisions a new server in Azure and then performs a Chef bootstrap. The goal of the bootstrap is to get Chef installed on the target system so it can run Chef Client with a Chef Server.
 
 #### Windows Bootstrapping Requirements
-knife-azure depends on knife-windows: https://github.com/chef/knife-windows
-to bootstrap Windows machines via WinRM (Basic, NTLM and Kerberos authentication) or ssh.
-
 Windows source images should have the WinRM service enabled and the
 authentication should be set accordingly (Basic, NTLM and Kerberos). Firewall rules should be added accordingly to the source images. Refer to the link to configure this:
 https://github.com/chef/knife-windows#nodes

@@ -130,7 +130,7 @@ describe Chef::Knife::AzureServerCreate do
 
       context "when winrm-ssl ssl and missing thumbprint" do
         it "raise error if :winrm_no_verify_cert is not set" do
-          Chef::Config[:knife][:winrm_ssl] = "ssl"
+          Chef::Config[:knife][:winrm_ssl] = true
           Chef::Config[:knife][:winrm_no_verify_cert] = true
           expect(@server_instance.ui).to receive(:error)
           expect { @server_instance.run }.to raise_error(SystemExit)
@@ -226,7 +226,7 @@ describe Chef::Knife::AzureServerCreate do
         expect(xml_content(testxml, "MediaLink")).to_not be nil
         expect(xml_content(testxml, "DiskName")).to_not be nil
         test_params(testxml, Chef::Config[:knife], Chef::Config[:knife][:azure_dns_name],
-                    Chef::Config[:knife][:azure_dns_name])
+          Chef::Config[:knife][:azure_dns_name])
       end
 
       it "quick create with wirm - API check" do
@@ -284,7 +284,7 @@ describe Chef::Knife::AzureServerCreate do
         expect(xml_content(testxml, "MediaLink")).to be == "http://ka001testeurope.blob.core.windows-int.net/vhds/os-disk.vhd"
         expect(xml_content(testxml, "DiskName")).to be == Chef::Config[:knife][:azure_os_disk_name]
         test_params(testxml, Chef::Config[:knife], Chef::Config[:knife][:azure_vm_name],
-                    Chef::Config[:knife][:azure_vm_name])
+          Chef::Config[:knife][:azure_vm_name])
       end
 
       it "create with availability set" do

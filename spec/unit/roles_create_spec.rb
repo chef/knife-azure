@@ -204,7 +204,7 @@ describe "roles" do
           azure_storage_account: "chefci",
           os_type: "Windows",
           connection_protocol: "winrm",
-          winrm_ssl: "ssl",
+          winrm_ssl: true,
           winrm_max_timeout: 1_800_000,
           winrm_max_memory_per_shell: 600,
         }

@@ -79,7 +79,7 @@ class Chef
         if azure_cred?
           validate_azure_login
         else
-          keys.concat([:azure_tenant_id, :azure_client_id, :azure_client_secret])
+          keys.concat(%i{azure_tenant_id azure_client_id azure_client_secret})
         end
 
         errors = []
@@ -97,10 +97,11 @@ class Chef
         if is_azure_cred?
           return { azure_tenant_id: locate_config_value(:azure_tenant_id), azure_client_id: locate_config_value(:azure_client_id), azure_client_secret: locate_config_value(:azure_client_secret) }
         elsif Chef::Platform.windows?
-          token_details = token_details_for_windows()
+          token_details = token_details_for_windows
         else
-          token_details = token_details_for_linux()
+          token_details = token_details_for_linux
         end
+
         token_details = check_token_validity(token_details)
         token_details
       end
@@ -270,10 +271,6 @@ class Chef
 
         unless locate_config_value(:connection_password).nil? ^ locate_config_value(:ssh_public_key).nil?
           raise ArgumentError, "Please specify either --connection-password or --ssh-public-key option for authentication."
-        end
-
-        if is_image_windows? && !locate_config_value(:ssh_public_key).nil?
-          raise ArgumentError, "Windows doesn't support SSH authentication. Please provide --connection-password option."
         end
 
         if locate_config_value(:azure_vnet_subnet_name) && !locate_config_value(:azure_vnet_name)
