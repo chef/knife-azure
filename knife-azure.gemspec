@@ -20,7 +20,7 @@ Gem::Specification.new do |s|
   s.required_ruby_version = ">= 2.3"
 
   s.add_dependency "nokogiri", ">= 1.5.5"
-  s.add_dependency "knife-windows", "~> 1.0"
+  s.add_dependency "knife-windows", "~> 3.0"
   s.add_dependency "azure_mgmt_resources", "~> 0.17", ">= 0.17.2"
   s.add_dependency "azure_mgmt_compute", "~> 0.18", ">= 0.18.3"
   s.add_dependency "azure_mgmt_storage", "~> 0.17", ">= 0.17.3"
