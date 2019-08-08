@@ -1,5 +1,5 @@
 #
-# Copyright:: Copyright 2016-2018 Chef Software, Inc.
+# Copyright:: Copyright 2010-2019, Chef Software Inc.
 # License:: Apache License, Version 2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,8 +25,7 @@ module Azure
 
     attr_accessor :ui
 
-    def initialize(options = {})
-    end
+    def initialize(options = {}); end
 
     def create_server(params = {})
       AzureInterface.api_not_implemented(self)

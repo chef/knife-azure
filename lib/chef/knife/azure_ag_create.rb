@@ -1,6 +1,6 @@
 #
 # Author:: Jeff Mendoza (jeffmendoza@live.com)
-# Copyright:: Copyright 2013-2018 Chef Software, Inc.
+# Copyright:: Copyright 2010-2019, Chef Software Inc.
 # License:: Apache License, Version 2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,18 +26,18 @@ class Chef
       banner "knife azure ag create (options)"
 
       option :azure_affinity_group,
-        :short => "-a GROUP",
-        :long => "--azure-affinity-group GROUP",
-        :description => "Specifies new affinity group name."
+        short: "-a GROUP",
+        long: "--azure-affinity-group GROUP",
+        description: "Specifies new affinity group name."
 
       option :azure_ag_desc,
-        :long => "--azure-ag-desc DESC",
-        :description => "Optional. Description for new affinity group."
+        long: "--azure-ag-desc DESC",
+        description: "Optional. Description for new affinity group."
 
       option :azure_service_location,
-        :short => "-m LOCATION",
-        :long => "--azure-service-location LOCATION",
-        :description => "Specifies the geographic location - the name of "\
+        short: "-m LOCATION",
+        long: "--azure-service-location LOCATION",
+        description: "Specifies the geographic location - the name of "\
                         "the data center location that is valid for your "\
                         "subscription. Eg: West US, East US, "\
                         "East Asia, Southeast Asia, North Europe, West Europe"
@@ -47,7 +47,7 @@ class Chef
 
         Chef::Log.info("validating...")
         validate_asm_keys!(:azure_affinity_group,
-                   :azure_service_location)
+          :azure_service_location)
 
         params = {
           azure_ag_name: locate_config_value(:azure_affinity_group),
@@ -61,11 +61,11 @@ class Chef
           if rsp.at_css("Code").nil? || rsp.at_css("Message").nil?
             puts "Unknown Error. try -VV"
           else
-            puts "#{rsp.at_css('Code').content}: "\
-                 "#{rsp.at_css('Message').content}"
+            puts "#{rsp.at_css("Code").content}: "\
+                 "#{rsp.at_css("Message").content}"
           end
         else
-          puts "Creation status: #{rsp.at_css('Status').content}"
+          puts "Creation status: #{rsp.at_css("Status").content}"
         end
       end
     end

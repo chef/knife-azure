@@ -1,6 +1,6 @@
 #
 # Author:: Barry Davis (barryd@jetstreamsoftware.com)
-# Copyright:: Copyright 2010-2018 Chef Software, Inc.
+# Copyright:: Copyright 2010-2019, Chef Software Inc.
 # License:: Apache License, Version 2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,9 +26,9 @@ module Azure
     # force_load should be true when there is something in local cache and we want to reload
     # first call is always load.
     def load(force_load = false)
-      if not @deploys || force_load
+      unless @deploys || force_load
         @deploys = begin
-          deploys = Array.new
+          deploys = []
           hosts = @connection.hosts.all
           hosts.each do |host|
             deploy = Deploy.new(@connection)
@@ -76,14 +76,14 @@ module Azure
       unless @connection.storageaccounts.exists?(params[:azure_storage_account])
         @connection.storageaccounts.create(params)
       end
-      if params[:identity_file]
+      if params[:ssh_identity_file]
         params[:fingerprint] = @connection.certificates.create(params)
       end
       if params[:cert_path]
         cert_data = File.read (params[:cert_path])
         @connection.certificates.add cert_data, params[:cert_password], "pfx", params[:azure_dns_name]
-      elsif params[:winrm_transport] == "ssl"
-        #TODO: generate certificates for ssl listener
+      elsif params[:winrm_ssl]
+        # TODO: generate certificates for ssl listener
       end
 
       params["deploy_name"] = get_deploy_name_for_hostedservice(params[:azure_dns_name])
@@ -106,8 +106,7 @@ module Azure
       @connection.roles.find_in_hosted_service(params[:azure_vm_name], params[:azure_dns_name])
     end
 
-    def delete(rolename)
-    end
+    def delete(rolename); end
 
     def queryDeploy(hostedservicename)
       deploy = Deploy.new(@connection)
@@ -131,7 +130,7 @@ module Azure
         @name = xml_content(deployXML, "Deployment Name")
         @status = xml_content(deployXML, "Deployment Status")
         @url = xml_content(deployXML, "Deployment Url")
-        @roles = Hash.new
+        @roles = {}
         rolesXML = deployXML.css("Deployment RoleInstanceList RoleInstance")
         rolesListXML = deployXML.css("Deployment RoleList Role")
         rolesXML.zip(rolesListXML).each do |roleXML, roleListXML|
@@ -143,12 +142,12 @@ module Azure
           role.parse_role_list_xml(roleListXML)
           @roles[role.name] = role
         end
-        @input_endpoints = Array.new
+        @input_endpoints = []
         endpointsXML = deployXML.css("InputEndpoint")
         endpointsXML.each do |endpointXML|
           @input_endpoints << parse_endpoint(endpointXML)
         end
-        @loadbalancers = Hash.new
+        @loadbalancers = {}
         lbsXML = deployXML.css("Deployment LoadBalancers LoadBalancer")
         lbsXML.each do |lbXML|
           loadbalancer = Loadbalancer.new(@connection)
@@ -161,7 +160,6 @@ module Azure
     def setup(params)
       role = Role.new(@connection)
       roleXML = role.setup(params)
-      #roleXML = Nokogiri::XML role.setup(params)
       builder = Nokogiri::XML::Builder.new do |xml|
         xml.Deployment(
           "xmlns" => "http://schemas.microsoft.com/windowsazure",
@@ -188,7 +186,7 @@ module Azure
     # This parses endpoints from a RoleList-Role-InputEndpoint, NOT a RoleInstanceList-RoleInstance-InstanceEndpoint
     # Refactor: make this an object rather than a hash..?
     def parse_endpoint(inputendpoint_xml)
-      hash = Hash.new
+      hash = {}
       %w{LoadBalancedEndpointSetName LocalPort Name Port Protocol EnableDirectServerReturn LoadBalancerName IdleTimeoutInMinutes}.each do |key|
         hash[key] = xml_content(inputendpoint_xml, key, nil)
       end
@@ -198,7 +196,7 @@ module Azure
       end
       probe = inputendpoint_xml.css("LoadBalancerProbe")
       if probe
-        hash["LoadBalancerProbe"] = Hash.new
+        hash["LoadBalancerProbe"] = {}
         %w{Path Port Protocol IntervalInSeconds TimeoutInSeconds}.each do |key|
           hash["LoadBalancerProbe"][key] = xml_content(probe, key, nil)
         end

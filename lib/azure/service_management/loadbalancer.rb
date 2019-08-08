@@ -1,6 +1,6 @@
 #
 # Author:: Aiman Alsari (aiman.alsari@gmail.com)
-# Copyright:: Copyright 2013-2018 Chef Software, Inc.
+# Copyright:: Copyright 2010-2019, Chef Software Inc.
 # License:: Apache License, Version 2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,7 +27,7 @@ module Azure
 
     def load
       @lbs ||= begin
-        @lbs = Hash.new
+        @lbs = {}
         @connection.deploys.all.each do |deploy|
           @lbs.merge!(deploy.loadbalancers)
         end

@@ -42,7 +42,7 @@ RSpec.configure do |c|
   end
 
   c.before(:all) do
-    #Create an empty mock certificate file
+    # Create an empty mock certificate file
     @cert_file = tmpFile("AzureLinuxCert.pem")
     FileUtils.touch(@cert_file)
     Chef::Log.init(tmpFile("debug.log"))
@@ -50,16 +50,16 @@ RSpec.configure do |c|
   end
 
   c.after(:all) do
-    #Cleanup files and dirs
+    # Cleanup files and dirs
     FileUtils.rm_rf("#{temp_dir}")
   end
 end
 
 TEST_PARAMS = {
-  :azure_subscription_id => "YOUR_SUBSCRIPTION_ID_HERE",
-  :azure_mgmt_cert => @cert_file,
-  :azure_api_host_name => "management-preview.core.windows-int.net",
-}
+  azure_subscription_id: "YOUR_SUBSCRIPTION_ID_HERE",
+  azure_mgmt_cert: @cert_file,
+  azure_api_host_name: "management-preview.core.windows-int.net",
+}.freeze
 
 module AzureSpecHelper
   def readFile(filename)
@@ -72,7 +72,7 @@ module AzureSpecHelper
 end
 
 def is_config_present
-  if ! ENV["RUN_INTEGRATION_TESTS"]
+  unless ENV["RUN_INTEGRATION_TESTS"]
     puts("\nPlease set RUN_INTEGRATION_TESTS environment variable to run integration tests")
     return false
   end
@@ -90,7 +90,7 @@ def is_config_present
     end
   end
 
-  err_msg = "\nPlease set #{unset_env_var.join(', ')} environment"
+  err_msg = "\nPlease set #{unset_env_var.join(", ")} environment"
   err_msg = err_msg + ( unset_env_var.length > 1 ? " variables " : " variable " ) + "for integration tests."
   puts err_msg unless unset_env_var.empty?
 
@@ -102,7 +102,7 @@ def is_config_present
     end
   end
 
-  config_err_msg = "\nPlease set #{unset_config_options.join(', ')} config"
+  config_err_msg = "\nPlease set #{unset_config_options.join(", ")} config"
   config_err_msg = config_err_msg + ( unset_config_options.length > 1 ? " options in ../spec/integration/config/environment.yml or as environment variables" : " option in ../spec/integration/config/environment.yml or as environment variable" ) + " for integration tests."
   puts config_err_msg unless unset_config_options.empty?
 
@@ -162,7 +162,7 @@ def is_windows?
 end
 
 RSpec.configure do |config|
-  config.filter_run_excluding :chef_gte_12_only => true unless chef_gte_12?
-  config.filter_run_excluding :chef_lt_12_only => true unless chef_lt_12?
-  config.filter_run_excluding :windows_only => true unless is_windows?
+  config.filter_run_excluding chef_gte_12_only: true unless chef_gte_12?
+  config.filter_run_excluding chef_lt_12_only: true unless chef_lt_12?
+  config.filter_run_excluding windows_only: true unless is_windows?
 end

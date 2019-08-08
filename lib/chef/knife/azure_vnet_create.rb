@@ -1,6 +1,6 @@
 #
 # Author:: Jeff Mendoza (jeffmendoza@live.com)
-# Copyright:: Copyright 2013-2018 Chef Software, Inc.
+# Copyright:: Copyright 2010-2019, Chef Software Inc.
 # License:: Apache License, Version 2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,26 +26,22 @@ class Chef
       banner "knife azure vnet create (options)"
 
       option :azure_network_name,
-        :short => "-n NETWORK_NAME",
-        :long => "--azure-network-name NETWORK_NAME",
-        :description =>
-          "Specifies the name of the virtual network to create."
+        short: "-n NETWORK_NAME",
+        long: "--azure-network-name NETWORK_NAME",
+        description:           "Specifies the name of the virtual network to create."
 
       option :azure_affinity_group,
-        :short => "-a GROUP",
-        :long => "--azure-affinity-group GROUP",
-        :description =>
-          "Specifies the affinity group to associate with the vnet."
+        short: "-a GROUP",
+        long: "--azure-affinity-group GROUP",
+        description:           "Specifies the affinity group to associate with the vnet."
 
       option :azure_address_space,
-        :long => "--azure-address-space CIDR",
-        :description =>
-          "Specifies the address space of the vnet using CIDR notation."
+        long: "--azure-address-space CIDR",
+        description:           "Specifies the address space of the vnet using CIDR notation."
 
       option :azure_subnet_name,
-        :long => "--azure-subnet-name CIDR",
-        :description =>
-          "Specifies the Subnet Name."
+        long: "--azure-subnet-name CIDR",
+        description:           "Specifies the Subnet Name."
 
       def run
         $stdout.sync = true
@@ -57,7 +53,7 @@ class Chef
           azure_vnet_name: locate_config_value(:azure_network_name),
           azure_ag_name: locate_config_value(:azure_affinity_group),
           azure_address_space: locate_config_value(:azure_address_space),
-          azure_subnet_name: locate_config_value(:azure_subnet_name) || "Subnet-#{Random.rand(10)}"
+          azure_subnet_name: locate_config_value(:azure_subnet_name) || "Subnet-#{Random.rand(10)}",
         }
 
         rsp = service.create_vnet(params)
@@ -66,11 +62,11 @@ class Chef
           if rsp.at_css("Code").nil? || rsp.at_css("Message").nil?
             puts "Unknown Error. try -VV"
           else
-            puts "#{rsp.at_css('Code').content}: "\
-                 "#{rsp.at_css('Message').content}"
+            puts "#{rsp.at_css("Code").content}: "\
+                 "#{rsp.at_css("Message").content}"
           end
         else
-          puts "Creation status: #{rsp.at_css('Status').content}"
+          puts "Creation status: #{rsp.at_css("Status").content}"
         end
       end
     end

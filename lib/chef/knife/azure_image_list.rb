@@ -2,7 +2,7 @@
 # Author:: Barry Davis (barryd@jetstreamsoftware.com)
 # Author:: Seth Chisamore (<schisamo@chef.io>)
 # Author:: Adam Jacob (<adam@chef.io>)
-# Copyright:: Copyright 2010-2018 Chef Software, Inc.
+# Copyright:: Copyright 2010-2019, Chef Software Inc.
 # License:: Apache License, Version 2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -29,10 +29,10 @@ class Chef
       banner "knife azure image list (options)"
 
       option :show_all_fields,
-        :long => "--full",
-        :default => false,
-        :boolean => true,
-        :description => "Show all the fields of the images"
+        long: "--full",
+        default: false,
+        boolean: true,
+        description: "Show all the fields of the images"
 
       def run
         $stdout.sync = true
@@ -43,7 +43,7 @@ class Chef
         image_labels = !locate_config_value(:show_all_fields) ? %w{Name OS Location} : %w{Name Category Label OS Location}
         image_list =  image_labels.map { |label| ui.color(label, :bold) }
 
-        image_items = image_labels.map { |item| item.downcase }
+        image_items = image_labels.map(&:downcase)
         items.each do |image|
           image_items.each { |item| image_list << image.send(item).to_s }
         end

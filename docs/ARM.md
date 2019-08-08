@@ -2,7 +2,7 @@
 
 ### Common Configuration
 
-ARM configuration options can be specified in your knife.rb file only.
+ARM configuration options can be specified in your config.rb file only.
 
 The following options are required for all azurerm subcommands:
 
@@ -36,9 +36,9 @@ knife azurerm server create
   --azure-vm-name my-new-vm-name
   --azure-service-location 'westus'
   --azure-image-os-type windows
-  -x myuser -P mypassword
+  -U myuser -P mypassword
   -r "recipe[cbk1::rec2]"
-  -c ~/.chef/knife.rb
+  -c ~/.chef/config.rb
 ```
 OR
 ```
@@ -50,9 +50,9 @@ knife azurerm server create
   --azure-image-reference-offer 'WindowsServer'
   --azure-image-reference-sku '2012-R2-Datacenter'
   --azure-image-reference-version 'latest'
-  -x myuser -P mypassword
+  -U myuser -P mypassword
   -r "recipe[cbk1::rec2]"
-  -c ~/.chef/knife.rb
+  -c ~/.chef/config.rb
 ```
 
 For Centos:
@@ -65,9 +65,9 @@ knife azurerm server create
   --azure-image-os-type centos
   --azure-image-reference-sku '6.5'
   --azure-vm-size Standard_A1_v2
-  --ssh-user myuser --ssh-password mypassword
+  --connection-user myuser --connection-password mypassword
   -r "recipe[cbk1::rec1]"
-  -c ~/.chef/knife.rb
+  -c ~/.chef/config.rb
 ```
 OR
 ```
@@ -79,10 +79,10 @@ knife azurerm server create
   --azure-image-reference-offer 'CentOS'
   --azure-image-reference-sku '6.5'
   --azure-image-reference-version 'latest'
-  --ssh-user myuser --ssh-password mypassword
+  --connection-user myuser --connection-password mypassword
   --azure-vm-size Standard_A1_v2
   -r "recipe[cbk1::rec1]"
-  -c ~/.chef/knife.rb
+  -c ~/.chef/config.rb
 ```
 
 For Ubuntu:
@@ -94,10 +94,10 @@ knife azurerm server create
   --azure-service-location 'westus'
   --azure-image-os-type ubuntu
   --azure-image-reference-sku '14.04.2-LTS'
-  --ssh-user myuser --ssh-password mypassword
+  --connection-user myuser --connection-password mypassword
   --azure-vm-size Standard_A1_v2
   -r "recipe[cbk1::rec1]"
-  -c ~/.chef/knife.rb
+  -c ~/.chef/config.rb
 ```
 OR
 ```
@@ -109,10 +109,10 @@ knife azurerm server create
   --azure-image-reference-offer 'UbuntuServer'
   --azure-image-reference-sku '14.04.2-LTS'
   --azure-image-reference-version 'latest'
-  --ssh-user myuser --ssh-password mypassword
+  --connection-user myuser --connection-password mypassword
   --azure-vm-size Standard_A1_v2
   -r "recipe[cbk1::rec1]"
-  -c ~/.chef/knife.rb
+  -c ~/.chef/config.rb
 ```
 
 For Rhel:
@@ -123,10 +123,10 @@ knife azurerm server create
   --azure-vm-name my-new-vm-name
   --azure-service-location 'westus'
   --azure-image-os-type rhel
-  --ssh-user myuser --ssh-password mypassword
+  --connection-user myuser --connection-password mypassword
   --azure-vm-size Standard_A1_v2
   -r "recipe[cbk1::rec1]"
-  -c ~/.chef/knife.rb
+  -c ~/.chef/config.rb
 ```
 OR
 ```
@@ -138,10 +138,10 @@ knife azurerm server create
   --azure-image-reference-offer 'RHEL'
   --azure-image-reference-sku '7.2'
   --azure-image-reference-version 'latest'
-  --ssh-user myuser --ssh-password mypassword
+  --connection-user myuser --connection-password mypassword
   --azure-vm-size Standard_A1_v2
   -r "recipe[cbk1::rec1]"
-  -c ~/.chef/knife.rb
+  -c ~/.chef/config.rb
 ```
 
 For Debian:
@@ -152,10 +152,10 @@ knife azurerm server create
   --azure-vm-name my-new-vm-name
   --azure-service-location 'westus'
   --azure-image-os-type debian
-  --ssh-user myuser --ssh-password mypassword
+  --connection-user myuser --connection-password mypassword
   --azure-vm-size Standard_A1_v2
   -r "recipe[cbk1::rec1]"
-  -c ~/.chef/knife.rb
+  -c ~/.chef/config.rb
 ```
 OR
 ```
@@ -167,10 +167,10 @@ knife azurerm server create
   --azure-image-reference-offer 'Debian'
   --azure-image-reference-sku '7'
   --azure-image-reference-version 'latest'
-  --ssh-user myuser --ssh-password mypassword
+  --connection-user myuser --connection-password mypassword
   --azure-vm-size Standard_A1_v2
   -r "recipe[cbk1::rec1]"
-  -c ~/.chef/knife.rb
+  -c ~/.chef/config.rb
 ```
 
 User can also pass names for virtual network and subnet while server create by providing `--azure-vnet-name` and `--azure-vnet-subnet-name` options. Following are the possible scenarios for the usage of these two options:
@@ -204,10 +204,10 @@ knife azurerm server create
   --azure-vm-name my-new-vm-name
   --azure-service-location 'westus'
   --azure-image-os-type ubuntu
-  --ssh-user myuser --ssh-password mypassword
+  --connection-user myuser --connection-password mypassword
   --azure-vm-size Standard_A1_v2
   -r "recipe[cbk1::rec1]"
-  -c ~/.chef/knife.rb
+  -c ~/.chef/config.rb
 ```
 OR
 ```
@@ -216,12 +216,12 @@ knife azurerm server create
   --azure-vm-name my-new-vm-name
   --azure-service-location 'westus'
   --azure-image-os-type ubuntu
-  --ssh-user myuser --ssh-password mypassword
+  --connection-user myuser --connection-password mypassword
   --azure-vm-size Standard_A1_v2
   --azure-vnet-name 'VnetName'
   --azure-vnet-subnet-name 'VnetSubnetName'
   -r "recipe[cbk1::rec1]"
-  -c ~/.chef/knife.rb
+  -c ~/.chef/config.rb
 ```
 OR
 ```
@@ -230,11 +230,11 @@ knife azurerm server create
   --azure-vm-name my-new-vm-name
   --azure-service-location 'westus'
   --azure-image-os-type ubuntu
-  --ssh-user myuser --ssh-password mypassword
+  --connection-user myuser --connection-password mypassword
   --azure-vm-size Standard_A1_v2
   --azure-vnet-name 'VnetName'
   -r "recipe[cbk1::rec1]"
-  -c ~/.chef/knife.rb
+  -c ~/.chef/config.rb
 ```
 
 #### --server-count option
@@ -250,7 +250,7 @@ knife azurerm server create
 --azure-image-os-type centos
 --azure-vm-size Standard_A1_v2
 --server-count 3
--x myuser -P mypassword
+-U myuser -P mypassword
 ```
 This will create 3 VMs with names: `my-new-vm-name0`, `my-new-vm-name1` and `my-new-vm-name2`
 
@@ -266,7 +266,7 @@ knife azurerm server create
 --azure-image-os-type centos
 --azure-vm-size Standard_A1_v2
 --extended-logs
--x myuser -P mypassword
+-U myuser -P mypassword
 ```
 
 #### --tcp-endpoints option
@@ -281,7 +281,7 @@ knife azurerm server create
 --azure-image-os-type centos
 --azure-vm-size Standard_A1_v2
 --tcp-endpoints '100,123'
--x myuser -P mypassword
+-U myuser -P mypassword
 ```
 
 #### --ohai-hints option
@@ -301,7 +301,7 @@ knife azurerm server create
 --azure-image-os-type centos
 --azure-vm-size Standard_A1_v2
 --ohai-hints 'vm_name,platform'
--x myuser -P mypassword
+-U myuser -P mypassword
 ```
 
 #### --azure-storage-account
@@ -327,7 +327,7 @@ knife azurerm server create
 --azure-image-os-type centos
 --azure-vm-size Standard_A1_v2
 --azure-storage-account 'teststorage'
--x myuser -P mypassword
+-U myuser -P mypassword
 ```
 
 #### --chef-daemon-interval
@@ -345,7 +345,7 @@ knife azurerm server create
 --azure-image-os-type centos
 --azure-vm-size Standard_A1_v2
 --azure-storage-account 'teststorage'
--x myuser -P mypassword
+-U myuser -P mypassword
 ```
 
 #### --azure-availability-set
@@ -361,8 +361,8 @@ knife azurerm server create
 --azure-service-location 'eastus'
 --azure-image-os-type windows
 --node-ssl-verify-mode none
--x myuser -P mypassword
--c ~/.chef/knife.rb
+-U myuser -P mypassword
+-c ~/.chef/config.rb
 ```
 
 ### Azure Server Delete Subcommand
@@ -371,11 +371,11 @@ For deleting associated resource-group along with server use --delete-resource-g
 For deleting associated node and client objects from the Chef server, add the --purge flag.
 
 ```
-knife azurerm server delete MyVMName --azure-resource-group-name MyResourceGrpName -c ~/.chef/knife.rb
+knife azurerm server delete MyVMName --azure-resource-group-name MyResourceGrpName -c ~/.chef/config.rb
 
-knife azurerm server delete MyVMName --azure-resource-group-name MyResourceGrpName -c ~/.chef/knife.rb --purge  #purge chef node
+knife azurerm server delete MyVMName --azure-resource-group-name MyResourceGrpName -c ~/.chef/config.rb --purge  #purge chef node
 
-knife azurerm server delete MyVMName --azure-resource-group-name MyResourceGrpName -c ~/.chef/knife.rb --delete-resource-group #deletes resource group
+knife azurerm server delete MyVMName --azure-resource-group-name MyResourceGrpName -c ~/.chef/config.rb --delete-resource-group #deletes resource group
 ```
 
 ### Azure Server List Subcommand
@@ -389,7 +389,7 @@ knife azurerm server list
 Outputs the details of an ARM server.
 
 ```
-knife azurerm server show MyVMName --azure-resource-group-name MyResourceGrpName -c ~/.chef/knife.rb
+knife azurerm server show MyVMName --azure-resource-group-name MyResourceGrpName -c ~/.chef/config.rb
 ```
 
 #### `daemon` feature
@@ -406,9 +406,9 @@ knife azurerm server create
   --azure-vm-name my-new-vm-name
   --azure-service-location 'westus'
   --azure-image-os-type windows
-  -x myuser -P mypassword
+  -U myuser -P mypassword
   -r "recipe[cbk1::rec2]"
-  -c ~/.chef/knife.rb
+  -c ~/.chef/config.rb
   --daemon 'task'
   --chef-daemon-interval '18'
 ```
@@ -422,9 +422,9 @@ knife azurerm server create
   --azure-image-reference-offer 'WindowsServer'
   --azure-image-reference-sku '2012-R2-Datacenter'
   --azure-image-reference-version 'latest'
-  -x myuser -P mypassword
+  -U myuser -P mypassword
   -r "recipe[cbk1::rec2]"
-  -c ~/.chef/knife.rb
+  -c ~/.chef/config.rb
   --daemon 'task'
   --chef-daemon-interval '18'
 ```

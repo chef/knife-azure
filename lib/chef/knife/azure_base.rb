@@ -1,7 +1,6 @@
-
 # Author:: Barry Davis (barryd@jetstreamsoftware.com)
 # Author:: Seth Chisamore (<schisamo@chef.io>)
-# Copyright:: Copyright 2011-2018 Chef Software, Inc.
+# Copyright:: Copyright 2010-2019, Chef Software Inc.
 # License:: Apache License, Version 2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,67 +22,65 @@ require "azure/service_management/ASM_interface"
 class Chef
   class Knife
     module AzureBase
-
       # :nodoc:
       # Would prefer to do this in a rational way, but can't be done b/c of
       # Mixlib::CLI's design :(
       def self.included(includer)
         includer.class_eval do
-
           deps do
             require "readline"
             require "chef/json_compat"
           end
 
           option :azure_subscription_id,
-            :short => "-S ID",
-            :long => "--azure-subscription-id ID",
-            :description => "Your Azure subscription ID",
-            :proc => Proc.new { |key| Chef::Config[:knife][:azure_subscription_id] = key }
+            short: "-S ID",
+            long: "--azure-subscription-id ID",
+            description: "Your Azure subscription ID",
+            proc: proc { |key| Chef::Config[:knife][:azure_subscription_id] = key }
 
           option :azure_mgmt_cert,
-            :short => "-p FILENAME",
-            :long => "--azure-mgmt-cert FILENAME",
-            :description => "Your Azure PEM file name",
-            :proc => Proc.new { |key| Chef::Config[:knife][:azure_mgmt_cert] = key }
+            short: "-p FILENAME",
+            long: "--azure-mgmt-cert FILENAME",
+            description: "Your Azure PEM file name",
+            proc: proc { |key| Chef::Config[:knife][:azure_mgmt_cert] = key }
 
           option :azure_api_host_name,
-            :short => "-H HOSTNAME",
-            :long => "--azure-api-host-name HOSTNAME",
-            :description => "Your Azure host name",
-            :proc => Proc.new { |key| Chef::Config[:knife][:azure_api_host_name] = key }
+            short: "-H HOSTNAME",
+            long: "--azure-api-host-name HOSTNAME",
+            description: "Your Azure host name",
+            proc: proc { |key| Chef::Config[:knife][:azure_api_host_name] = key }
 
           option :verify_ssl_cert,
-            :long => "--verify-ssl-cert",
-            :description => "Verify SSL Certificates for communication over HTTPS",
-            :boolean => true,
-            :default => false
+            long: "--verify-ssl-cert",
+            description: "Verify SSL Certificates for communication over HTTPS",
+            boolean: true,
+            default: false
 
           option :azure_publish_settings_file,
-            :long => "--azure-publish-settings-file FILENAME",
-            :description => "Your Azure Publish Settings File",
-            :proc => Proc.new { |key| Chef::Config[:knife][:azure_publish_settings_file] = key }
+            long: "--azure-publish-settings-file FILENAME",
+            description: "Your Azure Publish Settings File",
+            proc: proc { |key| Chef::Config[:knife][:azure_publish_settings_file] = key }
         end
       end
 
       def is_image_windows?
         images = service.list_images
         target_image = images.select { |i| i.name == locate_config_value(:azure_source_image) }
-        unless target_image[0].nil?
-          return target_image[0].os == "Windows"
-        else
-          ui.error("Invalid image. Use the command \"knife azure image list\" to verify the image name")
+        if target_image[0].nil?
+          ui.error('Invalid image. Use the command "knife azure image list" to verify the image name')
           exit 1
+        else
+          return target_image[0].os == "Windows"
         end
       end
 
       def service
         @service ||= begin
                       service = Azure::ServiceManagement::ASMInterface.new(
-                        :azure_subscription_id => locate_config_value(:azure_subscription_id),
-                        :azure_mgmt_cert => locate_config_value(:azure_mgmt_cert),
-                        :azure_api_host_name => locate_config_value(:azure_api_host_name),
-                        :verify_ssl_cert => locate_config_value(:verify_ssl_cert)
+                        azure_subscription_id: locate_config_value(:azure_subscription_id),
+                        azure_mgmt_cert: locate_config_value(:azure_mgmt_cert),
+                        azure_api_host_name: locate_config_value(:azure_api_host_name),
+                        verify_ssl_cert: locate_config_value(:verify_ssl_cert)
                       )
                     end
         @service.ui = ui
@@ -120,19 +117,14 @@ class Chef
       end
 
       def pretty_key(key)
-        key.to_s.tr("_", " ").gsub(/\w+/) { |w| (w =~ /(ssh)|(aws)/i) ? w.upcase : w.capitalize }
+        key.to_s.tr("_", " ").gsub(/\w+/) { |w| w =~ /(ssh)|(aws)/i ? w.upcase : w.capitalize }
       end
 
       # validate command pre-requisites (cli options)
-      # (locate_config_value(:winrm_password).length <= 6 && locate_config_value(:winrm_password).length >= 72)
+      # (locate_config_value(:connection_password).length <= 6 && locate_config_value(:connection_password).length >= 72)
       def validate_params!
-        if locate_config_value(:winrm_password) && !locate_config_value(:winrm_password).strip.size.between?(6, 72)
-          ui.error("The supplied password must be 6-72 characters long and meet password complexity requirements")
-          exit 1
-        end
-
-        if locate_config_value(:ssh_password) && !locate_config_value(:ssh_password).empty? && !locate_config_value(:ssh_password).strip.size.between?(6, 72)
-          ui.error("The supplied ssh password must be 6-72 characters long and meet password complexity requirements")
+        if locate_config_value(:connection_password) && !locate_config_value(:connection_password).length.between?(6, 72)
+          ui.error("The supplied connection password must be 6-72 characters long and meet password complexity requirements")
           exit 1
         end
 
@@ -141,20 +133,12 @@ class Chef
           exit 1
         end
 
-        if locate_config_value(:azure_service_location) && locate_config_value(:azure_affinity_group)
-          ui.error("Cannot specify both --azure-service-location and --azure-affinity-group, use one or the other.")
-          exit 1
-        elsif locate_config_value(:azure_service_location).nil? && locate_config_value(:azure_affinity_group).nil?
-          ui.error("Must specify either --azure-service-location or --azure-affinity-group.")
+        unless !!locate_config_value(:azure_service_location) ^ !!locate_config_value(:azure_affinity_group)
+          ui.error("Specify either --azure-service-location or --azure-affinity-group")
           exit 1
         end
 
-        if locate_config_value(:winrm_authentication_protocol) && ! %w{basic negotiate kerberos}.include?(locate_config_value(:winrm_authentication_protocol).downcase)
-          ui.error("Invalid value for --winrm-authentication-protocol option. Use valid protocol values i.e [basic, negotiate, kerberos]")
-          exit 1
-        end
-
-        if !(service.valid_image?(locate_config_value(:azure_source_image)))
+        unless service.valid_image?(locate_config_value(:azure_source_image))
           ui.error("Image '#{locate_config_value(:azure_source_image)}' is invalid")
           exit 1
         end
@@ -167,17 +151,17 @@ class Chef
           end
         end
 
-        if locate_config_value(:winrm_transport) == "ssl" && locate_config_value(:thumbprint).nil? && ( locate_config_value(:winrm_ssl_verify_mode).nil? || locate_config_value(:winrm_ssl_verify_mode) == :verify_peer )
-          ui.error("The SSL transport was specified without the --thumbprint option. Specify a thumbprint, or alternatively set the --winrm-ssl-verify-mode option to 'verify_none' to skip verification.")
+        if locate_config_value(:winrm_ssl) && locate_config_value(:thumbprint).nil? && locate_config_value(:winrm_no_verify_cert).nil?
+          ui.error("The SSL transport was specified without the --thumbprint option. Specify a thumbprint, or alternatively set the --winrm-no-verify-cert option to skip verification.")
           exit 1
         end
 
-        if locate_config_value(:extended_logs) && locate_config_value(:bootstrap_protocol) != "cloud-api"
+        if locate_config_value(:extended_logs) && locate_config_value(:connection_protocol) != "cloud-api"
           ui.error("--extended-logs option only works with --bootstrap-protocol cloud-api")
           exit 1
         end
 
-        if locate_config_value(:bootstrap_protocol) == "cloud-api" && locate_config_value(:azure_vm_name).nil? && locate_config_value(:azure_dns_name).nil?
+        if locate_config_value(:connection_protocol) == "cloud-api" && locate_config_value(:azure_vm_name).nil? && locate_config_value(:azure_dns_name).nil?
           ui.error("Specifying the DNS name using --azure-dns-name or VM name using --azure-vm-name option is required with --bootstrap-protocol cloud-api")
           exit 1
         end
@@ -187,7 +171,7 @@ class Chef
             raise ArgumentError, "The daemon option is only supported for Windows nodes."
           end
 
-          unless  locate_config_value(:bootstrap_protocol) == "cloud-api"
+          unless  locate_config_value(:connection_protocol) == "cloud-api"
             raise ArgumentError, "The --daemon option requires the use of --bootstrap-protocol cloud-api"
           end
 
@@ -205,17 +189,15 @@ class Chef
             errors << "You did not provide a valid '#{pretty_key(k)}' value. Please set knife[:#{k}] in your knife.rb or pass as an option."
           end
         end
-        if errors.each { |e| ui.error(e) }.any?
-          exit 1
-        end
+        exit 1 if errors.each { |e| ui.error(e) }.any?
       end
 
       # validate ASM mandatory keys
       def validate_asm_keys!(*keys)
-        mandatory_keys = [:azure_subscription_id, :azure_mgmt_cert, :azure_api_host_name]
+        mandatory_keys = %i{azure_subscription_id azure_mgmt_cert azure_api_host_name}
         keys.concat(mandatory_keys)
 
-        if !locate_config_value(:azure_mgmt_cert).nil?
+        unless locate_config_value(:azure_mgmt_cert).nil?
           config[:azure_mgmt_cert] = File.read find_file(locate_config_value(:azure_mgmt_cert))
         end
 
@@ -239,7 +221,7 @@ class Chef
           doc = Nokogiri::XML(File.open(find_file(filename)))
           profile = doc.at_css("PublishProfile")
           subscription = profile.at_css("Subscription")
-          #check given PublishSettings XML file format.Currently PublishSettings file have two different XML format
+          # check given PublishSettings XML file format.Currently PublishSettings file have two different XML format
           if profile.attribute("SchemaVersion").nil?
             management_cert = OpenSSL::PKCS12.new(Base64.decode64(profile.attribute("ManagementCertificate").value))
             Chef::Config[:knife][:azure_api_host_name] = URI(profile.attribute("Url").value).host
@@ -268,7 +250,7 @@ class Chef
         azure_profile = File.read(File.expand_path(filename))
         azure_profile = JSON.parse(azure_profile)
         default_subscription = get_default_subscription(azure_profile)
-        if default_subscription.has_key?("id") && default_subscription.has_key?("managementCertificate") && default_subscription.has_key?("managementEndpointUrl")
+        if default_subscription.key?("id") && default_subscription.key?("managementCertificate") && default_subscription.key?("managementEndpointUrl")
 
           Chef::Config[:knife][:azure_subscription_id] = default_subscription["id"]
           mgmt_key = OpenSSL::PKey::RSA.new(default_subscription["managementCertificate"]["key"]).to_pem
@@ -285,7 +267,7 @@ class Chef
         first_subscription_as_default = nil
         azure_profile["subscriptions"].each do |subscription|
           if subscription["isDefault"]
-            Chef::Log.info("Default subscription \'#{subscription['name']}\'' selected.")
+            Chef::Log.info("Default subscription \'#{subscription["name"]}\'' selected.")
             return subscription
           end
 
@@ -293,7 +275,7 @@ class Chef
         end
 
         if first_subscription_as_default
-          Chef::Log.info("First subscription \'#{subscription['name']}\' selected as default.")
+          Chef::Log.info("First subscription \'#{subscription["name"]}\' selected as default.")
         else
           Chef::Log.info("No subscriptions found.")
           exit 1
@@ -352,6 +334,7 @@ class Chef
 
       def fetch_substatus(extension)
         return nil if extension.at_css("ExtensionSettingStatus SubStatusList SubStatus").nil?
+
         substatus_list_xml = extension.css("ExtensionSettingStatus SubStatusList SubStatus")
         substatus_list_xml.each do |substatus|
           if substatus.at_css("Name").text == "Chef Client run logs"
@@ -398,7 +381,7 @@ class Chef
               ## unavailability of the substatus field indicates that chef-client run is not completed yet on the server ##
               fetch_process_wait_time = ((Time.now - fetch_process_start_time) / 60).round
               if fetch_process_wait_time <= fetch_process_wait_timeout ## wait for maximum 30 minutes until chef-client run logs becomes available ##
-                print "#{ui.color('.', :bold)}"
+                print "#{ui.color(".", :bold)}"
                 sleep 30
                 fetch_chef_client_logs(fetch_process_start_time, fetch_process_wait_timeout)
               else

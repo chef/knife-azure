@@ -1,7 +1,7 @@
 ## Basic Examples for ASM
 
 The following examples assume that you've configured the publishsettings file
-location in your knife.rb:
+location in your config.rb:
 
       # List images for use in creating new VM's:
       $ knife azure image list
@@ -10,17 +10,17 @@ location in your knife.rb:
       $ knife azure server list
 
       # Create and bootstrap a Windows VM over winrm (winrm is the default for Windows)
-      $ knife azure server create --azure-dns-name MyNewServerName --azure-vm-size Standard_A2 -I a699494373c04fc0bc8f2bb1389d6106__Windows-Server-2012-R2-20150825-en.us-127GB.vhd --azure-service-location 'West US' --winrm-user myuser --winrm-password 'mypassword'
+      $ knife azure server create --azure-dns-name MyNewServerName --azure-vm-size Standard_A2 -I a699494373c04fc0bc8f2bb1389d6106__Windows-Server-2012-R2-20150825-en.us-127GB.vhd --azure-service-location 'West US' --connection-user myuser --connection-password 'mypassword'
 
       # Create and bootstrap a Windows VM over winrm using SSL (winrm is the default for Windows)
-      $ knife azure server create --azure-dns-name MyNewServerName --azure-vm-size Standard_A2 -I a699494373c04fc0bc8f2bb1389d6106__Windows-Server-2012-R2-20150825-en.us-127GB.vhd --azure-service-location 'West US' --winrm-user myuser --winrm-password 'mypassword' --winrm-transport ssl --winrm-ssl-verify-mode verify_none
+      $ knife azure server create --azure-dns-name MyNewServerName --azure-vm-size Standard_A2 -I a699494373c04fc0bc8f2bb1389d6106__Windows-Server-2012-R2-20150825-en.us-127GB.vhd --azure-service-location 'West US' --connection-user myuser --connection-password 'mypassword' --winrm-ssl --winrm-no-verify-cert
 
       # Create and bootstrap an Ubuntu VM over ssh
-      $ knife azure server create -N MyNewNode --azure-vm-size Standard_A2 -I b39f27a8b8c64d52b05eac6a62ebad85__Ubuntu-14_04_1-LTS-amd64-server-20140927-en-us-30GB -m 'West US' --ssh-user myuser --identity-file ~/.ssh/myprivatekey_rsa
+      $ knife azure server create -N MyNewNode --azure-vm-size Standard_A2 -I b39f27a8b8c64d52b05eac6a62ebad85__Ubuntu-14_04_1-LTS-amd64-server-20140927-en-us-30GB -m 'West US' --connection-user myuser --ssh-identity-file ~/.ssh/myprivatekey_rsa
 
       # Create and bootstrap an Windows VM through the Azure API --
       # No winrm or ssh transport or Internet access required
-      $ knife azure server create --azure-dns-name MyNewServerName --azure-vm-size Standard_A2 -I a699494373c04fc0bc8f2bb1389d6106__Windows-Server-2012-R2-20150825-en.us-127GB.vhd --azure-service-location 'West US' --winrm-user myuser --winrm-password 'mypassword' --bootstrap-protocol cloud-api
+      $ knife azure server create --azure-dns-name MyNewServerName --azure-vm-size Standard_A2 -I a699494373c04fc0bc8f2bb1389d6106__Windows-Server-2012-R2-20150825-en.us-127GB.vhd --azure-service-location 'West US' --connection-user myuser --connection-password 'mypassword' --connection-protocol cloud-api
 
       # Delete a server and purge it from the Chef server
       $ knife azure server delete MyNewNode --purge -y
@@ -33,7 +33,7 @@ Use the --help option to read more about each subcommand. Eg:
 ## Detailed Usage for ASM mode
 
 ### Common Configuration
-Most configuration options can be specified either in your knife.rb file or as command line parameters. The CLI parameters override the knife.rb parameters.
+Most configuration options can be specified either in your config.rb file or as command line parameters. The CLI parameters override the config.rb parameters.
 
 The following options are required for all subcommands:
 
@@ -54,11 +54,6 @@ Outputs a list of all linux images that are available to use for provisioning. Y
 This subcommand provisions a new server in Azure and then performs a Chef bootstrap. The goal of the bootstrap is to get Chef installed on the target system so it can run Chef Client with a Chef Server.
 
 #### Windows Bootstrapping Requirements
-knife-azure depends on knife-windows: https://github.com/chef/knife-windows
-to bootstrap Windows machines via WinRM (Basic, NTLM and Kerberos authentication) or ssh.
-
-The distro/template to be used for bootstrapping is: https://github.com/chef/knife-windows/blob/master/lib/chef/knife/bootstrap/windows-chef-client-msi.erb
-
 Windows source images should have the WinRM service enabled and the
 authentication should be set accordingly (Basic, NTLM and Kerberos). Firewall rules should be added accordingly to the source images. Refer to the link to configure this:
 https://github.com/chef/knife-windows#nodes
@@ -101,27 +96,27 @@ You can create a server with minimal configuration. On the Azure Management Port
                 --azure-dns-name 'myservice'
                 --azure-service-location 'West US'
                 --azure-source-image 'source-image-name'
-                --ssh-user 'jetstream'
-                --identity-file '~/.ssh/myazure_rsa'
+                --connection-user 'jetstream'
+                --ssh-identity-file '~/.ssh/myazure_rsa'
 
-Note that the --identity-file option, which enables specification of a private
+Note that the --ssh-identity-file option, which enables specification of a private
 key authorized to communicate securely with the created server during the
-bootstrap process, will also configure the user specified by --ssh-user with
+bootstrap process, will also configure the user specified by --connection-user with
 the public key that corresponds to the private key specified by
---identity-file. This configuration persists even after the create subcommand
-has completed successfully, so that the key specified with --identity-file can
+--ssh-identity-file. This configuration persists even after the create subcommand
+has completed successfully, so that the key specified with --ssh-identity-file can
 be used with ssh clients for subsequent access to the server as the user
-specified by --ssh-user.
+specified by --connection-user.
 
-You can set these options from knife.rb. A typical knife.rb is
+You can set these options from config.rb. A typical config.rb is
 shown below:
 
     knife[:azure_publish_settings_file] = '/path/to/your/cert.publishsettingsfile'
     knife[:azure_dns_name] = 'myservice'
     knife[:azure_service_location] = 'West US'
     knife[:azure_source_image] = 'source-image-name'
-    knife[:ssh_user] = 'jetstream'
-    knife[:identity_file] = '~/.ssh/myazure_rsa'
+    knife[:connection_user] = 'jetstream'
+    knife[:ssh_identity_file] = '~/.ssh/myazure_rsa'
 
 #### Azure VM Advanced Create
 You can set various other options in the advanced create.
@@ -139,10 +134,10 @@ To connect to an existing DNS/service, you can use a command as below:
                 --azure-vm-name 'myvm02'
                 --azure-service-location 'West US'
                 --azure-source-image 'source-image-name'
-                --ssh-user 'jetstream'
-                --ssh-password 'jetstream@123'
+                --connection-user 'jetstream'
+                --connection-password 'jetstream@123'
 
-These options may also be configured from knife.rb, as in this example:
+These options may also be configured from config.rb, as in this example:
 
     knife[:azure_subscription_id] = 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx'
     knife[:azure_mgmt_cert] = '/path/to/your/mgmtCert.pem'
@@ -150,8 +145,8 @@ These options may also be configured from knife.rb, as in this example:
     knife[:azure_service_location] = 'West US'
     knife[:azure_dns_name]='myservice'
     knife[:azure_vm_name]='myvm02'
-    knife[:ssh_user]='jetstream'
-    knife[:identity_file]='/path/to/RSA/private/key'
+    knife[:connection_user]='jetstream'
+    knife[:ssh_identity_file]='/path/to/RSA/private/key'
     knife[:azure_storage_account]='auxpreview104'
     knife[:azure_os_disk_name]='disk107'
     knife[:tcp-endpoints]='80:80,3389:5678'
@@ -173,14 +168,13 @@ Note that the load balancing set will be created if it does not exist. If it exi
 
 #### Options for Bootstrapping a Windows Node in Azure
 
-    :bootstrap_protocol            Default is winrm for a windows image
-    :winrm_password                The WinRM password
-    :winrm_authentication_protocol Defaults to negotiate, supports kerberos, can be set to basic for debugging
-    :winrm_transport               Defaults to plaintext, use ssl for improved privacy
-    :winrm_port                    Defaults to 5985 plaintext transport, or 5986 for SSL
+    :connection_protocol           The protocol to use to connect to the target node. (valid options: 'ssh' or 'winrm')
+    :connection_password           Authenticate to the target host with this password
+    :winrm_auth_method             The WinRM authentication method to use. (valid options: 'plaintext', 'kerberos', 'ssl', or 'negotiate')
+    :winrm_ssl                     Use SSL in the WinRM connection
+    :connection_port               The port on the target node to connect to
     :ca_trust_file                 The CA certificate file to use to verify the server when using SSL
-    :winrm_ssl_verify_mode         Defaults to verify_peer, use verify_none to skip validation of the server certificate during testing
-    :kerberos_keytab_file          The Kerberos keytab file used for authentication
+    :winrm_no_verify_cert          Do not verify the SSL certificate of the target node for WinRM
     :kerberos_realm                The Kerberos realm used for authentication
     :kerberos_service              The Kerberos service used for authentication
 
@@ -189,17 +183,17 @@ Note that the load balancing set will be created if it does not exist. If it exi
 Theses options are useful if you have long-running run-lists and if the chef run might use a lot of memory. In most cases people don't need to set these, but if they see certain timeout or memory related errors during bootstrap, particularly on Win2k8r2, it may make sense to move these beyond the default.
 
     :winrm_max_timeout             Set winrm max timeout in minutes
-    :winrm_max_memoryPerShell      Set winrm max memory per shell in MB
+    :winrm_max_memory_per_shell    Set winrm max memory per shell in MB
 
     Command:
     knife azure server create
             --azure-dns-name 'myserver'
             --azure-source-image 'windows-2012-image-id'
             --azure-service-location 'West US'
-            --winrm-user azure
-            --winrm-password 'azure@123'
+            --connection-user azure
+            --connection-password 'azure@123'
             --winrm-max-timeout 30
-            --winrm-max-memoryPerShell 400
+            --winrm-max-memory-per-shell 400
 
 #### Azure Windows Node Create
 The quick create option requires the following options for a windows instance:
@@ -209,21 +203,19 @@ The quick create option requires the following options for a windows instance:
                 --azure-dns-name 'myserverdnsname'
                 --azure-service-location 'West US'
                 --azure-source-image 'windows-2012-image-id'
-                --winrm-user 'jetstream'
-                --winrm-password 'jetstream@123'
-                --distro 'windows-chef-client-msi'
+                --connection-user 'jetstream'
+                --connection-password 'jetstream@123'
 
-Sample knife.rb for bootstrapping Windows Node with basic authentication
+Sample config.rb for bootstrapping Windows Node with basic authentication
 
-    knife[:bootstrap_protocol] = 'winrm'
-    knife[:winrm_password] = 'mgcvTuvV2Rh'
-    knife[:winrm_user] = 'myuser'
-    knife[:winrm_port] = '5985'
-    knife[:distro] = 'windows-chef-client-msi'
+    knife[:connection_protocol] = 'winrm'
+    knife[:connection_password] = 'mgcvTuvV2Rh'
+    knife[:connection_user] = 'myuser'
+    knife[:connection_port] = '5985'
     knife[:azure_source_image]='windows-2012-image-id'
 
 #### `cloud-api` bootstrap feature
-By specifying the value `cloud-api` for the `bootstrap_protocol` option of `knife azure server create` instead of `winrm` or `ssh`, Microsoft Azure will install Chef Client using the `azure-chef-extension`. The process as a whole is asynchronous, so once the `knife azure server create` command has create the VM, full provisioning and Chef bootstrap will continue to occur even if the `knife` command is terminated before it completes.
+By specifying the value `cloud-api` for the `connection_protocol` option of `knife azure server create` instead of `winrm` or `ssh`, Microsoft Azure will install Chef Client using the `azure-chef-extension`. The process as a whole is asynchronous, so once the `knife azure server create` command has create the VM, full provisioning and Chef bootstrap will continue to occur even if the `knife` command is terminated before it completes.
 
 We have added option `daemon` for Windows OS which configures the chef-client as a service or as a scheduled task for unattended execution. Accepted values are `none`, `service` and `task`.
     none - Currently prevents the chef-client service or scheduled task to be configured.
@@ -238,9 +230,9 @@ Option `chef_daemon_interval` can be used for running the chef-client as a servi
                 --azure-dns-name 'myserverdnsname'
                 --azure-service-location 'West US'
                 --azure-source-image 'windows-2012-image-id'
-                --winrm-user 'jetstream'
-                --winrm-password 'jetstream@123'
-                --bootstrap-protocol 'cloud-api'
+                --connection-user 'jetstream'
+                --connection-password 'jetstream@123'
+                --connection-protocol 'cloud-api'
                 --daemon 'task'
                 --chef-daemon-interval '18'
 
@@ -250,7 +242,7 @@ It's possible to pass bootstrap options to the extension which get specified in 
     --environment
     --node-name
     --secret-file
-    --server
+    --server-url
     --validation-client-name
     --[no-]node-verify-api-cert
     --bootstrap-version
@@ -268,7 +260,7 @@ Following options are used for creating server with domain join
     :azure_domain_passwd    Specifies the password for domain user who has access to join the domain
 
     Command:
-    knife azure server create -I a699494373c04fc0bc8f2bb1389d6106__Windows-Server-2012-Datacenter-20151022-en.us-127GB.vhd --azure-vm-size Standard_A2 -x 'azure' -P 'admin@123' --azure-domain-passwd 'admin@123' --azure-domain-user 'some.domain.com\user' --azure-domain-name 'some.domain.com' -c '~\chef-repo\.chef\knife.rb' --azure-network-name 'mynetwork' --azure-subnet-name 'subnet1' --azure-service-location 'West US'
+    knife azure server create -I a699494373c04fc0bc8f2bb1389d6106__Windows-Server-2012-Datacenter-20151022-en.us-127GB.vhd --azure-vm-size Standard_A2 -U 'azure' -P 'admin@123' --azure-domain-passwd 'admin@123' --azure-domain-user 'some.domain.com\user' --azure-domain-name 'some.domain.com' -c '~\chef-repo\.chef\config.rb' --azure-network-name 'mynetwork' --azure-subnet-name 'subnet1' --azure-service-location 'West US'
 
 
 ### Azure Server Delete Subcommand

@@ -10,8 +10,8 @@ end
 
 group :test do
   gem "activesupport", "4.2.6"
-  gem "chef", ">= 13.0"
-  gem "chefstyle", "= 0.10.0"
+  gem "chef", ">= 15.0.300"
+  gem "chefstyle"
   gem "equivalent-xml", "~> 0.2.9"
   gem "guard-rspec"
   gem "knife-cloud", ">= 1.0.0"

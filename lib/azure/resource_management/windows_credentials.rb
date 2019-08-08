@@ -1,6 +1,6 @@
 #
 # Author:: Nimisha Sharad (nimisha.sharad@clogeny.com)
-# Copyright:: Copyright 2015-2018 Chef Software, Inc.
+# Copyright:: Copyright 2010-2019, Chef Software Inc.
 # License:: Apache License, Version 2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -40,35 +40,35 @@ module Azure::ARM
     # Ref: https://msdn.microsoft.com/en-us/library/windows/desktop/ms724284(v=vs.85).aspx
     class FILETIME < FFI::Struct
       layout :dwLowDateTime, :DWORD,
-             :dwHighDateTime, :DWORD
+        :dwHighDateTime, :DWORD
     end
 
     # Ref: https://msdn.microsoft.com/en-us/library/windows/desktop/aa374790(v=vs.85).aspx
     class CREDENTIAL_ATTRIBUTE < FFI::Struct
       layout :Keyword, :LPTSTR,
-             :Flags, :DWORD,
-             :ValueSize, :DWORD,
-             :Value, :LPBYTE
+        :Flags, :DWORD,
+        :ValueSize, :DWORD,
+        :Value, :LPBYTE
     end
 
     # Ref: https://msdn.microsoft.com/en-us/library/windows/desktop/aa374788(v=vs.85).aspx
     class CREDENTIAL_OBJECT < FFI::Struct
       layout :Flags, :DWORD,
-             :Type, :DWORD,
-             :TargetName, :LPTSTR,
-             :Comment, :LPTSTR,
-             :LastWritten, FILETIME,
-             :CredentialBlobSize, :DWORD,
-             :CredentialBlob, :LPBYTE,
-             :Persist, :DWORD,
-             :AttributeCount, :DWORD,
-             :Attributes, CREDENTIAL_ATTRIBUTE,
-             :TargetAlias, :LPTSTR,
-             :UserName, :LPTSTR
+        :Type, :DWORD,
+        :TargetName, :LPTSTR,
+        :Comment, :LPTSTR,
+        :LastWritten, FILETIME,
+        :CredentialBlobSize, :DWORD,
+        :CredentialBlob, :LPBYTE,
+        :Persist, :DWORD,
+        :AttributeCount, :DWORD,
+        :Attributes, CREDENTIAL_ATTRIBUTE,
+        :TargetAlias, :LPTSTR,
+        :UserName, :LPTSTR
       end
 
     # Ref: https://msdn.microsoft.com/en-us/library/windows/desktop/aa374804(v=vs.85).aspx
-    safe_attach_function :CredReadW, [:LPCTSTR, :DWORD, :DWORD, :pointer], :BOOL
+    safe_attach_function :CredReadW, %i{LPCTSTR DWORD DWORD pointer}, :BOOL
   end
 
   module WindowsCredentials
@@ -100,7 +100,7 @@ module Azure::ARM
         credential[:tokentype] = tokentype[0].split(":")[1]
         credential[:user] = user[0].split(":")[1]
         credential[:token] = access_token[0].split(":")[1]
-        #Todo: refresh_token is not complete currently
+        # Todo: refresh_token is not complete currently
         # target_name method needs to be modified for that
         credential[:refresh_token] = refresh_token[0].split(":")[1]
         credential[:clientid] = clientid[0].split(":")[1]
@@ -118,7 +118,7 @@ module Azure::ARM
       exit
     end
 
-    #Todo: For getting the complete refreshToken, both credentials (ending with --0-2 and --1-2) have to be read
+    # Todo: For getting the complete refreshToken, both credentials (ending with --0-2 and --1-2) have to be read
     def target_name
       # cmdkey command is used for accessing windows credential manager.
       # Multiple credentials get created in windows credential manager for a single Azure account in xplat-cli

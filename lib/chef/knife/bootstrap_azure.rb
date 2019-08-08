@@ -1,6 +1,6 @@
 #
 # Author:: Aliasgar Batterywala (aliasgar.batterywala@clogeny.com)
-# Copyright:: Copyright 2016-2018 Chef Software, Inc.
+# Copyright:: Copyright 2010-2019, Chef Software Inc.
 # License:: Apache License, Version 2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,13 +17,13 @@
 #
 
 require "chef/knife/azure_base"
+require "chef/knife/bootstrap"
 require "chef/knife/bootstrap/common_bootstrap_options"
 require "chef/knife/bootstrap/bootstrapper"
 
 class Chef
   class Knife
-    class BootstrapAzure < Knife
-
+    class BootstrapAzure < Knife::Bootstrap
       include Knife::AzureBase
       include Knife::Bootstrap::CommonBootstrapOptions
       include Knife::Bootstrap::Bootstrapper
@@ -31,45 +31,70 @@ class Chef
       banner "knife bootstrap azure SERVER (options)"
 
       option :azure_dns_name,
-        :short => "-d DNS_NAME",
-        :long => "--azure-dns-name DNS_NAME",
-        :description => "Optional. The DNS prefix name that is used to access the cloud service."
+        short: "-d DNS_NAME",
+        long: "--azure-dns-name DNS_NAME",
+        description: "Optional. The DNS prefix name that is used to access the cloud service."
 
-      def run
+      # run() would be executing from parent class
+      # Chef::Knife::Bootstrap, defined in core.
+      # Required methods have been overridden here
+      #### run() execution begins ####
+
+      def plugin_setup!; end
+
+      def validate_name_args!; end
+
+      def plugin_validate_options!
         ui.info "Validating..."
         validate_asm_keys!
-
-        begin
-          if @name_args.length == 1
-            service.add_extension(@name_args[0], set_ext_params)
-            if locate_config_value(:extended_logs)
-              print "\n\nWaiting for the Chef Extension to become available/ready"
-              wait_until_extension_available(Time.now, 10)
-              print "\n\nWaiting for the first chef-client run"
-              fetch_chef_client_logs(Time.now, 35)
-            end
-          else
-            raise ArgumentError, "Please specify the SERVER name which needs to be bootstrapped via the Chef Extension." if @name_args.length == 0
-            raise ArgumentError, "Please specify only one SERVER name which needs to be bootstrapped via the Chef Extension." if @name_args.length > 1
-          end
-        rescue => error
-          ui.error("#{error.message}")
-          Chef::Log.debug("#{error.backtrace.join("\n")}")
-          exit
-        end
       end
+
+      def plugin_create_instance!
+        if @name_args.length == 1
+          service.add_extension(@name_args[0], set_ext_params)
+          if locate_config_value(:extended_logs)
+            print "\n\nWaiting for the Chef Extension to become available/ready"
+            wait_until_extension_available(Time.now, 10)
+            print "\n\nWaiting for the first chef-client run"
+            fetch_chef_client_logs(Time.now, 35)
+          end
+        else
+          raise ArgumentError, "Please specify the SERVER name which needs to be bootstrapped via the Chef Extension." if @name_args.empty?
+          raise ArgumentError, "Please specify only one SERVER name which needs to be bootstrapped via the Chef Extension." if @name_args.length > 1
+        end
+      rescue StandardError => error
+        ui.error(error.message.to_s)
+        Chef::Log.debug(error.backtrace.join("\n").to_s)
+        exit
+      end
+
+      def plugin_finalize; end
+
+      # Following methods are not required
+      #
+      def connect!; end
+
+      def register_client; end
+
+      def render_template; end
+
+      def upload_bootstrap(content); end
+
+      def perform_bootstrap(bootstrap_path); end
+
+      #### run() execution ends ####
 
       def set_ext_params
         begin
           ui.info "Looking for the server #{@name_args[0]}..."
-          server = service.find_server({
-              name: @name_args[0],
-              azure_dns_name: locate_config_value(:azure_dns_name)
-            })
+          server = service.find_server(
+            name: @name_args[0],
+            azure_dns_name: locate_config_value(:azure_dns_name)
+          )
 
           ## if azure_dns_name value not passed by user then set it using the hostedservicename attribute from the retrieved server's object ##
           config[:azure_dns_name] = server.hostedservicename if locate_config_value(:azure_dns_name).nil? && (server.instance_of? Azure::Role)
-          if !server.instance_of? Azure::Role
+          unless server.instance_of? Azure::Role
             if server.nil?
               if !locate_config_value(:azure_dns_name).nil?
                 raise "Hosted service #{locate_config_value(:azure_dns_name)} does not exist."
@@ -83,7 +108,7 @@ class Chef
 
           ui.info "\nServer #{@name_args[0]} found."
           ui.info "Setting the Chef Extension parameters."
-          ext_params = Hash.new
+          ext_params = {}
           case server.os_type.downcase
           when "windows"
             ext_params[:chef_extension] = "ChefClient"
@@ -137,9 +162,7 @@ class Chef
               extension = fetch_extension(my_role)
               ## check if Chef Extension not found (which means it is not available/ready yet) then sleep_and_wait OR
               ## if found (which means it is available/ready now) then proceed further with chef-client run logs fetch process ##
-              if extension.nil?
-                sleep_and_wait = true
-              end
+              sleep_and_wait = true if extension.nil?
             else
               ## given role not found or GuestAgent not ready yet ##
               sleep_and_wait = true
@@ -151,7 +174,7 @@ class Chef
 
           ## wait for some time and then re-fetch the status ##
           if sleep_and_wait == true
-            print "#{ui.color('.', :bold)}"
+            print "#{ui.color(".", :bold)}"
             sleep 30
             wait_until_extension_available(
               extension_deploy_start_time,

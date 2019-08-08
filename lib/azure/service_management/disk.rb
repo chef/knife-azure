@@ -1,6 +1,6 @@
 #
 # Author:: Barry Davis (barryd@jetstreamsoftware.com)
-# Copyright:: Copyright 2010-2018 Chef Software, Inc.
+# Copyright:: Copyright 2010-2019, Chef Software Inc.
 # License:: Apache License, Version 2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,7 +23,7 @@ module Azure
     end
 
     def all
-      disks = Array.new
+      disks = []
       response = @connection.query_azure("disks")
       founddisks = response.css("Disk")
       founddisks.each do |disk|
@@ -37,6 +37,7 @@ module Azure
       founddisk = nil
       all.each do |disk|
         next unless disk.name == name
+
         founddisk = disk
       end
       founddisk
@@ -49,6 +50,7 @@ module Azure
     def clear_unattached
       all.each do |disk|
         next unless disk.attached == false
+
         @connection.query_azure("disks/" + disk.name, "delete")
       end
     end

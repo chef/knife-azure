@@ -2,7 +2,7 @@
 # Author:: Barry Davis (barryd@jetstreamsoftware.com)
 # Author:: Adam Jacob (<adam@chef.io>)
 # Author:: Seth Chisamore (<schisamo@chef.io>)
-# Copyright:: Copyright 2009-2018, Chef Software Inc.
+# Copyright:: Copyright 2010-2019, Chef Software Inc.
 # License:: Apache License, Version 2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -33,22 +33,22 @@ class Chef
       banner "knife azurerm server delete SERVER [SERVER] (options)"
 
       option :purge,
-        :short => "-P",
-        :long => "--purge",
-        :boolean => true,
-        :default => false,
-        :description => "Destroy corresponding node and client on the Chef Server, in addition to destroying the Windows Azure node itself.  Assumes node and client have the same name as the server (if not, add the '--node-name' option)."
+        short: "-P",
+        long: "--purge",
+        boolean: true,
+        default: false,
+        description: "Destroy corresponding node and client on the Chef Server, in addition to destroying the Windows Azure node itself.  Assumes node and client have the same name as the server (if not, add the '--node-name' option)."
 
       option :chef_node_name,
-        :short => "-N NAME",
-        :long => "--node-name NAME",
-        :description => "The name of the node and client to delete, if it differs from the server name. Only has meaning when used with the '--purge' option."
+        short: "-N NAME",
+        long: "--node-name NAME",
+        description: "The name of the node and client to delete, if it differs from the server name. Only has meaning when used with the '--purge' option."
 
       option :delete_resource_group,
-        :long => "--delete-resource-group",
-        :boolean => true,
-        :default => false,
-        :description => "Deletes corresponding resource group along with Vitual Machine."
+        long: "--delete-resource-group",
+        boolean: true,
+        default: false,
+        description: "Deletes corresponding resource group along with Vitual Machine."
 
       # Extracted from Chef::Knife.delete_object, because it has a
       # confirmation step built in... By specifying the '--purge'

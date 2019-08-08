@@ -1,6 +1,6 @@
 #
 # Author:: Jeff Mendoza (jeffmendoza@live.com)
-# Copyright:: Copyright 2013-2018 Chef Software, Inc.
+# Copyright:: Copyright 2010-2019, Chef Software Inc.
 # License:: Apache License, Version 2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,11 +26,11 @@ module Azure
       @ags ||= begin
         @ags = {}
         response = @connection.query_azure("affinitygroups",
-                                           "get",
-                                           "",
-                                           "",
-                                           true,
-                                           false)
+          "get",
+          "",
+          "",
+          true,
+          false)
         response.css("AffinityGroup").each do |ag|
           item = AG.new(@connection).parse(ag)
           @ags[item.name] = item
@@ -89,11 +89,11 @@ module Azure
         end
       end
       @connection.query_azure("affinitygroups",
-                              "post",
-                              builder.to_xml,
-                              "",
-                              true,
-                              false)
+        "post",
+        builder.to_xml,
+        "",
+        true,
+        false)
     end
   end
 end

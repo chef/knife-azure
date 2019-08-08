@@ -1,6 +1,6 @@
 #
 # Author:: Barry Davis (barryd@jetstreamsoftware.com)
-# Copyright:: Copyright 2010-2018 Chef Software, Inc.
+# Copyright:: Copyright 2010-2019, Chef Software Inc.
 # License:: Apache License, Version 2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,6 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+
 require "net/https"
 require "uri"
 require "nokogiri"
@@ -30,11 +31,11 @@ module AzureAPI
     end
 
     def query_azure(service_name,
-                    verb = "get",
-                    body = "",
-                    params = "",
-                    services = true,
-                    content_type = nil)
+      verb = "get",
+      body = "",
+      params = "",
+      services = true,
+      content_type = nil)
       svc_str = services ? "/services" : ""
       uri = URI.parse("#{@host_name}/#{@subscription_id}#{svc_str}/#{service_name}")
       scheme = !uri.scheme ? "https://" : ""
@@ -42,7 +43,7 @@ module AzureAPI
       print "."
       response = http_query(request_url, verb, body, params, content_type)
       if response.code.to_i == 307
-        Chef::Log.debug "Redirect to #{response['Location']}"
+        Chef::Log.debug "Redirect to #{response["Location"]}"
         response = http_query(response["Location"], verb, body, params, content_type)
       end
       @last_request_id = response["x-ms-request-id"]
@@ -65,7 +66,7 @@ module AzureAPI
       request_url = "#{scheme}#{@host_name}/#{@subscription_id}/operations/#{@last_request_id}"
       response = http_query(request_url, "get", "", "")
       if response.code.to_i == 307
-        Chef::Log.debug "Redirect to #{response['Location']}"
+        Chef::Log.debug "Redirect to #{response["Location"]}"
         response = http_query(response["Location"], "get", "", "")
       end
       response

@@ -1,3 +1,20 @@
+#
+# Copyright:: Copyright 2010-2019, Chef Software Inc.
+# License:: Apache License, Version 2.0
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
 require File.expand_path(File.dirname(__FILE__) + "/../spec_helper")
 require File.expand_path(File.dirname(__FILE__) + "/../unit/query_azure_mock")
 
@@ -8,15 +25,15 @@ describe Chef::Knife::AzureServerDelete do
   before do
     @server_instance = Chef::Knife::AzureServerDelete.new
     {
-      :azure_subscription_id => "azure_subscription_id",
-      :azure_mgmt_cert => @cert_file,
-      :azure_api_host_name => "preview.core.windows-int.net",
-      :name => "vm01",
-      :azure_service_location => "West Europe",
-      :azure_source_image => "azure_source_image",
-      :azure_vm_size => "Small",
-      :azure_dns_name => "service001",
-      :azure_storage_account => "ka001testeurope"
+      azure_subscription_id: "azure_subscription_id",
+      azure_mgmt_cert: @cert_file,
+      azure_api_host_name: "preview.core.windows-int.net",
+      name: "vm01",
+      azure_service_location: "West Europe",
+      azure_source_image: "azure_source_image",
+      azure_vm_size: "Small",
+      azure_dns_name: "service001",
+      azure_storage_account: "ka001testeurope",
     }.each do |key, value|
       Chef::Config[:knife][key] = value
     end
@@ -233,7 +250,7 @@ describe Chef::Knife::AzureServerDelete do
   end
 
   after(:each) do
-    Chef::Config[:knife][:preserve_azure_os_disk] = false if Chef::Config[:knife][:preserve_azure_os_disk] #cleanup config for each run
+    Chef::Config[:knife][:preserve_azure_os_disk] = false if Chef::Config[:knife][:preserve_azure_os_disk] # cleanup config for each run
     Chef::Config[:knife][:delete_azure_storage_account] = false if Chef::Config[:knife][:delete_azure_storage_account]
   end
 end

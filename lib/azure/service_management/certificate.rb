@@ -1,6 +1,6 @@
 #
 # Author:: Mukta Aphale (mukta.aphale@clogeny.com)
-# Copyright:: Copyright 2010-2018 Chef Software, Inc.
+# Copyright:: Copyright 2010-2019, Chef Software Inc.
 # License:: Apache License, Version 2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -58,8 +58,8 @@ module Azure
     def create(params)
       # If RSA private key has been specified, then generate an x 509 certificate from the
       # public part of the key
-      @cert_data = generate_public_key_certificate_data({ :ssh_key => params[:identity_file],
-                                                          :ssh_key_passphrase => params[:identity_file_passphrase] })
+      @cert_data = generate_public_key_certificate_data({ ssh_key: params[:ssh_identity_file],
+                                                          ssh_key_passphrase: params[:identity_file_passphrase] })
       add_certificate @cert_data, "knifeazure", "pfx", params[:azure_dns_name]
 
       # Return the fingerprint to be used while adding role
@@ -111,7 +111,7 @@ module Azure
       for attempt in 0..4
         Chef::Log.info "Waiting to get certificate ..."
         res = get_certificate(dns_name, @fingerprint)
-        break if !res.empty?
+        break unless res.empty?
         if attempt == 4
           raise "The certificate with thumbprint #{fingerprint} was not found."
         else
@@ -159,6 +159,7 @@ module Azure
         print "Enter certificate passphrase (empty for no passphrase):"
         passphrase = STDIN.gets
         return passphrase.strip if passphrase == "\n"
+
         print "Enter same passphrase again:"
         confirm_passphrase = STDIN.gets
       end until passphrase == confirm_passphrase
@@ -174,6 +175,7 @@ module Azure
         file_path = STDIN.gets
         stripped_file_path = file_path.strip
         return stripped_file_path if file_path == "\n"
+
         counter += 1
         exit(1) if counter == 3
       end until File.directory?(stripped_file_path)
@@ -198,7 +200,7 @@ module Azure
         @hostname = "*." + cert_params[:domain]
       end
 
-      #Create a self-signed X509 certificate from the rsa_key (unencrypted)
+      # Create a self-signed X509 certificate from the rsa_key (unencrypted)
       cert = OpenSSL::X509::Certificate.new
       cert.version = 2
       cert.serial = Random.rand(65534) + 1 # 2 digit byte range random number for better security aspect

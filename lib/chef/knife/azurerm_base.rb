@@ -1,7 +1,7 @@
 #
 # Author:: Aliasgar Batterywala (aliasgar.batterywala@clogeny.com)
 #
-# Copyright:: Copyright 2009-2018, Chef Software Inc.
+# Copyright:: Copyright 2010-2019, Chef Software Inc.
 # License:: Apache License, Version 2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -31,7 +31,7 @@ class Chef
 
       ## azure-xplat-cli versio that introduced deprecation of Windows Credentials
       ## Manager (WCM) usage for authentication credentials storage purpose ##
-      XPLAT_VERSION_WITH_WCM_DEPRECATED ||= "0.10.5"
+      XPLAT_VERSION_WITH_WCM_DEPRECATED ||= "0.10.5".freeze
 
       if Chef::Platform.windows?
         require "azure/resource_management/windows_credentials"
@@ -46,15 +46,15 @@ class Chef
           end
 
           option :azure_resource_group_name,
-            :short => "-r RESOURCE_GROUP_NAME",
-            :long => "--azure-resource-group-name RESOURCE_GROUP_NAME",
-            :description => "The Resource Group name."
+            short: "-r RESOURCE_GROUP_NAME",
+            long: "--azure-resource-group-name RESOURCE_GROUP_NAME",
+            description: "The Resource Group name."
         end
       end
 
       def service
         details = authentication_details
-        details.update(:azure_subscription_id => locate_config_value(:azure_subscription_id))
+        details.update(azure_subscription_id: locate_config_value(:azure_subscription_id))
         @service ||= begin
                       service = Azure::ResourceManagement::ARMInterface.new(details)
                     end
@@ -64,7 +64,11 @@ class Chef
 
       def locate_config_value(key)
         key = key.to_sym
-        config[key] || Chef::Config[:knife][key] || default_config[key]
+        if defined?(config_value) # Inherited by bootstrap
+          config_value(key) || default_config[key]
+        else
+          config[key] || Chef::Config[:knife][key] || default_config[key]
+        end
       end
 
       # validates ARM mandatory keys
@@ -75,7 +79,7 @@ class Chef
         if azure_cred?
           validate_azure_login
         else
-          keys.concat([:azure_tenant_id, :azure_client_id, :azure_client_secret])
+          keys.concat(%i{azure_tenant_id azure_client_id azure_client_secret})
         end
 
         errors = []
@@ -91,12 +95,13 @@ class Chef
 
       def authentication_details
         if is_azure_cred?
-          return { :azure_tenant_id => locate_config_value(:azure_tenant_id), :azure_client_id => locate_config_value(:azure_client_id), :azure_client_secret => locate_config_value(:azure_client_secret) }
+          return { azure_tenant_id: locate_config_value(:azure_tenant_id), azure_client_id: locate_config_value(:azure_client_id), azure_client_secret: locate_config_value(:azure_client_secret) }
         elsif Chef::Platform.windows?
-          token_details = token_details_for_windows()
+          token_details = token_details_for_windows
         else
-          token_details = token_details_for_linux()
+          token_details = token_details_for_linux
         end
+
         token_details = check_token_validity(token_details)
         token_details
       end
@@ -126,7 +131,7 @@ class Chef
         home_dir = File.expand_path("~")
         file = File.read(home_dir + "/.azure/accessTokens.json")
         file = JSON.parse(file)
-        token_details = { :tokentype => file[-1]["tokenType"], :user => file[-1]["userId"], :token => file[-1]["accessToken"], :clientid => file[-1]["_clientId"], :expiry_time => file[-1]["expiresOn"], :refreshtoken => file[-1]["refreshToken"] }
+        token_details = { tokentype: file[-1]["tokenType"], user: file[-1]["userId"], token: file[-1]["accessToken"], clientid: file[-1]["_clientId"], expiry_time: file[-1]["expiresOn"], refreshtoken: file[-1]["refreshToken"] }
         token_details
       end
 
@@ -144,12 +149,12 @@ class Chef
 
       def refresh_token
         azure_authentication
-        token_details = Chef::Platform.windows? ? token_details_for_windows() : token_details_for_linux()
+        token_details = Chef::Platform.windows? ? token_details_for_windows : token_details_for_linux
       end
 
       def azure_authentication
         ui.log("Authenticating...")
-        Mixlib::ShellOut.new("#{@azure_prefix} vm show 'knifetest@resourcegroup' testvm", :timeout => 30).run_command
+        Mixlib::ShellOut.new("#{@azure_prefix} vm show 'knifetest@resourcegroup' testvm", timeout: 30).run_command
       rescue Mixlib::ShellOut::CommandTimeout
       rescue Exception
         raise_azure_status
@@ -158,9 +163,7 @@ class Chef
       def check_token_validity(token_details)
         unless is_token_valid?(token_details)
           token_details = refresh_token
-          unless is_token_valid?(token_details)
-            raise_azure_status
-          end
+          raise_azure_status unless is_token_valid?(token_details)
         end
         token_details
       end
@@ -170,11 +173,10 @@ class Chef
           # cmdkey command is used for accessing windows credential manager
           xplat_creds_cmd = Mixlib::ShellOut.new("cmdkey /list | findstr AzureXplatCli")
           result = xplat_creds_cmd.run_command
-          if result.stdout.nil? || result.stdout.empty?
-            raise login_message
-          end
+          raise login_message if result.stdout.nil? || result.stdout.empty?
         else
           home_dir = File.expand_path("~")
+          puts "File.exist? = #{File.exist?("a")}"
           if !File.exist?(home_dir + "/.azure/accessTokens.json") || File.size?(home_dir + "/.azure/accessTokens.json") <= 2
             raise login_message
           end
@@ -190,7 +192,7 @@ class Chef
           doc = Nokogiri::XML(File.open(find_file(filename)))
           profile = doc.at_css("PublishProfile")
           subscription = profile.at_css("Subscription")
-          #check given PublishSettings XML file format.Currently PublishSettings file have two different XML format
+          # check given PublishSettings XML file format.Currently PublishSettings file have two different XML format
           if profile.attribute("SchemaVersion").nil?
             management_cert = OpenSSL::PKCS12.new(Base64.decode64(profile.attribute("ManagementCertificate").value))
             Chef::Config[:knife][:azure_api_host_name] = URI(profile.attribute("Url").value).host
@@ -264,6 +266,14 @@ class Chef
       end
 
       def validate_params!
+        if locate_config_value(:connection_user).nil?
+          raise ArgumentError, "Please provide --connection-user option for authentication."
+        end
+
+        unless locate_config_value(:connection_password).nil? ^ locate_config_value(:ssh_public_key).nil?
+          raise ArgumentError, "Please specify either --connection-password or --ssh-public-key option for authentication."
+        end
+
         if locate_config_value(:azure_vnet_subnet_name) && !locate_config_value(:azure_vnet_name)
           raise ArgumentError, "When --azure-vnet-subnet-name is specified, the --azure-vnet-name must also be specified."
         end
@@ -274,12 +284,6 @@ class Chef
 
         if locate_config_value(:node_ssl_verify_mode) && !%w{none peer}.include?(locate_config_value(:node_ssl_verify_mode))
           raise ArgumentError, "Invalid value '#{locate_config_value(:node_ssl_verify_mode)}' for --node-ssl-verify-mode. Use Valid values i.e 'none', 'peer'."
-        end
-
-        if is_image_windows?
-          if locate_config_value(:winrm_user).nil? || locate_config_value(:winrm_password).nil?
-            raise ArgumentError, "Please provide --winrm-user and --winrm-password options for Windows option."
-          end
         end
 
         if !is_image_windows?
@@ -304,8 +308,14 @@ class Chef
           end
         end
 
+        if locate_config_value(:azure_image_os_type)
+          unless %w{ubuntu centos rhel debian windows}.include?(locate_config_value(:azure_image_os_type))
+            raise ArgumentError, "Invalid value of --azure-image-os-type. Accepted values ubuntu|centos|rhel|debian|windows"
+          end
+        end
+
         config[:ohai_hints] = format_ohai_hints(locate_config_value(:ohai_hints))
-        validate_ohai_hints if ! locate_config_value(:ohai_hints).casecmp("default").zero?
+        validate_ohai_hints unless locate_config_value(:ohai_hints).casecmp("default").zero?
       end
 
       private
@@ -334,6 +344,7 @@ class Chef
 
       def is_old_xplat?
         return true unless @azure_version
+
         Gem::Version.new(@azure_version) < Gem::Version.new(XPLAT_VERSION_WITH_WCM_DEPRECATED)
       end
 

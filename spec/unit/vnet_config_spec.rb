@@ -1,6 +1,19 @@
 #
 # Author:: Aliasgar Batterywala (<aliasgar.batterywala@clogeny.com>)
-# Copyright:: Copyright 2016-2018 Chef Software, Inc.
+# Copyright:: Copyright 2010-2019, Chef Software Inc.
+# License:: Apache License, Version 2.0
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 #
 
 require File.expand_path(File.dirname(__FILE__) + "/../spec_helper")
@@ -28,7 +41,7 @@ describe Azure::ARM::VnetConfig do
   end
 
   def used_networks(subnets)
-    used_networks_pool = Array.new
+    used_networks_pool = []
     subnets.each do |subnet|
       used_networks_pool.push(IPAddress(subnet.address_prefix))
     end
@@ -44,7 +57,7 @@ describe Azure::ARM::VnetConfig do
           vnet_name = "vnet-2"
           @subnets = stub_subnets_list_response(resource_group_name, vnet_name)
           @subnets_address_prefix = [ subnet(resource_group_name, vnet_name, 0),
-            subnet(resource_group_name, vnet_name, 2)
+            subnet(resource_group_name, vnet_name, 2),
           ]
         end
 
@@ -61,7 +74,7 @@ describe Azure::ARM::VnetConfig do
           vnet_name = "vnet-1"
           @subnets = stub_subnets_list_response(resource_group_name, vnet_name)
           @subnets_address_prefix = [ subnet(resource_group_name, vnet_name, 0),
-            subnet(resource_group_name, vnet_name, 1)
+            subnet(resource_group_name, vnet_name, 1),
           ]
         end
 
@@ -111,7 +124,8 @@ describe Azure::ARM::VnetConfig do
         @resource_group_name = "rgrp-2"
         @vnet_name = "vnet-2"
         allow(@dummy_class).to receive(:network_resource_client).and_return(
-          stub_network_resource_client(nil, @resource_group_name, @vnet_name))
+          stub_network_resource_client(nil, @resource_group_name, @vnet_name)
+        )
       end
 
       it "returns vnet object" do
@@ -128,16 +142,18 @@ describe Azure::ARM::VnetConfig do
         @vnet_name = "vnet-22"
         request = {}
         response = OpenStruct.new({
-          "body" => '{"error": {"code": "ResourceNotFound"}}'
+          "body" => '{"error": {"code": "ResourceNotFound"}}',
         })
         body = "MsRestAzure::AzureOperationError"
         error = MsRestAzure::AzureOperationError.new(request, response, body)
         network_resource_client = double("NetworkResourceClient",
-          :virtual_networks => double)
+          virtual_networks: double)
         allow(network_resource_client.virtual_networks).to receive(
-          :get).and_raise(error)
+          :get
+        ).and_raise(error)
         allow(@dummy_class).to receive(:network_resource_client).and_return(
-          network_resource_client)
+          network_resource_client
+        )
       end
 
       it "returns false" do
@@ -152,16 +168,18 @@ describe Azure::ARM::VnetConfig do
         @vnet_name = "vnet-22"
         request = {}
         response = OpenStruct.new({
-          "body" => '{"error": {"code": "SomeProblemOccurred"}}'
+          "body" => '{"error": {"code": "SomeProblemOccurred"}}',
         })
         body = "MsRestAzure::AzureOperationError"
         @error = MsRestAzure::AzureOperationError.new(request, response, body)
         network_resource_client = double("NetworkResourceClient",
-          :virtual_networks => double)
+          virtual_networks: double)
         allow(network_resource_client.virtual_networks).to receive(
-          :get).and_raise(@error)
+          :get
+        ).and_raise(@error)
         allow(@dummy_class).to receive(:network_resource_client).and_return(
-          network_resource_client)
+          network_resource_client
+        )
       end
 
       it "raises error" do
@@ -179,7 +197,8 @@ describe Azure::ARM::VnetConfig do
           @resource_group_name = "rgrp-2"
           @vnet_name = "vnet-2"
           allow(@dummy_class).to receive(:network_resource_client).and_return(
-            stub_network_resource_client(nil, @resource_group_name, @vnet_name))
+            stub_network_resource_client(nil, @resource_group_name, @vnet_name)
+          )
           @subnets_vnet_name = [ subnet(@resource_group_name, @vnet_name) ].flatten!
         end
 
@@ -195,7 +214,8 @@ describe Azure::ARM::VnetConfig do
           @resource_group_name = "rgrp-2"
           @vnet_name = "vnet-3"
           allow(@dummy_class).to receive(:network_resource_client).and_return(
-            stub_network_resource_client(nil, @resource_group_name, @vnet_name))
+            stub_network_resource_client(nil, @resource_group_name, @vnet_name)
+          )
           @subnets_vnet_name = [ subnet(@resource_group_name, @vnet_name) ].flatten!
         end
 
@@ -213,7 +233,8 @@ describe Azure::ARM::VnetConfig do
           @resource_group_name = "rgrp-2"
           @vnet_name = "vnet-2"
           allow(@dummy_class).to receive(:network_resource_client).and_return(
-            stub_network_resource_client(nil, @resource_group_name, @vnet_name))
+            stub_network_resource_client(nil, @resource_group_name, @vnet_name)
+          )
           @subnets_address_prefix = [ subnet(@resource_group_name, @vnet_name, 1) ]
         end
 
@@ -229,10 +250,11 @@ describe Azure::ARM::VnetConfig do
           @resource_group_name = "rgrp-3"
           @vnet_name = "vnet-5"
           allow(@dummy_class).to receive(:network_resource_client).and_return(
-            stub_network_resource_client(nil, @resource_group_name, @vnet_name))
+            stub_network_resource_client(nil, @resource_group_name, @vnet_name)
+          )
           @subnets_address_prefix = [ subnet(@resource_group_name, @vnet_name, 0),
             subnet(@resource_group_name, @vnet_name, 1),
-            subnet(@resource_group_name, @vnet_name, 3)
+            subnet(@resource_group_name, @vnet_name, 3),
           ]
         end
 
@@ -250,8 +272,8 @@ describe Azure::ARM::VnetConfig do
       @subnet = {
         "name" => "my_sbn",
         "properties" => {
-          "addressPrefix" => "10.20.30.40/20"
-        }
+          "addressPrefix" => "10.20.30.40/20",
+        },
       }
     end
 
@@ -332,7 +354,7 @@ describe Azure::ARM::VnetConfig do
           IPAddress("12.23.19.0/24"),
           IPAddress("221.17.234.0/29"),
           IPAddress("133.78.152.0/25"),
-          IPAddress("11.13.48.0/20")
+          IPAddress("11.13.48.0/20"),
         ]
       end
 
@@ -354,7 +376,7 @@ describe Azure::ARM::VnetConfig do
           IPAddress("165.98.0.0/20"),
           IPAddress("192.168.172.0/24"),
           IPAddress("31.66.12.128/25"),
-          IPAddress("10.9.0.0/16")
+          IPAddress("10.9.0.0/16"),
         ]
       end
 
@@ -380,7 +402,8 @@ describe Azure::ARM::VnetConfig do
         resource_group_name = "rgrp-1"
         vnet_name = "vnet-1"
         @subnets.push(stub_subnets_list_response(
-          resource_group_name, vnet_name)).flatten!
+          resource_group_name, vnet_name
+        )).flatten!
       end
 
       it "returns the sorted list of subnets in ascending order of their cidr prefix" do
@@ -421,8 +444,8 @@ describe Azure::ARM::VnetConfig do
         resource_group_name = "rgrp-1"
         vnet_name = "vnet-1"
         subnets.push(stub_subnets_list_response(
-          resource_group_name, vnet_name)
-        ).flatten!
+          resource_group_name, vnet_name
+        )).flatten!
 
         @used_networks_pool = used_networks(subnets)
       end
@@ -446,13 +469,13 @@ describe Azure::ARM::VnetConfig do
         resource_group_name = "rgrp-3"
         vnet_name = "vnet-5"
         subnets.push(stub_subnets_list_response(
-          resource_group_name, vnet_name)
-        ).flatten!
+          resource_group_name, vnet_name
+        )).flatten!
 
         @used_networks_pool = used_networks(subnets)
       end
 
-      it "returns the list of used_networks sorted in descending order of their hosts size", :if => (RUBY_VERSION.to_f <= 2.1) do
+      it "returns the list of used_networks sorted in descending order of their hosts size", if: (RUBY_VERSION.to_f <= 2.1) do
         response = @dummy_class.sort_used_networks_by_hosts_size(@used_networks_pool)
         expect(response[0].network.address.concat("/" + response[0].prefix.to_s)).to be == "69.182.14.0/24"
         expect(response[1].network.address.concat("/" + response[1].prefix.to_s)).to be == "69.182.9.0/24"
@@ -462,7 +485,7 @@ describe Azure::ARM::VnetConfig do
         expect(response[5].network.address.concat("/" + response[5].prefix.to_s)).to be == "40.23.19.0/29"
       end
 
-      it "returns the list of used_networks sorted in descending order of their hosts size", :if => (RUBY_VERSION.to_f >= 2.2) do
+      it "returns the list of used_networks sorted in descending order of their hosts size", if: (RUBY_VERSION.to_f >= 2.2) do
         response = @dummy_class.sort_used_networks_by_hosts_size(@used_networks_pool)
         expect(response[0].network.address.concat("/" + response[0].prefix.to_s)).to be == "69.182.9.0/24"
         expect(response[1].network.address.concat("/" + response[1].prefix.to_s)).to be == "69.182.11.0/24"
@@ -785,7 +808,7 @@ describe Azure::ARM::VnetConfig do
           before do
             @vnet_address_prefix = "62.12.3.128/25"
             @subnets = [OpenStruct.new({ "name" => "sbn17",
-                                         "address_prefix" => "62.12.3.128/25"
+                                         "address_prefix" => "62.12.3.128/25",
             })]
           end
 
@@ -806,9 +829,9 @@ describe Azure::ARM::VnetConfig do
         before do
           resource_group_name = "rgrp-4"
           vnet_name = "vnet-6"
-          @vnet_config = { :virtualNetworkName => vnet_name,
-                           :addressPrefixes => [ "130.88.9.0/24", "112.90.2.0/24" ],
-                           :subnets => Array.new
+          @vnet_config = { virtualNetworkName: vnet_name,
+                           addressPrefixes: [ "130.88.9.0/24", "112.90.2.0/24" ],
+                           subnets: [],
           }
           @subnets = stub_subnets_list_response(resource_group_name, vnet_name)
         end
@@ -816,35 +839,35 @@ describe Azure::ARM::VnetConfig do
         it "raises error saying no space available to add subnet" do
           expect do
             @dummy_class.add_subnet("sbn18",
-            @vnet_config, @subnets) end.to raise_error(RuntimeError,
-              "Unable to add subnet sbn18 into the virtual network #{@vnet_config[:virtualNetworkName]}, no address space available !!!"
-            )
+              @vnet_config, @subnets)
+          end          .to raise_error(RuntimeError,
+            "Unable to add subnet sbn18 into the virtual network #{@vnet_config[:virtualNetworkName]}, no address space available !!!")
         end
       end
 
       context "example-2" do
         before do
-          @vnet_config = { :virtualNetworkName => "vnet-6",
-                           :addressPrefixes => [ "10.10.11.0/24" ],
-                           :subnets => Array.new
+          @vnet_config = { virtualNetworkName: "vnet-6",
+                           addressPrefixes: [ "10.10.11.0/24" ],
+                           subnets: [],
           }
           @subnets = [OpenStruct.new({ "name" => "sbn19",
-                                       "address_prefix" => "10.10.11.0/25"
+                                       "address_prefix" => "10.10.11.0/25",
           }),
           OpenStruct.new({ "name" => "sbn20",
-                           "address_prefix" => "10.10.11.128/26"
+                           "address_prefix" => "10.10.11.128/26",
           }),
           OpenStruct.new({ "name" => "sbn21",
-                           "address_prefix" => "10.10.11.192/26"
+                           "address_prefix" => "10.10.11.192/26",
           })]
         end
 
         it "raises error saying no space available to add subnet" do
           expect do
             @dummy_class.add_subnet("sbn22",
-            @vnet_config, @subnets) end.to raise_error(RuntimeError,
-              "Unable to add subnet sbn22 into the virtual network #{@vnet_config[:virtualNetworkName]}, no address space available !!!"
-            )
+              @vnet_config, @subnets)
+          end .to raise_error(RuntimeError,
+            "Unable to add subnet sbn22 into the virtual network #{@vnet_config[:virtualNetworkName]}, no address space available !!!")
         end
       end
     end
@@ -856,27 +879,27 @@ describe Azure::ARM::VnetConfig do
           vnet_name = "vnet-4"
           @subnet_name = "sbn23"
           new_subnet_prefix = "10.15.0.0/24"
-          @vnet_config = { :virtualNetworkName => vnet_name,
-                           :addressPrefixes => [ "10.15.0.0/20", "40.23.19.0/29" ],
-                           :subnets => [{ "name" => "sbn8",
-                                          "properties" => {
-                "address_prefix" => "40.23.19.0/29"
-              }
-            }]
+          @vnet_config = { virtualNetworkName: vnet_name,
+                           addressPrefixes: [ "10.15.0.0/20", "40.23.19.0/29" ],
+                           subnets: [{ "name" => "sbn8",
+                                       "properties" => {
+                "address_prefix" => "40.23.19.0/29",
+              },
+            }],
           }
           @subnets = stub_subnets_list_response(resource_group_name, vnet_name)
-          @updated_vnet_config = { :virtualNetworkName => vnet_name,
-                                   :addressPrefixes => [ "10.15.0.0/20", "40.23.19.0/29" ],
-                                   :subnets => [{ "name" => "sbn8",
-                                                  "properties" => {
-                "address_prefix" => "40.23.19.0/29"
-              }
+          @updated_vnet_config = { virtualNetworkName: vnet_name,
+                                   addressPrefixes: [ "10.15.0.0/20", "40.23.19.0/29" ],
+                                   subnets: [{ "name" => "sbn8",
+                                               "properties" => {
+                "address_prefix" => "40.23.19.0/29",
+              },
             },
             { "name" => "sbn23",
               "properties" => {
-                "addressPrefix" => new_subnet_prefix
-              }
-            }]
+                "addressPrefix" => new_subnet_prefix,
+              },
+            }],
           }
         end
 
@@ -892,47 +915,47 @@ describe Azure::ARM::VnetConfig do
           vnet_name = "vnet-2"
           @subnet_name = "sbn24"
           new_subnet_prefix = "10.2.16.16/28"
-          @vnet_config = { :virtualNetworkName => vnet_name,
-                           :addressPrefixes => [ "10.2.0.0/16", "192.168.172.0/24", "16.2.0.0/24" ],
-                           :subnets => [{ "name" => "sbn3",
-                                          "properties" => {
-                "address_prefix" => "10.2.0.0/20"
-              }
+          @vnet_config = { virtualNetworkName: vnet_name,
+                           addressPrefixes: [ "10.2.0.0/16", "192.168.172.0/24", "16.2.0.0/24" ],
+                           subnets: [{ "name" => "sbn3",
+                                       "properties" => {
+                "address_prefix" => "10.2.0.0/20",
+              },
             },
             { "name" => "sbn4",
               "properties" => {
-                "address_prefix" => "192.168.172.0/25"
-              }
+                "address_prefix" => "192.168.172.0/25",
+              },
             },
             { "name" => "sbn5",
               "properties" => {
-                "address_prefix" => "10.2.16.0/28"
-              }
-            }]
+                "address_prefix" => "10.2.16.0/28",
+              },
+            }],
           }
           @subnets = stub_subnets_list_response(resource_group_name, vnet_name)
-          @updated_vnet_config = { :virtualNetworkName => vnet_name,
-                                   :addressPrefixes => [ "10.2.0.0/16", "192.168.172.0/24", "16.2.0.0/24" ],
-                                   :subnets => [{ "name" => "sbn3",
-                                                  "properties" => {
-                "address_prefix" => "10.2.0.0/20"
-              }
+          @updated_vnet_config = { virtualNetworkName: vnet_name,
+                                   addressPrefixes: [ "10.2.0.0/16", "192.168.172.0/24", "16.2.0.0/24" ],
+                                   subnets: [{ "name" => "sbn3",
+                                               "properties" => {
+                "address_prefix" => "10.2.0.0/20",
+              },
             },
             { "name" => "sbn4",
               "properties" => {
-                "address_prefix" => "192.168.172.0/25"
-              }
+                "address_prefix" => "192.168.172.0/25",
+              },
             },
             { "name" => "sbn5",
               "properties" => {
-                "address_prefix" => "10.2.16.0/28"
-              }
+                "address_prefix" => "10.2.16.0/28",
+              },
             },
             { "name" => "sbn24",
               "properties" => {
-                "addressPrefix" => new_subnet_prefix
-              }
-            }]
+                "addressPrefix" => new_subnet_prefix,
+              },
+            }],
           }
         end
 
@@ -951,13 +974,13 @@ describe Azure::ARM::VnetConfig do
         @vnet_name = "vnet-11"
         @subnet_name = "sbn11"
         allow(@dummy_class).to receive(:get_vnet).and_return(false)
-        @vnet_config = { :virtualNetworkName => "vnet-11",
-                         :addressPrefixes => [ "10.0.0.0/16" ],
-                         :subnets => [{ "name" => "sbn11",
-                                        "properties" => {
-              "addressPrefix" => "10.0.0.0/24"
-            }
-          }]
+        @vnet_config = { virtualNetworkName: "vnet-11",
+                         addressPrefixes: [ "10.0.0.0/16" ],
+                         subnets: [{ "name" => "sbn11",
+                                     "properties" => {
+              "addressPrefix" => "10.0.0.0/24",
+            },
+          }],
         }
       end
 
@@ -977,19 +1000,20 @@ describe Azure::ARM::VnetConfig do
             @vnet_name = "vnet-3"
             @subnet_name = "sbn7"
             allow(@dummy_class).to receive(:network_resource_client).and_return(
-              stub_network_resource_client(nil, @resource_group_name, @vnet_name))
-            @vnet_config = @vnet_config = { :virtualNetworkName => "vnet-3",
-                                            :addressPrefixes => [ "25.3.16.0/20", "141.154.163.0/26" ],
-                                            :subnets => [{ "name" => "sbn6",
-                                                           "properties" => {
-                  "addressPrefix" => "25.3.29.0/25"
-                }
+              stub_network_resource_client(nil, @resource_group_name, @vnet_name)
+            )
+            @vnet_config = @vnet_config = { virtualNetworkName: "vnet-3",
+                                            addressPrefixes: [ "25.3.16.0/20", "141.154.163.0/26" ],
+                                            subnets: [{ "name" => "sbn6",
+                                                        "properties" => {
+                  "addressPrefix" => "25.3.29.0/25",
+                },
               },
               { "name" => "sbn7",
                 "properties" => {
-                  "addressPrefix" => "25.3.29.128/25"
-                }
-              }]
+                  "addressPrefix" => "25.3.29.128/25",
+                },
+              }],
             }
           end
 
@@ -1007,14 +1031,15 @@ describe Azure::ARM::VnetConfig do
             @vnet_name = "vnet-4"
             @subnet_name = "sbn8"
             allow(@dummy_class).to receive(:network_resource_client).and_return(
-              stub_network_resource_client(nil, @resource_group_name, @vnet_name))
-            @vnet_config = @vnet_config = { :virtualNetworkName => "vnet-4",
-                                            :addressPrefixes => [ "10.15.0.0/20", "40.23.19.0/29" ],
-                                            :subnets => [{ "name" => "sbn8",
-                                                           "properties" => {
-                  "addressPrefix" => "40.23.19.0/29"
-                }
-              }]
+              stub_network_resource_client(nil, @resource_group_name, @vnet_name)
+            )
+            @vnet_config = @vnet_config = { virtualNetworkName: "vnet-4",
+                                            addressPrefixes: [ "10.15.0.0/20", "40.23.19.0/29" ],
+                                            subnets: [{ "name" => "sbn8",
+                                                        "properties" => {
+                  "addressPrefix" => "40.23.19.0/29",
+                },
+              }],
             }
           end
 
@@ -1035,16 +1060,17 @@ describe Azure::ARM::VnetConfig do
               @vnet_name = "vnet-6"
               @subnet_name = "sbn40"
               allow(@dummy_class).to receive(:network_resource_client).and_return(
-                stub_network_resource_client(nil, @resource_group_name, @vnet_name))
+                stub_network_resource_client(nil, @resource_group_name, @vnet_name)
+              )
             end
 
             it "raises error" do
               expect do
                 @dummy_class.create_vnet_config(
-                @resource_group_name, @vnet_name, @subnet_name)
-              end.to raise_error(RuntimeError,
-                  "Unable to add subnet #{@subnet_name} into the virtual network #{@vnet_name}, no address space available !!!"
+                  @resource_group_name, @vnet_name, @subnet_name
                 )
+              end.to raise_error(RuntimeError,
+                "Unable to add subnet #{@subnet_name} into the virtual network #{@vnet_name}, no address space available !!!")
             end
           end
 
@@ -1055,21 +1081,21 @@ describe Azure::ARM::VnetConfig do
               @subnet_name = "sbn60"
 
               subnets = [OpenStruct.new({ "name" => "sbn19",
-                                          "address_prefix" => "10.10.11.0/25"
+                                          "address_prefix" => "10.10.11.0/25",
               }),
               OpenStruct.new({ "name" => "sbn20",
-                               "address_prefix" => "10.10.11.128/26"
+                               "address_prefix" => "10.10.11.128/26",
               }),
               OpenStruct.new({ "name" => "sbn21",
-                               "address_prefix" => "10.10.11.192/26"
+                               "address_prefix" => "10.10.11.192/26",
               })]
 
               vnet = OpenStruct.new({
                 "location" => "westus",
                 "address_space" => OpenStruct.new({
-                    "address_prefixes" => [ "10.10.11.0/24" ]
+                    "address_prefixes" => [ "10.10.11.0/24" ],
                   }),
-                "subnets" => subnets
+                "subnets" => subnets,
               })
 
               allow(@dummy_class).to receive(:get_vnet).and_return(vnet)
@@ -1079,10 +1105,10 @@ describe Azure::ARM::VnetConfig do
             it "raises error" do
               expect do
                 @dummy_class.create_vnet_config(
-                @resource_group_name, @vnet_name, @subnet_name)
-              end.to raise_error(RuntimeError,
-                  "Unable to add subnet #{@subnet_name} into the virtual network #{@vnet_name}, no address space available !!!"
+                  @resource_group_name, @vnet_name, @subnet_name
                 )
+              end.to raise_error(RuntimeError,
+                "Unable to add subnet #{@subnet_name} into the virtual network #{@vnet_name}, no address space available !!!")
             end
           end
         end
@@ -1095,39 +1121,40 @@ describe Azure::ARM::VnetConfig do
               @subnet_name = "sbn27"
               new_subnet_prefix = "69.182.8.0/24"
               allow(@dummy_class).to receive(:network_resource_client).and_return(
-                stub_network_resource_client(nil, @resource_group_name, @vnet_name))
-              @vnet_config = { :virtualNetworkName => "vnet-5",
-                               :addressPrefixes => [ "69.182.8.0/21", "12.3.19.0/24" ],
-                               :subnets => [{ "name" => "sbn9",
-                                              "properties" => {
-                    "addressPrefix" => "69.182.9.0/24"
-                  }
+                stub_network_resource_client(nil, @resource_group_name, @vnet_name)
+              )
+              @vnet_config = { virtualNetworkName: "vnet-5",
+                               addressPrefixes: [ "69.182.8.0/21", "12.3.19.0/24" ],
+                               subnets: [{ "name" => "sbn9",
+                                           "properties" => {
+                    "addressPrefix" => "69.182.9.0/24",
+                  },
                 },
                 { "name" => "sbn10",
                   "properties" => {
-                    "addressPrefix" => "69.182.11.0/24"
-                  }
+                    "addressPrefix" => "69.182.11.0/24",
+                  },
                 },
                 { "name" => "sbn11",
                   "properties" => {
-                    "addressPrefix" => "12.3.19.0/25"
-                  }
+                    "addressPrefix" => "12.3.19.0/25",
+                  },
                 },
                 { "name" => "sbn12",
                   "properties" => {
-                    "addressPrefix" => "69.182.14.0/24"
-                  }
+                    "addressPrefix" => "69.182.14.0/24",
+                  },
                 },
                 { "name" => "sbn13",
                   "properties" => {
-                    "addressPrefix" => "12.3.19.128/25"
-                  }
+                    "addressPrefix" => "12.3.19.128/25",
+                  },
                 },
                 { "name" => "sbn27",
                   "properties" => {
-                    "addressPrefix" => new_subnet_prefix
-                  }
-                }]
+                    "addressPrefix" => new_subnet_prefix,
+                  },
+                }],
               }
             end
 
@@ -1147,64 +1174,64 @@ describe Azure::ARM::VnetConfig do
               new_subnet_prefix = "133.72.16.128/25"
 
               subnets = [OpenStruct.new({ "name" => "sbn19",
-                                          "address_prefix" => "10.10.11.0/25"
+                                          "address_prefix" => "10.10.11.0/25",
               }),
               OpenStruct.new({ "name" => "sbn20",
-                               "address_prefix" => "10.10.11.128/26"
+                               "address_prefix" => "10.10.11.128/26",
               }),
               OpenStruct.new({ "name" => "sbn21",
-                               "address_prefix" => "10.10.11.192/26"
+                               "address_prefix" => "10.10.11.192/26",
               }),
               OpenStruct.new({ "name" => "sbn22",
-                               "address_prefix" => "192.168.172.0/24"
+                               "address_prefix" => "192.168.172.0/24",
               }),
               OpenStruct.new({ "name" => "sbn23",
-                               "address_prefix" => "133.72.16.0/25"
+                               "address_prefix" => "133.72.16.0/25",
               })]
 
               vnet = OpenStruct.new({
                 "location" => "westus",
                 "address_space" => OpenStruct.new({
-                    "address_prefixes" => [ "10.10.11.0/24", "192.168.172.0/24", "133.72.16.0/24" ]
+                    "address_prefixes" => [ "10.10.11.0/24", "192.168.172.0/24", "133.72.16.0/24" ],
                   }),
-                "subnets" => subnets
+                "subnets" => subnets,
               })
 
               allow(@dummy_class).to receive(:get_vnet).and_return(vnet)
               allow(@dummy_class).to receive(:subnets_list).and_return(subnets)
 
-              @vnet_config = { :virtualNetworkName => "vnet-60",
-                               :addressPrefixes => [ "10.10.11.0/24", "192.168.172.0/24", "133.72.16.0/24" ],
-                               :subnets => [{ "name" => "sbn19",
-                                              "properties" => {
-                    "addressPrefix" => "10.10.11.0/25"
-                  }
+              @vnet_config = { virtualNetworkName: "vnet-60",
+                               addressPrefixes: [ "10.10.11.0/24", "192.168.172.0/24", "133.72.16.0/24" ],
+                               subnets: [{ "name" => "sbn19",
+                                           "properties" => {
+                    "addressPrefix" => "10.10.11.0/25",
+                  },
                 },
                 { "name" => "sbn20",
                   "properties" => {
-                    "addressPrefix" => "10.10.11.128/26"
-                  }
+                    "addressPrefix" => "10.10.11.128/26",
+                  },
                 },
                 { "name" => "sbn21",
                   "properties" => {
-                    "addressPrefix" => "10.10.11.192/26"
-                  }
+                    "addressPrefix" => "10.10.11.192/26",
+                  },
                 },
                 { "name" => "sbn22",
                   "properties" => {
-                    "addressPrefix" => "192.168.172.0/24"
-                  }
+                    "addressPrefix" => "192.168.172.0/24",
+                  },
                 },
                 { "name" => "sbn23",
                   "properties" => {
-                    "addressPrefix" => "133.72.16.0/25"
-                  }
+                    "addressPrefix" => "133.72.16.0/25",
+                  },
                 },
                 { "name" => "sbn70",
                   "properties" => {
-                    "addressPrefix" => new_subnet_prefix
-                  }
-                }]
+                    "addressPrefix" => new_subnet_prefix,
+                  },
+                }],
               }
             end
 
@@ -1223,19 +1250,20 @@ describe Azure::ARM::VnetConfig do
               @subnet_name = "sbn26"
               new_subnet_prefix = "10.15.0.0/24"
               allow(@dummy_class).to receive(:network_resource_client).and_return(
-                stub_network_resource_client(nil, @resource_group_name, @vnet_name))
-              @vnet_config = @vnet_config = { :virtualNetworkName => "vnet-4",
-                                              :addressPrefixes => [ "10.15.0.0/20", "40.23.19.0/29" ],
-                                              :subnets => [{ "name" => "sbn8",
-                                                             "properties" => {
-                    "addressPrefix" => "40.23.19.0/29"
-                  }
+                stub_network_resource_client(nil, @resource_group_name, @vnet_name)
+              )
+              @vnet_config = @vnet_config = { virtualNetworkName: "vnet-4",
+                                              addressPrefixes: [ "10.15.0.0/20", "40.23.19.0/29" ],
+                                              subnets: [{ "name" => "sbn8",
+                                                          "properties" => {
+                    "addressPrefix" => "40.23.19.0/29",
+                  },
                 },
                 { "name" => "sbn26",
                   "properties" => {
-                    "addressPrefix" => new_subnet_prefix
-                  }
-                }]
+                    "addressPrefix" => new_subnet_prefix,
+                  },
+                }],
               }
             end
 
@@ -1260,29 +1288,30 @@ describe Azure::ARM::VnetConfig do
           @subnet_name = "sbn30"
           new_subnet_prefix = "10.3.0.0/24"
           allow(@dummy_class).to receive(:network_resource_client).and_return(
-            stub_network_resource_client(nil, @resource_group_name, @vnet_name))
-          @vnet_config = { :virtualNetworkName => "vnet-7",
-                           :addressPrefixes => [ "10.3.0.0/16", "160.10.2.0/24" ],
-                           :subnets => [{ "name" => "sbn15",
-                                          "properties" => {
-                "addressPrefix" => "160.10.2.192/26"
-              }
+            stub_network_resource_client(nil, @resource_group_name, @vnet_name)
+          )
+          @vnet_config = { virtualNetworkName: "vnet-7",
+                           addressPrefixes: [ "10.3.0.0/16", "160.10.2.0/24" ],
+                           subnets: [{ "name" => "sbn15",
+                                       "properties" => {
+                "addressPrefix" => "160.10.2.192/26",
+              },
             },
             { "name" => "GatewaySubnet",
               "properties" => {
-                "addressPrefix" => "10.3.1.0/24"
-              }
+                "addressPrefix" => "10.3.1.0/24",
+              },
             },
             { "name" => "sbn16",
               "properties" => {
-                "addressPrefix" => "160.10.2.0/25"
-              }
+                "addressPrefix" => "160.10.2.0/25",
+              },
             },
             { "name" => "sbn30",
               "properties" => {
-                "addressPrefix" => new_subnet_prefix
-              }
-            }]
+                "addressPrefix" => new_subnet_prefix,
+              },
+            }],
           }
         end
 
@@ -1300,24 +1329,25 @@ describe Azure::ARM::VnetConfig do
           @vnet_name = "vnet-7"
           @subnet_name = "sbn16"
           allow(@dummy_class).to receive(:network_resource_client).and_return(
-            stub_network_resource_client(nil, @resource_group_name, @vnet_name))
-          @vnet_config = { :virtualNetworkName => "vnet-7",
-                           :addressPrefixes => [ "10.3.0.0/16", "160.10.2.0/24" ],
-                           :subnets => [{ "name" => "sbn15",
-                                          "properties" => {
-                "addressPrefix" => "160.10.2.192/26"
-              }
+            stub_network_resource_client(nil, @resource_group_name, @vnet_name)
+          )
+          @vnet_config = { virtualNetworkName: "vnet-7",
+                           addressPrefixes: [ "10.3.0.0/16", "160.10.2.0/24" ],
+                           subnets: [{ "name" => "sbn15",
+                                       "properties" => {
+                "addressPrefix" => "160.10.2.192/26",
+              },
             },
             { "name" => "GatewaySubnet",
               "properties" => {
-                "addressPrefix" => "10.3.1.0/24"
-              }
+                "addressPrefix" => "10.3.1.0/24",
+              },
             },
             { "name" => "sbn16",
               "properties" => {
-                "addressPrefix" => "160.10.2.0/25"
-              }
-            }]
+                "addressPrefix" => "160.10.2.0/25",
+              },
+            }],
           }
         end
 
@@ -1334,7 +1364,8 @@ describe Azure::ARM::VnetConfig do
       it "raises error" do
         expect do
           @dummy_class.create_vnet_config(
-          "rgrp-1", "vnet-1", "GatewaySubnet")
+            "rgrp-1", "vnet-1", "GatewaySubnet"
+          )
         end.to raise_error(ArgumentError, "GatewaySubnet cannot be used as the name for --azure-vnet-subnet-name option. GatewaySubnet can only be used for virtual network gateways.")
       end
     end
@@ -1345,13 +1376,16 @@ describe Azure::ARM::VnetConfig do
         @vnet_name = "vnet-7"
         @subnet_name = "sbn26"
         allow(@dummy_class).to receive(:network_resource_client).and_return(
-          stub_network_resource_client(nil, @resource_group_name, @vnet_name))
+          stub_network_resource_client(nil, @resource_group_name, @vnet_name)
+        )
       end
 
       it "does not raise error" do
         expect do
           @dummy_class.create_vnet_config(
-          @resource_group_name, @vnet_name, @subnet_name) end.to_not raise_error
+            @resource_group_name, @vnet_name, @subnet_name
+          )
+        end .to_not raise_error
       end
     end
   end

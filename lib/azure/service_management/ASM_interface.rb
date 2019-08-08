@@ -1,5 +1,5 @@
 #
-# Copyright:: Copyright 2016-2018 Chef Software, Inc.
+# Copyright:: Copyright 2010-2019, Chef Software Inc.
 # License:: Apache License, Version 2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -64,9 +64,10 @@ module Azure
       end
 
       def rdp_port(arr_ports)
-        if !arr_ports
+        unless arr_ports
           return ""
         end
+
         if arr_ports.length > 0
           arr_ports.each do |port|
             if port["Name"] == "Remote Desktop"
@@ -78,7 +79,7 @@ module Azure
       end
 
       def find_server(params = {})
-        server = connection.roles.find(params[:name], params = { :azure_dns_name => params[:azure_dns_name] })
+        server = connection.roles.find(params[:name], params = { azure_dns_name: params[:azure_dns_name] })
       end
 
       def delete_server(params = {})
@@ -117,7 +118,7 @@ module Azure
 
         puts ""
         if role
-          details = Array.new
+          details = []
           details << ui.color("Role name", :bold, :cyan)
           details << role.name
           details << ui.color("Status", :bold, :cyan)
@@ -226,7 +227,7 @@ module Azure
           remove_hosted_service_on_failure = nil
         end
 
-        #If Storage Account is not specified, check if the geographic location has one to re-use
+        # If Storage Account is not specified, check if the geographic location has one to re-use
         if not params[:azure_storage_account]
           storage_accts = connection.storageaccounts.all
           storage = storage_accts.find { |storage_acct| storage_acct.location.to_s == params[:azure_service_location] }
