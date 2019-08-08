@@ -1,20 +1,18 @@
 # knife-azure Change Log
 
-<!-- latest_release 2.0.0 -->
+<!-- latest_release -->
+<!-- latest_release -->
+
+<!-- release_rollup -->
+<!-- release_rollup -->
+
+<!-- latest_stable_release -->
 ## [v2.0.0](https://github.com/chef/knife-azure/tree/v2.0.0) (2019-08-08)
 
 #### Merged Pull Requests
 - Support for Chef-15 [#500](https://github.com/chef/knife-azure/pull/500) ([Nimesh-Msys](https://github.com/Nimesh-Msys))
-<!-- latest_release -->
-
-<!-- release_rollup -->
-### Changes not yet released to rubygems.org
-
-#### Merged Pull Requests
-- Support for Chef-15 [#500](https://github.com/chef/knife-azure/pull/500) ([Nimesh-Msys](https://github.com/Nimesh-Msys)) <!-- 2.0.0 -->
-<!-- release_rollup -->
-
 <!-- latest_stable_release -->
+
 ## [v1.9.0](https://github.com/chef/knife-azure/tree/v1.9.0) (2019-02-21)
 
 #### Merged Pull Requests
@@ -25,7 +23,6 @@
 - Upgraded version of knife-azure azure-sdk libraries.  [#491](https://github.com/chef/knife-azure/pull/491) ([Vasu1105](https://github.com/Vasu1105))
 - Tidy up bootstrap.md  [#493](https://github.com/chef/knife-azure/pull/493) ([stuartpreston](https://github.com/stuartpreston))
 - Fix for wrong number of arguments error while using extended logs option. [#497](https://github.com/chef/knife-azure/pull/497) ([Vasu1105](https://github.com/Vasu1105))
-<!-- latest_stable_release -->
 
 ## [v1.8.7](https://github.com/chef/knife-azure/tree/v1.8.7) (2018-12-04)
 
