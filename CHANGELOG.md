@@ -1,9 +1,17 @@
 # knife-azure Change Log
 
-<!-- latest_release -->
+<!-- latest_release 2.0.0 -->
+## [v2.0.0](https://github.com/chef/knife-azure/tree/v2.0.0) (2019-08-08)
+
+#### Merged Pull Requests
+- Support for Chef-15 [#500](https://github.com/chef/knife-azure/pull/500) ([Nimesh-Msys](https://github.com/Nimesh-Msys))
 <!-- latest_release -->
 
 <!-- release_rollup -->
+### Changes not yet released to rubygems.org
+
+#### Merged Pull Requests
+- Support for Chef-15 [#500](https://github.com/chef/knife-azure/pull/500) ([Nimesh-Msys](https://github.com/Nimesh-Msys)) <!-- 2.0.0 -->
 <!-- release_rollup -->
 
 <!-- latest_stable_release -->
