@@ -45,7 +45,7 @@ describe Chef::Knife::BootstrapAzurerm do
       expect(@bootstrap_azurerm_instance.ui).to receive(:log).with("Validating...")
       expect(@bootstrap_azurerm_instance).to receive(:validate_arm_keys!)
       expect(@service).to_not receive(:create_vm_extension)
-      expect(@bootstrap_azurerm_instance.ui).to receive(:error).twice
+      expect(@bootstrap_azurerm_instance.ui).to receive(:error)
       expect(Chef::Log).to receive(:debug).at_least(:once)
       @bootstrap_azurerm_instance.run
     end
@@ -69,9 +69,7 @@ describe Chef::Knife::BootstrapAzurerm do
       expect(@bootstrap_azurerm_instance.name_args.length).to be == 3
       expect(@bootstrap_azurerm_instance.ui).to receive(:log).with("Validating...")
       expect(@service).to_not receive(:create_vm_extension)
-      expect(@bootstrap_azurerm_instance.ui).to receive(
-        :error
-      ).twice
+      expect(@bootstrap_azurerm_instance.ui).to receive(:error)
       expect(Chef::Log).to receive(:debug).at_least(:once)
       @bootstrap_azurerm_instance.run
     end
@@ -81,9 +79,7 @@ describe Chef::Knife::BootstrapAzurerm do
       expect(@service).to_not receive(:create_vm_extension)
       expect(@service).to receive(:find_server).and_return(nil)
       expect(@bootstrap_azurerm_instance.ui).to receive(:log).twice
-      expect(@bootstrap_azurerm_instance.ui).to receive(
-        :error
-      ).twice
+      expect(@bootstrap_azurerm_instance.ui).to receive(:error)
       expect(Chef::Log).to receive(:debug).at_least(:once)
       @bootstrap_azurerm_instance.run
     end
@@ -94,7 +90,7 @@ describe Chef::Knife::BootstrapAzurerm do
       expect(@bootstrap_azurerm_instance.ui).to receive(:log).twice
       allow(@service).to receive(:find_server).and_return(@server)
       allow(@service).to receive(:extension_already_installed?).and_return(true)
-      expect(@bootstrap_azurerm_instance.ui).to receive(:error).twice
+      expect(@bootstrap_azurerm_instance.ui).to receive(:error)
       expect(Chef::Log).to receive(:debug).at_least(:once)
       @bootstrap_azurerm_instance.run
     end
@@ -147,7 +143,7 @@ describe Chef::Knife::BootstrapAzurerm do
       allow(@server).to receive_message_chain(:storage_profile, :os_disk, :os_type).and_return("linux")
       allow(@server).to receive_message_chain(:storage_profile, :image_reference, :offer).and_return("abc")
       expect(@bootstrap_azurerm_instance.ui).to receive(:log).twice
-      expect(@bootstrap_azurerm_instance.ui).to receive(:error).twice
+      expect(@bootstrap_azurerm_instance.ui).to receive(:error)
       expect(Chef::Log).to receive(:debug).at_least(:once)
       @bootstrap_azurerm_instance.run
     end

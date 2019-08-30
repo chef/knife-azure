@@ -211,13 +211,13 @@ module Azure
       def virtual_machine_exist?(resource_group_name, vm_name)
         compute_management_client.virtual_machines.get(resource_group_name, vm_name)
         true
-      rescue MsRestAzure::AzureOperationError => error
-        if error.body
-          err_json = JSON.parse(error.response.body)
+      rescue MsRestAzure::AzureOperationError => e
+        if e.body
+          err_json = JSON.parse(e.response.body)
           if err_json["error"]["code"] == "ResourceNotFound"
             return false
           else
-            raise error
+            raise e
           end
         end
       end
@@ -225,13 +225,13 @@ module Azure
       def security_group_exist?(resource_group_name, security_group_name)
         network_resource_client.network_security_groups.get(resource_group_name, security_group_name)
         true
-      rescue MsRestAzure::AzureOperationError => error
-        if error.body
-          err_json = JSON.parse(error.response.body)
+      rescue MsRestAzure::AzureOperationError => e
+        if e.body
+          err_json = JSON.parse(e.response.body)
           if err_json["error"]["code"] == "ResourceNotFound"
             return false
           else
-            raise error
+            raise e
           end
         end
       end
@@ -443,9 +443,9 @@ module Azure
             vm_ext.name,
             vm_ext
           )
-        rescue Exception => error
+        rescue Exception => e
           Chef::Log.error("Failed to create the Virtual Machine Extension -- exception being rescued.")
-          common_arm_rescue_block(error)
+          common_arm_rescue_block(e)
         end
 
         vm_extension
@@ -497,15 +497,17 @@ module Azure
           end
           Chef::Log.debug(error.response.body)
         else
-          begin
-            JSON.parse(error.message)
-            Chef::Log.debug("#{error.message}")
-          rescue JSON::ParserError => e
-            ui.error("#{error.message}")
-          end
-          ui.error("Something went wrong. Please use -VV option for more details.")
-          Chef::Log.debug("#{error.backtrace.join("\n")}")
+          message = begin
+                      JSON.parse(error.message)
+                    rescue JSON::ParserError => e
+                      error.message
+                    end
+          ui.error(message)
+          Chef::Log.debug(message)
         end
+      rescue Exception => e
+        ui.error("Something went wrong. Please use -VV option for more details.")
+        Chef::Log.debug(error.backtrace.join("\n").to_s)
       end
     end
   end
