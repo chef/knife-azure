@@ -1,9 +1,17 @@
 # knife-azure Change Log
 
-<!-- latest_release -->
+<!-- latest_release 2.0.2 -->
+## [v2.0.2](https://github.com/chef/knife-azure/tree/v2.0.2) (2019-09-10)
+
+#### Merged Pull Requests
+- Minor Fixes while displaying Error Messages [#503](https://github.com/chef/knife-azure/pull/503) ([Nimesh-Msys](https://github.com/Nimesh-Msys))
 <!-- latest_release -->
 
-<!-- release_rollup -->
+<!-- release_rollup since=2.0.1 -->
+### Changes not yet released to rubygems.org
+
+#### Merged Pull Requests
+- Minor Fixes while displaying Error Messages [#503](https://github.com/chef/knife-azure/pull/503) ([Nimesh-Msys](https://github.com/Nimesh-Msys)) <!-- 2.0.2 -->
 <!-- release_rollup -->
 
 <!-- latest_stable_release -->
