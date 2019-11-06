@@ -9,7 +9,7 @@ group :debug do
 end
 
 group :test do
-  gem "activesupport", "4.2.6"
+  gem "activesupport", "6.0.1"
   gem "chef", ">= 15.0.300"
   gem "chefstyle"
   gem "equivalent-xml", "~> 0.2.9"
