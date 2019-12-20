@@ -16,10 +16,10 @@
 # limitations under the License.
 #
 
-require "chef/knife/azure_base"
+require_relative "azure_base"
 require "chef/knife/bootstrap"
-require "chef/knife/bootstrap/common_bootstrap_options"
-require "chef/knife/bootstrap/bootstrapper"
+require_relative "bootstrap/common_bootstrap_options"
+require_relative "bootstrap/bootstrapper"
 
 class Chef
   class Knife

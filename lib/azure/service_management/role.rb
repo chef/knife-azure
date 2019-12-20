@@ -17,7 +17,7 @@
 #
 
 require "securerandom"
-require "azure/service_management/utility"
+require_relative "utility"
 
 module Azure
   class Roles

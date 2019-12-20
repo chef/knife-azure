@@ -15,9 +15,9 @@
 # limitations under the License.
 #
 
-require "azure/azure_interface"
-require "azure/resource_management/ARM_deployment_template"
-require "azure/resource_management/vnet_config"
+require_relative "../azure_interface"
+require_relative "ARM_deployment_template"
+require_relative "vnet_config"
 require "azure_mgmt_resources"
 require "azure_mgmt_compute"
 require "azure_mgmt_storage"

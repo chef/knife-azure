@@ -18,7 +18,7 @@
 #
 
 require "chef/knife"
-require "azure/resource_management/ARM_interface"
+require_relative "../../azure/resource_management/ARM_interface"
 require "mixlib/shellout"
 require "chef/mixin/shell_out"
 require "time"
@@ -34,7 +34,7 @@ class Chef
       XPLAT_VERSION_WITH_WCM_DEPRECATED ||= "0.10.5".freeze
 
       if Chef::Platform.windows?
-        require "azure/resource_management/windows_credentials"
+        require_relative "../../azure/resource_management/windows_credentials"
         include Azure::ARM::WindowsCredentials
       end
 

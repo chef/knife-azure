@@ -16,17 +16,17 @@
 # limitations under the License.
 #
 
-require "azure/service_management/image"
-require "azure/service_management/role"
-require "azure/service_management/deploy"
-require "azure/service_management/host"
-require "azure/service_management/loadbalancer"
-require "azure/service_management/vnet"
-require "azure/service_management/utility"
-require "azure/service_management/ag"
-require "azure/service_management/storageaccount"
-require "azure/service_management/certificate"
-require "azure/service_management/disk"
+require_relative "image"
+require_relative "role"
+require_relative "deploy"
+require_relative "host"
+require_relative "loadbalancer"
+require_relative "vnet"
+require_relative "utility"
+require_relative "ag"
+require_relative "storageaccount"
+require_relative "certificate"
+require_relative "disk"
 
 module Azure
   class ServiceManagement

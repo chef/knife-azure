@@ -16,12 +16,12 @@
 # limitations under the License.
 #
 
-require "chef/knife/azurerm_base"
+require_relative "azurerm_base"
 require "securerandom"
 require "chef/knife/bootstrap"
 require "chef/knife/bootstrap/client_builder"
-require "chef/knife/bootstrap/common_bootstrap_options"
-require "chef/knife/bootstrap/bootstrapper"
+require_relative "bootstrap/common_bootstrap_options"
+require_relative "bootstrap/bootstrapper"
 
 class Chef
   class Knife

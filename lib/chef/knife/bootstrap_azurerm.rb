@@ -16,11 +16,11 @@
 # limitations under the License.
 #
 
-require "chef/knife/azurerm_base"
+require_relative "azurerm_base"
 require "chef/knife/bootstrap"
-require "chef/knife/bootstrap/common_bootstrap_options"
-require "chef/knife/bootstrap/bootstrapper"
-require "azure/resource_management/ARM_interface"
+require_relative "bootstrap/common_bootstrap_options"
+require_relative "bootstrap/bootstrapper"
+require_relative "../../azure/resource_management/ARM_interface"
 require "time"
 
 class Chef
