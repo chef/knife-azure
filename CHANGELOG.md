@@ -1,9 +1,17 @@
 # knife-azure Change Log
 
-<!-- latest_release -->
+<!-- latest_release 2.0.3 -->
+## [v2.0.3](https://github.com/chef/knife-azure/tree/v2.0.3) (2019-12-21)
+
+#### Merged Pull Requests
+- Migrate to Buildkite for testing [#512](https://github.com/chef/knife-azure/pull/512) ([tas50](https://github.com/tas50))
 <!-- latest_release -->
 
-<!-- release_rollup -->
+<!-- release_rollup since=2.0.2 -->
+### Changes not yet released to rubygems.org
+
+#### Merged Pull Requests
+- Migrate to Buildkite for testing [#512](https://github.com/chef/knife-azure/pull/512) ([tas50](https://github.com/tas50)) <!-- 2.0.3 -->
 <!-- release_rollup -->
 
 <!-- latest_stable_release -->
