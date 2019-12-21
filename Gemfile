@@ -12,7 +12,7 @@ group :test do
   gem "activesupport", "6.0.2.1"
   gem "chef", ">= 15.0.300"
   gem "chefstyle"
-  gem "equivalent-xml", "~> 0.2.9"
+  gem "equivalent-xml", "~> 0.6.0"
   gem "guard-rspec"
   gem "knife-cloud", ">= 1.0.0"
   gem "mixlib-config", "~> 2.0"
