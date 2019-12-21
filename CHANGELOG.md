@@ -1,16 +1,17 @@
 # knife-azure Change Log
 
-<!-- latest_release 2.0.4 -->
-## [v2.0.4](https://github.com/chef/knife-azure/tree/v2.0.4) (2019-12-21)
+<!-- latest_release 2.0.5 -->
+## [v2.0.5](https://github.com/chef/knife-azure/tree/v2.0.5) (2019-12-21)
 
 #### Merged Pull Requests
-- Substitute require for require_relative [#511](https://github.com/chef/knife-azure/pull/511) ([tas50](https://github.com/tas50))
+- Update activesupport requirement from 4.2.6 to 6.0.2.1 [#510](https://github.com/chef/knife-azure/pull/510) ([dependabot-preview[bot]](https://github.com/dependabot-preview[bot]))
 <!-- latest_release -->
 
 <!-- release_rollup since=2.0.2 -->
 ### Changes not yet released to rubygems.org
 
 #### Merged Pull Requests
+- Update activesupport requirement from 4.2.6 to 6.0.2.1 [#510](https://github.com/chef/knife-azure/pull/510) ([dependabot-preview[bot]](https://github.com/dependabot-preview[bot])) <!-- 2.0.5 -->
 - Substitute require for require_relative [#511](https://github.com/chef/knife-azure/pull/511) ([tas50](https://github.com/tas50)) <!-- 2.0.4 -->
 - Migrate to Buildkite for testing [#512](https://github.com/chef/knife-azure/pull/512) ([tas50](https://github.com/tas50)) <!-- 2.0.3 -->
 <!-- release_rollup -->
