@@ -62,10 +62,6 @@ Naming/VariableName:
     - 'spec/unit/images_spec.rb'
     - 'spec/unit/query_azure_mock.rb'
 
-Performance/RedundantMatch:
-  Exclude:
-    - 'spec/unit/query_azure_mock.rb'
-
 Style/For:
   Exclude:
     - 'lib/azure/resource_management/ARM_deployment_template.rb'
