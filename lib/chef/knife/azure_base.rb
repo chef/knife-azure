@@ -17,7 +17,7 @@
 #
 
 require "chef/knife"
-require "azure/service_management/ASM_interface"
+require_relative "../../azure/service_management/ASM_interface"
 
 class Chef
   class Knife

@@ -15,8 +15,8 @@
 # limitations under the License.
 #
 
-require "azure/custom_errors"
-require "azure/helpers"
+require_relative "custom_errors"
+require_relative "helpers"
 
 module Azure
   class AzureInterface

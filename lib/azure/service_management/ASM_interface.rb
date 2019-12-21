@@ -15,9 +15,9 @@
 # limitations under the License.
 #
 
-require "azure/azure_interface"
-require "azure/service_management/rest"
-require "azure/service_management/connection"
+require_relative "../azure_interface"
+require_relative "rest"
+require_relative "connection"
 
 module Azure
   class ServiceManagement
