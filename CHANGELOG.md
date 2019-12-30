@@ -1,9 +1,17 @@
 # knife-azure Change Log
 
-<!-- latest_release -->
+<!-- latest_release 2.0.7 -->
+## [v2.0.7](https://github.com/chef/knife-azure/tree/v2.0.7) (2019-12-30)
+
+#### Merged Pull Requests
+- Allow mixlib-config 3.x in test [#505](https://github.com/chef/knife-azure/pull/505) ([dependabot-preview[bot]](https://github.com/dependabot-preview[bot]))
 <!-- latest_release -->
 
-<!-- release_rollup -->
+<!-- release_rollup since=2.0.6 -->
+### Changes not yet released to rubygems.org
+
+#### Merged Pull Requests
+- Allow mixlib-config 3.x in test [#505](https://github.com/chef/knife-azure/pull/505) ([dependabot-preview[bot]](https://github.com/dependabot-preview[bot])) <!-- 2.0.7 -->
 <!-- release_rollup -->
 
 <!-- latest_stable_release -->
