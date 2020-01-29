@@ -1,6 +1,7 @@
 # Knife Azure
 
-[![Gem Version](https://badge.fury.io/rb/knife-azure.svg)](https://rubygems.org/gems/knife-azure) [![Build Status](https://travis-ci.org/chef/knife-azure.svg?branch=master)](https://travis-ci.org/chef/knife-azure)
+[![Gem Version](https://badge.fury.io/rb/knife-azure.svg)](https://rubygems.org/gems/knife-azure)
+[![Build status](https://badge.buildkite.com/7796bf2bd728a4a0ca714273e12ab2df436d6afccb862ea5bb.svg)](https://buildkite.com/chef-oss/chef-knife-azure-master-verify)
 
 **Umbrella Project**: [Knife](https://github.com/chef/chef-oss-practices/blob/master/projects/knife.md)
 
@@ -12,25 +13,17 @@
 
 ## Description
 
-A [knife](http://docs.chef.io/knife.html) plugin to create, delete, and enumerate [Microsoft Azure](https://azure.microsoft.com) resources to be managed by Chef.
+A [knife](http://docs.chef.io/knife.html) plugin to create, delete, and enumerate [Microsoft Azure](https://azure.microsoft.com) resources to be managed by Chef Infra.
 
 NOTE: You may also want to consider using the [Azure CLI](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli), this application is written by the Azure team and has many other integrations with Azure. If click [here](https://github.com/chef-partners/azure-chef-extension/blob/master/examples/azure-xplat-cli-examples.md) you'll see deeper examples of using the Chef extension and Azure.
 
 ## Installation
 
-Be sure you are running the latest version of Chef DK, which can be installed via:
+knife-azure comes bundled with Chef Workstation, which can be installed via:
 
 ```
-https://downloads.chef.io/chef-dk/
+https://downloads.chef.io/chef-workstation/
 ```
-
-This plugin is distributed as a Ruby Gem. To install it, run:
-
-```bash
-chef gem install knife-azure
-```
-
-Depending on your system's configuration, you may need to run this command with root/administrator privileges.
 
 ## Modes
 
@@ -64,7 +57,7 @@ For information on contributing to this project see <https://github.com/chef/che
 
 ## License
 
-Copyright:: Copyright 2010-2019, Chef Software, Inc.
+Copyright:: Copyright 2010-2020, Chef Software, Inc.
 
 License:: Apache License, Version 2.0
 
