@@ -18,6 +18,7 @@
 
 require_relative "../spec_helper"
 require_relative "query_azure_mock"
+require_relative "../../lib/azure/resource_management/ARM_interface"
 
 describe Azure::ARM::VnetConfig do
   include QueryAzureMock

@@ -19,6 +19,7 @@
 require_relative "../spec_helper"
 require_relative "query_azure_mock"
 require "chef/knife/bootstrap"
+require_relative "../../lib/azure/resource_management/ARM_interface"
 
 describe Chef::Knife::AzurermServerCreate do
   include AzureSpecHelper

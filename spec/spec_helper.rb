@@ -25,7 +25,6 @@ if Chef::Platform.windows?
 end
 
 require "fileutils"
-require "securerandom"
 require "knife-azure/version"
 
 def temp_dir
