@@ -17,8 +17,9 @@
 #
 
 require_relative "../spec_helper"
-require File.expand_path(File.dirname(__FILE__) + "/../unit/query_azure_mock")
+require_relative "query_azure_mock"
 require "chef/knife/bootstrap"
+require_relative "../../lib/azure/resource_management/ARM_interface"
 
 describe Chef::Knife::AzurermServerCreate do
   include AzureSpecHelper
@@ -1123,17 +1124,6 @@ describe Chef::Knife::AzurermServerCreate do
           pri_config = { validation_key: "foo", chef_server_crt: "foo", encrypted_data_bag_secret: nil }
           response = @arm_server_instance.get_chef_extension_private_params
           expect(response).to be == pri_config
-        end
-      end
-
-      context "when validation key is not present, using chef 11", :chef_lt_12_only do
-        before do
-          allow(File).to receive(:exist?).and_return(false)
-        end
-
-        it "raises an exception if validation_key is not present in chef 11" do
-          expect(@arm_server_instance.ui).to receive(:error).twice
-          expect { @arm_server_instance.run }.to raise_error(SystemExit)
         end
       end
     end

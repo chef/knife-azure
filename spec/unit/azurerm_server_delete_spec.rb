@@ -16,7 +16,7 @@
 #
 
 require_relative "../spec_helper"
-require File.expand_path(File.dirname(__FILE__) + "/../unit/query_azure_mock")
+require_relative "query_azure_mock"
 
 describe Chef::Knife::AzurermServerDelete do
   include AzureSpecHelper

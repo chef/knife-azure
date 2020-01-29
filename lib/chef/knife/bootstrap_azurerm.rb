@@ -29,8 +29,8 @@ class Chef
       include Knife::Bootstrap::Bootstrapper
 
       deps do
-        require_relative "../../azure/resource_management/ARM_interface"
         require "time"
+        include Knife::AzurermBase.load_deps
       end
 
       banner "knife bootstrap azurerm SERVER (options)"

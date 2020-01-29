@@ -18,10 +18,6 @@
 #
 
 require "chef/knife"
-require_relative "../../azure/resource_management/ARM_interface"
-require "chef/mixin/shell_out"
-require "time"
-require "json"
 
 class Chef
   class Knife
@@ -42,6 +38,10 @@ class Chef
           deps do
             require "readline"
             require "chef/json_compat"
+            require_relative "../../azure/resource_management/ARM_interface"
+            require "chef/mixin/shell_out"
+            require "time"
+            require "json"
           end
 
           option :azure_resource_group_name,

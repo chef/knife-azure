@@ -32,6 +32,7 @@ class Chef
 
       deps do
         require "securerandom"
+        include Knife::AzurermBase.load_deps
       end
 
       banner "knife azurerm server create (options)"
