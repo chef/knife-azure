@@ -17,7 +17,6 @@
 #
 
 require "chef/knife"
-require_relative "../../azure/service_management/ASM_interface"
 
 class Chef
   class Knife
@@ -30,6 +29,7 @@ class Chef
           deps do
             require "readline"
             require "chef/json_compat"
+            require_relative "../../azure/service_management/ASM_interface"
           end
 
           option :azure_subscription_id,
