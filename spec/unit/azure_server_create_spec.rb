@@ -557,18 +557,6 @@ describe Chef::Knife::AzureServerCreate do
         expect { @server_instance.run }.to raise_error(SystemExit)
       end
 
-      it "port should be unique number when connection-port not specified for winrm", :chef_lt_12_only do
-        Chef::Config[:knife][:connection_port] = nil
-        Chef::Config[:knife][:azure_dns_name] = "service001"
-        Chef::Config[:knife][:azure_vm_name] = "newvm01"
-        Chef::Config[:knife][:connection_protocol] = "winrm"
-        Chef::Config[:knife][:connection_user] = "testuser"
-        Chef::Config[:knife][:connection_password] = "Jetstream123!"
-        expect(@server_instance).to receive(:is_image_windows?).exactly(3).times.and_return(true)
-        @server_params = @server_instance.create_server_def
-        expect(@server_params[:port]).to be == "5985"
-      end
-
       it "port should be connection-port value specified in the option" do
         Chef::Config[:knife][:connection_protocol] = "winrm"
         Chef::Config[:knife][:connection_user] = "testuser"
@@ -993,17 +981,6 @@ describe Chef::Knife::AzureServerCreate do
       it "raises an error and exits" do
         expect(@server_instance.ui).to receive(:error).with("Specified SSL certificate does not exist.")
         expect { @server_instance.get_chef_extension_private_params }.to raise_error(SystemExit)
-      end
-    end
-
-    context "when validation key is not present, using chef 11", :chef_lt_12_only do
-      before do
-        allow(File).to receive(:exist?).and_return(false)
-      end
-
-      it "raises an exception if validation_key is not present in chef 11" do
-        expect(@server_instance.ui).to receive(:error)
-        expect { @server_instance.run }.to raise_error(SystemExit)
       end
     end
   end

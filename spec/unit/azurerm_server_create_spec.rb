@@ -1126,17 +1126,6 @@ describe Chef::Knife::AzurermServerCreate do
           expect(response).to be == pri_config
         end
       end
-
-      context "when validation key is not present, using chef 11", :chef_lt_12_only do
-        before do
-          allow(File).to receive(:exist?).and_return(false)
-        end
-
-        it "raises an exception if validation_key is not present in chef 11" do
-          expect(@arm_server_instance.ui).to receive(:error).twice
-          expect { @arm_server_instance.run }.to raise_error(SystemExit)
-        end
-      end
     end
   end
 
