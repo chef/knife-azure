@@ -16,7 +16,7 @@
 # limitations under the License.
 #
 
-require File.expand_path("../azurerm_base", __FILE__)
+require_relative "azurerm_base"
 
 class Chef
   class Knife

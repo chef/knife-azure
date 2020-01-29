@@ -18,7 +18,7 @@
 # limitations under the License.
 #
 
-require File.expand_path("../azurerm_base", __FILE__)
+require_relative "azurerm_base"
 
 # These two are needed for the '--purge' deletion case
 require "chef/node"

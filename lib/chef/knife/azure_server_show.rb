@@ -18,7 +18,7 @@
 # limitations under the License.
 #
 
-require File.expand_path("../azure_base", __FILE__)
+require_relative "azure_base"
 
 class Chef
   class Knife
