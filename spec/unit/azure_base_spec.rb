@@ -1,6 +1,6 @@
 #
 # Author:: Ameya Varade (<ameya.varade@clogeny.com>)
-# Copyright:: Copyright 2010-2019, Chef Software Inc.
+# Copyright:: Copyright 2010-2020, Chef Software Inc.
 # License:: Apache License, Version 2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,7 +16,7 @@
 # limitations under the License.
 #
 
-require File.expand_path(File.dirname(__FILE__) + "/../spec_helper")
+require_relative "../spec_helper"
 
 describe Chef::Knife::AzureBase do
   include AzureSpecHelper
