@@ -28,11 +28,6 @@ class Chef
       ## Manager (WCM) usage for authentication credentials storage purpose ##
       XPLAT_VERSION_WITH_WCM_DEPRECATED ||= "0.10.5".freeze
 
-      if Chef::Platform.windows?
-        require_relative "../../azure/resource_management/windows_credentials"
-        include Azure::ARM::WindowsCredentials
-      end
-
       def self.included(includer)
         includer.class_eval do
           deps do
@@ -42,6 +37,11 @@ class Chef
             require "chef/mixin/shell_out"
             require "time"
             require "json"
+
+            if Chef::Platform.windows?
+              require_relative "../../azure/resource_management/windows_credentials"
+              include Azure::ARM::WindowsCredentials
+            end
           end
 
           option :azure_resource_group_name,
