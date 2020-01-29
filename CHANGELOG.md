@@ -1,20 +1,18 @@
 # knife-azure Change Log
 
-<!-- latest_release 2.0.11 -->
+<!-- latest_release -->
+<!-- latest_release -->
+
+<!-- release_rollup -->
+<!-- release_rollup -->
+
+<!-- latest_stable_release -->
 ## [v2.0.11](https://github.com/chef/knife-azure/tree/v2.0.11) (2020-01-29)
 
 #### Merged Pull Requests
 - Fix windows credentials failures on windows [#516](https://github.com/chef/knife-azure/pull/516) ([tas50](https://github.com/tas50))
-<!-- latest_release -->
-
-<!-- release_rollup since=2.0.10 -->
-### Changes not yet released to rubygems.org
-
-#### Merged Pull Requests
-- Fix windows credentials failures on windows [#516](https://github.com/chef/knife-azure/pull/516) ([tas50](https://github.com/tas50)) <!-- 2.0.11 -->
-<!-- release_rollup -->
-
 <!-- latest_stable_release -->
+
 ## [v2.0.10](https://github.com/chef/knife-azure/tree/v2.0.10) (2020-01-29)
 
 #### Merged Pull Requests
@@ -22,7 +20,6 @@
 - Use require_relative wherever we can [#513](https://github.com/chef/knife-azure/pull/513) ([tas50](https://github.com/tas50))
 - Move more requires into deps blocks [#514](https://github.com/chef/knife-azure/pull/514) ([tas50](https://github.com/tas50))
 - Move very slow azurerm deps to a deps block [#515](https://github.com/chef/knife-azure/pull/515) ([tas50](https://github.com/tas50))
-<!-- latest_stable_release -->
 
 ## [v2.0.6](https://github.com/chef/knife-azure/tree/v2.0.6) (2019-12-21)
 
