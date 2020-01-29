@@ -1,4 +1,4 @@
-require File.expand_path(File.dirname(__FILE__) + "/../spec_helper")
+require_relative "../spec_helper"
 require File.expand_path(File.dirname(__FILE__) + "/query_azure_mock")
 
 module Azure
