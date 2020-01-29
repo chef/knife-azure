@@ -20,15 +20,17 @@
 
 require_relative "azure_base"
 
-# These two are needed for the '--purge' deletion case
-require "chef/node"
-require "chef/api_client"
-
 class Chef
   class Knife
     class AzureServerDelete < Knife
 
       include Knife::AzureBase
+
+      deps do
+        # These two are needed for the '--purge' deletion case
+        require "chef/node"
+        require "chef/api_client"
+      end
 
       banner "knife azure server delete SERVER [SERVER] (options)"
 

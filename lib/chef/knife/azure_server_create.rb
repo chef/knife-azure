@@ -19,7 +19,6 @@
 #
 
 require_relative "azure_base"
-require "securerandom"
 require "chef/knife/bootstrap"
 require "chef/knife/bootstrap/client_builder"
 require_relative "bootstrap/common_bootstrap_options"
@@ -33,6 +32,7 @@ class Chef
       include Knife::Bootstrap::Bootstrapper
 
       deps do
+        require "securerandom"
         require "readline"
         require "chef/json_compat"
         require "chef/knife/bootstrap"

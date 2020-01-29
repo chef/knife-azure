@@ -17,7 +17,6 @@
 #
 
 require_relative "azurerm_base"
-require "securerandom"
 require "chef/knife/bootstrap"
 require "chef/knife/bootstrap/client_builder"
 require_relative "bootstrap/common_bootstrap_options"
@@ -30,6 +29,10 @@ class Chef
       include Knife::AzurermBase
       include Knife::Bootstrap::CommonBootstrapOptions
       include Knife::Bootstrap::Bootstrapper
+
+      deps do
+        require "securerandom"
+      end
 
       banner "knife azurerm server create (options)"
 

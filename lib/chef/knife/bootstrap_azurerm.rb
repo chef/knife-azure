@@ -20,8 +20,6 @@ require_relative "azurerm_base"
 require "chef/knife/bootstrap"
 require_relative "bootstrap/common_bootstrap_options"
 require_relative "bootstrap/bootstrapper"
-require_relative "../../azure/resource_management/ARM_interface"
-require "time"
 
 class Chef
   class Knife
@@ -29,6 +27,11 @@ class Chef
       include Knife::AzurermBase
       include Knife::Bootstrap::CommonBootstrapOptions
       include Knife::Bootstrap::Bootstrapper
+
+      deps do
+        require_relative "../../azure/resource_management/ARM_interface"
+        require "time"
+      end
 
       banner "knife bootstrap azurerm SERVER (options)"
 

@@ -19,7 +19,6 @@
 
 require "chef/knife"
 require_relative "../../azure/resource_management/ARM_interface"
-require "mixlib/shellout"
 require "chef/mixin/shell_out"
 require "time"
 require "json"
