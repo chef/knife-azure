@@ -1,26 +1,23 @@
 # knife-azure Change Log
 
-<!-- latest_release 2.0.13 -->
-## [v2.0.13](https://github.com/chef/knife-azure/tree/v2.0.13) (2020-02-12)
-
-#### Merged Pull Requests
-- Move helpers to their own dir to speedup loading [#518](https://github.com/chef/knife-azure/pull/518) ([tas50](https://github.com/tas50))
+<!-- latest_release -->
 <!-- latest_release -->
 
-<!-- release_rollup since=2.0.11 -->
-### Changes not yet released to rubygems.org
-
-#### Merged Pull Requests
-- Move helpers to their own dir to speedup loading [#518](https://github.com/chef/knife-azure/pull/518) ([tas50](https://github.com/tas50)) <!-- 2.0.13 -->
-- Don&#39;t depend of chef-bin [#517](https://github.com/chef/knife-azure/pull/517) ([tas50](https://github.com/tas50)) <!-- 2.0.12 -->
+<!-- release_rollup -->
 <!-- release_rollup -->
 
 <!-- latest_stable_release -->
+## [v2.0.13](https://github.com/chef/knife-azure/tree/v2.0.13) (2020-02-12)
+
+#### Merged Pull Requests
+- Don&#39;t depend of chef-bin [#517](https://github.com/chef/knife-azure/pull/517) ([tas50](https://github.com/tas50))
+- Move helpers to their own dir to speedup loading [#518](https://github.com/chef/knife-azure/pull/518) ([tas50](https://github.com/tas50))
+<!-- latest_stable_release -->
+
 ## [v2.0.11](https://github.com/chef/knife-azure/tree/v2.0.11) (2020-01-29)
 
 #### Merged Pull Requests
 - Fix windows credentials failures on windows [#516](https://github.com/chef/knife-azure/pull/516) ([tas50](https://github.com/tas50))
-<!-- latest_stable_release -->
 
 ## [v2.0.10](https://github.com/chef/knife-azure/tree/v2.0.10) (2020-01-29)
 
