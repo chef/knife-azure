@@ -16,7 +16,7 @@
 # limitations under the License.
 #
 
-require_relative "azure_base"
+require_relative "helpers/azure_base"
 
 class Chef
   class Knife

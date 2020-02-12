@@ -17,7 +17,7 @@ Lint/AmbiguousBlockAssociation:
 
 Lint/AmbiguousRegexpLiteral:
   Exclude:
-    - 'lib/chef/knife/azurerm_base.rb'
+    - 'lib/chef/knife/helpers/azurerm_base.rb'
 
 Lint/DuplicateMethods:
   Exclude:
@@ -68,13 +68,12 @@ Style/For:
 Style/NonNilCheck:
   Exclude:
     - 'lib/azure/service_management/deploy.rb'
-    - 'lib/chef/knife/azure_base.rb'
     - 'lib/chef/knife/azure_server_create.rb'
     - 'lib/chef/knife/bootstrap_azure.rb'
+    - 'lib/chef/knife/helpers/azure_base.rb'
 
 Style/NumericPredicate:
   Exclude:
     - 'spec/**/*'
     - 'lib/azure/service_management/role.rb'
-    - 'lib/chef/knife/azurerm_base.rb'
-    - 'lib/chef/knife/bootstrap/bootstrapper.rb'
+    - 'lib/chef/knife/helpers/azurerm_base.rb'
