@@ -44,11 +44,11 @@ module Azure
       attr_accessor :connection
 
       def initialize(params = {})
-        if params[:azure_client_secret]
-          token_provider = MsRestAzure::ApplicationTokenProvider.new(params[:azure_tenant_id], params[:azure_client_id], params[:azure_client_secret])
-        else
-          token_provider = MsRest::StringTokenProvider.new(params[:token], params[:tokentype])
-        end
+        token_provider = if params[:azure_client_secret]
+                           MsRestAzure::ApplicationTokenProvider.new(params[:azure_tenant_id], params[:azure_client_id], params[:azure_client_secret])
+                         else
+                           MsRest::StringTokenProvider.new(params[:token], params[:tokentype])
+                         end
         @credentials = MsRest::TokenCredentials.new(token_provider)
         @azure_subscription_id = params[:azure_subscription_id]
         super

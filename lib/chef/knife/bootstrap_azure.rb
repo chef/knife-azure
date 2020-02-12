@@ -16,7 +16,7 @@
 # limitations under the License.
 #
 
-require_relative "azure_base"
+require_relative "helpers/azure_base"
 require "chef/knife/bootstrap"
 require_relative "bootstrap/common_bootstrap_options"
 require_relative "bootstrap/bootstrapper"

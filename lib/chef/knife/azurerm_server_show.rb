@@ -16,7 +16,7 @@
 # limitations under the License.
 #
 
-require_relative "azurerm_base"
+require_relative "helpers/azurerm_base"
 
 class Chef
   class Knife

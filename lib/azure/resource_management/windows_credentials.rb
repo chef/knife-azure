@@ -101,7 +101,7 @@ module Azure
           credential[:tokentype] = tokentype[0].split(":")[1]
           credential[:user] = user[0].split(":")[1]
           credential[:token] = access_token[0].split(":")[1]
-          # Todo: refresh_token is not complete currently
+          # TODO: refresh_token is not complete currently
           # target_name method needs to be modified for that
           credential[:refresh_token] = refresh_token[0].split(":")[1]
           credential[:clientid] = clientid[0].split(":")[1]
