@@ -9,7 +9,7 @@ group :debug do
 end
 
 group :test do
-  gem "activesupport", "6.0.2.1"
+  gem "activesupport", "6.0.2.2"
   gem "chefstyle"
   gem "equivalent-xml", "~> 0.6.0"
   gem "guard-rspec"
