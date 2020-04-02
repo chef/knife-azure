@@ -1,29 +1,26 @@
 # knife-azure Change Log
 
-<!-- latest_release 2.0.17 -->
-## [v2.0.17](https://github.com/chef/knife-azure/tree/v2.0.17) (2020-04-02)
-
-#### Merged Pull Requests
-- Cache gem installs in Expeditor [#523](https://github.com/chef/knife-azure/pull/523) ([tas50](https://github.com/tas50))
+<!-- latest_release -->
 <!-- latest_release -->
 
-<!-- release_rollup since=2.0.13 -->
-### Changes not yet released to rubygems.org
-
-#### Merged Pull Requests
-- Cache gem installs in Expeditor [#523](https://github.com/chef/knife-azure/pull/523) ([tas50](https://github.com/tas50)) <!-- 2.0.17 -->
-- Fix extra space [#522](https://github.com/chef/knife-azure/pull/522) ([tas50](https://github.com/tas50)) <!-- 2.0.16 -->
-- Update activesupport requirement from 6.0.2.1 to 6.0.2.2 [#520](https://github.com/chef/knife-azure/pull/520) ([dependabot-preview[bot]](https://github.com/dependabot-preview[bot])) <!-- 2.0.15 -->
-- Fix load error removing load_deps [#521](https://github.com/chef/knife-azure/pull/521) ([dheerajd-msys](https://github.com/dheerajd-msys)) <!-- 2.0.14 -->
+<!-- release_rollup -->
 <!-- release_rollup -->
 
 <!-- latest_stable_release -->
+## [v2.0.17](https://github.com/chef/knife-azure/tree/v2.0.17) (2020-04-02)
+
+#### Merged Pull Requests
+- Fix load error removing load_deps [#521](https://github.com/chef/knife-azure/pull/521) ([dheerajd-msys](https://github.com/dheerajd-msys))
+- Update activesupport requirement from 6.0.2.1 to 6.0.2.2 [#520](https://github.com/chef/knife-azure/pull/520) ([dependabot-preview[bot]](https://github.com/dependabot-preview[bot]))
+- Fix extra space [#522](https://github.com/chef/knife-azure/pull/522) ([tas50](https://github.com/tas50))
+- Cache gem installs in Expeditor [#523](https://github.com/chef/knife-azure/pull/523) ([tas50](https://github.com/tas50))
+<!-- latest_stable_release -->
+
 ## [v2.0.13](https://github.com/chef/knife-azure/tree/v2.0.13) (2020-02-12)
 
 #### Merged Pull Requests
 - Don&#39;t depend of chef-bin [#517](https://github.com/chef/knife-azure/pull/517) ([tas50](https://github.com/tas50))
 - Move helpers to their own dir to speedup loading [#518](https://github.com/chef/knife-azure/pull/518) ([tas50](https://github.com/tas50))
-<!-- latest_stable_release -->
 
 ## [v2.0.11](https://github.com/chef/knife-azure/tree/v2.0.11) (2020-01-29)
 
