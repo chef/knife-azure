@@ -30,7 +30,7 @@ class Chef
         # These two are needed for the '--purge' deletion case
         require "chef/node"
         require "chef/api_client"
-        include Knife::AzurermBase.load_deps
+        include Knife::AzurermBase
       end
 
       banner "knife azurerm server delete SERVER [SERVER] (options)"

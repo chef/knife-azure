@@ -215,7 +215,7 @@ module Azure
         if e.body
           err_json = JSON.parse(e.response.body)
           if err_json["error"]["code"] == "ResourceNotFound"
-            return false
+            false
           else
             raise e
           end
@@ -229,7 +229,7 @@ module Azure
         if e.body
           err_json = JSON.parse(e.response.body)
           if err_json["error"]["code"] == "ResourceNotFound"
-            return false
+            false
           else
             raise e
           end

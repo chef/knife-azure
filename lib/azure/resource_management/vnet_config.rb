@@ -41,7 +41,7 @@ module Azure::ARM
       if error.body
         err_json = JSON.parse(error.response.body)
         if err_json["error"]["code"] == "ResourceNotFound"
-          return false
+          false
         else
           raise error
         end

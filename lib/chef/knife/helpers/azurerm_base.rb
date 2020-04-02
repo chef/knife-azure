@@ -33,7 +33,7 @@ class Chef
           deps do
             require "readline"
             require "chef/json_compat"
-            require_relative "../../azure/resource_management/ARM_interface"
+            require_relative "../../../azure/resource_management/ARM_interface"
             require "chef/mixin/shell_out"
             require "time"
             require "json"
@@ -137,12 +137,12 @@ class Chef
       def is_token_valid?(token_details)
         time_difference = Time.parse(token_details[:expiry_time]) - Time.now.utc
         if time_difference <= 0
-          return false
+          false
         elsif time_difference <= 600 # 600sec = 10min
           # This is required otherwise a long running command may fail inbetween if the token gets expired.
           raise "Token will expire within 10 minutes. Please run '#{@azure_prefix} login' command"
         else
-          return true
+          true
         end
       end
 
