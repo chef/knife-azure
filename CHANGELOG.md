@@ -1,9 +1,17 @@
 # knife-azure Change Log
 
-<!-- latest_release -->
+<!-- latest_release 2.0.14 -->
+## [v2.0.14](https://github.com/chef/knife-azure/tree/v2.0.14) (2020-04-02)
+
+#### Merged Pull Requests
+- Fix load error removing load_deps [#521](https://github.com/chef/knife-azure/pull/521) ([dheerajd-msys](https://github.com/dheerajd-msys))
 <!-- latest_release -->
 
-<!-- release_rollup -->
+<!-- release_rollup since=2.0.13 -->
+### Changes not yet released to rubygems.org
+
+#### Merged Pull Requests
+- Fix load error removing load_deps [#521](https://github.com/chef/knife-azure/pull/521) ([dheerajd-msys](https://github.com/dheerajd-msys)) <!-- 2.0.14 -->
 <!-- release_rollup -->
 
 <!-- latest_stable_release -->
