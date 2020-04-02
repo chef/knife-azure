@@ -27,7 +27,7 @@ class Chef
       banner "knife azurerm server show SERVER (options)"
 
       deps do
-        include Knife::AzurermBase.load_deps
+        include Knife::AzurermBase
       end
 
       def run

@@ -30,7 +30,7 @@ class Chef
 
       deps do
         require "time"
-        include Knife::AzurermBase.load_deps
+        include Knife::AzurermBase
       end
 
       banner "knife bootstrap azurerm SERVER (options)"

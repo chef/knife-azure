@@ -29,7 +29,7 @@ class Chef
           deps do
             require "readline"
             require "chef/json_compat"
-            require_relative "../../azure/service_management/ASM_interface"
+            require_relative "../../../azure/service_management/ASM_interface"
           end
 
           option :azure_subscription_id,
@@ -70,7 +70,7 @@ class Chef
           ui.error('Invalid image. Use the command "knife azure image list" to verify the image name')
           exit 1
         else
-          return target_image[0].os == "Windows"
+          target_image[0].os == "Windows"
         end
       end
 
