@@ -24,7 +24,6 @@ group :test do
   gem "rb-readline"
   gem "rspec", ">= 3.0"
   gem "rspec_junit_formatter"
-
 end
 
 group :docs do
