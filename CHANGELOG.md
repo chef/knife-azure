@@ -1,16 +1,17 @@
 # knife-azure Change Log
 
-<!-- latest_release 2.0.15 -->
-## [v2.0.15](https://github.com/chef/knife-azure/tree/v2.0.15) (2020-04-02)
+<!-- latest_release 2.0.16 -->
+## [v2.0.16](https://github.com/chef/knife-azure/tree/v2.0.16) (2020-04-02)
 
 #### Merged Pull Requests
-- Update activesupport requirement from 6.0.2.1 to 6.0.2.2 [#520](https://github.com/chef/knife-azure/pull/520) ([dependabot-preview[bot]](https://github.com/dependabot-preview[bot]))
+- Fix extra space [#522](https://github.com/chef/knife-azure/pull/522) ([tas50](https://github.com/tas50))
 <!-- latest_release -->
 
 <!-- release_rollup since=2.0.13 -->
 ### Changes not yet released to rubygems.org
 
 #### Merged Pull Requests
+- Fix extra space [#522](https://github.com/chef/knife-azure/pull/522) ([tas50](https://github.com/tas50)) <!-- 2.0.16 -->
 - Update activesupport requirement from 6.0.2.1 to 6.0.2.2 [#520](https://github.com/chef/knife-azure/pull/520) ([dependabot-preview[bot]](https://github.com/dependabot-preview[bot])) <!-- 2.0.15 -->
 - Fix load error removing load_deps [#521](https://github.com/chef/knife-azure/pull/521) ([dheerajd-msys](https://github.com/dheerajd-msys)) <!-- 2.0.14 -->
 <!-- release_rollup -->
