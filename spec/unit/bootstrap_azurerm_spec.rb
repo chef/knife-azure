@@ -1,6 +1,6 @@
 #
 # Author:: Nimisha Sharad (<nimisha.sharad@clogeny.com>)
-# Copyright:: Copyright 2010-2020, Chef Software Inc.
+# Copyright:: Copyright (c) Chef Software Inc.
 # License:: Apache License, Version 2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,10 +27,11 @@ describe Chef::Knife::BootstrapAzurerm do
 
   before do
     @bootstrap_azurerm_instance = create_arm_instance(Chef::Knife::BootstrapAzurerm)
+    @bootstrap_azurerm_instance.merge_configs
     @service = @bootstrap_azurerm_instance.service
     @bootstrap_azurerm_instance.name_args = ["test-vm-01"]
-    Chef::Config[:knife][:azure_resource_group_name] = "test-rgp-01"
-    Chef::Config[:knife][:azure_service_location] = "West US"
+    @bootstrap_azurerm_instance.config[:azure_resource_group_name] = "test-rgp-01"
+    @bootstrap_azurerm_instance.config[:azure_service_location] = "West US"
 
     @compute_client = double("ComputeManagementClient")
     allow(@bootstrap_azurerm_instance.service).to receive(
@@ -51,14 +52,14 @@ describe Chef::Knife::BootstrapAzurerm do
     end
 
     it "raises error when azure_resource_group_name is not specified" do
-      Chef::Config[:knife].delete(:azure_resource_group_name)
+      @bootstrap_azurerm_instance.config.delete(:azure_resource_group_name)
       expect(@bootstrap_azurerm_instance.ui).to receive(:log).with("Validating...")
       expect(@bootstrap_azurerm_instance.ui).to receive(:error)
       expect { @bootstrap_azurerm_instance.run }.to raise_error(SystemExit)
     end
 
     it "raises error when azure_service_location is not specified" do
-      Chef::Config[:knife].delete(:azure_service_location)
+      @bootstrap_azurerm_instance.config.delete(:azure_service_location)
       expect(@bootstrap_azurerm_instance.ui).to receive(:log).with("Validating...")
       expect(@bootstrap_azurerm_instance.ui).to receive(:error)
       expect { @bootstrap_azurerm_instance.run }.to raise_error(SystemExit)
@@ -225,7 +226,7 @@ describe Chef::Knife::BootstrapAzurerm do
 
     context "when extension version is set in knife.rb" do
       before do
-        Chef::Config[:knife][:azure_chef_extension_version] = "1312.11"
+        @bootstrap_azurerm_instance.config[:azure_chef_extension_version] = "1312.11"
       end
 
       it "will pick up the extension version from knife.rb" do
@@ -236,7 +237,7 @@ describe Chef::Knife::BootstrapAzurerm do
 
     context "when extension version is not set in knife.rb" do
       before do
-        Chef::Config[:knife].delete(:azure_chef_extension_version)
+        @bootstrap_azurerm_instance.config.delete(:azure_chef_extension_version)
         allow(@service).to receive(
           :get_latest_chef_extension_version
         ).and_return("1213.14")

@@ -1,6 +1,6 @@
 #
 # Author:: Aliasgar Batterywala (aliasgar.batterywala@clogeny.com)
-# Copyright:: Copyright 2010-2019, Chef Software Inc.
+# Copyright:: Copyright (c) Chef Software Inc.
 # License:: Apache License, Version 2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -156,55 +156,55 @@ class Chef
 
       def create_server_def
         server_def = {
-          azure_resource_group_name: locate_config_value(:azure_resource_group_name),
-          azure_storage_account: locate_config_value(:azure_storage_account),
-          azure_storage_account_type: locate_config_value(:azure_storage_account_type),
-          azure_vm_name: locate_config_value(:azure_vm_name),
-          azure_service_location: locate_config_value(:azure_service_location),
-          azure_os_disk_name: locate_config_value(:azure_os_disk_name),
-          azure_os_disk_caching: locate_config_value(:azure_os_disk_caching),
-          azure_os_disk_create_option: locate_config_value(:azure_os_disk_create_option),
-          azure_vm_size: locate_config_value(:azure_vm_size),
-          azure_image_reference_publisher: locate_config_value(:azure_image_reference_publisher),
-          azure_image_reference_offer: locate_config_value(:azure_image_reference_offer),
-          azure_image_reference_sku: locate_config_value(:azure_image_reference_sku),
-          azure_image_reference_version: locate_config_value(:azure_image_reference_version),
-          azure_availability_set: locate_config_value(:azure_availability_set),
-          azure_vnet_name: locate_config_value(:azure_vnet_name),
-          azure_vnet_subnet_name: locate_config_value(:azure_vnet_subnet_name),
-          ssl_cert_fingerprint: locate_config_value(:thumbprint),
-          cert_path: locate_config_value(:cert_path),
-          cert_password: locate_config_value(:cert_passphrase),
-          vnet_subnet_address_prefix: locate_config_value(:vnet_subnet_address_prefix),
-          server_count: locate_config_value(:server_count),
+          azure_resource_group_name: config[:azure_resource_group_name],
+          azure_storage_account: config[:azure_storage_account],
+          azure_storage_account_type: config[:azure_storage_account_type],
+          azure_vm_name: config[:azure_vm_name],
+          azure_service_location: config[:azure_service_location],
+          azure_os_disk_name: config[:azure_os_disk_name],
+          azure_os_disk_caching: config[:azure_os_disk_caching],
+          azure_os_disk_create_option: config[:azure_os_disk_create_option],
+          azure_vm_size: config[:azure_vm_size],
+          azure_image_reference_publisher: config[:azure_image_reference_publisher],
+          azure_image_reference_offer: config[:azure_image_reference_offer],
+          azure_image_reference_sku: config[:azure_image_reference_sku],
+          azure_image_reference_version: config[:azure_image_reference_version],
+          azure_availability_set: config[:azure_availability_set],
+          azure_vnet_name: config[:azure_vnet_name],
+          azure_vnet_subnet_name: config[:azure_vnet_subnet_name],
+          ssl_cert_fingerprint: config[:thumbprint],
+          cert_path: config[:cert_path],
+          cert_password: config[:cert_passphrase],
+          vnet_subnet_address_prefix: config[:vnet_subnet_address_prefix],
+          server_count: config[:server_count],
         }
 
-        server_def[:tcp_endpoints] = locate_config_value(:tcp_endpoints) if locate_config_value(:tcp_endpoints)
+        server_def[:tcp_endpoints] = config[:tcp_endpoints] if config[:tcp_endpoints]
 
         # We assign azure_vm_name to chef_node_name If node name is nill because storage account name is combination of hash value and node name.
-        config[:chef_node_name] ||= locate_config_value(:azure_vm_name)
+        config[:chef_node_name] ||= config[:azure_vm_name]
 
-        server_def[:azure_storage_account] = locate_config_value(:azure_vm_name) if server_def[:azure_storage_account].nil?
+        server_def[:azure_storage_account] = config[:azure_vm_name] if server_def[:azure_storage_account].nil?
         server_def[:azure_storage_account] = server_def[:azure_storage_account].gsub(/[!@#$%^&*()_-]/, "")
 
-        server_def[:azure_os_disk_name] = locate_config_value(:azure_vm_name) if server_def[:azure_os_disk_name].nil?
+        server_def[:azure_os_disk_name] = config[:azure_vm_name] if server_def[:azure_os_disk_name].nil?
         server_def[:azure_os_disk_name] = server_def[:azure_os_disk_name].gsub(/[!@#$%^&*()_-]/, "")
 
-        server_def[:azure_vnet_name] = locate_config_value(:azure_vm_name) if server_def[:azure_vnet_name].nil?
-        server_def[:azure_vnet_subnet_name] = locate_config_value(:azure_vm_name) if locate_config_value(:azure_vnet_subnet_name).nil?
+        server_def[:azure_vnet_name] = config[:azure_vm_name] if server_def[:azure_vnet_name].nil?
+        server_def[:azure_vnet_subnet_name] = config[:azure_vm_name] if config[:azure_vnet_subnet_name].nil?
 
         server_def[:chef_extension] = get_chef_extension_name
         server_def[:chef_extension_publisher] = get_chef_extension_publisher
-        server_def[:chef_extension_version] = locate_config_value(:azure_chef_extension_version)
+        server_def[:chef_extension_version] = config[:azure_chef_extension_version]
         server_def[:chef_extension_public_param] = get_chef_extension_public_params
         server_def[:chef_extension_private_param] = get_chef_extension_private_params
         server_def[:auto_upgrade_minor_version] = false
-        server_def[:connection_user] = locate_config_value(:connection_user)
-        server_def[:disablePasswordAuthentication] = if locate_config_value(:ssh_public_key)
-                                                       server_def[:ssh_public_key] = File.read(locate_config_value(:ssh_public_key))
+        server_def[:connection_user] = config[:connection_user]
+        server_def[:disablePasswordAuthentication] = if config[:ssh_public_key]
+                                                       server_def[:ssh_public_key] = File.read(config[:ssh_public_key])
                                                        "true"
                                                      else
-                                                       server_def[:connection_password] = locate_config_value(:connection_password)
+                                                       server_def[:connection_password] = config[:connection_password]
                                                        "false"
                                                      end
 
@@ -229,7 +229,7 @@ class Chef
       end
 
       def validate_ohai_hints
-        hint_values = locate_config_value(:ohai_hints).split(",")
+        hint_values = config[:ohai_hints].split(",")
         hint_values.each do |hint|
           unless is_supported_ohai_hint?(hint)
             raise ArgumentError, "Ohai Hint name #{hint} passed is not supported. Please run the command help to see the list of supported values."
@@ -245,22 +245,22 @@ class Chef
       end
 
       def set_configs
-        unless locate_config_value(:connection_user).nil?
-          config[:connection_user] = locate_config_value(:connection_user)
+        unless config[:connection_user].nil?
+          config[:connection_user] = config[:connection_user]
         end
 
-        unless locate_config_value(:connection_password).nil?
-          config[:connection_password] = locate_config_value(:connection_password)
+        unless config[:connection_password].nil?
+          config[:connection_password] = config[:connection_password]
         end
       end
 
       def set_default_image_reference!
         begin
-          if locate_config_value(:azure_image_os_type)
+          if config[:azure_image_os_type]
             validate_publisher_and_offer
             ## if azure_image_os_type is given (with or without azure-image-reference-sku) and other image reference parameters are not given,
             # set default image reference parameters
-            case locate_config_value(:azure_image_os_type)
+            case config[:azure_image_os_type]
             when "ubuntu"
               set_os_image("Canonical", "UbuntuServer", "14.04.2-LTS")
             when "centos"
@@ -292,15 +292,15 @@ class Chef
       def set_os_image(publisher, img_offer, default_os_version)
         config[:azure_image_reference_publisher] = publisher
         config[:azure_image_reference_offer] = img_offer
-        config[:azure_image_reference_sku] = locate_config_value(:azure_image_reference_sku) ? locate_config_value(:azure_image_reference_sku) : default_os_version
+        config[:azure_image_reference_sku] = config[:azure_image_reference_sku] ? config[:azure_image_reference_sku] : default_os_version
       end
 
       def is_image_os_type?
-        locate_config_value(:azure_image_reference_publisher) && locate_config_value(:azure_image_reference_offer) && locate_config_value(:azure_image_reference_sku) && locate_config_value(:azure_image_reference_version)
+        config[:azure_image_reference_publisher] && config[:azure_image_reference_offer] && config[:azure_image_reference_sku] && config[:azure_image_reference_version]
       end
 
       def validate_publisher_and_offer
-        if locate_config_value(:azure_image_reference_publisher) || locate_config_value(:azure_image_reference_offer)
+        if config[:azure_image_reference_publisher] || config[:azure_image_reference_offer]
           # if azure_image_os_type is given and any of the other image reference parameters like publisher or offer are also given,
           # raise error
           raise ArgumentError, 'Please specify either --azure-image-os-type OR --azure-image-os-type with --azure-image-reference-sku or 4 image reference parameters i.e.

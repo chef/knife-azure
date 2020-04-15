@@ -1,5 +1,5 @@
 #
-# Copyright:: Copyright 2010-2020, Chef Software Inc.
+# Copyright:: Copyright (c) Chef Software Inc.
 # License:: Apache License, Version 2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,7 +23,7 @@ describe Chef::Knife::AzureServerList do
   include QueryAzureMock
 
   before do
-    @server_management_instance = create_instance(Azure::ServiceManagement::ASMInterface)
+    @server_management_instance = Azure::ServiceManagement::ASMInterface.new
     @server_instance = create_instance(Chef::Knife::AzureServerList)
   end
 

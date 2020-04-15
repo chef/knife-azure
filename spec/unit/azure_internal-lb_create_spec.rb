@@ -1,5 +1,5 @@
 #
-# Copyright:: Copyright 2010-2020, Chef Software Inc.
+# Copyright:: Copyright (c) Chef Software Inc.
 # License:: Apache License, Version 2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -37,10 +37,10 @@ describe Chef::Knife::AzureInternalLbCreate do
   end
 
   it "should succeed." do
-    Chef::Config[:knife][:azure_load_balancer] = "new-lb"
-    Chef::Config[:knife][:azure_lb_static_vip] = "10.3.3.3"
-    Chef::Config[:knife][:azure_subnet_name] = "vnet"
-    Chef::Config[:knife][:azure_dns_name] = "vmname"
+    @server_instance.config[:azure_load_balancer] = "new-lb"
+    @server_instance.config[:azure_lb_static_vip] = "10.3.3.3"
+    @server_instance.config[:azure_subnet_name] = "vnet"
+    @server_instance.config[:azure_dns_name] = "vmname"
     expect(@server_instance.service.connection.lbs).to receive(:create).with(
       azure_load_balancer: "new-lb",
       azure_lb_static_vip: "10.3.3.3",

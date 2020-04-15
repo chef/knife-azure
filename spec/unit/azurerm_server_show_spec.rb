@@ -1,5 +1,5 @@
 #
-# Copyright:: Cop#yright 2010-2020, Chef Software Inc.
+# Copyright:: Copyright (c) Chef Software Inc.
 # License:: Apache License, Version 2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,7 +24,7 @@ describe Chef::Knife::AzurermServerShow do
 
   before do
     @arm_server_instance = create_arm_instance(Chef::Knife::AzurermServerShow)
-    Chef::Config[:knife][:azure_resource_group_name] = "RESOURCE_GROUP"
+    @arm_server_instance.config[:azure_resource_group_name] = "RESOURCE_GROUP"
     @arm_server_instance.name_args = %w{vmname}
     @compute_client = double("ComputeManagementClient")
     @network_client = double("NetworkManagementClient")

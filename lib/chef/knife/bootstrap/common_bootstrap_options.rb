@@ -1,6 +1,6 @@
 #
 # Author:: Aliasgar Batterywala (aliasgar.batterywala@clogeny.com)
-# Copyright:: Copyright 2010-2019, Chef Software Inc.
+# Copyright:: Copyright 2010-2020, Chef Software Inc.
 # License:: Apache License, Version 2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -46,8 +46,7 @@ class Chef
               short: "-m LOCATION",
               long: "--azure-service-location LOCATION",
               description: "Required if not using an Affinity Group. Specifies the geographic location - the name of the data center location that is valid for your subscription.
-                            Eg: West US, East US, East Asia, Southeast Asia, North Europe, West Europe",
-              proc: Proc.new { |lo| Chef::Config[:knife][:azure_service_location] = lo }
+                            Eg: West US, East US, East Asia, Southeast Asia, North Europe, West Europe"
 
             option :azure_storage_account,
               short: "-a NAME",
@@ -69,8 +68,7 @@ class Chef
               long: "--azure-vm-size SIZE",
               description: "Optional. Size of virtual machine. Default is Standard_A1_v2.
                             Eg: Standard_A1_v2, Standard_F2, Standard_G1 etc.",
-              default: "Standard_A1_v2",
-              proc: Proc.new { |si| Chef::Config[:knife][:azure_vm_size] = si }
+              default: "Standard_A1_v2"
 
             deprecated_option :bootstrap_protocol,
               replacement: :connection_protocol,

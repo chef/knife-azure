@@ -8,6 +8,9 @@ group :debug do
   gem "pry-stack_explorer"
 end
 
+gem "chef", path: "../chef"
+gem "ohai", path: "../ohai"
+
 group :test do
   # until we remove support for Ruby 2.5
   if Gem::Version.new(RUBY_VERSION) < Gem::Version.new("2.6")

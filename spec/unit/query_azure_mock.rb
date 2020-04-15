@@ -1,5 +1,5 @@
 #
-# Copyright:: Copyright 2010-2020, Chef Software Inc.
+# Copyright:: Copyright (c) Chef Software Inc.
 # License:: Apache License, Version 2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,12 +26,13 @@ module QueryAzureMock
 
   def create_instance(object)
     @server_instance = object.new
+    @server_instance.merge_configs
     {
       azure_subscription_id: "azure_subscription_id",
       azure_mgmt_cert: @cert_file,
       azure_api_host_name: "preview.core.windows-int.net",
     }.each do |key, value|
-      Chef::Config[:knife][key] = value
+      @server_instance.config[key] = value
     end
 
     @server_instance
@@ -39,6 +40,7 @@ module QueryAzureMock
 
   def create_arm_instance(object)
     @server_instance = object.new
+    @server_instance.merge_configs
     {
       azure_subscription_id: "azure_subscription_id",
       azure_tenant_id: "azure_tenant_id",
@@ -50,7 +52,7 @@ module QueryAzureMock
       connection_user: "test-user",
       validation_key: "/tmp/validation_key",
     }.each do |key, value|
-      Chef::Config[:knife][key] = value
+      @server_instance.config[key] = value
     end
 
     stub_resource_groups

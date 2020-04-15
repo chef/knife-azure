@@ -1,5 +1,5 @@
 #
-# Copyright:: Copyright 2010-2020, Chef Software Inc.
+# Copyright:: Copyright (c) Chef Software Inc.
 # License:: Apache License, Version 2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -37,8 +37,8 @@ describe Chef::Knife::AzureAgCreate do
   end
 
   it "should succeed." do
-    Chef::Config[:knife][:azure_affinity_group] = "new-ag"
-    Chef::Config[:knife][:azure_service_location] = "West US"
+    @server_instance.config[:azure_affinity_group] = "new-ag"
+    @server_instance.config[:azure_service_location] = "West US"
     expect(@connection.ags).to receive(:create).with(
       azure_ag_name: "new-ag",
       azure_ag_desc: nil,
@@ -46,6 +46,7 @@ describe Chef::Knife::AzureAgCreate do
     ).and_call_original
     expect(@server_instance.ui).to_not receive(:warn)
     expect(@server_instance.ui).to_not receive(:error)
+    @server_instance.merge_configs
     @server_instance.run
   end
 end

@@ -1,5 +1,5 @@
 #
-# Copyright:: Copyright 2010-2020, Chef Software Inc.
+# Copyright:: Copyright (c) Chef Software Inc.
 # License:: Apache License, Version 2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -29,7 +29,7 @@ describe "storageaccounts" do
       azure_mgmt_cert: @cert_file,
       azure_api_host_name: "preview.core.windows-int.net",
     }.each do |key, value|
-      Chef::Config[:knife][key] = value
+      @server_instance.config[key] = value
     end
 
     stub_query_azure (@server_instance.service.connection)

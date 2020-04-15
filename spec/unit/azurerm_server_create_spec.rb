@@ -1,6 +1,6 @@
 #
 # Author:: Aliasgar Batterywala (<aliasgar.batterywala@clogeny.com>)
-# Copyright:: Copyright 2010-2020, Chef Software Inc.
+# Copyright:: Copyright (c) Chef Software Inc.
 # License:: Apache License, Version 2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -31,10 +31,10 @@ describe Chef::Knife::AzurermServerCreate do
     @service = @arm_server_instance.service
 
     @params = {
-      azure_resource_group_name: Chef::Config[:knife][:azure_resource_group_name],
-      azure_service_location: Chef::Config[:knife][:azure_service_location],
-      azure_vm_name: Chef::Config[:knife][:azure_vm_name],
-      connection_user: Chef::Config[:knife][:connection_user],
+      azure_resource_group_name: @arm_server_instance.config[:azure_resource_group_name],
+      azure_service_location: @arm_server_instance.config[:azure_service_location],
+      azure_vm_name: @arm_server_instance.config[:azure_vm_name],
+      connection_user: @arm_server_instance.config[:connection_user],
       connection_password: "connection_password",
       azure_vm_size: "small",
       azure_storage_account: "azurestorageaccount",
@@ -76,106 +76,108 @@ describe Chef::Knife::AzurermServerCreate do
   describe "parameter test:" do
     context "compulsory parameters" do
       it "connection_user" do
-        Chef::Config[:knife].delete(:connection_user)
+        @arm_server_instance.config.delete(:connection_user)
         expect(@arm_server_instance.ui).to receive(:error)
         expect { @arm_server_instance.run }.to raise_error(SystemExit)
       end
 
       it "connection_password" do
-        Chef::Config[:knife].delete(:connection_password)
+        @arm_server_instance.config.delete(:connection_password)
         expect(@arm_server_instance.ui).to receive(:error)
         expect { @arm_server_instance.run }.to raise_error(SystemExit)
       end
 
       it "ssh_public_key" do
-        Chef::Config[:knife].delete(:ssh_public_key)
+        @arm_server_instance.config.delete(:ssh_public_key)
         expect(@arm_server_instance.ui).to receive(:error)
         expect { @arm_server_instance.run }.to raise_error(SystemExit)
       end
 
       it "azure_subscription_id" do
-        Chef::Config[:knife].delete(:azure_subscription_id)
+        @arm_server_instance.config.delete(:azure_subscription_id)
         expect(@arm_server_instance.ui).to receive(:error).twice
         expect { @arm_server_instance.run }.to raise_error(SystemExit)
       end
 
       it "azure_resource_group_name" do
-        Chef::Config[:knife].delete(:azure_resource_group_name)
+        @arm_server_instance.config.delete(:azure_resource_group_name)
         expect(@arm_server_instance.ui).to receive(:error)
         expect { @arm_server_instance.run }.to raise_error(SystemExit)
       end
 
       it "azure_vm_name" do
-        Chef::Config[:knife].delete(:azure_vm_name)
+        @arm_server_instance.config.delete(:azure_vm_name)
         expect(@arm_server_instance.ui).to receive(:error)
         expect { @arm_server_instance.run }.to raise_error(SystemExit)
       end
 
       it "vm name validation success for Linux" do
-        Chef::Config[:knife][:azure_vm_name] = "test-vm1234"
-        Chef::Config[:knife][:ssh_public_key] = "ssh_public_key"
+        pp @arm_server_instance.config[:ohai_hints]
+        pp Chef::Config[:knife][:ohai_hints]
+        @arm_server_instance.config[:azure_vm_name] = "test-vm1234"
+        @arm_server_instance.config[:ssh_public_key] = "ssh_public_key"
         allow(@arm_server_instance).to receive(:is_image_windows?).and_return(false)
         expect { @arm_server_instance.validate_params! }.not_to raise_error
       end
 
       it "vm name validation success for Windows" do
-        Chef::Config[:knife][:azure_vm_name] = "test-vm1234"
-        Chef::Config[:knife][:connection_password] = "connection_password"
+        @arm_server_instance.config[:azure_vm_name] = "test-vm1234"
+        @arm_server_instance.config[:connection_password] = "connection_password"
         allow(@arm_server_instance).to receive(:is_image_windows?).and_return(true)
         expect { @arm_server_instance.validate_params! }.not_to raise_error
       end
 
       it "vm name validation failure for name containing special characters for Linux" do
-        Chef::Config[:knife][:azure_vm_name] = "test_vm1234!@#"
+        @arm_server_instance.config[:azure_vm_name] = "test_vm1234!@#"
         allow(@arm_server_instance).to receive(:is_image_windows?).and_return(false)
         expect { @arm_server_instance.validate_params! }.to raise_error(ArgumentError)
       end
 
       it "vm name validation failure for name containing special characters for Windows" do
-        Chef::Config[:knife][:azure_vm_name] = "test_vm1234!@#"
+        @arm_server_instance.config[:azure_vm_name] = "test_vm1234!@#"
         allow(@arm_server_instance).to receive(:is_image_windows?).and_return(true)
         expect { @arm_server_instance.validate_params! }.to raise_error(ArgumentError)
       end
 
       it "vm name validation failure for name containing more than 15 characters for Windows" do
-        Chef::Config[:knife][:azure_vm_name] = "testvm123123123123"
+        @arm_server_instance.config[:azure_vm_name] = "testvm123123123123"
         allow(@arm_server_instance).to receive(:is_image_windows?).and_return(true)
         expect { @arm_server_instance.validate_params! }.to raise_error(ArgumentError)
       end
 
       it "vm name validation failure for name containing more than 64 characters for Linux" do
-        Chef::Config[:knife][:azure_vm_name] = "testvm123123123123123123123123123123123123123123123123123123123123123123123123123123123123123"
+        @arm_server_instance.config[:azure_vm_name] = "testvm123123123123123123123123123123123123123123123123123123123123123123123123123123123123123"
         allow(@arm_server_instance).to receive(:is_image_windows?).and_return(false)
         expect { @arm_server_instance.validate_params! }.to raise_error(ArgumentError)
       end
 
       it "azure_service_location" do
-        Chef::Config[:knife].delete(:azure_service_location)
+        @arm_server_instance.config.delete(:azure_service_location)
         expect(@arm_server_instance.ui).to receive(:error)
         expect { @arm_server_instance.run }.to raise_error(SystemExit)
       end
 
       it "azure_image_reference_publisher" do
-        Chef::Config[:knife].delete(:azure_image_reference_publisher)
+        @arm_server_instance.config.delete(:azure_image_reference_publisher)
         expect(@arm_server_instance.ui).to receive(:error)
         expect { @arm_server_instance.run }.to raise_error(SystemExit)
       end
 
       it "azure_image_reference_offer" do
-        Chef::Config[:knife].delete(:azure_image_reference_offer)
+        @arm_server_instance.config.delete(:azure_image_reference_offer)
         expect(@arm_server_instance.ui).to receive(:error)
         expect { @arm_server_instance.run }.to raise_error(SystemExit)
       end
 
       it "azure_image_reference_sku" do
-        Chef::Config[:knife].delete(:azure_image_reference_sku)
+        @arm_server_instance.config.delete(:azure_image_reference_sku)
         expect(@arm_server_instance.ui).to receive(:error)
         expect { @arm_server_instance.run }.to raise_error(SystemExit)
       end
 
       it "winrm user and password error if not provided for windows image" do
-        Chef::Config[:knife].delete(:connection_user)
-        Chef::Config[:knife].delete(:connection_password)
+        @arm_server_instance.config.delete(:connection_user)
+        @arm_server_instance.config.delete(:connection_password)
         allow(@arm_server_instance).to receive(:is_image_windows?).and_return(true)
         expect { @arm_server_instance.validate_params! }.to raise_error(ArgumentError)
       end
@@ -191,7 +193,7 @@ describe Chef::Knife::AzurermServerCreate do
       context "when not given by user" do
         before do
           @vm_name_with_no_special_chars = "testvm"
-          Chef::Config[:knife][:connection_password] = "connection_password"
+          @arm_server_instance.config[:connection_password] = "connection_password"
           @azure_vm_size_default_value = "Small"
           @xplat_creds_cmd = double(run_command: double)
           @result = double(stdout: "")
@@ -204,66 +206,66 @@ describe Chef::Knife::AzurermServerCreate do
 
         it "azure_tenant_id not provided for Linux platform" do
           allow(Chef::Platform).to receive(:windows?).and_return(false)
-          Chef::Config[:knife].delete(:azure_tenant_id)
+          @arm_server_instance.config.delete(:azure_tenant_id)
           allow(File).to receive(:exist?).and_return(false)
           expect { @arm_server_instance.run }.to raise_error(SystemExit)
         end
 
         it "azure_client_id not provided for Linux platform" do
           allow(Chef::Platform).to receive(:windows?).and_return(false)
-          Chef::Config[:knife].delete(:azure_client_id)
+          @arm_server_instance.config.delete(:azure_client_id)
           allow(File).to receive(:exist?).and_return(false)
           expect { @arm_server_instance.run }.to raise_error(SystemExit)
         end
 
         it "azure_client_secret not provided for Linux platform" do
           allow(Chef::Platform).to receive(:windows?).and_return(false)
-          Chef::Config[:knife].delete(:azure_client_secret)
+          @arm_server_instance.config.delete(:azure_client_secret)
           allow(File).to receive(:exist?).and_return(false)
           expect { @arm_server_instance.run }.to raise_error(SystemExit)
         end
 
         it "azure_tenant_id not provided for Windows platform" do
           allow(Chef::Platform).to receive(:windows?).and_return(true)
-          Chef::Config[:knife].delete(:azure_tenant_id)
+          @arm_server_instance.config.delete(:azure_tenant_id)
           allow(File).to receive(:exist?).and_return(false)
           expect { @arm_server_instance.run }.to raise_error(SystemExit)
         end
 
         it "azure_client_id not provided for Windows platform" do
           allow(Chef::Platform).to receive(:windows?).and_return(true)
-          Chef::Config[:knife].delete(:azure_client_id)
+          @arm_server_instance.config.delete(:azure_client_id)
           allow(File).to receive(:exist?).and_return(false)
           expect { @arm_server_instance.run }.to raise_error(SystemExit)
         end
 
         it "azure_client_secret not provided for windows platform" do
           allow(Chef::Platform).to receive(:windows?).and_return(true)
-          Chef::Config[:knife].delete(:azure_client_secret)
+          @arm_server_instance.config.delete(:azure_client_secret)
           allow(File).to receive(:exist?).and_return(false)
           expect { @arm_server_instance.run }.to raise_error(SystemExit)
         end
 
         it "azure_storage_account not provided by user so vm_name gets assigned to it" do
-          Chef::Config[:knife].delete(:azure_storage_account)
+          @arm_server_instance.config.delete(:azure_storage_account)
           @server_params = @arm_server_instance.create_server_def
           expect(@server_params[:azure_storage_account]).to be == @vm_name_with_no_special_chars
         end
 
         it "azure_os_disk_name not provided by user so vm_name gets assigned to it" do
-          Chef::Config[:knife].delete(:azure_os_disk_name)
+          @arm_server_instance.config.delete(:azure_os_disk_name)
           @server_params = @arm_server_instance.create_server_def
           expect(@server_params[:azure_os_disk_name]).to be == @vm_name_with_no_special_chars
         end
 
         it "azure_vnet_name not provided by user so vm_name gets assigned to it" do
-          Chef::Config[:knife].delete(:azure_vnet_name)
+          @arm_server_instance.config.delete(:azure_vnet_name)
           @server_params = @arm_server_instance.create_server_def
           expect(@server_params[:azure_vnet_name]).to be == "test-vm"
         end
 
         it "azure_vnet_subnet_name not provided by user so vm_name gets assigned to it" do
-          Chef::Config[:knife].delete(:azure_vnet_subnet_name)
+          @arm_server_instance.config.delete(:azure_vnet_subnet_name)
           @server_params = @arm_server_instance.create_server_def
           expect(@server_params[:azure_vnet_subnet_name]).to be == "test-vm"
         end
@@ -274,21 +276,21 @@ describe Chef::Knife::AzurermServerCreate do
         end
 
         after do
-          Chef::Config[:knife].delete(:connection_password)
+          @arm_server_instance.config.delete(:connection_password)
         end
       end
 
       shared_context "and other common parameters" do
         before do
           @vm_name_with_no_special_chars = "testvm"
-          Chef::Config[:knife][:azure_storage_account] = "azure_storage_account"
+          @arm_server_instance.config[:azure_storage_account] = "azure_storage_account"
           @storage_account_name_with_no_special_chars = "azurestorageaccount"
-          Chef::Config[:knife][:azure_os_disk_name] = "azure_os_disk_name"
+          @arm_server_instance.config[:azure_os_disk_name] = "azure_os_disk_name"
           @os_disk_name_with_no_special_chars = "azureosdiskname"
-          Chef::Config[:knife][:azure_vnet_name] = "azure_vnet_name"
-          Chef::Config[:knife][:azure_vnet_subnet_name] = "azure_vnet_subnet_name"
-          Chef::Config[:knife][:azure_vm_size] = "Medium"
-          Chef::Config[:knife][:server_count] = 3
+          @arm_server_instance.config[:azure_vnet_name] = "azure_vnet_name"
+          @arm_server_instance.config[:azure_vnet_subnet_name] = "azure_vnet_subnet_name"
+          @arm_server_instance.config[:azure_vm_size] = "Medium"
+          @arm_server_instance.config[:server_count] = 3
           allow(File).to receive(:exist?).and_return(true)
         end
 
@@ -314,7 +316,7 @@ describe Chef::Knife::AzurermServerCreate do
 
         context "azure_vnet_name provided by user but azure_vnet_subnet_name not provided by user" do
           before do
-            Chef::Config[:knife].delete(:azure_vnet_subnet_name)
+            @arm_server_instance.config.delete(:azure_vnet_subnet_name)
           end
 
           it "assigns vm_name to the azure_vnet_subnet_name" do
@@ -325,7 +327,7 @@ describe Chef::Knife::AzurermServerCreate do
 
         context "azure_vnet_subnet_name provided by user but azure_vnet_name not provided by user" do
           before do
-            Chef::Config[:knife].delete(:azure_vnet_name)
+            @arm_server_instance.config.delete(:azure_vnet_name)
           end
 
           it "raises error" do
@@ -337,20 +339,20 @@ describe Chef::Knife::AzurermServerCreate do
 
         context "raise node_ssl_verify_mode error for wrong value" do
           before do
-            Chef::Config[:knife][:node_ssl_verify_mode] = "MyValue"
+            @arm_server_instance.config[:node_ssl_verify_mode] = "MyValue"
           end
 
           it "raises error" do
             expect { @arm_server_instance.validate_params! }.to raise_error(
-              ArgumentError, "Invalid value '#{Chef::Config[:knife][:node_ssl_verify_mode]}' for --node-ssl-verify-mode. Use Valid values i.e 'none', 'peer'."
+              ArgumentError, "Invalid value '#{@arm_server_instance.config[:node_ssl_verify_mode]}' for --node-ssl-verify-mode. Use Valid values i.e 'none', 'peer'."
             )
           end
         end
 
         context "GatewaySubnet name provided by user as the name for azure_vnet_subnet_name option" do
           it "raises error" do
-            Chef::Config[:knife][:azure_vnet_name] = "MyVnet"
-            Chef::Config[:knife][:azure_vnet_subnet_name] = "GatewaySubnet"
+            @arm_server_instance.config[:azure_vnet_name] = "MyVnet"
+            @arm_server_instance.config[:azure_vnet_subnet_name] = "GatewaySubnet"
             expect { @arm_server_instance.validate_params! }.to raise_error(
               ArgumentError, "GatewaySubnet cannot be used as the name for --azure-vnet-subnet-name option. GatewaySubnet can only be used for virtual network gateways."
             )
@@ -368,21 +370,21 @@ describe Chef::Knife::AzurermServerCreate do
         end
 
         after do
-          Chef::Config[:knife].delete(:connection_password)
-          Chef::Config[:knife].delete(:ssh_public_key)
-          Chef::Config[:knife].delete(:azure_storage_account)
-          Chef::Config[:knife].delete(:azure_os_disk_name)
-          Chef::Config[:knife].delete(:azure_vnet_name)
-          Chef::Config[:knife].delete(:azure_vnet_subnet_name)
-          Chef::Config[:knife].delete(:azure_vm_size)
-          Chef::Config[:knife].delete(:server_count)
+          @arm_server_instance.config.delete(:connection_password)
+          @arm_server_instance.config.delete(:ssh_public_key)
+          @arm_server_instance.config.delete(:azure_storage_account)
+          @arm_server_instance.config.delete(:azure_os_disk_name)
+          @arm_server_instance.config.delete(:azure_vnet_name)
+          @arm_server_instance.config.delete(:azure_vnet_subnet_name)
+          @arm_server_instance.config.delete(:azure_vm_size)
+          @arm_server_instance.config.delete(:server_count)
         end
       end
 
       context "when given by user" do
         context "for windows nodes with --connection-password" do
           before do
-            Chef::Config[:knife][:connection_password] = "connection_password"
+            @arm_server_instance.config[:connection_password] = "connection_password"
             # @arm_server_instance.config[:azure_image_os_type] = "windows"
             allow(@arm_server_instance).to receive(:is_image_windows?).and_return(true)
           end
@@ -397,7 +399,7 @@ describe Chef::Knife::AzurermServerCreate do
           end
 
           it "raises error if invalid daemon value is provided" do
-            Chef::Config[:knife][:daemon] = "foo"
+            @arm_server_instance.config[:daemon] = "foo"
             expect { @arm_server_instance.validate_params! }.to raise_error(
               ArgumentError, "Invalid value for --daemon option. Use valid daemon values i.e 'none', 'service' and 'task'."
             )
@@ -405,7 +407,7 @@ describe Chef::Knife::AzurermServerCreate do
 
           %w{service task none}.each do |daemon|
             it "does not raises error if valid daemon option is provided" do
-              Chef::Config[:knife][:daemon] = daemon
+              @arm_server_instance.config[:daemon] = daemon
               expect { @arm_server_instance.validate_params! }.not_to raise_error(
                 ArgumentError, "The daemon option is only support for Windows nodes."
               )
@@ -418,7 +420,7 @@ describe Chef::Knife::AzurermServerCreate do
 
         context "for other than windows nodes with --ssh-public-key" do
           before do
-            Chef::Config[:knife][:ssh_public_key] = File.dirname(__FILE__) + "/assets/key_rsa.pub"
+            @arm_server_instance.config[:ssh_public_key] = File.dirname(__FILE__) + "/assets/key_rsa.pub"
             # @arm_server_instance.config[:azure_image_os_type] = "ubuntu"
             allow(@arm_server_instance).to receive(:is_image_windows?).and_return(false)
           end
@@ -433,7 +435,7 @@ describe Chef::Knife::AzurermServerCreate do
           end
 
           it "raises error if daemon option is provided" do
-            Chef::Config[:knife][:daemon] = "service"
+            @arm_server_instance.config[:daemon] = "service"
             expect { @arm_server_instance.validate_params! }.to raise_error(
               ArgumentError, "The daemon option is only support for Windows nodes."
             )
@@ -445,8 +447,8 @@ describe Chef::Knife::AzurermServerCreate do
 
   describe "server create" do
     before do
-      Chef::Config[:knife][:connection_password] = "connection_password"
-      Chef::Config[:knife][:connection_password] = "connection_password"
+      @arm_server_instance.config[:connection_password] = "connection_password"
+      @arm_server_instance.config[:connection_password] = "connection_password"
 
       @resource_client = double("ResourceManagementClient")
       @compute_client = double("ComputeManagementClient")
@@ -604,7 +606,7 @@ describe Chef::Knife::AzurermServerCreate do
             connection_user: "connection_user",
             azure_chef_extension_version: "1210.12",
           }.each do |key, value|
-            Chef::Config[:knife][key] = value
+            @arm_server_instance.config[key] = value
           end
 
           expect(@arm_server_instance).to receive(
@@ -665,7 +667,7 @@ describe Chef::Knife::AzurermServerCreate do
             azure_image_reference_version: "latest",
             connection_user: "connection_user",
           }.each do |key, value|
-            Chef::Config[:knife][key] = value
+            @arm_server_instance.config[key] = value
           end
 
           expect(@arm_server_instance).to receive(
@@ -694,8 +696,8 @@ describe Chef::Knife::AzurermServerCreate do
 
       context "for multiple VM creation" do
         before do
-          Chef::Config[:knife][:server_count] = 3
-          Chef::Config[:knife][:azure_chef_extension_version] = "1210.12"
+          @arm_server_instance.config[:server_count] = 3
+          @arm_server_instance.config[:azure_chef_extension_version] = "1210.12"
 
           expect(@arm_server_instance).to receive(
             :is_image_windows?
@@ -752,7 +754,7 @@ describe Chef::Knife::AzurermServerCreate do
         end
 
         after do
-          Chef::Config[:knife].delete(:server_count)
+          @arm_server_instance.config.delete(:server_count)
         end
       end
     end
@@ -904,15 +906,15 @@ describe Chef::Knife::AzurermServerCreate do
     describe "bootstrap protocol cloud-api" do
       before do
         allow(@arm_server_instance).to receive(:msg_server_summary)
-        Chef::Config[:knife][:run_list] = ["getting-started"]
-        Chef::Config[:knife][:validation_client_name] = "testorg-validator"
-        Chef::Config[:knife][:chef_server_url] = "https://api.opscode.com/organizations/testorg"
+        @arm_server_instance.config[:run_list] = ["getting-started"]
+        @arm_server_instance.config[:validation_client_name] = "testorg-validator"
+        @arm_server_instance.config[:chef_server_url] = "https://api.opscode.com/organizations/testorg"
       end
 
       after do
-        Chef::Config[:knife].delete(:run_list)
-        Chef::Config[:knife].delete(:validation_client_name)
-        Chef::Config[:knife].delete(:chef_server_url)
+        @arm_server_instance.config.delete(:run_list)
+        @arm_server_instance.config.delete(:validation_client_name)
+        @arm_server_instance.config.delete(:chef_server_url)
       end
 
       context "parameters test" do
@@ -946,13 +948,13 @@ describe Chef::Knife::AzurermServerCreate do
         end
 
         it "sets user supplied value for chef_extension_version parameter" do
-          Chef::Config[:knife][:azure_chef_extension_version] = "1210.12"
+          @arm_server_instance.config[:azure_chef_extension_version] = "1210.12"
           @server_params = @arm_server_instance.create_server_def
           expect(@server_params[:chef_extension_version]).to be == "1210.12"
         end
 
         it "sets nil value for chef_extension_version parameter when user has not supplied any value for it" do
-          Chef::Config[:knife].delete(:azure_chef_extension_version)
+          @arm_server_instance.config.delete(:azure_chef_extension_version)
           @server_params = @arm_server_instance.create_server_def
           expect(@server_params[:chef_extension_version]).to be nil
         end
@@ -1254,7 +1256,6 @@ describe Chef::Knife::AzurermServerCreate do
     end
 
     it "uses all 4 user supplied values for image reference parameters when os_type is not given" do
-      @arm_server_instance.config.delete(:azure_image_os_type)
       @arm_server_instance.config[:azure_image_reference_publisher] = "OpenLogic"
       @arm_server_instance.config[:azure_image_reference_offer] = "CentOS"
       @arm_server_instance.config[:azure_image_reference_sku] = "6.7"
@@ -1267,8 +1268,6 @@ describe Chef::Knife::AzurermServerCreate do
     end
 
     it "uses default value for version when other 3 image reference parameters are given by user except os_type" do
-      @arm_server_instance.config.delete(:azure_image_os_type)
-      @arm_server_instance.config.delete(:azure_image_reference_version)
       @arm_server_instance.config[:azure_image_reference_publisher] = "Canonical"
       @arm_server_instance.config[:azure_image_reference_offer] = "UbuntuServer"
       @arm_server_instance.config[:azure_image_reference_sku] = "12.04.5-LTS"

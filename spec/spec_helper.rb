@@ -35,6 +35,12 @@ def tmpFile(filename)
   temp_dir + "/" + filename
 end
 
+class UnexpectedSystemExit < RuntimeError
+  def self.from(system_exit)
+    new(system_exit.message).tap { |e| e.set_backtrace(system_exit.backtrace) }
+  end
+end
+
 RSpec.configure do |c|
   c.before(:each) do
     Chef::Config.reset
@@ -51,6 +57,14 @@ RSpec.configure do |c|
   c.after(:all) do
     # Cleanup files and dirs
     FileUtils.rm_rf("#{temp_dir}")
+  end
+
+  c.around(:example) do |ex|
+    begin
+      ex.run
+    rescue SystemExit => e
+      raise UnexpectedSystemExit.from(e)
+    end
   end
 end
 

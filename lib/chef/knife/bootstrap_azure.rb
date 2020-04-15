@@ -1,6 +1,6 @@
 #
 # Author:: Aliasgar Batterywala (aliasgar.batterywala@clogeny.com)
-# Copyright:: Copyright 2010-2019, Chef Software Inc.
+# Copyright:: Copyright 2010-2020, Chef Software Inc.
 # License:: Apache License, Version 2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -52,7 +52,7 @@ class Chef
       def plugin_create_instance!
         if @name_args.length == 1
           service.add_extension(@name_args[0], set_ext_params)
-          if locate_config_value(:extended_logs)
+          if config[:extended_logs]
             print "\n\nWaiting for the Chef Extension to become available/ready"
             wait_until_extension_available(Time.now, 10)
             print "\n\nWaiting for the first chef-client run"
@@ -89,20 +89,20 @@ class Chef
           ui.info "Looking for the server #{@name_args[0]}..."
           server = service.find_server(
             name: @name_args[0],
-            azure_dns_name: locate_config_value(:azure_dns_name)
+            azure_dns_name: config[:azure_dns_name]
           )
 
           ## if azure_dns_name value not passed by user then set it using the hostedservicename attribute from the retrieved server's object ##
-          config[:azure_dns_name] = server.hostedservicename if locate_config_value(:azure_dns_name).nil? && (server.instance_of? Azure::Role)
+          config[:azure_dns_name] = server.hostedservicename if config[:azure_dns_name].nil? && (server.instance_of? Azure::Role)
           unless server.instance_of? Azure::Role
             if server.nil?
-              if !locate_config_value(:azure_dns_name).nil?
-                raise "Hosted service #{locate_config_value(:azure_dns_name)} does not exist."
+              if !config[:azure_dns_name].nil?
+                raise "Hosted service #{config[:azure_dns_name]} does not exist."
               else
                 raise "Server #{@name_args[0]} does not exist."
               end
             else
-              raise "Server #{@name_args[0]} does not exist under the hosted service #{locate_config_value(:azure_dns_name)}."
+              raise "Server #{@name_args[0]} does not exist under the hosted service #{config[:azure_dns_name]}."
             end
           end
 
@@ -122,7 +122,7 @@ class Chef
             raise "OS type #{server.os_type} is not supported."
           end
 
-          ext_params[:azure_dns_name] = server.hostedservicename || locate_config_value(:azure_dns_name)
+          ext_params[:azure_dns_name] = server.hostedservicename || config[:azure_dns_name]
           ext_params[:deploy_name] = server.deployname
           ext_params[:role_xml] = server.role_xml
           ext_params[:azure_vm_name] = @name_args[0]

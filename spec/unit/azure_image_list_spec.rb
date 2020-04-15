@@ -1,5 +1,5 @@
 #
-# Copyright:: Copyright 2010-2020, Chef Software Inc.
+# Copyright:: Copyright (c) Chef Software Inc.
 # License:: Apache License, Version 2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -35,7 +35,7 @@ describe Chef::Knife::AzureImageList do
       azure_storage_account: "ka001testeurope",
       azure_vm_size: "Small",
     }.each do |key, value|
-      Chef::Config[:knife][key] = value
+      @server_instance.config[key] = value
     end
     stub_query_azure(@server_instance.service.connection)
     allow(@server_instance).to receive(:items).and_return(:true)
@@ -65,7 +65,7 @@ describe Chef::Knife::AzureImageList do
   end
 
   it "should display Name, Category, Label and OS columns when show_all_fields set to true." do
-    Chef::Config[:knife][:show_all_fields] = true
+    @server_instance.config[:show_all_fields] = true
     expect(@server_instance.ui).to receive(:list)
       .with(["Name", "Category", "Label", "OS", "Location",
           "CANONICAL__Canonical-Ubuntu-12-04-20120519-2012-05-19-en-us-30GB.vhd", "Canonical",

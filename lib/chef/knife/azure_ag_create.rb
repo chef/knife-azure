@@ -1,6 +1,6 @@
 #
 # Author:: Jeff Mendoza (jeffmendoza@live.com)
-# Copyright:: Copyright 2010-2019, Chef Software Inc.
+# Copyright:: Copyright 2010-2020, Chef Software Inc.
 # License:: Apache License, Version 2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -50,9 +50,9 @@ class Chef
           :azure_service_location)
 
         params = {
-          azure_ag_name: locate_config_value(:azure_affinity_group),
-          azure_ag_desc: locate_config_value(:azure_ag_desc),
-          azure_location: locate_config_value(:azure_service_location),
+          azure_ag_name: config[:azure_affinity_group],
+          azure_ag_desc: config[:azure_ag_desc],
+          azure_location: config[:azure_service_location],
         }
 
         rsp = service.create_affinity_group(params)

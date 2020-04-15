@@ -1,5 +1,5 @@
 #
-# Copyright:: Copyright 2010-2020, Chef Software Inc.
+# Copyright:: Copyright (c) Chef Software Inc.
 # License:: Apache License, Version 2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,7 +30,7 @@ describe Chef::Knife::AzurermServerDelete do
 
       @service = @arm_server_instance.service
 
-      Chef::Config[:knife][:azure_resource_group_name] = "test-rg-group"
+      @arm_server_instance.config[:azure_resource_group_name] = "test-rg-group"
       @arm_server_instance.name_args = ["VM001"]
 
       @server_detail = double("server", name: "VM001", hardware_profile: double, storage_profile: double(os_disk: double))
@@ -90,15 +90,15 @@ describe Chef::Knife::AzurermServerDelete do
       @resource_client = double("ResourceManagementClient")
       @service = @arm_server_instance.service
 
-      Chef::Config[:knife][:azure_resource_group_name] = "test-rg-group"
-      Chef::Config[:knife][:delete_resource_group] = true
+      @arm_server_instance.config[:azure_resource_group_name] = "test-rg-group"
+      @arm_server_instance.config[:delete_resource_group] = true
       @arm_server_instance.name_args = ["VM001"]
     end
 
     it "destroys the corresponding resource group if --delete-resource-group option is given" do
       server = double("server")
       allow(server).to receive(:nil?).and_return("false")
-      Chef::Config[:knife][:delete_resource_group] = true
+      @arm_server_instance.config[:delete_resource_group] = true
       allow(@arm_server_instance.service.ui).to receive(:confirm).and_return (true)
 
       expect(@arm_server_instance).to receive(:validate_arm_keys!).with(:azure_resource_group_name)

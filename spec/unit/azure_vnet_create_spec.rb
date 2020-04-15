@@ -1,5 +1,5 @@
 #
-# Copyright:: Copyright 2010-2020, Chef Software Inc.
+# Copyright:: Copyright (c) Chef Software Inc.
 # License:: Apache License, Version 2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -37,10 +37,10 @@ describe Chef::Knife::AzureVnetCreate do
   end
 
   it "should succeed." do
-    Chef::Config[:knife][:azure_network_name] = "new-net"
-    Chef::Config[:knife][:azure_affinity_group] = "ag"
-    Chef::Config[:knife][:azure_address_space] = "10.0.0.0/24"
-    Chef::Config[:knife][:azure_subnet_name] = "Subnet-7"
+    @server_instance.config[:azure_network_name] = "new-net"
+    @server_instance.config[:azure_affinity_group] = "ag"
+    @server_instance.config[:azure_address_space] = "10.0.0.0/24"
+    @server_instance.config[:azure_subnet_name] = "Subnet-7"
     expect(@connection.vnets).to receive(:create).with(
       azure_vnet_name: "new-net",
       azure_ag_name: "ag",

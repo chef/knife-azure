@@ -1,6 +1,6 @@
 #
 # Author:: Aiman Alsari (aiman.alsari@gmail.com)
-# Copyright:: Copyright 2010-2019, Chef Software Inc.
+# Copyright:: Copyright 2010-2020, Chef Software Inc.
 # License:: Apache License, Version 2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -50,10 +50,10 @@ class Chef
         validate_asm_keys!(:azure_load_balancer)
 
         params = {
-          azure_load_balancer: locate_config_value(:azure_load_balancer),
-          azure_lb_static_vip: locate_config_value(:azure_lb_static_vip),
-          azure_subnet_name: locate_config_value(:azure_subnet_name),
-          azure_dns_name: locate_config_value(:azure_dns_name),
+          azure_load_balancer: config[:azure_load_balancer],
+          azure_lb_static_vip: config[:azure_lb_static_vip],
+          azure_subnet_name: config[:azure_subnet_name],
+          azure_dns_name: config[:azure_dns_name],
         }
 
         rsp = service.create_internal_lb(params)

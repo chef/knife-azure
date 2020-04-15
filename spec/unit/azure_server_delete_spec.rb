@@ -1,5 +1,5 @@
 #
-# Copyright:: Copyright 2010-2020, Chef Software Inc.
+# Copyright:: Copyright (c) Chef Software Inc.
 # License:: Apache License, Version 2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -35,7 +35,7 @@ describe Chef::Knife::AzureServerDelete do
       azure_dns_name: "service001",
       azure_storage_account: "ka001testeurope",
     }.each do |key, value|
-      Chef::Config[:knife][key] = value
+      @server_instance.config[key] = value
     end
     @connection = @server_instance.service.connection
     stub_query_azure(@connection)
@@ -57,7 +57,7 @@ describe Chef::Knife::AzureServerDelete do
   end
 
   it "wait for server delete" do
-    Chef::Config[:knife][:wait] = true
+    @server_instance.config[:wait] = true
     @server_instance.name_args = ["role001"]
     expect(@server_instance.ui).to receive(:warn).twice
     expect(@server_instance.service).to receive(:delete_server).and_call_original
@@ -70,8 +70,8 @@ describe Chef::Knife::AzureServerDelete do
   end
 
   it "wait for server delete and preserve_azure_vhd" do
-    Chef::Config[:knife][:wait] = true
-    Chef::Config[:knife][:preserve_azure_vhd] = true
+    @server_instance.config[:wait] = true
+    @server_instance.config[:preserve_azure_vhd] = true
     @server_instance.name_args = ["role001"]
     expect(@server_instance.ui).to receive(:warn).twice
     expect(@server_instance.service).to receive(:delete_server).and_call_original
@@ -84,8 +84,8 @@ describe Chef::Knife::AzureServerDelete do
   end
 
   it "delete everything if cloud service contains only one role and no wait and no preserve option set" do
-    Chef::Config[:knife][:wait] = false
-    Chef::Config[:knife][:azure_dns_name] = "service002"
+    @server_instance.config[:wait] = false
+    @server_instance.config[:azure_dns_name] = "service002"
     @server_instance.name_args = ["vm01"]
     expect(@server_instance.ui).to receive(:warn).twice
     expect(@server_instance.service).to receive(:delete_server).and_call_original
@@ -97,9 +97,9 @@ describe Chef::Knife::AzureServerDelete do
   end
 
   it "delete everything if cloud service contains only one role and preserve-azure-dns true set and no wait and no other preserve option set" do
-    Chef::Config[:knife][:wait] = false
-    Chef::Config[:knife][:azure_dns_name] = "service002"
-    Chef::Config[:knife][:preserve_azure_dns_name] = true
+    @server_instance.config[:wait] = false
+    @server_instance.config[:azure_dns_name] = "service002"
+    @server_instance.config[:preserve_azure_dns_name] = true
     @server_instance.name_args = ["vm01"]
     expect(@server_instance.ui).to receive(:warn).twice
     expect(@server_instance.service).to receive(:delete_server).and_call_original
@@ -113,7 +113,7 @@ describe Chef::Knife::AzureServerDelete do
   it "display valid nomenclature in delete output" do
     @server_instance.name_args = ["role001"]
     expect(@server_instance.ui).to receive(:warn).twice
-    expect(@server_instance.service).to receive(:msg_pair).with(@server_instance.service.ui, "DNS Name", Chef::Config[:knife][:azure_dns_name] + ".cloudapp.net")
+    expect(@server_instance.service).to receive(:msg_pair).with(@server_instance.service.ui, "DNS Name", @server_instance.config[:azure_dns_name] + ".cloudapp.net")
     expect(@server_instance.service).to receive(:msg_pair).with(@server_instance.service.ui, "VM Name", "role001")
     expect(@server_instance.service).to receive(:msg_pair).with(@server_instance.service.ui, "Size", "Small")
     expect(@server_instance.service).to receive(:msg_pair).with(@server_instance.service.ui, "Public Ip Address", "65.52.249.191")
@@ -134,7 +134,7 @@ describe Chef::Knife::AzureServerDelete do
 
   it "dont cleanup hosted service when --preserve-azure-dns-name param set" do
     @server_instance.name_args = ["role001"]
-    Chef::Config[:knife][:preserve_azure_dns_name] = true
+    @server_instance.config[:preserve_azure_dns_name] = true
     expect(@server_instance.ui).to receive(:warn).twice
     expect(@server_instance.service).to receive(:delete_server).and_call_original
     expect(@server_instance.service).to receive(:msg_pair).exactly(4).times
@@ -147,13 +147,13 @@ describe Chef::Knife::AzureServerDelete do
     test_hostname = "vm002"
     @server_instance.name_args = [test_hostname]
 
-    Chef::Config[:knife][:azure_dns_name] = "service001"
-    Chef::Config[:knife][:preserve_azure_os_disk] = true
+    @server_instance.config[:azure_dns_name] = "service001"
+    @server_instance.config[:preserve_azure_os_disk] = true
     expect(@server_instance.service).to receive(:delete_server).and_call_original
     expect(@server_instance.service).to receive(:msg_pair).exactly(4).times
 
     # test correct params are passed to azure API.
-    expect(@connection).to receive(:query_azure).with("hostedservices/#{Chef::Config[:knife][:azure_dns_name]}/deployments/deployment001/roles/#{test_hostname}", "delete")
+    expect(@connection).to receive(:query_azure).with("hostedservices/#{@server_instance.config[:azure_dns_name]}/deployments/deployment001/roles/#{test_hostname}", "delete")
 
     @server_instance.run
   end
@@ -162,16 +162,16 @@ describe Chef::Knife::AzureServerDelete do
     test_hostnames = %w{vm002 role002 role001}
     @server_instance.name_args = test_hostnames
 
-    Chef::Config[:knife][:azure_dns_name] = "service001"
-    Chef::Config[:knife][:preserve_azure_os_disk] = true
+    @server_instance.config[:azure_dns_name] = "service001"
+    @server_instance.config[:preserve_azure_os_disk] = true
 
     expect(@server_instance.service).to receive(:delete_server).exactly(3).times.and_call_original
     expect(@server_instance.service).to receive(:msg_pair).exactly(12).times
 
     # test correct calls are made to azure API.
-    expect(@connection).to receive(:query_azure).with("hostedservices/#{Chef::Config[:knife][:azure_dns_name]}/deployments/deployment001", "delete")
-    expect(@connection).to receive(:query_azure).with("hostedservices/#{Chef::Config[:knife][:azure_dns_name]}/deployments/deployment001/roles/#{test_hostnames[1]}", "delete")
-    expect(@connection).to receive(:query_azure).with("hostedservices/#{Chef::Config[:knife][:azure_dns_name]}/deployments/deployment001/roles/#{test_hostnames[0]}", "delete")
+    expect(@connection).to receive(:query_azure).with("hostedservices/#{@server_instance.config[:azure_dns_name]}/deployments/deployment001", "delete")
+    expect(@connection).to receive(:query_azure).with("hostedservices/#{@server_instance.config[:azure_dns_name]}/deployments/deployment001/roles/#{test_hostnames[1]}", "delete")
+    expect(@connection).to receive(:query_azure).with("hostedservices/#{@server_instance.config[:azure_dns_name]}/deployments/deployment001/roles/#{test_hostnames[0]}", "delete")
 
     @server_instance.run
   end
@@ -180,17 +180,17 @@ describe Chef::Knife::AzureServerDelete do
     test_hostname = "role002"
     test_diskname = "disk1"
     @server_instance.name_args = [test_hostname]
-    Chef::Config[:knife][:preserve_azure_os_disk] = true
+    @server_instance.config[:preserve_azure_os_disk] = true
     expect(@server_instance.service).to receive(:delete_server).exactly(:once).and_call_original
     expect(@server_instance.service).to receive(:msg_pair).exactly(4).times
 
-    expect(@connection).to receive(:query_azure).with("hostedservices/#{Chef::Config[:knife][:azure_dns_name]}/deployments/deployment001/roles/#{test_hostname}", "delete").exactly(:once)
+    expect(@connection).to receive(:query_azure).with("hostedservices/#{@server_instance.config[:azure_dns_name]}/deployments/deployment001/roles/#{test_hostname}", "delete").exactly(:once)
     expect(@connection).to_not receive(:query_azure).with("disks/#{test_diskname}", "delete")
     @server_instance.run
   end
 
   it "should delete OS Disk and VHD when --wait set and --preserve-azure-os-disk, --preserve-azure-vhd are not set." do
-    Chef::Config[:knife][:wait] = true
+    @server_instance.config[:wait] = true
     test_hostname = "role001"
     test_diskname = "deployment001-role002-0-201241722728"
     @server_instance.name_args = [test_hostname]
@@ -204,7 +204,7 @@ describe Chef::Knife::AzureServerDelete do
   it "should preserve VHD when --preserve-azure-vhd is set." do
     test_hostname = "role001"
     test_diskname = "deployment001-role002-0-201241722728"
-    Chef::Config[:knife][:preserve_azure_vhd] = true
+    @server_instance.config[:preserve_azure_vhd] = true
     @server_instance.name_args = [test_hostname]
     expect(@server_instance.service).to receive(:delete_server).exactly(1).and_call_original
     expect(@server_instance.service).to receive(:msg_pair).exactly(4).times
@@ -221,7 +221,7 @@ describe Chef::Knife::AzureServerDelete do
     end
 
     it "should be deleted when --delete-azure-storage-account is set." do
-      Chef::Config[:knife][:delete_azure_storage_account] = true
+      @server_instance.config[:delete_azure_storage_account] = true
       expect(@connection).to receive(:query_azure).with("storageservices/#{@test_storage_account}", "delete")
       expect(@server_instance.service).to receive(:msg_pair).exactly(4).times
 
@@ -238,8 +238,8 @@ describe Chef::Knife::AzureServerDelete do
 
   it "should give a warning and exit when both --preserve-azure-os-disk and --delete-azure-storage-account are set." do
     test_hostname = "role001"
-    Chef::Config[:knife][:preserve_azure_os_disk] = true
-    Chef::Config[:knife][:delete_azure_storage_account] = true
+    @server_instance.config[:preserve_azure_os_disk] = true
+    @server_instance.config[:delete_azure_storage_account] = true
     @server_instance.name_args = [test_hostname]
     test_storage_account = "auxpreview104imagestore"
     test_diskname = "deployment001-role002-0-201241722728"
@@ -250,7 +250,7 @@ describe Chef::Knife::AzureServerDelete do
   end
 
   after(:each) do
-    Chef::Config[:knife][:preserve_azure_os_disk] = false if Chef::Config[:knife][:preserve_azure_os_disk] # cleanup config for each run
-    Chef::Config[:knife][:delete_azure_storage_account] = false if Chef::Config[:knife][:delete_azure_storage_account]
+    @server_instance.config[:preserve_azure_os_disk] = false if @server_instance.config[:preserve_azure_os_disk] # cleanup config for each run
+    @server_instance.config[:delete_azure_storage_account] = false if @server_instance.config[:delete_azure_storage_account]
   end
 end

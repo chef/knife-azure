@@ -1,6 +1,6 @@
 #
 # Author:: Jeff Mendoza (jeffmendoza@live.com)
-# Copyright:: Copyright 2010-2019, Chef Software Inc.
+# Copyright:: Copyright 2010-2020, Chef Software Inc.
 # License:: Apache License, Version 2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -50,10 +50,10 @@ class Chef
         validate_asm_keys!(:azure_network_name, :azure_affinity_group, :azure_address_space)
 
         params = {
-          azure_vnet_name: locate_config_value(:azure_network_name),
-          azure_ag_name: locate_config_value(:azure_affinity_group),
-          azure_address_space: locate_config_value(:azure_address_space),
-          azure_subnet_name: locate_config_value(:azure_subnet_name) || "Subnet-#{Random.rand(10)}",
+          azure_vnet_name: config[:azure_network_name],
+          azure_ag_name: config[:azure_affinity_group],
+          azure_address_space: config[:azure_address_space],
+          azure_subnet_name: config[:azure_subnet_name] || "Subnet-#{Random.rand(10)}",
         }
 
         rsp = service.create_vnet(params)

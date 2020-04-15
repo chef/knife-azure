@@ -26,7 +26,7 @@ describe "roles" do
       azure_mgmt_cert: @cert_file,
       azure_api_host_name: "preview.core.windows-int.net",
     }.each do |key, value|
-      Chef::Config[:knife][key] = value
+      @server_instance.config[key] = value
     end
 
     stub_query_azure @server_instance.service.connection
