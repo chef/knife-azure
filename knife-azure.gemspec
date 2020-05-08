@@ -17,7 +17,7 @@ Gem::Specification.new do |s|
   s.files = %w{LICENSE} + Dir.glob("lib/**/*")
   s.homepage = "https://github.com/chef/knife-azure"
   s.require_paths = ["lib"]
-  s.required_ruby_version = ">= 2.5"
+  s.required_ruby_version = ">= 2.6"
 
   s.add_dependency "chef", ">= 15.10.21" # needs this version for Chef 16 backports
   s.add_dependency "nokogiri", ">= 1.5.5"
