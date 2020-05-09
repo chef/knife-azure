@@ -2,7 +2,7 @@
 # Author:: Barry Davis (barryd@jetstreamsoftware.com)
 # Author:: Seth Chisamore (<schisamo@chef.io>)
 # Author:: Adam Jacob (<adam@chef.io>)
-# Copyright:: Copyright 2010-2019, Chef Software Inc.
+# Copyright:: Copyright (c) Chef Software Inc.
 # License:: Apache License, Version 2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -40,7 +40,7 @@ class Chef
         validate_asm_keys!
         items = service.list_images
 
-        image_labels = !locate_config_value(:show_all_fields) ? %w{Name OS Location} : %w{Name Category Label OS Location}
+        image_labels = !config[:show_all_fields] ? %w{Name OS Location} : %w{Name Category Label OS Location}
         image_list =  image_labels.map { |label| ui.color(label, :bold) }
 
         image_items = image_labels.map(&:downcase)
@@ -49,7 +49,7 @@ class Chef
         end
 
         puts "\n"
-        puts ui.list(image_list, :uneven_columns_across, !locate_config_value(:show_all_fields) ? 3 : 5)
+        puts ui.list(image_list, :uneven_columns_across, !config[:show_all_fields] ? 3 : 5)
       end
     end
   end

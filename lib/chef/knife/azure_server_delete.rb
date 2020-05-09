@@ -2,7 +2,7 @@
 # Author:: Barry Davis (barryd@jetstreamsoftware.com)
 # Author:: Adam Jacob (<adam@chef.io>)
 # Author:: Seth Chisamore (<schisamo@chef.io>)
-# Copyright:: Copyright 2010-2019, Chef Software Inc.
+# Copyright:: Copyright (c) Chef Software Inc.
 # License:: Apache License, Version 2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -94,7 +94,7 @@ class Chef
       end
 
       def validate_disk_and_storage
-        if locate_config_value(:preserve_azure_os_disk) && locate_config_value(:delete_azure_storage_account)
+        if config[:preserve_azure_os_disk] && config[:delete_azure_storage_account]
           ui.warn("Cannot delete storage account while keeping OS Disk. Please set any one option.")
           exit
         else
@@ -107,11 +107,11 @@ class Chef
         validate_disk_and_storage
         @name_args.each do |name|
           begin
-            service.delete_server( { name: name, preserve_azure_os_disk: locate_config_value(:preserve_azure_os_disk),
-                                     preserve_azure_vhd: locate_config_value(:preserve_azure_vhd),
-                                     preserve_azure_dns_name: locate_config_value(:preserve_azure_dns_name),
-                                     delete_azure_storage_account: locate_config_value(:delete_azure_storage_account),
-                                     wait: locate_config_value(:wait) } )
+            service.delete_server( { name: name, preserve_azure_os_disk: config[:preserve_azure_os_disk],
+                                     preserve_azure_vhd: config[:preserve_azure_vhd],
+                                     preserve_azure_dns_name: config[:preserve_azure_dns_name],
+                                     delete_azure_storage_account: config[:delete_azure_storage_account],
+                                     wait: config[:wait] } )
 
             if config[:purge]
               node_to_delete = config[:chef_node_name] || name

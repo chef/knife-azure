@@ -1,6 +1,6 @@
 # Author:: Barry Davis (barryd@jetstreamsoftware.com)
 # Author:: Seth Chisamore (<schisamo@chef.io>)
-# Copyright:: Copyright 2010-2019, Chef Software Inc.
+# Copyright:: Copyright (c) Chef Software Inc.
 # License:: Apache License, Version 2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -35,20 +35,17 @@ class Chef
           option :azure_subscription_id,
             short: "-S ID",
             long: "--azure-subscription-id ID",
-            description: "Your Azure subscription ID",
-            proc: proc { |key| Chef::Config[:knife][:azure_subscription_id] = key }
+            description: "Your Azure subscription ID"
 
           option :azure_mgmt_cert,
             short: "-p FILENAME",
             long: "--azure-mgmt-cert FILENAME",
-            description: "Your Azure PEM file name",
-            proc: proc { |key| Chef::Config[:knife][:azure_mgmt_cert] = key }
+            description: "Your Azure PEM file name"
 
           option :azure_api_host_name,
             short: "-H HOSTNAME",
             long: "--azure-api-host-name HOSTNAME",
-            description: "Your Azure host name",
-            proc: proc { |key| Chef::Config[:knife][:azure_api_host_name] = key }
+            description: "Your Azure host name"
 
           option :verify_ssl_cert,
             long: "--verify-ssl-cert",
@@ -58,14 +55,13 @@ class Chef
 
           option :azure_publish_settings_file,
             long: "--azure-publish-settings-file FILENAME",
-            description: "Your Azure Publish Settings File",
-            proc: proc { |key| Chef::Config[:knife][:azure_publish_settings_file] = key }
+            description: "Your Azure Publish Settings File"
         end
       end
 
       def is_image_windows?
         images = service.list_images
-        target_image = images.select { |i| i.name == locate_config_value(:azure_source_image) }
+        target_image = images.select { |i| i.name == config[:azure_source_image] }
         if target_image[0].nil?
           ui.error('Invalid image. Use the command "knife azure image list" to verify the image name')
           exit 1
@@ -77,19 +73,14 @@ class Chef
       def service
         @service ||= begin
                       service = Azure::ServiceManagement::ASMInterface.new(
-                        azure_subscription_id: locate_config_value(:azure_subscription_id),
-                        azure_mgmt_cert: locate_config_value(:azure_mgmt_cert),
-                        azure_api_host_name: locate_config_value(:azure_api_host_name),
-                        verify_ssl_cert: locate_config_value(:verify_ssl_cert)
+                        azure_subscription_id: config[:azure_subscription_id],
+                        azure_mgmt_cert: config[:azure_mgmt_cert],
+                        azure_api_host_name: config[:azure_api_host_name],
+                        verify_ssl_cert: config[:verify_ssl_cert]
                       )
                     end
         @service.ui = ui
         @service
-      end
-
-      def locate_config_value(key)
-        key = key.to_sym
-        config[key] || Chef::Config[:knife][key]
       end
 
       def msg_pair(label, value, color = :cyan)
@@ -103,16 +94,16 @@ class Chef
         msg_pair("DNS Name", server.hostedservicename + ".cloudapp.net")
         msg_pair("VM Name", server.name)
         msg_pair("Size", server.size)
-        msg_pair("Azure Source Image", locate_config_value(:azure_source_image))
-        msg_pair("Azure Service Location", locate_config_value(:azure_service_location))
+        msg_pair("Azure Source Image", config[:azure_source_image])
+        msg_pair("Azure Service Location", config[:azure_service_location])
         msg_pair("Public Ip Address", server.publicipaddress)
         msg_pair("Private Ip Address", server.ipaddress)
         msg_pair("SSH Port", server.sshport) unless server.sshport.nil?
         msg_pair("WinRM Port", server.winrmport) unless server.winrmport.nil?
         msg_pair("TCP Ports", server.tcpports) unless server.tcpports.nil? || server.tcpports.empty?
         msg_pair("UDP Ports", server.udpports) unless server.udpports.nil? || server.udpports.empty?
-        msg_pair("Environment", locate_config_value(:environment) || "_default")
-        msg_pair("Runlist", locate_config_value(:run_list)) unless locate_config_value(:run_list).empty?
+        msg_pair("Environment", config[:environment] || "_default")
+        msg_pair("Runlist", config[:run_list]) unless config[:run_list].empty?
         puts "\n"
       end
 
@@ -121,61 +112,61 @@ class Chef
       end
 
       # validate command pre-requisites (cli options)
-      # (locate_config_value(:connection_password).length <= 6 && locate_config_value(:connection_password).length >= 72)
+      # (config[:connection_password].length <= 6 && config[:connection_password].length >= 72)
       def validate_params!
-        if locate_config_value(:connection_password) && !locate_config_value(:connection_password).length.between?(6, 72)
+        if config[:connection_password] && !config[:connection_password].length.between?(6, 72)
           ui.error("The supplied connection password must be 6-72 characters long and meet password complexity requirements")
           exit 1
         end
 
-        if locate_config_value(:azure_connect_to_existing_dns) && locate_config_value(:azure_vm_name).nil?
+        if config[:azure_connect_to_existing_dns] && config[:azure_vm_name].nil?
           ui.error("Specify the VM name using --azure-vm-name option, since you are connecting to existing dns")
           exit 1
         end
 
-        unless !!locate_config_value(:azure_service_location) ^ !!locate_config_value(:azure_affinity_group)
+        unless !!config[:azure_service_location] ^ !!config[:azure_affinity_group]
           ui.error("Specify either --azure-service-location or --azure-affinity-group")
           exit 1
         end
 
-        unless service.valid_image?(locate_config_value(:azure_source_image))
-          ui.error("Image '#{locate_config_value(:azure_source_image)}' is invalid")
+        unless service.valid_image?(config[:azure_source_image])
+          ui.error("Image '#{config[:azure_source_image]}' is invalid")
           exit 1
         end
 
         # Validate join domain requirements.
-        if locate_config_value(:azure_domain_name) || locate_config_value(:azure_domain_user)
-          if locate_config_value(:azure_domain_user).nil? || locate_config_value(:azure_domain_passwd).nil?
+        if config[:azure_domain_name] || config[:azure_domain_user]
+          if config[:azure_domain_user].nil? || config[:azure_domain_passwd].nil?
             ui.error("Must specify both --azure-domain-user and --azure-domain-passwd.")
             exit 1
           end
         end
 
-        if locate_config_value(:winrm_ssl) && locate_config_value(:thumbprint).nil? && locate_config_value(:winrm_no_verify_cert).nil?
+        if config[:winrm_ssl] && config[:thumbprint].nil? && config[:winrm_no_verify_cert].nil?
           ui.error("The SSL transport was specified without the --thumbprint option. Specify a thumbprint, or alternatively set the --winrm-no-verify-cert option to skip verification.")
           exit 1
         end
 
-        if locate_config_value(:extended_logs) && locate_config_value(:connection_protocol) != "cloud-api"
+        if config[:extended_logs] && config[:connection_protocol] != "cloud-api"
           ui.error("--extended-logs option only works with --bootstrap-protocol cloud-api")
           exit 1
         end
 
-        if locate_config_value(:connection_protocol) == "cloud-api" && locate_config_value(:azure_vm_name).nil? && locate_config_value(:azure_dns_name).nil?
+        if config[:connection_protocol] == "cloud-api" && config[:azure_vm_name].nil? && config[:azure_dns_name].nil?
           ui.error("Specifying the DNS name using --azure-dns-name or VM name using --azure-vm-name option is required with --bootstrap-protocol cloud-api")
           exit 1
         end
 
-        if locate_config_value(:daemon)
+        if config[:daemon]
           unless is_image_windows?
             raise ArgumentError, "The daemon option is only supported for Windows nodes."
           end
 
-          unless  locate_config_value(:connection_protocol) == "cloud-api"
+          unless  config[:connection_protocol] == "cloud-api"
             raise ArgumentError, "The --daemon option requires the use of --bootstrap-protocol cloud-api"
           end
 
-          unless %w{none service task}.include?(locate_config_value(:daemon).downcase)
+          unless %w{none service task}.include?(config[:daemon].downcase)
             raise ArgumentError, "Invalid value for --daemon option. Valid values are 'none', 'service' and 'task'."
           end
         end
@@ -185,7 +176,7 @@ class Chef
       def validate!(keys)
         errors = []
         keys.each do |k|
-          if locate_config_value(k).nil?
+          if config[k].nil?
             errors << "You did not provide a valid '#{pretty_key(k)}' value. Please set knife[:#{k}] in your knife.rb or pass as an option."
           end
         end
@@ -197,13 +188,13 @@ class Chef
         mandatory_keys = %i{azure_subscription_id azure_mgmt_cert azure_api_host_name}
         keys.concat(mandatory_keys)
 
-        unless locate_config_value(:azure_mgmt_cert).nil?
-          config[:azure_mgmt_cert] = File.read find_file(locate_config_value(:azure_mgmt_cert))
+        unless config[:azure_mgmt_cert].nil?
+          config[:azure_mgmt_cert] = File.read find_file(config[:azure_mgmt_cert])
         end
 
-        if !locate_config_value(:azure_publish_settings_file).nil?
-          parse_publish_settings_file(locate_config_value(:azure_publish_settings_file))
-        elsif locate_config_value(:azure_subscription_id).nil? && locate_config_value(:azure_mgmt_cert).nil? && locate_config_value(:azure_api_host_name).nil?
+        if !config[:azure_publish_settings_file].nil?
+          parse_publish_settings_file(config[:azure_publish_settings_file])
+        elsif config[:azure_subscription_id].nil? && config[:azure_mgmt_cert].nil? && config[:azure_api_host_name].nil?
           azureprofile_file = get_azure_profile_file_path
           if File.exist?(File.expand_path(azureprofile_file))
             errors = parse_azure_profile(azureprofile_file, errors)
@@ -224,15 +215,15 @@ class Chef
           # check given PublishSettings XML file format.Currently PublishSettings file have two different XML format
           if profile.attribute("SchemaVersion").nil?
             management_cert = OpenSSL::PKCS12.new(Base64.decode64(profile.attribute("ManagementCertificate").value))
-            Chef::Config[:knife][:azure_api_host_name] = URI(profile.attribute("Url").value).host
+            config[:azure_api_host_name] = URI(profile.attribute("Url").value).host
           elsif profile.attribute("SchemaVersion").value == "2.0"
             management_cert = OpenSSL::PKCS12.new(Base64.decode64(subscription.attribute("ManagementCertificate").value))
-            Chef::Config[:knife][:azure_api_host_name] = URI(subscription.attribute("ServiceManagementUrl").value).host
+            config[:azure_api_host_name] = URI(subscription.attribute("ServiceManagementUrl").value).host
           else
             ui.error("Publish settings file Schema not supported - " + filename)
           end
-          Chef::Config[:knife][:azure_mgmt_cert] = management_cert.certificate.to_pem + management_cert.key.to_pem
-          Chef::Config[:knife][:azure_subscription_id] = doc.at_css("Subscription").attribute("Id").value
+          config[:azure_mgmt_cert] = management_cert.certificate.to_pem + management_cert.key.to_pem
+          config[:azure_subscription_id] = doc.at_css("Subscription").attribute("Id").value
         rescue
           ui.error("Incorrect publish settings file - " + filename)
           exit 1
@@ -252,11 +243,11 @@ class Chef
         default_subscription = get_default_subscription(azure_profile)
         if default_subscription.key?("id") && default_subscription.key?("managementCertificate") && default_subscription.key?("managementEndpointUrl")
 
-          Chef::Config[:knife][:azure_subscription_id] = default_subscription["id"]
+          config[:azure_subscription_id] = default_subscription["id"]
           mgmt_key = OpenSSL::PKey::RSA.new(default_subscription["managementCertificate"]["key"]).to_pem
           mgmt_cert = OpenSSL::X509::Certificate.new(default_subscription["managementCertificate"]["cert"]).to_pem
-          Chef::Config[:knife][:azure_mgmt_cert] = mgmt_key + mgmt_cert
-          Chef::Config[:knife][:azure_api_host_name] = URI(default_subscription["managementEndpointUrl"]).host
+          config[:azure_mgmt_cert] = mgmt_key + mgmt_cert
+          config[:azure_api_host_name] = URI(default_subscription["managementEndpointUrl"]).host
         else
           errors << "Check if values set for 'id', 'managementCertificate', 'managementEndpointUrl' in -> #{filename} for 'defaultSubscription'. \n  OR "
         end
@@ -300,8 +291,8 @@ class Chef
       end
 
       def fetch_deployment
-        deployment_name = service.deployment_name(locate_config_value(:azure_dns_name))
-        deployment = service.deployment("hostedservices/#{locate_config_value(:azure_dns_name)}/deployments/#{deployment_name}")
+        deployment_name = service.deployment_name(config[:azure_dns_name])
+        deployment = service.deployment("hostedservices/#{config[:azure_dns_name]}/deployments/#{deployment_name}")
 
         deployment
       end
@@ -312,7 +303,7 @@ class Chef
         if deployment.at_css("Deployment Name") != nil
           role_list_xml = deployment.css("RoleInstanceList RoleInstance")
           role_list_xml.each do |role|
-            if role.at_css("RoleName").text == (locate_config_value(:azure_vm_name) || @name_args[0])
+            if role.at_css("RoleName").text == (config[:azure_vm_name] || @name_args[0])
               return role
             end
           end
@@ -391,11 +382,11 @@ class Chef
             end
           else
             ## Chef Extension could not be found ##
-            ui.error("Unable to find Chef extension under role #{locate_config_value(:azure_vm_name) || @name_args[0]}.")
+            ui.error("Unable to find Chef extension under role #{config[:azure_vm_name] || @name_args[0]}.")
           end
         else
           ## server could not be found ##
-          ui.error("chef-client run logs could not be fetched since role #{locate_config_value(:azure_vm_name) || @name_args[0]} could not be found.")
+          ui.error("chef-client run logs could not be fetched since role #{config[:azure_vm_name] || @name_args[0]} could not be found.")
         end
       end
     end

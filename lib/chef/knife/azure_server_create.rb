@@ -2,7 +2,7 @@
 # Author:: Barry Davis (barryd@jetstreamsoftware.com)
 # Author:: Adam Jacob (<adam@chef.io>)
 # Author:: Seth Chisamore (<schisamo@chef.io>)
-# Copyright:: Copyright 2010-2019, Chef Software Inc.
+# Copyright:: Copyright (c) Chef Software Inc.
 # License:: Apache License, Version 2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -196,7 +196,7 @@ class Chef
 
         config[:connection_port] = server_def[:port]
         config[:connection_protocol] = server_def[:connection_protocol]
-        config[:chef_node_name] = locate_config_value(:chef_node_name) || server_name
+        config[:chef_node_name] = config[:chef_node_name] || server_name
       rescue => error
         ui.error("Something went wrong. Please use -VV option for more details.")
         Chef::Log.debug(error.backtrace.join("\n").to_s)
@@ -216,7 +216,7 @@ class Chef
       alias host_descriptor server_name
 
       def plugin_finalize
-        if locate_config_value(:connection_protocol) == "cloud-api" && locate_config_value(:extended_logs)
+        if config[:connection_protocol] == "cloud-api" && config[:extended_logs]
           print "\nWaiting for the first chef-client run"
           fetch_chef_client_logs(Time.now, 30)
         end
@@ -228,8 +228,8 @@ class Chef
       def wait_until_virtual_machine_ready(retry_interval_in_seconds = 30)
         vm_status = nil
         begin
-          azure_vm_startup_timeout = locate_config_value(:azure_vm_startup_timeout).to_i
-          azure_vm_ready_timeout = locate_config_value(:azure_vm_ready_timeout).to_i
+          azure_vm_startup_timeout = config[:azure_vm_startup_timeout].to_i
+          azure_vm_ready_timeout = config[:azure_vm_ready_timeout].to_i
           vm_status = wait_for_virtual_machine_state(:vm_status_provisioning, azure_vm_startup_timeout, retry_interval_in_seconds)
           if vm_status != :vm_status_ready
             begin
@@ -242,7 +242,7 @@ class Chef
 
           msg_server_summary(@server)
 
-          if locate_config_value(:connection_protocol) == "cloud-api"
+          if config[:connection_protocol] == "cloud-api"
             extension_status = wait_for_resource_extension_state(:wagent_provisioning, 5, retry_interval_in_seconds)
 
             if extension_status != :extension_installing
@@ -323,7 +323,7 @@ class Chef
       end
 
       def get_virtual_machine_status
-        @server = service.get_role_server(locate_config_value(:azure_dns_name), locate_config_value(:azure_vm_name))
+        @server = service.get_role_server(config[:azure_dns_name], config[:azure_vm_name])
         if @server.nil?
           :vm_status_not_detected
         else
@@ -340,14 +340,14 @@ class Chef
       end
 
       def get_extension_status
-        deployment_name = service.deployment_name(locate_config_value(:azure_dns_name))
-        deployment = service.deployment("hostedservices/#{locate_config_value(:azure_dns_name)}/deployments/#{deployment_name}")
+        deployment_name = service.deployment_name(config[:azure_dns_name])
+        deployment = service.deployment("hostedservices/#{config[:azure_dns_name]}/deployments/#{deployment_name}")
         extension_status = {}
 
         if deployment.at_css("Deployment Name") != nil
           role_list_xml = deployment.css("RoleInstanceList RoleInstance")
           role_list_xml.each do |role|
-            if role.at_css("RoleName").text == locate_config_value(:azure_vm_name)
+            if role.at_css("RoleName").text == config[:azure_vm_name]
               lnx_waagent_fail_msg = "Failed to deserialize the status reported by the Guest Agent"
               waagent_status_msg = role.at_css("GuestAgentStatus FormattedMessage Message").text
               if role.at_css("GuestAgentStatus Status").text == "Ready"
@@ -384,32 +384,32 @@ class Chef
 
       def create_server_def
         server_def = {
-          azure_storage_account: locate_config_value(:azure_storage_account),
-          azure_api_host_name: locate_config_value(:azure_api_host_name),
-          azure_dns_name: locate_config_value(:azure_dns_name),
-          azure_vm_name: locate_config_value(:azure_vm_name),
-          azure_service_location: locate_config_value(:azure_service_location),
-          azure_os_disk_name: locate_config_value(:azure_os_disk_name),
-          azure_source_image: locate_config_value(:azure_source_image),
-          azure_vm_size: locate_config_value(:azure_vm_size),
-          tcp_endpoints: locate_config_value(:tcp_endpoints),
-          udp_endpoints: locate_config_value(:udp_endpoints),
-          connection_protocol: locate_config_value(:connection_protocol),
-          azure_connect_to_existing_dns: locate_config_value(:azure_connect_to_existing_dns),
-          connection_user: locate_config_value(:connection_user),
-          azure_availability_set: locate_config_value(:azure_availability_set),
-          azure_affinity_group: locate_config_value(:azure_affinity_group),
-          azure_network_name: locate_config_value(:azure_network_name),
-          azure_subnet_name: locate_config_value(:azure_subnet_name),
-          ssl_cert_fingerprint: locate_config_value(:thumbprint),
-          cert_path: locate_config_value(:cert_path),
-          cert_password: locate_config_value(:cert_passphrase),
-          winrm_ssl: locate_config_value(:winrm_ssl),
-          winrm_max_timeout: locate_config_value(:winrm_max_timeout).to_i * 60 * 1000, # converting minutes to milliseconds
-          winrm_max_memory_per_shell: locate_config_value(:winrm_max_memory_per_shell),
+          azure_storage_account: config[:azure_storage_account],
+          azure_api_host_name: config[:azure_api_host_name],
+          azure_dns_name: config[:azure_dns_name],
+          azure_vm_name: config[:azure_vm_name],
+          azure_service_location: config[:azure_service_location],
+          azure_os_disk_name: config[:azure_os_disk_name],
+          azure_source_image: config[:azure_source_image],
+          azure_vm_size: config[:azure_vm_size],
+          tcp_endpoints: config[:tcp_endpoints],
+          udp_endpoints: config[:udp_endpoints],
+          connection_protocol: config[:connection_protocol],
+          azure_connect_to_existing_dns: config[:azure_connect_to_existing_dns],
+          connection_user: config[:connection_user],
+          azure_availability_set: config[:azure_availability_set],
+          azure_affinity_group: config[:azure_affinity_group],
+          azure_network_name: config[:azure_network_name],
+          azure_subnet_name: config[:azure_subnet_name],
+          ssl_cert_fingerprint: config[:thumbprint],
+          cert_path: config[:cert_path],
+          cert_password: config[:cert_passphrase],
+          winrm_ssl: config[:winrm_ssl],
+          winrm_max_timeout: config[:winrm_max_timeout].to_i * 60 * 1000, # converting minutes to milliseconds
+          winrm_max_memory_per_shell: config[:winrm_max_memory_per_shell],
         }
 
-        if locate_config_value(:connection_protocol) == "cloud-api"
+        if config[:connection_protocol] == "cloud-api"
           server_def[:chef_extension] = get_chef_extension_name
           server_def[:chef_extension_publisher] = get_chef_extension_publisher
           server_def[:chef_extension_version] = get_chef_extension_version
@@ -420,20 +420,20 @@ class Chef
             # We can specify the AdminUsername after API version 2013-03-01. However, in this API version,
             # the AdminUsername is a required parameter.
             # Also, the user name cannot be Administrator, Admin, Admin1 etc, for enhanced security (provided by Azure)
-            if locate_config_value(:connection_user).nil? || locate_config_value(:connection_user).downcase =~ /admin*/
+            if config[:connection_user].nil? || config[:connection_user].downcase =~ /admin*/
               ui.error("Connection User is compulsory parameter and it cannot be named 'admin*'")
               exit 1
             # take cares of when user name contains domain
             # azure add role api doesn't support '\\' in user name
-            elsif locate_config_value(:connection_user).split('\\').length.eql?(2)
-              server_def[:connection_user] = locate_config_value(:connection_user).split('\\')[1]
+            elsif config[:connection_user].split('\\').length.eql?(2)
+              server_def[:connection_user] = config[:connection_user].split('\\')[1]
             end
           else
-            unless locate_config_value(:connection_user)
+            unless config[:connection_user]
               ui.error("Connection User is compulsory parameter")
               exit 1
             end
-            unless locate_config_value(:connection_password) || locate_config_value(:ssh_identity_file)
+            unless config[:connection_password] || config[:ssh_identity_file]
               ui.error("Specify either SSH Key or SSH Password")
               exit 1
             end
@@ -442,52 +442,52 @@ class Chef
 
         if is_image_windows?
           server_def[:os_type] = "Windows"
-          server_def[:admin_password] = locate_config_value(:connection_password)
-          server_def[:connection_protocol] = locate_config_value(:connection_protocol) || "winrm"
+          server_def[:admin_password] = config[:connection_password]
+          server_def[:connection_protocol] = config[:connection_protocol] || "winrm"
         else
           server_def[:os_type] = "Linux"
-          server_def[:connection_protocol] = locate_config_value(:connection_protocol).nil? || locate_config_value(:connection_protocol) == "winrm" ? "ssh" : locate_config_value(:connection_protocol)
-          server_def[:connection_user] = locate_config_value(:connection_user)
-          server_def[:connection_password] = locate_config_value(:connection_password)
-          server_def[:ssh_identity_file] = locate_config_value(:ssh_identity_file)
-          server_def[:identity_file_passphrase] = locate_config_value(:identity_file_passphrase)
+          server_def[:connection_protocol] = config[:connection_protocol].nil? || config[:connection_protocol] == "winrm" ? "ssh" : config[:connection_protocol]
+          server_def[:connection_user] = config[:connection_user]
+          server_def[:connection_password] = config[:connection_password]
+          server_def[:ssh_identity_file] = config[:ssh_identity_file]
+          server_def[:identity_file_passphrase] = config[:identity_file_passphrase]
         end
 
-        azure_connect_to_existing_dns = locate_config_value(:azure_connect_to_existing_dns)
+        azure_connect_to_existing_dns = config[:azure_connect_to_existing_dns]
         if is_image_windows? && server_def[:connection_protocol] == "winrm"
-          port = locate_config_value(:connection_port) || "5985"
-          port = locate_config_value(:connection_port) || Random.rand(64000) + 1000 if azure_connect_to_existing_dns
+          port = config[:connection_port] || "5985"
+          port = config[:connection_port] || Random.rand(64000) + 1000 if azure_connect_to_existing_dns
         elsif server_def[:connection_protocol] == "ssh"
-          port = locate_config_value(:connection_port) || "22"
-          port = locate_config_value(:connection_port) || Random.rand(64000) + 1000 if azure_connect_to_existing_dns
+          port = config[:connection_port] || "22"
+          port = config[:connection_port] || Random.rand(64000) + 1000 if azure_connect_to_existing_dns
         end
 
         server_def[:port] = port
 
-        server_def[:is_vm_image] = service.vm_image?(locate_config_value(:azure_source_image))
-        server_def[:azure_domain_name] = locate_config_value(:azure_domain_name) if locate_config_value(:azure_domain_name)
+        server_def[:is_vm_image] = service.vm_image?(config[:azure_source_image])
+        server_def[:azure_domain_name] = config[:azure_domain_name] if config[:azure_domain_name]
 
-        if locate_config_value(:azure_domain_user)
+        if config[:azure_domain_user]
           # extract domain name since it should be part of username
-          case locate_config_value(:azure_domain_user)
+          case config[:azure_domain_user]
           when /(\S+)\\(.+)/ # format - fully-qualified-DNS-domain\username
-            server_def[:azure_domain_name] = $1 if locate_config_value(:azure_domain_name).nil?
+            server_def[:azure_domain_name] = $1 if config[:azure_domain_name].nil?
             server_def[:azure_user_domain_name] = $1
             server_def[:azure_domain_user] = $2
           when /(.+)@(\S+)/ # format - user@fully-qualified-DNS-domain
-            server_def[:azure_domain_name] = $2 if locate_config_value(:azure_domain_name).nil?
+            server_def[:azure_domain_name] = $2 if config[:azure_domain_name].nil?
             server_def[:azure_user_domain_name] = $2
             server_def[:azure_domain_user] = $1
           else
-            if locate_config_value(:azure_domain_name).nil?
+            if config[:azure_domain_name].nil?
               ui.error('--azure-domain-name should be specified if --azure-domain-user is not in one of the following formats: fully-qualified-DNS-domain\username, user@fully-qualified-DNS-domain')
               exit 1
             end
-            server_def[:azure_domain_user] = locate_config_value(:azure_domain_user)
+            server_def[:azure_domain_user] = config[:azure_domain_user]
           end
         end
-        server_def[:azure_domain_passwd] = locate_config_value(:azure_domain_passwd)
-        server_def[:azure_domain_ou_dn] = locate_config_value(:azure_domain_ou_dn)
+        server_def[:azure_domain_passwd] = config[:azure_domain_passwd]
+        server_def[:azure_domain_ou_dn] = config[:azure_domain_ou_dn]
 
         server_def
       end
@@ -499,17 +499,17 @@ class Chef
       end
 
       def set_configs
-        unless locate_config_value(:connection_user).nil?
-          config[:connection_user] = locate_config_value(:connection_user)
+        unless config[:connection_user].nil?
+          config[:connection_user] = config[:connection_user]
         end
 
-        unless locate_config_value(:connection_password).nil?
-          config[:connection_password] = locate_config_value(:connection_password)
+        unless config[:connection_password].nil?
+          config[:connection_password] = config[:connection_password]
         end
 
-        config[:azure_dns_name] = get_dns_name(locate_config_value(:azure_dns_name))
-        config[:azure_vm_name] = locate_config_value(:azure_dns_name) unless locate_config_value(:azure_vm_name)
-        config[:chef_node_name] = locate_config_value(:azure_vm_name) unless locate_config_value(:chef_node_name)
+        config[:azure_dns_name] = get_dns_name(config[:azure_dns_name])
+        config[:azure_vm_name] = config[:azure_dns_name] unless config[:azure_vm_name]
+        config[:chef_node_name] = config[:azure_vm_name] unless config[:chef_node_name]
       end
 
       # This is related to Windows VM's specifically and computer name
@@ -520,10 +520,10 @@ class Chef
       def get_dns_name(azure_dns_name, prefix = "az-")
         return azure_dns_name unless azure_dns_name.nil?
 
-        if locate_config_value(:azure_vm_name).nil?
+        if config[:azure_vm_name].nil?
           (prefix + SecureRandom.hex((MAX_VM_NAME_CHARACTERS - prefix.length) / 2))
         else
-          locate_config_value(:azure_vm_name)
+          config[:azure_vm_name]
         end
       end
     end

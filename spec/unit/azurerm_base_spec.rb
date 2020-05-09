@@ -1,6 +1,6 @@
 #
 # Author:: Dheeraj Dubey (<dheeraj.dubey@msystechnologies.com>)
-# Copyright:: Copyright 2010-2020, Chef Software Inc.
+# Copyright:: Copyright (c) Chef Software Inc.
 # License:: Apache License, Version 2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,10 +30,10 @@ describe Chef::Knife::AzurermBase do
     end
   end
   before do
-    @dummy = Chef::Knife::DummyClass.new
-    Chef::Config[:knife][:azure_api_host_name] = "preview.core.windows-int.net"
-    Chef::Config[:knife][:azure_subscription_id] = "azure_subscription_id"
-    Chef::Config[:knife][:azure_mgmt_cert] = @cert_file
+    @dummy = create_arm_instance(Chef::Knife::DummyClass)
+    @dummy.config[:azure_api_host_name] = "preview.core.windows-int.net"
+    @dummy.config[:azure_subscription_id] = "azure_subscription_id"
+    @dummy.config[:azure_mgmt_cert] = @cert_file
     allow(@dummy.ui).to receive(:error)
     @arm_server_instance = create_arm_instance(Chef::Knife::AzurermServerList)
     @service = @arm_server_instance.service
@@ -44,55 +44,55 @@ describe Chef::Knife::AzurermBase do
   describe "azurerm base tests - " do
     context "Tests for publish settings file" do
       before do
-        Chef::Config[:knife][:azure_api_host_name] = nil
-        Chef::Config[:knife][:azure_subscription_id] = nil
+        @dummy.config[:azure_api_host_name] = nil
+        @dummy.config[:azure_subscription_id] = nil
       end
 
       def validate_cert
-        expect(Chef::Config[:knife][:azure_mgmt_cert]).to include("-----BEGIN CERTIFICATE-----")
-        expect(Chef::Config[:knife][:azure_mgmt_cert]).to include("-----END CERTIFICATE-----")
-        expect(Chef::Config[:knife][:azure_mgmt_cert]).to include("-----BEGIN RSA PRIVATE KEY-----")
-        expect(Chef::Config[:knife][:azure_mgmt_cert]).to include("-----END RSA PRIVATE KEY-----")
+        expect(@dummy.config[:azure_mgmt_cert]).to include("-----BEGIN CERTIFICATE-----")
+        expect(@dummy.config[:azure_mgmt_cert]).to include("-----END CERTIFICATE-----")
+        expect(@dummy.config[:azure_mgmt_cert]).to include("-----BEGIN RSA PRIVATE KEY-----")
+        expect(@dummy.config[:azure_mgmt_cert]).to include("-----END RSA PRIVATE KEY-----")
       end
 
       it "- should continue to regular flow if publish settings file not provided" do
         allow(@dummy).to receive(:get_azure_profile_file_path).and_return(File.dirname(__FILE__) + "/assets/azure-profile-files/C_account_azure_arm_profile.json")
-        Chef::Config[:knife][:azure_api_host_name] = "preview.core.windows-int.net"
-        Chef::Config[:knife][:azure_subscription_id] = "azure_subscription_id"
+        @dummy.config[:azure_api_host_name] = "preview.core.windows-int.net"
+        @dummy.config[:azure_subscription_id] = "azure_subscription_id"
+        allow(Chef::Platform).to receive(:windows?).and_return(false)
         @dummy.validate_arm_keys!
-        expect(Chef::Config[:knife][:azure_api_host_name]).to be == "preview.core.windows-int.net"
-        expect(Chef::Config[:knife][:azure_subscription_id]).to be == "azure_subscription_id"
+        expect(@dummy.config[:azure_api_host_name]).to be == "preview.core.windows-int.net"
+        expect(@dummy.config[:azure_subscription_id]).to be == "azure_subscription_id"
       end
 
       it "- should validate extract parameters" do
-        Chef::Config[:knife][:azure_publish_settings_file] = get_publish_settings_file_path("azureValid.publishsettings")
+        @dummy.config[:azure_publish_settings_file] = get_publish_settings_file_path("azureValid.publishsettings")
         @dummy.validate_arm_keys!
-        expect(Chef::Config[:knife][:azure_api_host_name]).to be == "management.core.windows.net"
-        expect(Chef::Config[:knife][:azure_subscription_id]).to be == "id1"
+        expect(@dummy.config[:azure_api_host_name]).to be == "management.core.windows.net"
+        expect(@dummy.config[:azure_subscription_id]).to be == "id1"
         validate_cert
       end
 
       it "- should validate parse method" do
         @dummy.parse_publish_settings_file(get_publish_settings_file_path("azureValid.publishsettings"))
-        expect(Chef::Config[:knife][:azure_api_host_name]).to be == "management.core.windows.net"
-        expect(Chef::Config[:knife][:azure_subscription_id]).to be == "id1"
+        expect(@dummy.config[:azure_api_host_name]).to be == "management.core.windows.net"
+        expect(@dummy.config[:azure_subscription_id]).to be == "id1"
         validate_cert
       end
 
       it "- should validate parse method for SchemaVersion2-0 publishsettings file" do
         @dummy.parse_publish_settings_file(get_publish_settings_file_path("azureValidSchemaVersion-2.0.publishsettings"))
-        expect(Chef::Config[:knife][:azure_api_host_name]).to be == "management.core.windows.net"
-        expect(Chef::Config[:knife][:azure_subscription_id]).to be == "id1"
+        expect(@dummy.config[:azure_api_host_name]).to be == "management.core.windows.net"
+        expect(@dummy.config[:azure_subscription_id]).to be == "id1"
         validate_cert
       end
 
       it "- should validate settings file and subscrition id" do
         @dummy.config[:azure_subscription_id] = "azure_subscription_id"
-        Chef::Config[:knife][:azure_publish_settings_file] = get_publish_settings_file_path("azureValid.publishsettings")
+        @dummy.config[:azure_publish_settings_file] = get_publish_settings_file_path("azureValid.publishsettings")
         @dummy.validate_arm_keys!
-        expect(Chef::Config[:knife][:azure_api_host_name]).to be == "management.core.windows.net"
-        expect(@dummy.config[:azure_subscription_id]).to be == "azure_subscription_id"
-        expect(Chef::Config[:knife][:azure_subscription_id]).to be == "id1"
+        expect(@dummy.config[:azure_api_host_name]).to be == "management.core.windows.net"
+        expect(@dummy.config[:azure_subscription_id]).to be == "id1"
         validate_cert
       end
     end
@@ -302,9 +302,9 @@ describe Chef::Knife::AzurermBase do
 
     context "ARM Authentication test cases" do
       before do
-        Chef::Config[:knife][:azure_tenant_id] = "abeb039a-rfrgrggb48f-0c99bdc99d15"
-        Chef::Config[:knife][:azure_client_id] = "54dsdwe-3e2f36-e9f11d7f88a1"
-        Chef::Config[:knife][:azure_client_secret] = "xyz@123"
+        @arm_server_instance.config[:azure_tenant_id] = "abeb039a-rfrgrggb48f-0c99bdc99d15"
+        @arm_server_instance.config[:azure_client_id] = "54dsdwe-3e2f36-e9f11d7f88a1"
+        @arm_server_instance.config[:azure_client_secret] = "xyz@123"
       end
 
       it "using AD App creds for authentication" do
@@ -316,7 +316,7 @@ describe Chef::Knife::AzurermBase do
 
       it "using Token Authentication for Linux Platform" do
         token_details = { tokentype: "Bearer", user: "xxx@outlook.com", token: "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1iIxLjAifQ.hZjHXXjbSdMmMs9oSZxGKa62EnNG6jkTY4RSmq8dQMvmwHgDCF4KoT_sOIsrAJTVwXuCdxYa5Jr83sfydFwiO2QWWOaSgyRXGPouex4NXFI_LFdnRzhLBoN0ONwUWHrV12N4LBgHyNLiyfeZQJFCbD0LTcPdjh7qQZ5aVgcoz_CB33PGD_z2L_6ynWrlAoihLEmYD6vbebMDSSFazvzoVg", expiry_time: "2116-05-31T09:42:15.617Z", clientid: "dsff-8df-sd45e-34345f7b46", refreshtoken: "FPbm0gXiszvV_cMwGkgACwMBZ26fWA6fH3ToRLTHYU3wvvTWiU74ukRhMHhv20OJOtZBOtbckh3kTMT7QvzUYfd4uHFzwAYCtsh2SOY-dCAA" }
-        Chef::Config[:knife].delete(:azure_tenant_id)
+        @arm_server_instance.config.delete(:azure_tenant_id)
         allow(Chef::Platform).to receive(:windows?).and_return(false)
         allow(@arm_server_instance).to receive(:token_details_for_linux).and_return(token_details)
         @authentication_details = @arm_server_instance.authentication_details
@@ -325,9 +325,9 @@ describe Chef::Knife::AzurermBase do
 
       it "using Token Authentication for Windows Platform" do
         token_details = { tokentype: "Bearer", user: "xxx@outlook.com", token: "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1iIxLjAifQ.hZjHXXjbSdMmMs9oSZxGKa62EnNG6jkTY4RSmq8dQMvmwHgDCF4KoT_sOIsrAJTVwXuCdxYa5Jr83sfydFwiO2QWWOaSgyRXGPouex4NXFI_LFdnRzhLBoN0ONwUWHrV12N4LBgHyNLiyfeZQJFCbD0LTcPdjh7qQZ5aVgcoz_CB33PGD_z2L_6ynWrlAoihLEmYD6vbebMDSSFazvzoVg", expiry_time: "2116-05-31T09:42:15.617Z", clientid: "dsff-8df-sd45e-34345f7b46", refreshtoken: "FPbm0gXiszvV_cMwGkgACwMBZ26fWA6fH3ToRLTHYU3wvvTWiU74ukRhMHhv20OJOtZBOtbckh3kTMT7QvzUYfd4uHFzwAYCtsh2SOY-dCAA" }
-        Chef::Config[:knife].delete(:azure_tenant_id)
-        allow(Chef::Platform).to receive(:windows?).and_return(true)
-        allow(@arm_server_instance).to receive(:token_details_for_windows).and_return(token_details)
+        @arm_server_instance.config.delete(:azure_tenant_id)
+        expect(Chef::Platform).to receive(:windows?).and_return(true)
+        expect(@arm_server_instance).to receive(:token_details_for_windows).and_return(token_details)
         @authentication_details = @arm_server_instance.authentication_details
         expect(@authentication_details[:clientid]).to be == "dsff-8df-sd45e-34345f7b46"
       end
@@ -344,8 +344,8 @@ describe Chef::Knife::AzurermBase do
     context "find_file" do
       it "finds the file with given path" do
         file_path = get_publish_settings_file_path("azureValid.publishsettings")
-        Chef::Config[:knife][:azure_publish_settings_file] = file_path
-        expect(@dummy.find_file(Chef::Config[:knife][:azure_publish_settings_file])).to eq file_path
+        @dummy.config[:azure_publish_settings_file] = file_path
+        expect(@dummy.find_file(@dummy.config[:azure_publish_settings_file])).to eq file_path
       end
     end
   end

@@ -1,6 +1,6 @@
 #
 # Author:: Nimisha Sharad (nimisha.sharad@clogeny.com)
-# Copyright:: Copyright 2010-2019, Chef Software Inc.
+# Copyright:: Copyright (c) Chef Software Inc.
 # License:: Apache License, Version 2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -87,7 +87,7 @@ class Chef
       #### run() execution ends ####
 
       def set_ext_params
-        server = service.find_server(locate_config_value(:azure_resource_group_name), name_args[0])
+        server = service.find_server(config[:azure_resource_group_name], name_args[0])
 
         if server
           if service.extension_already_installed?(server)
@@ -107,16 +107,16 @@ class Chef
               raise "OS type #{server.storage_profile.os_disk.os_type} is not supported."
             end
 
-            ext_params[:azure_resource_group_name] = locate_config_value(:azure_resource_group_name)
+            ext_params[:azure_resource_group_name] = config[:azure_resource_group_name]
             ext_params[:azure_vm_name] = @name_args[0]
-            ext_params[:azure_service_location] = locate_config_value(:azure_service_location)
+            ext_params[:azure_service_location] = config[:azure_service_location]
             ext_params[:chef_extension_publisher] = get_chef_extension_publisher
             ext_params[:chef_extension_version] = get_chef_extension_version(ext_params[:chef_extension])
             ext_params[:chef_extension_public_param] = get_chef_extension_public_params
             ext_params[:chef_extension_private_param] = get_chef_extension_private_params
           end
         else
-          raise "The given server '#{@name_args[0]}' does not exist under resource group '#{locate_config_value(:azure_resource_group_name)}'"
+          raise "The given server '#{@name_args[0]}' does not exist under resource group '#{config[:azure_resource_group_name]}'"
         end
 
         ext_params

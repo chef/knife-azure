@@ -1,6 +1,6 @@
 #
 # Author:: Aliasgar Batterywala (<aliasgar.batterywala@clogeny.com>)
-# Copyright:: Copyright 2010-2020, Chef Software Inc.
+# Copyright:: Copyright (c) Chef Software Inc.
 # License:: Apache License, Version 2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,6 +18,7 @@
 
 require_relative "../spec_helper"
 require_relative "query_azure_mock"
+require_relative "../../lib/azure/resource_management/ARM_interface"
 require "chef/knife/bootstrap"
 
 describe Chef::Knife::BootstrapAzure do
@@ -28,7 +29,7 @@ describe Chef::Knife::BootstrapAzure do
   before do
     @bootstrap_azure_instance = create_instance(Chef::Knife::BootstrapAzure)
     @service = @bootstrap_azure_instance.service
-    Chef::Config[:knife][:azure_dns_name] = "test-dns-01"
+    @bootstrap_azure_instance.config[:azure_dns_name] = "test-dns-01"
     @bootstrap_azure_instance.name_args = ["test-vm-01"]
     @server_role = Azure::Role.new("connection")
     allow(@bootstrap_azure_instance.ui).to receive(:info)
@@ -38,19 +39,19 @@ describe Chef::Knife::BootstrapAzure do
 
   describe "parameters validation" do
     it "raises error when azure_subscription_id is not specified" do
-      Chef::Config[:knife].delete(:azure_subscription_id)
+      @bootstrap_azure_instance.config.delete(:azure_subscription_id)
       expect(@bootstrap_azure_instance.ui).to receive(:error)
       expect { @bootstrap_azure_instance.run }.to raise_error(SystemExit)
     end
 
     it "raises error when azure_mgmt_cert is not specified" do
-      Chef::Config[:knife].delete(:azure_mgmt_cert)
+      @bootstrap_azure_instance.config.delete(:azure_mgmt_cert)
       expect(@bootstrap_azure_instance.ui).to receive(:error)
       expect { @bootstrap_azure_instance.run }.to raise_error(SystemExit)
     end
 
     it "raises error when azure_api_host_name is not specified" do
-      Chef::Config[:knife].delete(:azure_api_host_name)
+      @bootstrap_azure_instance.config.delete(:azure_api_host_name)
       expect(@bootstrap_azure_instance.ui).to receive(:error)
       expect { @bootstrap_azure_instance.run }.to raise_error(SystemExit)
     end
@@ -103,7 +104,7 @@ describe Chef::Knife::BootstrapAzure do
     end
 
     it "raises error when hosted service name is not given but invalid server name is given" do
-      Chef::Config[:knife].delete(:azure_dns_name)
+      @bootstrap_azure_instance.config.delete(:azure_dns_name)
       expect(@bootstrap_azure_instance.name_args.length).to be == 1
       expect(@service).to_not receive(:add_extension)
       expect(@service).to receive(
@@ -117,7 +118,7 @@ describe Chef::Knife::BootstrapAzure do
     end
 
     context "server name specified do exist" do
-      context "hosted service name is specified in Chef::Config[:knife] object" do
+      context "hosted service name is specified in @bootstrap_azure_instance.config object" do
         before do
           @server_role.hostedservicename = "my_new_dns"
           allow(@server_role).to receive_message_chain(
@@ -145,14 +146,13 @@ describe Chef::Knife::BootstrapAzure do
             :find_server
           ).and_return(@server_role)
           expect { @bootstrap_azure_instance.run }.not_to raise_error
-          expect(Chef::Config[:knife][:azure_dns_name]).to be == "test-dns-01"
-          expect(@bootstrap_azure_instance.config[:azure_dns_name]).to be_nil
+          expect(@bootstrap_azure_instance.config[:azure_dns_name]).to be == "test-dns-01"
         end
       end
 
-      context "hosted service name is not specified in Chef::Config[:knife] object or anywhere else" do
+      context "hosted service name is not specified in @bootstrap_azure_instance.config object or anywhere else" do
         before do
-          Chef::Config[:knife].delete(:azure_dns_name)
+          @bootstrap_azure_instance.config.delete(:azure_dns_name)
           @server_role.hostedservicename = "my_new_dns"
           allow(@server_role).to receive_message_chain(
             :os_type, :downcase
@@ -180,7 +180,6 @@ describe Chef::Knife::BootstrapAzure do
           ).and_return(@server_role)
           expect { @bootstrap_azure_instance.run }.not_to raise_error
           expect(@bootstrap_azure_instance.config[:azure_dns_name]).to be == "my_new_dns"
-          expect(Chef::Config[:knife][:azure_dns_name]).to be_nil
         end
       end
     end
@@ -201,7 +200,7 @@ describe Chef::Knife::BootstrapAzure do
 
     context "when extended_logs is true" do
       before do
-        Chef::Config[:knife][:extended_logs] = true
+        @bootstrap_azure_instance.config[:extended_logs] = true
       end
 
       it "deploys the Chef Extension on the server and also waits and fetch the chef-client run logs" do
@@ -449,7 +448,7 @@ describe Chef::Knife::BootstrapAzure do
         chef_extension_version: "1210.12",
         chef_extension_public_param: "MyPublicParamsValue",
         chef_extension_private_param: "MyPrivateParamsValue",
-        azure_dns_name: Chef::Config[:knife][:azure_dns_name],
+        azure_dns_name: @bootstrap_azure_instance.config[:azure_dns_name],
       }
       @role = Azure::Role.new("connection")
     end
@@ -541,7 +540,7 @@ describe Chef::Knife::BootstrapAzure do
 
     context "when extension version is set in knife.rb" do
       before do
-        Chef::Config[:knife][:azure_chef_extension_version] = "1012.10"
+        @bootstrap_azure_instance.config[:azure_chef_extension_version] = "1012.10"
       end
 
       it "will pick up the extension version from knife.rb" do
@@ -552,7 +551,7 @@ describe Chef::Knife::BootstrapAzure do
 
     context "when extension version is not set in knife.rb" do
       before do
-        Chef::Config[:knife].delete(:azure_chef_extension_version)
+        @bootstrap_azure_instance.config.delete(:azure_chef_extension_version)
         extensions_list_xml = Nokogiri::XML(readFile("bootstrap_azure_role_xmls/extensions_list.xml"))
         allow(@service).to receive(
           :get_extension

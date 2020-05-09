@@ -1,6 +1,6 @@
 #
 # Author:: Adam Jacob (<adam@chef.io>)
-# Copyright:: Copyright 2010-2019, Chef Software Inc.
+# Copyright:: Copyright (c) Chef Software Inc.
 # License:: Apache License, Version 2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -36,7 +36,7 @@ class Chef
         get_azure_cli_version
         validate_arm_keys!
         begin
-          service.list_servers(locate_config_value(:azure_resource_group_name))
+          service.list_servers(config[:azure_resource_group_name])
         rescue => error
           service.common_arm_rescue_block(error)
         end

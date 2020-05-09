@@ -1,7 +1,7 @@
 #
 # Author:: Aliasgar Batterywala (aliasgar.batterywala@clogeny.com)
 #
-# Copyright:: Copyright 2010-2019, Chef Software Inc.
+# Copyright:: Copyright (c) Chef Software Inc.
 # License:: Apache License, Version 2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,7 +24,7 @@ class Chef
     module AzurermBase
       include Chef::Mixin::ShellOut
 
-      ## azure-xplat-cli versio that introduced deprecation of Windows Credentials
+      ## azure-xplat-cli version that introduced deprecation of Windows Credentials
       ## Manager (WCM) usage for authentication credentials storage purpose ##
       XPLAT_VERSION_WITH_WCM_DEPRECATED ||= "0.10.5".freeze
 
@@ -53,26 +53,18 @@ class Chef
 
       def service
         details = authentication_details
-        details.update(azure_subscription_id: locate_config_value(:azure_subscription_id))
+        details.update(azure_subscription_id: config[:azure_subscription_id])
         @service ||= begin
+                      require_relative "../../../azure/resource_management/ARM_interface"
                       service = Azure::ResourceManagement::ARMInterface.new(details)
                     end
         @service.ui = ui
         @service
       end
 
-      def locate_config_value(key)
-        key = key.to_sym
-        if defined?(config_value) # Inherited by bootstrap
-          config_value(key) || default_config[key]
-        else
-          config[key] || Chef::Config[:knife][key] || default_config[key]
-        end
-      end
-
       # validates ARM mandatory keys
       def validate_arm_keys!(*keys)
-        parse_publish_settings_file(locate_config_value(:azure_publish_settings_file)) unless locate_config_value(:azure_publish_settings_file).nil?
+        parse_publish_settings_file(config[:azure_publish_settings_file]) unless config[:azure_publish_settings_file].nil?
         keys.push(:azure_subscription_id)
 
         if azure_cred?
@@ -83,7 +75,7 @@ class Chef
 
         errors = []
         keys.each do |k|
-          if locate_config_value(k).nil?
+          if config[k].nil?
             errors << "You did not provide a valid '#{pretty_key(k)}' value. Please set knife[:#{k}] in your knife.rb."
           end
         end
@@ -94,7 +86,7 @@ class Chef
 
       def authentication_details
         if is_azure_cred?
-          return { azure_tenant_id: locate_config_value(:azure_tenant_id), azure_client_id: locate_config_value(:azure_client_id), azure_client_secret: locate_config_value(:azure_client_secret) }
+          return { azure_tenant_id: config[:azure_tenant_id], azure_client_id: config[:azure_client_id], azure_client_secret: config[:azure_client_secret] }
         elsif Chef::Platform.windows?
           token_details = token_details_for_windows
         else
@@ -175,8 +167,7 @@ class Chef
           raise login_message if result.stdout.nil? || result.stdout.empty?
         else
           home_dir = File.expand_path("~")
-          puts "File.exist? = #{File.exist?("a")}"
-          if !File.exist?(home_dir + "/.azure/accessTokens.json") || File.size?(home_dir + "/.azure/accessTokens.json") <= 2
+          if !File.exist?(home_dir + "/.azure/accessTokens.json") || ( File.size?(home_dir + "/.azure/accessTokens.json") <= 2 )
             raise login_message
           end
         end
@@ -194,15 +185,15 @@ class Chef
           # check given PublishSettings XML file format.Currently PublishSettings file have two different XML format
           if profile.attribute("SchemaVersion").nil?
             management_cert = OpenSSL::PKCS12.new(Base64.decode64(profile.attribute("ManagementCertificate").value))
-            Chef::Config[:knife][:azure_api_host_name] = URI(profile.attribute("Url").value).host
+            config[:azure_api_host_name] = URI(profile.attribute("Url").value).host
           elsif profile.attribute("SchemaVersion").value == "2.0"
             management_cert = OpenSSL::PKCS12.new(Base64.decode64(subscription.attribute("ManagementCertificate").value))
-            Chef::Config[:knife][:azure_api_host_name] = URI(subscription.attribute("ServiceManagementUrl").value).host
+            config[:azure_api_host_name] = URI(subscription.attribute("ServiceManagementUrl").value).host
           else
             ui.error("Publish settings file Schema not supported - " + filename)
           end
-          Chef::Config[:knife][:azure_mgmt_cert] = management_cert.certificate.to_pem + management_cert.key.to_pem
-          Chef::Config[:knife][:azure_subscription_id] = doc.at_css("Subscription").attribute("Id").value
+          config[:azure_mgmt_cert] = management_cert.certificate.to_pem + management_cert.key.to_pem
+          config[:azure_subscription_id] = doc.at_css("Subscription").attribute("Id").value
         rescue => error
           puts "#{error.class} and #{error.message}"
           exit 1
@@ -265,56 +256,56 @@ class Chef
       end
 
       def validate_params!
-        if locate_config_value(:connection_user).nil?
+        if config[:connection_user].nil?
           raise ArgumentError, "Please provide --connection-user option for authentication."
         end
 
-        unless locate_config_value(:connection_password).nil? ^ locate_config_value(:ssh_public_key).nil?
+        unless config[:connection_password].nil? ^ config[:ssh_public_key].nil?
           raise ArgumentError, "Please specify either --connection-password or --ssh-public-key option for authentication."
         end
 
-        if locate_config_value(:azure_vnet_subnet_name) && !locate_config_value(:azure_vnet_name)
+        if config[:azure_vnet_subnet_name] && !config[:azure_vnet_name]
           raise ArgumentError, "When --azure-vnet-subnet-name is specified, the --azure-vnet-name must also be specified."
         end
 
-        if locate_config_value(:azure_vnet_subnet_name) == "GatewaySubnet"
+        if config[:azure_vnet_subnet_name] == "GatewaySubnet"
           raise ArgumentError, "GatewaySubnet cannot be used as the name for --azure-vnet-subnet-name option. GatewaySubnet can only be used for virtual network gateways."
         end
 
-        if locate_config_value(:node_ssl_verify_mode) && !%w{none peer}.include?(locate_config_value(:node_ssl_verify_mode))
-          raise ArgumentError, "Invalid value '#{locate_config_value(:node_ssl_verify_mode)}' for --node-ssl-verify-mode. Use Valid values i.e 'none', 'peer'."
+        if config[:node_ssl_verify_mode] && !%w{none peer}.include?(config[:node_ssl_verify_mode])
+          raise ArgumentError, "Invalid value '#{config[:node_ssl_verify_mode]}' for --node-ssl-verify-mode. Use Valid values i.e 'none', 'peer'."
         end
 
         if !is_image_windows?
-          if (locate_config_value(:azure_vm_name).match /^(?=.*[a-zA-Z-])([a-zA-z0-9-]{1,64})$/).nil?
+          if (config[:azure_vm_name].match /^(?=.*[a-zA-Z-])([a-zA-z0-9-]{1,64})$/).nil?
             raise ArgumentError, "VM name can only contain alphanumeric and hyphen(-) characters and maximun length cannot exceed 64 charachters."
           end
-        elsif (locate_config_value(:azure_vm_name).match /^(?=.*[a-zA-Z-])([a-zA-z0-9-]{1,15})$/).nil?
+        elsif (config[:azure_vm_name].match /^(?=.*[a-zA-Z-])([a-zA-z0-9-]{1,15})$/).nil?
           raise ArgumentError, "VM name can only contain alphanumeric and hyphen(-) characters and maximun length cannot exceed 15 charachters."
         end
 
-        if locate_config_value(:server_count).to_i > 5
+        if config[:server_count].to_i > 5
           raise ArgumentError, "Maximum allowed value of --server-count is 5."
         end
 
-        if locate_config_value(:daemon)
+        if config[:daemon]
           unless is_image_windows?
             raise ArgumentError, "The daemon option is only support for Windows nodes."
           end
 
-          unless %w{none service task}.include?(locate_config_value(:daemon))
+          unless %w{none service task}.include?(config[:daemon])
             raise ArgumentError, "Invalid value for --daemon option. Use valid daemon values i.e 'none', 'service' and 'task'."
           end
         end
 
-        if locate_config_value(:azure_image_os_type)
-          unless %w{ubuntu centos rhel debian windows}.include?(locate_config_value(:azure_image_os_type))
+        if config[:azure_image_os_type]
+          unless %w{ubuntu centos rhel debian windows}.include?(config[:azure_image_os_type])
             raise ArgumentError, "Invalid value of --azure-image-os-type. Accepted values ubuntu|centos|rhel|debian|windows"
           end
         end
 
-        config[:ohai_hints] = format_ohai_hints(locate_config_value(:ohai_hints))
-        validate_ohai_hints unless locate_config_value(:ohai_hints).casecmp("default").zero?
+        config[:ohai_hints] = format_ohai_hints(config[:ohai_hints])
+        validate_ohai_hints unless config[:ohai_hints].casecmp("default").zero?
       end
 
       private
@@ -330,15 +321,15 @@ class Chef
       end
 
       def is_image_windows?
-        locate_config_value(:azure_image_reference_offer) =~ /WindowsServer.*/
+        config[:azure_image_reference_offer] =~ /WindowsServer.*/
       end
 
       def is_azure_cred?
-        locate_config_value(:azure_tenant_id) && locate_config_value(:azure_client_id) && locate_config_value(:azure_client_secret)
+        config[:azure_tenant_id] && config[:azure_client_id] && config[:azure_client_secret]
       end
 
       def azure_cred?
-        locate_config_value(:azure_tenant_id).nil? || locate_config_value(:azure_client_id).nil? || locate_config_value(:azure_client_secret).nil?
+        config[:azure_tenant_id].nil? || config[:azure_client_id].nil? || config[:azure_client_secret].nil?
       end
 
       def is_old_xplat?

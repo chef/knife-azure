@@ -1,6 +1,6 @@
 #
 # Author:: Mukta Aphale (mukta.aphale@clogeny.com)
-# Copyright:: Copyright 2010-2019, Chef Software Inc.
+# Copyright:: Copyright (c) Chef Software Inc.
 # License:: Apache License, Version 2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -142,7 +142,7 @@ module Azure
       puts "Certificate Thumbprint: #{@thumbprint.to_s.upcase}"
       puts "*" * 70
 
-      Chef::Config[:knife][:ca_trust_file] = file_path + ".pem" if Chef::Config[:knife][:ca_trust_file].nil?
+      config[:ca_trust_file] = file_path + ".pem" if config[:ca_trust_file].nil?
       cert_data = File.read (file_path + ".b64")
       add_certificate cert_data, @winrm_cert_passphrase, "pfx", cert_params[:azure_dns_name]
       @thumbprint

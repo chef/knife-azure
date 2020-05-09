@@ -1,5 +1,5 @@
 #
-# Copyright:: Copyright 2010-2020, Chef Software Inc.
+# Copyright:: Copyright (c) Chef Software Inc.
 # License:: Apache License, Version 2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -60,7 +60,7 @@ describe Chef::Knife::AzurermServerList do
 
   context "resource_group_name is not given" do
     before do
-      Chef::Config[:knife].delete(:azure_resource_group_name)
+      @arm_server_instance.config.delete(:azure_resource_group_name)
     end
 
     it "should display only labels if there are no servers" do
@@ -96,7 +96,7 @@ describe Chef::Knife::AzurermServerList do
 
   context "resource_group_name is given" do
     before do
-      Chef::Config[:knife][:azure_resource_group_name] = "myresourcegroup1"
+      @arm_server_instance.config[:azure_resource_group_name] = "myresourcegroup1"
     end
 
     it "should display only labels if there are no servers under the given resource_group" do
