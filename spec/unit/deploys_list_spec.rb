@@ -46,7 +46,7 @@ describe "deploys" do
   end
   it "each role should have values" do
     @connection.deploys.all.each do |deploy|
-    # describe_deploy deploy
+      # describe_deploy deploy
       deploy.roles.each do |role|
         # describe_role role
         expect(role.name).to_not be nil

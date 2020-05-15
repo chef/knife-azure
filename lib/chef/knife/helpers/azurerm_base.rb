@@ -99,7 +99,7 @@ class Chef
 
       def get_azure_cli_version
         if @azure_version != ""
-          get_version = shell_out!("azure -v || az -v | grep azure-cli", { returns: [0] }).stdout
+          get_version = shell_out!("azure -v || az -v | grep azure-cli", returns: [0]).stdout
           @azure_version = get_version.gsub(/[^0-9.]/, "")
         end
         @azure_prefix = @azure_version.to_i < 2 ? "azure" : "az"
