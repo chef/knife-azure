@@ -1,9 +1,17 @@
 # knife-azure Change Log
 
-<!-- latest_release -->
+<!-- latest_release 3.0.1 -->
+## [v3.0.1](https://github.com/chef/knife-azure/tree/v3.0.1) (2020-05-15)
+
+#### Merged Pull Requests
+- Fix deprecated keyword parameters warning. [#526](https://github.com/chef/knife-azure/pull/526) ([btm](https://github.com/btm))
 <!-- latest_release -->
 
-<!-- release_rollup -->
+<!-- release_rollup since=3.0.0 -->
+### Changes not yet released to rubygems.org
+
+#### Merged Pull Requests
+- Fix deprecated keyword parameters warning. [#526](https://github.com/chef/knife-azure/pull/526) ([btm](https://github.com/btm)) <!-- 3.0.1 -->
 <!-- release_rollup -->
 
 <!-- latest_stable_release -->
