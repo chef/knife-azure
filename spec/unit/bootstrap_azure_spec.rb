@@ -214,7 +214,7 @@ describe Chef::Knife::BootstrapAzure do
       end
 
       context "when Chef Extension becomes available/ready within the prescribed timeout" do
-        it "successfully deploys the Chef Extension on the server and also successfully fetches the chef-client run logs without raising any error" do
+        it "successfully deploys the Chef Extension on the server and also y fetches the chef-client run logs without raising any error" do
           expect(@bootstrap_azure_instance.name_args.length).to be == 1
           expect(@bootstrap_azure_instance).to receive(:set_ext_params)
           expect(@service).to receive(:add_extension)
@@ -567,7 +567,7 @@ describe Chef::Knife::BootstrapAzure do
   end
 
   describe "wait_until_extension_available" do
-    context "extension_availaibility_wait_time has exceeded the extension_availaibility_wait_timeout" do
+    context "extension_availability_wait_time has exceeded the extension_availability_wait_timeout" do
       before do
         @start_time = Time.now
       end
@@ -579,7 +579,7 @@ describe Chef::Knife::BootstrapAzure do
       end
     end
 
-    context "extension_availaibility_wait_time has not exceeded the extension_availaibility_wait_timeout" do
+    context "extension_availability_wait_time has not exceeded the extension_availability_wait_timeout" do
       context "deployment not available" do
         before do
           @start_time = Time.now

@@ -57,7 +57,7 @@ describe "ags" do
   end
 
   context "create a new affinity group" do
-    it "using explicity parameters it should pass in expected body" do
+    it "using explicitly parameters it should pass in expected body" do
       params = {
         azure_ag_name: "new-ag",
         azure_ag_desc: "ag description",

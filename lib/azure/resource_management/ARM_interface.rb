@@ -323,7 +323,7 @@ module Azure
         else
           ui.log("Creating ResourceGroup....\n\n")
           resource_group = create_resource_group(params)
-          Chef::Log.info("ResourceGroup creation successfull.")
+          Chef::Log.info("ResourceGroup creation successful.")
           Chef::Log.info("Resource Group name is: #{resource_group.name}")
           Chef::Log.info("Resource Group ID is: #{resource_group.id}")
         end
@@ -355,7 +355,7 @@ module Azure
 
           ui.log("Creating Virtual Machine....")
           deployment = create_virtual_machine_using_template(params)
-          ui.log("Virtual Machine creation successfull.") unless deployment.nil?
+          ui.log("Virtual Machine creation successful.") unless deployment.nil?
 
           unless deployment.nil?
             ui.log("Deployment name is: #{deployment.name}")

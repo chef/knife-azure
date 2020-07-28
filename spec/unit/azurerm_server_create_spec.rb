@@ -391,7 +391,7 @@ describe Chef::Knife::AzurermServerCreate do
 
           include_context "and other common parameters"
 
-          it "does not disable the passwod authentication" do
+          it "does not disable the password authentication" do
             @server_params = @arm_server_instance.create_server_def
             allow(File).to receive(:read).and_call_original
             expect(@server_params[:chef_extension_private_param][:validation_key]).to be == "foo"
@@ -427,7 +427,7 @@ describe Chef::Knife::AzurermServerCreate do
 
           include_context "and other common parameters"
 
-          it "disable the passwod authentication" do
+          it "disable the password authentication" do
             @server_params = @arm_server_instance.create_server_def
             allow(File).to receive(:read).and_call_original
             expect(@server_params[:chef_extension_private_param][:validation_key]).to be == "foo"

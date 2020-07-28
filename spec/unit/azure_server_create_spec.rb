@@ -822,7 +822,7 @@ describe Chef::Knife::AzureServerCreate do
     end
 
     context "get azure chef extension version" do
-      it "take user specified verison" do
+      it "take user specified version" do
         @server_instance.config[:azure_chef_extension_version] = "1200.12"
         expect(@server_instance.get_chef_extension_version).to eq("1200.12")
       end

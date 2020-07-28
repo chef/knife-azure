@@ -219,7 +219,7 @@ class Chef
       def msg_server_summary(server)
         puts "\n\n"
         if server.provisioningstate == "Succeeded"
-          Chef::Log.info("Server creation went successfull.")
+          Chef::Log.info("Server creation went successful.")
           puts "\nServer Details are:\n"
 
           msg_pair("Server ID", server.id)
@@ -240,7 +240,7 @@ class Chef
         puts "\n\n"
 
         if server.resources.provisioning_state == "Succeeded"
-          Chef::Log.info("Server Extension creation went successfull.")
+          Chef::Log.info("Server Extension creation went successful.")
           puts "\nServer Extension Details are:\n"
 
           msg_pair("Server Extension ID", server.resources.id)
@@ -278,10 +278,10 @@ class Chef
 
         if !is_image_windows?
           if (config[:azure_vm_name].match /^(?=.*[a-zA-Z-])([a-zA-z0-9-]{1,64})$/).nil?
-            raise ArgumentError, "VM name can only contain alphanumeric and hyphen(-) characters and maximun length cannot exceed 64 charachters."
+            raise ArgumentError, "VM name can only contain alphanumeric and hyphen(-) characters and maximum length cannot exceed 64 characters."
           end
         elsif (config[:azure_vm_name].match /^(?=.*[a-zA-Z-])([a-zA-z0-9-]{1,15})$/).nil?
-          raise ArgumentError, "VM name can only contain alphanumeric and hyphen(-) characters and maximun length cannot exceed 15 charachters."
+          raise ArgumentError, "VM name can only contain alphanumeric and hyphen(-) characters and maximum length cannot exceed 15 characters."
         end
 
         if config[:server_count].to_i > 5

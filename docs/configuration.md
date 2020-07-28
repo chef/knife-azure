@@ -18,7 +18,7 @@ Put the following in your `knife.rb`
 knife[:azure_tenant_id] # found via: tenantId=$(azure account show -s <subscriptionId> --json | jq -r '.[0].tenantId')
 knife[:azure_subscription_id] # found via: <subscriptionId>
 knife[:azure_client_id] # appId=$(azure ad app show --search <principleappcreated> --json | jq -r '.[0].appId')
-knife[:azure_client_secret] # password you set at initally
+knife[:azure_client_secret] # password you set at initially
 ```
 
 *Microsoft Azure encourages the use of Azure CLI 2.0. If you are still using [azure-xplat-cli](https://github.com/Azure/azure-xplat-cli) then you may simply run ```azure login``` and skip creating the service principal entirely.*
@@ -61,28 +61,28 @@ file, you can also specify it in PEM format. Follow these steps to generate the 
 1. Decode the certificate file:
 
     ### On Linux/Mac(Homebrew)
-    
+
         base64 -d cert.pfx > cert_decoded.pfx
-    
+
     ### On Windows
-    
+
     You can decode and extract the PFX file using     powershell or a free windows base 64 decoder     such as     http://www.fourmilab.ch/webtools/base64/base64.    zip,
-    
+
         base64.exe -d cert.pfx -> cert_decoded.pfx
-    
+
 1. Convert the decoded PFX file to a PEM file
 
     #### On Linux/Mac(Homebrew)
-    
+
         openssl pkcs12 -in cert_decoded.pfx -out     managementCertificate.pem -nodes
-    
+
     #### On Windows
      Use powershell & run following command. If     openssl.exe is not already installed it can be     downloaded from     http://www.openssl.org/related/binaries.html     (Note: openssl depends on Microsoft Visual C++     Redistributable package (x86) which must be     installed for openssl to function properly).
-    
+
         openssl base64 -d -A -in cert_decoded.pfx -out cert_decode.der
-    
+
         openssl pkcs12 -in cert_decoded.der -out managementCertificate.pem -nodes
-    
+
     You might be asked to enter a password which is     usually blank.
     You might be also asked to enter a passphrase.     Please enter the phrase of your choice.
 
