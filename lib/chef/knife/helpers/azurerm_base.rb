@@ -93,8 +93,7 @@ class Chef
           token_details = token_details_for_linux
         end
 
-        token_details = check_token_validity(token_details)
-        token_details
+        check_token_validity(token_details)
       end
 
       def get_azure_cli_version
@@ -122,8 +121,7 @@ class Chef
         home_dir = File.expand_path("~")
         file = File.read(home_dir + "/.azure/accessTokens.json")
         file = JSON.parse(file)
-        token_details = { tokentype: file[-1]["tokenType"], user: file[-1]["userId"], token: file[-1]["accessToken"], clientid: file[-1]["_clientId"], expiry_time: file[-1]["expiresOn"], refreshtoken: file[-1]["refreshToken"] }
-        token_details
+        { tokentype: file[-1]["tokenType"], user: file[-1]["userId"], token: file[-1]["accessToken"], clientid: file[-1]["_clientId"], expiry_time: file[-1]["expiresOn"], refreshtoken: file[-1]["refreshToken"] }
       end
 
       def is_token_valid?(token_details)

@@ -422,8 +422,7 @@ module Azure
         deploy_params = Deployment.new
         deploy_params.properties = deploy_prop
 
-        deployment = resource_management_client.deployments.create_or_update(params[:azure_resource_group_name], "#{params[:azure_vm_name]}_deploy", deploy_params)
-        deployment
+        resource_management_client.deployments.create_or_update(params[:azure_resource_group_name], "#{params[:azure_vm_name]}_deploy", deploy_params)
       end
 
       def create_vm_extension(params)
@@ -467,8 +466,7 @@ module Azure
           params[:chef_extension]
         ).last.name
         ext_version_split_values = ext_version.split(".")
-        ext_version = ext_version_split_values[0] + "." + ext_version_split_values[1]
-        ext_version
+        ext_version_split_values[0] + "." + ext_version_split_values[1]
       end
 
       def delete_resource_group(resource_group_name)
