@@ -26,11 +26,11 @@ class Chef
 
       include Knife::AzurermBase
 
+      # non option deps that we can lazily load only when we actually execute the plugin
       deps do
         # These two are needed for the '--purge' deletion case
         require "chef/node"
         require "chef/api_client"
-        include Knife::AzurermBase
       end
 
       banner "knife azurerm server delete SERVER [SERVER] (options)"

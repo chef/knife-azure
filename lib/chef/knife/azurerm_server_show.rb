@@ -26,10 +26,6 @@ class Chef
 
       banner "knife azurerm server show SERVER (options)"
 
-      deps do
-        include Knife::AzurermBase
-      end
-
       def run
         $stdout.sync = true
         # check azure cli version due to azure changed `azure` to `az` in azure-cli2.0

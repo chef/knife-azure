@@ -416,14 +416,14 @@ module QueryAzureMock
           retval = Nokogiri::XML readFile("list_hosts.xml")
         elsif name =~ %r{hostedservices/([-\w]*)$} && params == "embed-detail=true"
           retval = Nokogiri::XML readFile("list_deployments_for_service001.xml")
-        elsif name =~ %r{hostedservices/([-\w]*)$}
+        elsif %r{hostedservices/([-\w]*)$}.match?(name)
           service_name = %r{hostedservices/([-\w]*)}.match(name)[1]
           retval = lookup_resource_in_test_xml(service_name, "ServiceName", "HostedServices HostedService", "list_hosts.xml")
         elsif name == "hostedservices/service001/deploymentslots/Production"
           retval = Nokogiri::XML readFile("list_deployments_for_service001.xml")
         elsif name == "hostedservices/service001/deployments/deployment001/roles/role001"
           retval = Nokogiri::XML readFile("list_deployments_for_service001.xml")
-        elsif name =~ %r{hostedservices/[-\w]*/deployments/[-\w]*/roles/[-\w]*}
+        elsif %r{hostedservices/[-\w]*/deployments/[-\w]*/roles/[-\w]*}.match?(name)
           retval = Nokogiri::XML readFile("list_deployments_for_service005.xml")
         elsif name == "hostedservices/service002/deploymentslots/Production"
           retval = Nokogiri::XML readFile("list_deployments_for_service002.xml")
@@ -437,12 +437,12 @@ module QueryAzureMock
           retval = Nokogiri::XML readFile("list_deployments_for_service004.xml")
         elsif name == "storageservices"
           retval = Nokogiri::XML readFile("list_storageaccounts.xml")
-        elsif name =~ %r{storageservices/[-\w]*$}
+        elsif %r{storageservices/[-\w]*$}.match?(name)
           service_name = %r{storageservices/([-\w]*)}.match(name)[1]
           retval = lookup_resource_in_test_xml(service_name, "ServiceName", "StorageServices StorageService", "list_storageaccounts.xml")
         elsif name == "hostedservices/unknown_yet/certificates/sha1-9dbcac68f670a27cf5d9a4e6c4a8d097bff645e2"
           retval = Nokogiri::XML readFile("get_service_certificate_error.xml")
-        elsif /\b([a-f0-9]{40})\b/.match(name)
+        elsif /\b([a-f0-9]{40})\b/.match?(name)
           retval = Nokogiri::XML readFile("get_service_certificate.xml")
         else
           Chef::Log.warn "unknown get value:" + name
@@ -466,10 +466,10 @@ module QueryAzureMock
         elsif name == "hostedservices/service004/deployments/deployment004/roles"
           retval = Nokogiri::XML readFile("post_success.xml")
           @receivedXML = body
-        elsif name =~ %r{hostedservices/vm01.*/deployments}
+        elsif %r{hostedservices/vm01.*/deployments}.match?(name)
           retval = Nokogiri::XML readFile("post_success.xml")
           @receivedXML = body
-        elsif name =~ %r{hostedservices/vmname/deployments}
+        elsif %r{hostedservices/vmname/deployments}.match?(name)
           # Case when vm name and service name are same.
           retval = Nokogiri::XML readFile("post_success.xml")
           @receivedXML = body

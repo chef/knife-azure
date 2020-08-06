@@ -22,16 +22,16 @@ require_relative "helpers/azure_base"
 require "chef/knife/bootstrap"
 require "chef/knife/bootstrap/client_builder"
 require_relative "bootstrap/common_bootstrap_options"
-require_relative "bootstrap/bootstrapper"
 
 class Chef
   class Knife
     class AzureServerCreate < Knife::Bootstrap
       include Knife::AzureBase
       include Knife::Bootstrap::CommonBootstrapOptions
-      include Knife::Bootstrap::Bootstrapper
 
       deps do
+        require_relative "bootstrap/bootstrapper"
+        include Knife::Bootstrap::Bootstrapper
         require "securerandom"
         require "readline"
         require "chef/json_compat"

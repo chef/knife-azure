@@ -19,14 +19,19 @@
 require_relative "helpers/azure_base"
 require "chef/knife/bootstrap"
 require_relative "bootstrap/common_bootstrap_options"
-require_relative "bootstrap/bootstrapper"
+
 
 class Chef
   class Knife
     class BootstrapAzure < Knife::Bootstrap
       include Knife::AzureBase
       include Knife::Bootstrap::CommonBootstrapOptions
-      include Knife::Bootstrap::Bootstrapper
+
+      # non option deps that we can lazily load only when we actually execute the plugin
+      deps do
+        require_relative "bootstrap/bootstrapper"
+        include Knife::Bootstrap::Bootstrapper
+      end
 
       banner "knife bootstrap azure SERVER (options)"
 

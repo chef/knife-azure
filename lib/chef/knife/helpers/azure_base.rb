@@ -108,7 +108,7 @@ class Chef
       end
 
       def pretty_key(key)
-        key.to_s.tr("_", " ").gsub(/\w+/) { |w| w =~ /(ssh)|(aws)/i ? w.upcase : w.capitalize }
+        key.to_s.tr("_", " ").gsub(/\w+/) { |w| /(ssh)|(aws)/i.match?(w) ? w.upcase : w.capitalize }
       end
 
       # validate command pre-requisites (cli options)
@@ -292,9 +292,7 @@ class Chef
 
       def fetch_deployment
         deployment_name = service.deployment_name(config[:azure_dns_name])
-        deployment = service.deployment("hostedservices/#{config[:azure_dns_name]}/deployments/#{deployment_name}")
-
-        deployment
+        service.deployment("hostedservices/#{config[:azure_dns_name]}/deployments/#{deployment_name}")
       end
 
       def fetch_role

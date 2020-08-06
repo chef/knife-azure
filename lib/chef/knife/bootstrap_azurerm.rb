@@ -19,18 +19,18 @@
 require_relative "helpers/azurerm_base"
 require "chef/knife/bootstrap"
 require_relative "bootstrap/common_bootstrap_options"
-require_relative "bootstrap/bootstrapper"
 
 class Chef
   class Knife
     class BootstrapAzurerm < Knife::Bootstrap
       include Knife::AzurermBase
       include Knife::Bootstrap::CommonBootstrapOptions
-      include Knife::Bootstrap::Bootstrapper
 
+      # non option deps that we can lazily load only when we actually execute the plugin
       deps do
         require "time"
-        include Knife::AzurermBase
+        require_relative "bootstrap/bootstrapper"
+        include Knife::Bootstrap::Bootstrapper
       end
 
       banner "knife bootstrap azurerm SERVER (options)"
