@@ -292,9 +292,7 @@ class Chef
 
       def fetch_deployment
         deployment_name = service.deployment_name(config[:azure_dns_name])
-        deployment = service.deployment("hostedservices/#{config[:azure_dns_name]}/deployments/#{deployment_name}")
-
-        deployment
+        service.deployment("hostedservices/#{config[:azure_dns_name]}/deployments/#{deployment_name}")
       end
 
       def fetch_role
