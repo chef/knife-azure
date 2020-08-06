@@ -51,7 +51,7 @@ class Chef
         long: "--delete-resource-group",
         boolean: true,
         default: false,
-        description: "Deletes corresponding resource group along with Vitual Machine."
+        description: "Deletes corresponding resource group along with Virtual Machine."
 
       # Extracted from Chef::Knife.delete_object, because it has a
       # confirmation step built in... By specifying the '--purge'

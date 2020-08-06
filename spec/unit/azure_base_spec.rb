@@ -79,7 +79,7 @@ describe Chef::Knife::AzureBase do
         validate_cert
       end
 
-      it "- should validate settings file and subscrition id" do
+      it "- should validate settings file and subscription id" do
         @dummy.config[:azure_subscription_id] = "azure_subscription_id"
         @dummy.config[:azure_publish_settings_file] = get_publish_settings_file_path("azureValid.publishsettings")
         @dummy.validate_asm_keys!

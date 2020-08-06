@@ -85,7 +85,7 @@ module Azure
       ca.add_extension(ef.create_extension("keyUsage", "keyCertSign, cRLSign", true))
       ca.add_extension(ef.create_extension("subjectKeyIdentifier", "hash", false))
       ca.add_extension(ef.create_extension("authorityKeyIdentifier", "keyid:always", false))
-      ca.sign(key, OpenSSL::Digest::SHA256.new)
+      ca.sign(key, OpenSSL::Digest.new("SHA256"))
       # Generate the SHA1 fingerprint of the der format of the X 509 certificate
       @fingerprint = OpenSSL::Digest::SHA1.new(ca.to_der)
       # Create the pfx format of the certificate
@@ -216,7 +216,7 @@ module Azure
       cert.add_extension(ef.create_extension("subjectKeyIdentifier", "hash", false))
       cert.add_extension(ef.create_extension("authorityKeyIdentifier", "keyid:always", false))
       cert.add_extension(ef.create_extension("extendedKeyUsage", "1.3.6.1.5.5.7.3.1", false))
-      cert.sign(rsa_key, OpenSSL::Digest::SHA1.new)
+      cert.sign(rsa_key, OpenSSL::Digest.new("SHA1"))
       @thumbprint = OpenSSL::Digest::SHA1.new(cert.to_der)
       cert
     end

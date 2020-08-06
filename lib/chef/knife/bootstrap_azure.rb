@@ -139,10 +139,10 @@ class Chef
         ext_params
       end
 
-      def wait_until_extension_available(extension_deploy_start_time, extension_availaibility_wait_timeout)
-        extension_availaibility_wait_time = ((Time.now - extension_deploy_start_time) / 60).round
-        if extension_availaibility_wait_time <= extension_availaibility_wait_timeout
-          ## extension availaibility wait time has not exceeded the maximum threshold set for the wait timeout ##
+      def wait_until_extension_available(extension_deploy_start_time, extension_availability_wait_timeout)
+        extension_availability_wait_time = ((Time.now - extension_deploy_start_time) / 60).round
+        if extension_availability_wait_time <= extension_availability_wait_timeout
+          ## extension availability wait time has not exceeded the maximum threshold set for the wait timeout ##
           my_role = nil
           sleep_and_wait = false
           deployment = fetch_deployment
@@ -178,12 +178,12 @@ class Chef
             sleep 30
             wait_until_extension_available(
               extension_deploy_start_time,
-              extension_availaibility_wait_timeout
+              extension_availability_wait_timeout
             )
           end
         else
-          ## extension availaibility wait time exceeded maximum threshold set for the wait timeout ##
-          raise "\nUnable to fetch chef-client run logs as Chef Extension seems to be unavailable even after #{extension_availaibility_wait_timeout} minutes of its deployment.\n"
+          ## extension availability wait time exceeded maximum threshold set for the wait timeout ##
+          raise "\nUnable to fetch chef-client run logs as Chef Extension seems to be unavailable even after #{extension_availability_wait_timeout} minutes of its deployment.\n"
         end
       end
     end

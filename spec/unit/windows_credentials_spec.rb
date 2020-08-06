@@ -115,7 +115,7 @@ describe Chef::Knife::AzurermBase, :windows_only do
       expect(latest_target).to be == "target"
     end
 
-    it "should remove 'Target:' and extra speces from the target string for single target" do
+    it "should remove 'Target:' and extra spaces from the target string for single target" do
       targets = ["   Target:target   "]
       latest_target = @windows_credentials.latest_credential_target(targets)
       expect(latest_target).to be == "target"

@@ -123,8 +123,8 @@ module Azure
       def target_name
         # cmdkey command is used for accessing windows credential manager.
         # Multiple credentials get created in windows credential manager for a single Azure account in xplat-cli
-        # One of them is for common tanent id, which can't be used
-        # Others end with --0-x,--1-x,--2-x etc, where x represents the total no. of credentails across which the token is divided
+        # One of them is for common tenant id, which can't be used
+        # Others end with --0-x,--1-x,--2-x etc, where x represents the total no. of credentials across which the token is divided
         # The one ending with --0-x has the complete accessToken in the credentialBlob.
         # Refresh Token is split across both credentials (ending with --0-x and --1-x).
         # Xplat splits the credentials based on the number of bytes of the tokens.

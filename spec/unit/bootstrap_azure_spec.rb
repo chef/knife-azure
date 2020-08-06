@@ -567,7 +567,7 @@ describe Chef::Knife::BootstrapAzure do
   end
 
   describe "wait_until_extension_available" do
-    context "extension_availaibility_wait_time has exceeded the extension_availaibility_wait_timeout" do
+    context "extension_availability_wait_time has exceeded the extension_availability_wait_timeout" do
       before do
         @start_time = Time.now
       end
@@ -579,7 +579,7 @@ describe Chef::Knife::BootstrapAzure do
       end
     end
 
-    context "extension_availaibility_wait_time has not exceeded the extension_availaibility_wait_timeout" do
+    context "extension_availability_wait_time has not exceeded the extension_availability_wait_timeout" do
       context "deployment not available" do
         before do
           @start_time = Time.now

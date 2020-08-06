@@ -132,7 +132,7 @@ describe Chef::Knife::AzureServerDelete do
     @server_instance.run
   end
 
-  it "dont cleanup hosted service when --preserve-azure-dns-name param set" do
+  it "don't cleanup hosted service when --preserve-azure-dns-name param set" do
     @server_instance.name_args = ["role001"]
     @server_instance.config[:preserve_azure_dns_name] = true
     expect(@server_instance.ui).to receive(:warn).twice
