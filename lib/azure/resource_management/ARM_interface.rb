@@ -29,18 +29,6 @@ module Azure
       include Azure::ARM::ARMDeploymentTemplate
       include Azure::ARM::VnetConfig
 
-      include Azure::Resources::Mgmt::V2018_05_01
-      include Azure::Resources::Mgmt::V2018_05_01::Models
-
-      include Azure::Compute::Mgmt::V2018_06_01
-      include Azure::Compute::Mgmt::V2018_06_01::Models
-
-      include Azure::Storage::Mgmt::V2018_07_01
-      include Azure::Storage::Mgmt::V2018_07_01::Models
-
-      include Azure::Network::Mgmt::V2018_08_01
-      include Azure::Network::Mgmt::V2018_08_01::Models
-
       attr_accessor :connection
 
       def initialize(params = {})
@@ -56,7 +44,7 @@ module Azure
 
       def resource_management_client
         @resource_management_client ||= begin
-          resource_management_client = ResourceManagementClient.new(@credentials)
+          resource_management_client = ::Azure::Resources::Profiles::Latest::Mgmt::Client.new(@credentials)
           resource_management_client.subscription_id = @azure_subscription_id
           resource_management_client
         end
@@ -64,7 +52,7 @@ module Azure
 
       def compute_management_client
         @compute_management_client ||= begin
-          compute_management_client = ComputeManagementClient.new(@credentials)
+          compute_management_client = ::Azure::Compute::Profiles::Latest::Mgmt::Client.new(@credentials)
           compute_management_client.subscription_id = @azure_subscription_id
           compute_management_client
         end
@@ -72,7 +60,7 @@ module Azure
 
       def storage_management_client
         @storage_management_client ||= begin
-          storage_management_client = StorageManagementClient.new(@credentials)
+          storage_management_client = ::Azure::Storage::Profiles::Latest::Mgmt::Client.new(@credentials)
           storage_management_client.subscription_id = @azure_subscription_id
           storage_management_client
         end
@@ -80,7 +68,7 @@ module Azure
 
       def network_resource_client
         @network_resource_client ||= begin
-          network_resource_client = NetworkManagementClient.new(@credentials)
+          network_resource_client = ::Azure::Network::Profiles::Latest::Mgmt::Client.new(@credentials)
           network_resource_client.subscription_id = @azure_subscription_id
           network_resource_client
         end
