@@ -24,7 +24,7 @@ if Chef::Platform.windows?
   require "azure/resource_management/windows_credentials"
 end
 
-require "fileutils"
+require "fileutils" unless defined?(FileUtils)
 require "knife-azure/version"
 
 def temp_dir

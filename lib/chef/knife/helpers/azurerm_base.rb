@@ -35,8 +35,8 @@ class Chef
             require "chef/json_compat"
             require_relative "../../../azure/resource_management/ARM_interface"
             require "chef/mixin/shell_out"
-            require "time"
-            require "json"
+            require "time" unless defined?(Time)
+            require "json" unless defined?(JSON)
 
             if Chef::Platform.windows?
               require_relative "../../azure/resource_management/windows_credentials"
@@ -172,10 +172,10 @@ class Chef
       end
 
       def parse_publish_settings_file(filename)
-        require "nokogiri"
-        require "base64"
-        require "openssl"
-        require "uri"
+        require "nokogiri" unless defined?(Nokogiri)
+        require "base64" unless defined?(Base64)
+        require "openssl" unless defined?(OpenSSL)
+        require "uri" unless defined?(URI)
         begin
           doc = Nokogiri::XML(File.open(find_file(filename)))
           profile = doc.at_css("PublishProfile")

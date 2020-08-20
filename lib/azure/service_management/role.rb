@@ -16,7 +16,7 @@
 # limitations under the License.
 #
 
-require "securerandom"
+require "securerandom" unless defined?(SecureRandom)
 require_relative "utility"
 
 module Azure

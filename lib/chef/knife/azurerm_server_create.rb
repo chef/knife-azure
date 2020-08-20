@@ -31,7 +31,7 @@ class Chef
       include Knife::Bootstrap::Bootstrapper
 
       deps do
-        require "securerandom"
+        require "securerandom" unless defined?(SecureRandom)
         include Knife::AzurermBase
       end
 

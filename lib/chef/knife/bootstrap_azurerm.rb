@@ -29,7 +29,7 @@ class Chef
       include Knife::Bootstrap::Bootstrapper
 
       deps do
-        require "time"
+        require "time" unless defined?(Time)
         include Knife::AzurermBase
       end
 
