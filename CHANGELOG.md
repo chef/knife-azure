@@ -1,9 +1,17 @@
 # knife-azure Change Log
 
-<!-- latest_release -->
+<!-- latest_release 3.0.5 -->
+## [v3.0.5](https://github.com/chef/knife-azure/tree/v3.0.5) (2020-08-21)
+
+#### Merged Pull Requests
+- Optimize our requires [#533](https://github.com/chef/knife-azure/pull/533) ([tas50](https://github.com/tas50))
 <!-- latest_release -->
 
-<!-- release_rollup -->
+<!-- release_rollup since=3.0.4 -->
+### Changes not yet released to rubygems.org
+
+#### Merged Pull Requests
+- Optimize our requires [#533](https://github.com/chef/knife-azure/pull/533) ([tas50](https://github.com/tas50)) <!-- 3.0.5 -->
 <!-- release_rollup -->
 
 <!-- latest_stable_release -->
