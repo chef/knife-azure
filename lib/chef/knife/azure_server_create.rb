@@ -32,7 +32,7 @@ class Chef
       include Knife::Bootstrap::Bootstrapper
 
       deps do
-        require "securerandom"
+        require "securerandom" unless defined?(SecureRandom)
         require "readline"
         require "chef/json_compat"
         require "chef/knife/bootstrap"

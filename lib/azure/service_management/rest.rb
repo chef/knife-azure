@@ -16,9 +16,10 @@
 # limitations under the License.
 #
 
-require "net/https"
-require "uri"
-require "nokogiri"
+require "net/http" unless defined?(Net::HTTP)
+require "openssl" unless defined?(OpenSSL)
+require "uri" unless defined?(URI)
+require "nokogiri" unless defined?(Nokogiri)
 
 module AzureAPI
 

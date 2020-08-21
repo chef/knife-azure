@@ -204,10 +204,10 @@ class Chef
       end
 
       def parse_publish_settings_file(filename)
-        require "nokogiri"
-        require "base64"
-        require "openssl"
-        require "uri"
+        require "nokogiri" unless defined?(Nokogiri)
+        require "base64" unless defined?(Base64)
+        require "openssl" unless defined?(OpenSSL)
+        require "uri" unless defined?(URI)
         begin
           doc = Nokogiri::XML(File.open(find_file(filename)))
           profile = doc.at_css("PublishProfile")
@@ -235,8 +235,8 @@ class Chef
       end
 
       def parse_azure_profile(filename, errors)
-        require "openssl"
-        require "uri"
+        require "openssl" unless defined?(OpenSSL)
+        require "uri" unless defined?(URI)
         errors = [] if errors.nil?
         azure_profile = File.read(File.expand_path(filename))
         azure_profile = JSON.parse(azure_profile)

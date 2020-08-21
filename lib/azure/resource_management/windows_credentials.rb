@@ -19,8 +19,8 @@
 # XPLAT stores the access token and other information in windows credential manager.
 # Using FFI to call CredRead function
 require "chef"
-require "mixlib/shellout"
-require "ffi"
+require "mixlib/shellout" unless defined?(Mixlib::ShellOut)
+require "ffi" unless defined?(FFI)
 require "chef/win32/api"
 
 module Azure
