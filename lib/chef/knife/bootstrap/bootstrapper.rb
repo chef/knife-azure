@@ -16,7 +16,11 @@
 # limitations under the License.
 #
 
-require_relative "../../../azure/resource_management/ARM_interface"
+module Azure
+  class ResourceManagement
+    autoload :ARMInterface, "azure/resource_management/ARM_interface"
+  end
+end
 
 class Chef
   class Knife
