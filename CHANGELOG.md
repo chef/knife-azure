@@ -1,9 +1,17 @@
 # knife-azure Change Log
 
-<!-- latest_release -->
+<!-- latest_release 3.0.6 -->
+## [v3.0.6](https://github.com/chef/knife-azure/tree/v3.0.6) (2020-09-09)
+
+#### Merged Pull Requests
+- improve load performance by autoloading ARMInterface [#534](https://github.com/chef/knife-azure/pull/534) ([mwrock](https://github.com/mwrock))
 <!-- latest_release -->
 
-<!-- release_rollup -->
+<!-- release_rollup since=3.0.5 -->
+### Changes not yet released to rubygems.org
+
+#### Merged Pull Requests
+- improve load performance by autoloading ARMInterface [#534](https://github.com/chef/knife-azure/pull/534) ([mwrock](https://github.com/mwrock)) <!-- 3.0.6 -->
 <!-- release_rollup -->
 
 <!-- latest_stable_release -->
