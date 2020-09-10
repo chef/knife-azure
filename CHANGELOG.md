@@ -1,9 +1,17 @@
 # knife-azure Change Log
 
-<!-- latest_release -->
+<!-- latest_release 3.0.7 -->
+## [v3.0.7](https://github.com/chef/knife-azure/tree/v3.0.7) (2020-09-10)
+
+#### Merged Pull Requests
+- Update activesupport requirement from 6.0.3.1 to 6.0.3.3 [#536](https://github.com/chef/knife-azure/pull/536) ([dependabot-preview[bot]](https://github.com/dependabot-preview[bot]))
 <!-- latest_release -->
 
-<!-- release_rollup -->
+<!-- release_rollup since=3.0.6 -->
+### Changes not yet released to rubygems.org
+
+#### Merged Pull Requests
+- Update activesupport requirement from 6.0.3.1 to 6.0.3.3 [#536](https://github.com/chef/knife-azure/pull/536) ([dependabot-preview[bot]](https://github.com/dependabot-preview[bot])) <!-- 3.0.7 -->
 <!-- release_rollup -->
 
 <!-- latest_stable_release -->
