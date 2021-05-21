@@ -15,13 +15,13 @@ to spin up or delete machines.
 Put the following in your `knife.rb`
 
 ```ruby
-knife[:azure_tenant_id] # found via: tenantId=$(azure account show -s <subscriptionId> --json | jq -r '.[0].tenantId')
+knife[:azure_tenant_id] # found via: tenantId=$(az account show -s <subscriptionId> --json | jq -r '.[0].tenantId')
 knife[:azure_subscription_id] # found via: <subscriptionId>
-knife[:azure_client_id] # appId=$(azure ad app show --search <principleappcreated> --json | jq -r '.[0].appId')
+knife[:azure_client_id] # appId=$(az ad app show --search <principleappcreated> --json | jq -r '.[0].appId')
 knife[:azure_client_secret] # password you set at initially
 ```
 
-*Microsoft Azure encourages the use of Azure CLI 2.0. If you are still using [azure-xplat-cli](https://github.com/Azure/azure-xplat-cli) then you may simply run ```azure login``` and skip creating the service principal entirely.*
+*Microsoft Azure encourages the use of Azure CLI 2.0. If you are still using [azure-xplat-cli](https://github.com/Azure/azure-xplat-cli) then you may simply run ```az login``` and skip creating the service principal entirely.* 
 
 ## ASM mode
 
@@ -48,7 +48,7 @@ An `Azure Profile` is a `JSON` file with subscription and environment informatio
 The Azure Profile file can be created and manipulated using the [Azure CLI](http://azure.microsoft.com/en-us/documentation/articles/virtual-machines-command-line-tools/). You can
 also refer [Azure Xplat-CLI](https://github.com/Azure/azure-xplat-cli#use-publish-settings-file-management-certificate-authentication).
 
-If Azure Profile file has entries for multiple subscriptions then you can choose the default using `azure account set <subscription_name>`. The same default subscription will
+If Azure Profile file has entries for multiple subscriptions then you can choose the default using `az account set <subscription_name>`. The same default subscription will
 be picked up that you have configured.
 
 ## Alternative Management Certificate Specification
