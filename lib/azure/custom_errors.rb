@@ -29,6 +29,6 @@ module CustomErrors
       caller.first =~ /in \`(.+)\'/
       method_name = $1
       raise CustomErrors::InterfaceNotImplementedError.new("#{klass.class.name} needs to implement '#{method_name}' for interface #{name}!")
-   end
+    end
   end
 end

@@ -307,7 +307,7 @@ module Azure
             ## chef-client run did not complete within maximum timeout of 30 minutes ##
             ## fetch whatever logs available under the chef-client.log file ##
             color = :yellow
-            end
+          end
           puts ui.color(status, color, :bold).to_s
           puts "----> chef-client run logs: "
           puts "\n#{message}\n" ## message field of substatus contains the chef-client run logs ##
@@ -484,11 +484,9 @@ module Azure
           err_details = err_json["error"]["details"] if err_json["error"]
           if err_details
             err_details.each do |err|
-              begin
-                ui.error(JSON.parse(err["message"])["error"]["message"])
-              rescue JSON::ParserError => e
-                ui.error(err["message"])
-              end
+              ui.error(JSON.parse(err["message"])["error"]["message"])
+            rescue JSON::ParserError => e
+              ui.error(err["message"])
             end
           else
             ui.error(err_json["error"]["message"])

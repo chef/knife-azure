@@ -275,10 +275,10 @@ class Chef
         end
 
         if !is_image_windows?
-          if (config[:azure_vm_name].match /^(?=.*[a-zA-Z-])([a-zA-z0-9-]{1,64})$/).nil?
+          if (config[:azure_vm_name].match(/^(?=.*[a-zA-Z-])([a-zA-z0-9-]{1,64})$/)).nil?
             raise ArgumentError, "VM name can only contain alphanumeric and hyphen(-) characters and maximum length cannot exceed 64 characters."
           end
-        elsif (config[:azure_vm_name].match /^(?=.*[a-zA-Z-])([a-zA-z0-9-]{1,15})$/).nil?
+        elsif (config[:azure_vm_name].match(/^(?=.*[a-zA-Z-])([a-zA-z0-9-]{1,15})$/)).nil?
           raise ArgumentError, "VM name can only contain alphanumeric and hyphen(-) characters and maximum length cannot exceed 15 characters."
         end
 

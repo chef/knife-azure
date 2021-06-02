@@ -51,7 +51,7 @@ module Azure::ARM
       # Security Rule priority can be set between 100 and 4096
       rule_no = 300
       incremental = 0
-      for port in tcp_ports
+      tcp_ports.each do |port|
         rule_no += 2
         sec_grp_json["properties"]["securityRules"].push(
           "name" => vm_name + "_rule_" + incremental.to_s,
@@ -510,7 +510,7 @@ module Azure::ARM
         }
 
         length = template["resources"].length.to_i - 1
-        for i in 0..length do
+        (0..length).each do |i|
           if template["resources"][i]["type"] == "Microsoft.Compute/virtualMachines"
             template["resources"][i]["dependsOn"] << "[concat('Microsoft.Compute/availabilitySets/', parameters('availabilitySetName'))]"
             template["resources"][i]["properties"]["availabilitySet"] = { "id" => "[resourceId('Microsoft.Compute/availabilitySets', parameters('availabilitySetName'))]" }
@@ -523,7 +523,7 @@ module Azure::ARM
         sec_grp_json = tcp_ports(params[:tcp_endpoints], params[:azure_vm_name])
         template["resources"].insert(1, sec_grp_json)
         length = template["resources"].length.to_i - 1
-        for i in 0..length do
+        (0..length).each do |i|
           if template["resources"][i]["type"] == "Microsoft.Network/virtualNetworks"
             template["resources"][i] = template["resources"][i].merge({ "dependsOn" => [sec_grp] })
           end
@@ -558,7 +558,7 @@ module Azure::ARM
       end
       if params[:server_count].to_i > 1 && params[:chef_extension_private_param][:validation_key].nil?
         template["resources"].last["properties"]["protectedSettings"]["client_pem"] = "[parameters(concat('client_pem',copyIndex()))]"
-        0.upto (params[:server_count].to_i - 1) do |count|
+        0.upto(params[:server_count].to_i - 1) do |count|
           template["parameters"]["client_pem" + count.to_s] = {
             "type" => "string",
             "metadata" => {
@@ -658,7 +658,7 @@ module Azure::ARM
         },
       }
       if params[:server_count].to_i > 1 && params[:chef_extension_private_param][:validation_key].nil?
-        0.upto (params[:server_count].to_i - 1) do |count|
+        0.upto(params[:server_count].to_i - 1) do |count|
           parameters["client_pem#{count}"] = {
               "value" => "#{params[:chef_extension_private_param][("client_pem" + count.to_s).to_sym]}",
             }

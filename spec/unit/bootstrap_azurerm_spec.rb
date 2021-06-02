@@ -23,7 +23,6 @@ require "chef/knife/bootstrap"
 describe Chef::Knife::BootstrapAzurerm do
   include AzureSpecHelper
   include QueryAzureMock
-  include AzureUtility
 
   before do
     @bootstrap_azurerm_instance = create_arm_instance(Chef::Knife::BootstrapAzurerm)

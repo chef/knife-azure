@@ -101,7 +101,7 @@ describe Chef::Knife::AzurermBase do
   describe "Token related test cases" do
     context "Xplat Azure login validation" do
       context "Platform is Linux" do
-        let (:azure_prefix) { @dummy.instance_variable_get(:@azure_prefix) }
+        let(:azure_prefix) { @dummy.instance_variable_get(:@azure_prefix) }
         before(:each) do
           allow(Chef::Platform).to receive(:windows?).and_return(false)
         end
