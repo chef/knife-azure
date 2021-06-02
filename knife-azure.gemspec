@@ -26,4 +26,5 @@ Gem::Specification.new do |s|
   s.add_dependency "azure_mgmt_network", "~> 0.18", ">= 0.18.2"
   s.add_dependency "listen", "~> 3.1"
   s.add_dependency "ipaddress"
+  s.add_dependency "rb-readline"
 end
