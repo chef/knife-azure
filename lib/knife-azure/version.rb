@@ -17,7 +17,7 @@
 
 module Knife
   module Azure
-    VERSION = "3.0.7".freeze
+    VERSION = "3.0.8".freeze
     MAJOR, MINOR, TINY = VERSION.split(".")
   end
 end
