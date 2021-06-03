@@ -101,13 +101,13 @@ describe Chef::Knife::AzurermBase do
   describe "Token related test cases" do
     context "Xplat Azure login validation" do
       context "Platform is Linux" do
-        let (:azure_prefix) { @dummy.instance_variable_get(:@azure_prefix) }
+        let(:azure_prefix) { @dummy.instance_variable_get(:@azure_prefix) }
         before(:each) do
           allow(Chef::Platform).to receive(:windows?).and_return(false)
         end
         it "Accesstoken file doesnt exist for Linux" do
           allow(File).to receive(:exist?).and_return(false)
-          expect { @arm_server_instance.validate_azure_login }.to raise_error("Please run XPLAT's 'azure login' command OR specify azure_tenant_id, azure_subscription_id, azure_client_id, azure_client_secret in your knife.rb")
+          expect { @arm_server_instance.validate_azure_login }.to raise_error("Please run XPLAT's 'azure login' command OR specify azure_tenant_id, azure_subscription_id, azure_client_id, azure_client_secret in your config.rb (knife.rb).")
         end
 
         it "Accesstoken file exist for Linux" do
@@ -118,7 +118,7 @@ describe Chef::Knife::AzurermBase do
 
         it "Accesstoken file contain [] value upon running azure logout command for Linux" do
           allow(File).to receive(:size?).and_return(2)
-          expect { @arm_server_instance.validate_azure_login }.to raise_error("Please run XPLAT's 'azure login' command OR specify azure_tenant_id, azure_subscription_id, azure_client_id, azure_client_secret in your knife.rb")
+          expect { @arm_server_instance.validate_azure_login }.to raise_error("Please run XPLAT's 'azure login' command OR specify azure_tenant_id, azure_subscription_id, azure_client_id, azure_client_secret in your config.rb (knife.rb).")
         end
       end
 
@@ -164,7 +164,7 @@ describe Chef::Knife::AzurermBase do
                 expect(Mixlib::ShellOut).to receive(:new).with(
                   "cmdkey /list | findstr AzureXplatCli"
                 ).and_return(xplat_creds_cmd)
-                expect { @arm_server_instance.validate_azure_login }.to raise_error("Please run XPLAT's 'azure login' command OR specify azure_tenant_id, azure_subscription_id, azure_client_id, azure_client_secret in your knife.rb")
+                expect { @arm_server_instance.validate_azure_login }.to raise_error("Please run XPLAT's 'azure login' command OR specify azure_tenant_id, azure_subscription_id, azure_client_id, azure_client_secret in your config.rb (knife.rb).")
               end
             end
 
@@ -198,7 +198,7 @@ describe Chef::Knife::AzurermBase do
               it "raises error" do
                 expect(Mixlib::ShellOut).to_not receive(:new)
                 expect(File).to receive(:expand_path).and_return("user_home_path")
-                expect { @arm_server_instance.validate_azure_login }.to raise_error("Please run XPLAT's 'azure login' command OR specify azure_tenant_id, azure_subscription_id, azure_client_id, azure_client_secret in your knife.rb")
+                expect { @arm_server_instance.validate_azure_login }.to raise_error("Please run XPLAT's 'azure login' command OR specify azure_tenant_id, azure_subscription_id, azure_client_id, azure_client_secret in your config.rb (knife.rb).")
               end
             end
 

@@ -16,14 +16,8 @@
 #
 
 require_relative "../spec_helper"
-require_relative "../../lib/azure/service_management/ASM_interface"
 
 module QueryAzureMock
-  include AzureUtility
-  def create_service
-    @service = Azure::ServiceManagement::ASMInterface.new(TEST_PARAMS)
-  end
-
   def create_instance(object)
     @server_instance = object.new
     @server_instance.merge_configs

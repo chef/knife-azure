@@ -49,16 +49,11 @@ class Chef
             config[:azure_chef_extension_version]
           else
             chef_extension_name ||= get_chef_extension_name
-            if @service.instance_of? Azure::ResourceManagement::ARMInterface
-              service.get_latest_chef_extension_version(
-                azure_service_location: config[:azure_service_location],
-                chef_extension_publisher: get_chef_extension_publisher,
-                chef_extension: chef_extension_name
-              )
-            elsif @service.instance_of? Azure::ServiceManagement::ASMInterface
-              extensions = service.get_extension(chef_extension_name, get_chef_extension_publisher)
-              extensions.css("Version").max.text.split(".").first + ".*"
-            end
+            service.get_latest_chef_extension_version(
+              azure_service_location: config[:azure_service_location],
+              chef_extension_publisher: get_chef_extension_publisher,
+              chef_extension: chef_extension_name
+            )
           end
         end
 

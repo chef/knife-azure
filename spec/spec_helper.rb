@@ -1,23 +1,9 @@
 $LOAD_PATH.unshift(File.join(File.dirname(__FILE__), "..", "lib"))
 
-require "chef/knife/azure_ag_create"
-require "chef/knife/azure_ag_list"
-require "chef/knife/azure_image_list"
-require "chef/knife/azure_internal-lb_create"
-require "chef/knife/azure_internal-lb_list"
-require "chef/knife/azure_server_create"
-require "chef/knife/azure_server_delete"
-require "chef/knife/azure_server_show"
-require "chef/knife/azure_server_list"
-require "chef/knife/azure_vnet_create"
-require "chef/knife/azure_vnet_list"
-
 require "chef/knife/azurerm_server_list"
 require "chef/knife/azurerm_server_show"
 require "chef/knife/azurerm_server_delete"
 require "chef/knife/azurerm_server_create"
-require "chef/knife/bootstrap_azure"
-
 require "chef/knife/bootstrap_azurerm"
 
 if Chef::Platform.windows?
@@ -60,11 +46,11 @@ RSpec.configure do |c|
   end
 
   c.around(:example) do |ex|
-    begin
-      ex.run
-    rescue SystemExit => e
-      raise UnexpectedSystemExit.from(e)
-    end
+
+    ex.run
+  rescue SystemExit => e
+    raise UnexpectedSystemExit.from(e)
+
   end
 end
 
@@ -93,8 +79,8 @@ def is_config_present
   unset_env_var = []
   unset_config_options = []
   is_config = true
-  config_file_exist = File.exist?(File.expand_path("../integration/config/environment.yml", __FILE__))
-  azure_config = YAML.load(File.read(File.expand_path("../integration/config/environment.yml", __FILE__))) if config_file_exist
+  config_file_exist = File.exist?(File.expand_path("integration/config/environment.yml", __dir__))
+  azure_config = YAML.load(File.read(File.expand_path("integration/config/environment.yml", __dir__))) if config_file_exist
 
   %w{AZURE_PUBLISH_SETTINGS_FILE AZURE_MGMT_CERT AZURE_SUBSCRIPTION_ID AZURE_API_HOST_NAME}.each do |az_env_var|
     if ENV[az_env_var].nil?
@@ -154,8 +140,8 @@ def init_azure_test
     puts "Error while creating file - azure invalid"
   end
 
-  config_file_exist = File.exist?(File.expand_path("../integration/config/environment.yml", __FILE__))
-  azure_config = YAML.load(File.read(File.expand_path("../integration/config/environment.yml", __FILE__))) if config_file_exist
+  config_file_exist = File.exist?(File.expand_path("integration/config/environment.yml", __dir__))
+  azure_config = YAML.load(File.read(File.expand_path("integration/config/environment.yml", __dir__))) if config_file_exist
 
   %w{AZ_SSH_USER AZ_SSH_PASSWORD AZ_WINDOWS_SSH_USER AZ_WINDOWS_SSH_PASSWORD AZ_WINRM_USER AZ_WINRM_PASSWORD AZ_LINUX_IMAGE AZ_LINUX_VM_SIZE AZ_INVALID_VM_SIZE AZ_WINDOWS_VM_SIZE AZ_WINDOWS_IMAGE AZ_WINDOWS_SSH_IMAGE AZURE_SERVICE_LOCATION}.each do |az_config_opt|
     instance_variable_set("@#{az_config_opt.downcase}", (azure_config[az_config_opt] if azure_config) || ENV[az_config_opt])

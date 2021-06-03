@@ -25,7 +25,7 @@ describe Chef::Knife::AzurermServerDelete do
   describe "delete server without deleting resource group" do
     before do
       @arm_server_instance = create_arm_instance(Chef::Knife::AzurermServerDelete)
-      allow(@arm_server_instance.service.ui).to receive(:confirm).and_return (true)
+      allow(@arm_server_instance.service.ui).to receive(:confirm).and_return(true)
       @compute_client = double("ComputeManagementClient")
 
       @service = @arm_server_instance.service
@@ -85,7 +85,7 @@ describe Chef::Knife::AzurermServerDelete do
   describe "delete respective resource group along with server" do
     before do
       @arm_server_instance = create_arm_instance(Chef::Knife::AzurermServerDelete)
-      allow(@arm_server_instance.service.ui).to receive(:confirm).and_return (true)
+      allow(@arm_server_instance.service.ui).to receive(:confirm).and_return(true)
       allow_any_instance_of(Chef::Knife::AzurermBase).to receive(:get_azure_cli_version).and_return("1.0.0")
       @resource_client = double("ResourceManagementClient")
       @service = @arm_server_instance.service
@@ -99,7 +99,7 @@ describe Chef::Knife::AzurermServerDelete do
       server = double("server")
       allow(server).to receive(:nil?).and_return("false")
       @arm_server_instance.config[:delete_resource_group] = true
-      allow(@arm_server_instance.service.ui).to receive(:confirm).and_return (true)
+      allow(@arm_server_instance.service.ui).to receive(:confirm).and_return(true)
 
       expect(@arm_server_instance).to receive(:validate_arm_keys!).with(:azure_resource_group_name)
       expect(@arm_server_instance.service).to receive(:resource_management_client).and_return(@resource_client)
