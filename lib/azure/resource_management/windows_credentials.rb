@@ -66,7 +66,7 @@ module Azure
           :Attributes, CREDENTIAL_ATTRIBUTE,
           :TargetAlias, :LPTSTR,
           :UserName, :LPTSTR
-        end
+      end
 
       # Ref: https://msdn.microsoft.com/en-us/library/windows/desktop/aa374804(v=vs.85).aspx
       safe_attach_function :CredReadW, %i{LPCTSTR DWORD DWORD pointer}, :BOOL
@@ -178,5 +178,5 @@ module Azure
         end
       end
     end
-end
+  end
 end

@@ -292,7 +292,7 @@ class Chef
       def set_os_image(publisher, img_offer, default_os_version)
         config[:azure_image_reference_publisher] = publisher
         config[:azure_image_reference_offer] = img_offer
-        config[:azure_image_reference_sku] = config[:azure_image_reference_sku] ? config[:azure_image_reference_sku] : default_os_version
+        config[:azure_image_reference_sku] = config[:azure_image_reference_sku] || default_os_version
       end
 
       def is_image_os_type?

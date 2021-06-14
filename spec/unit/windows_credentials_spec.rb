@@ -17,11 +17,9 @@
 #
 
 require_relative "../spec_helper"
-require_relative "query_azure_mock"
 
 describe Chef::Knife::AzurermBase, :windows_only do
   include AzureSpecHelper
-  include QueryAzureMock
 
   class Chef
     class Knife

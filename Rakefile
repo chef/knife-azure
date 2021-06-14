@@ -1,5 +1,5 @@
 #
-# Copyright:: Copyright 2010-2019, Chef Software Inc.
+# Copyright:: Chef Software Inc.
 # License:: Apache License, Version 2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -55,20 +55,6 @@ begin
   end
 rescue LoadError
   puts "chefstyle gem is not installed. bundle install first to make sure all dependencies are installed."
-end
-
-begin
-  require "yard" unless defined?(YARD)
-  YARD::Rake::YardocTask.new(:docs)
-rescue LoadError
-  puts "yard is not available. bundle install first to make sure all dependencies are installed."
-end
-
-task :console do
-  require "irb"
-  require "irb/completion"
-  ARGV.clear
-  IRB.start
 end
 
 task default: %i{style spec}

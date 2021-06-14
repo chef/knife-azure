@@ -24,7 +24,6 @@ require_relative "../../lib/azure/resource_management/ARM_interface"
 describe Chef::Knife::AzurermServerCreate do
   include AzureSpecHelper
   include QueryAzureMock
-  include AzureUtility
 
   before do
     @arm_server_instance = create_arm_instance(Chef::Knife::AzurermServerCreate)

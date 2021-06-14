@@ -76,7 +76,7 @@ class Chef
         errors = []
         keys.each do |k|
           if config[k].nil?
-            errors << "You did not provide a valid '#{pretty_key(k)}' value. Please set knife[:#{k}] in your knife.rb."
+            errors << "You did not provide a valid '#{pretty_key(k)}' value. Please set knife[:#{k}] in your config.rb (knife.rb)."
           end
         end
         if errors.each { |e| ui.error(e) }.any?
@@ -275,10 +275,10 @@ class Chef
         end
 
         if !is_image_windows?
-          if (config[:azure_vm_name].match /^(?=.*[a-zA-Z-])([a-zA-z0-9-]{1,64})$/).nil?
+          if (config[:azure_vm_name].match(/^(?=.*[a-zA-Z-])([a-zA-z0-9-]{1,64})$/)).nil?
             raise ArgumentError, "VM name can only contain alphanumeric and hyphen(-) characters and maximum length cannot exceed 64 characters."
           end
-        elsif (config[:azure_vm_name].match /^(?=.*[a-zA-Z-])([a-zA-z0-9-]{1,15})$/).nil?
+        elsif (config[:azure_vm_name].match(/^(?=.*[a-zA-Z-])([a-zA-z0-9-]{1,15})$/)).nil?
           raise ArgumentError, "VM name can only contain alphanumeric and hyphen(-) characters and maximum length cannot exceed 15 characters."
         end
 
@@ -349,7 +349,7 @@ class Chef
         ## in Windows Credentails Manager (WCM).
         ## Newer versions use the same pattern across platforms where credentials gets
         ## stored in ~/.azure/accessTokens.json file.
-        "Please run XPLAT's '#{@azure_prefix} login' command OR specify azure_tenant_id, azure_subscription_id, azure_client_id, azure_client_secret in your knife.rb"
+        "Please run XPLAT's '#{@azure_prefix} login' command OR specify azure_tenant_id, azure_subscription_id, azure_client_id, azure_client_secret in your config.rb (knife.rb)."
       end
     end
   end

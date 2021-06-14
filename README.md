@@ -27,29 +27,21 @@ https://downloads.chef.io/chef-workstation/
 
 ## Modes
 
-`knife-azure 1.6.0` onwards supports Azure Resource Manager (preferred). You can easily switch between:
-
-- Resource manager: commands using the Azure Resource Manager API
-- Service management: commands using the Azure service management API
-
-They are not designed to work together. Commands starting with `knife azurerm` use ARM mode, while commands starting with `knife azure` use ASM mode.
+`knife-azure 4.0` onwards removes the legacy `knife azure` commands that utilized the Azure Service Management API. This API was deprecated in March 2018.
 
 ## Configuration
 
 1. [ARM Configuration](docs/configuration.md#arm-mode)
-1. [ASM Configuration](docs/configuration.md#asm-mode)
 
 ## Detailed Usage
 
 1. [ARM Mode](docs/ARM.md)
-1. [ASM Mode](docs/ASM.md)
 
-## Bootstrap existing VM to install the chef-client using chef-extension
+## Bootstrap existing VM to install the Chef Infra Client using chef-extension
 
-We have added a utility in ARM and ASM to bootstrap existing VM. This will install the chef-client using chef extension on your VM.
+We have added a utility to bootstrap existing VM. This will install the Chef Infra Client using chef extension on your VM.
 
 1. [Bootstrap Doc for ARM Mode](docs/bootstrap.md#arm-mode)
-1. [Bootstrap Doc for ASM Mode](docs/bootstrap.md#asm-mode)
 
 ## Contributing
 
