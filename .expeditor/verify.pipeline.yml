@@ -11,21 +11,13 @@ expeditor:
 
 steps:
 
-- label: run-specs-ruby-2.7
+- label: run-specs-ruby-3.1
   command:
     - .expeditor/run_linux_tests.sh rake
   expeditor:
     executor:
       docker:
-        image: ruby:2.7-buster
-
-- label: run-specs-ruby-3.0
-  command:
-    - .expeditor/run_linux_tests.sh rake
-  expeditor:
-    executor:
-      docker:
-        image: ruby:3.0-buster
+        image: ruby:3.1-buster
 
 - label: run-specs-windows
   command:
@@ -37,4 +29,4 @@ steps:
     executor:
       docker:
         host_os: windows
-        image: rubydistros/windows-2019:2.7
+        image: rubydistros/windows-2019:3.1
