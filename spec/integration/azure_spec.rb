@@ -91,7 +91,7 @@ describe "knife-azure integration test", if: is_config_present do
   end
 
   describe "display help for command" do
-    %w{server\ create server\ delete server\ list image\ list server\ show vnet\ create vnet\ list ag\ create ag\ list}.each do |command|
+    ["server create", "server delete", "server list", "image list", "server show", "vnet create", "vnet list", "ag create", "ag list"].each do |command|
       context "when --help option used with #{command} command" do
         let(:command) { "knife azure #{command} --help" }
         run_cmd_check_stdout("--help")
