@@ -16,6 +16,7 @@
 #
 
 require_relative "../spec_helper"
+require "ostruct"
 
 module QueryAzureMock
   def create_instance(object)
