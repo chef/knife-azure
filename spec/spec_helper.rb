@@ -32,7 +32,7 @@ RSpec.configure do |c|
     Chef::Config.reset
 
     # Set environment variables to bypass licensing (same as CI)
-    ENV['CHEF_LICENSE'] = 'accept-silent'
+    ENV["CHEF_LICENSE"] = "accept-silent"
 
     # Mock license acceptance to prevent tomlrb parsing issues
     allow_any_instance_of(Chef::Knife::AzurermServerCreate).to receive(:check_license)
@@ -62,7 +62,7 @@ RSpec.configure do |c|
 
   c.after(:each) do
     # Clean up environment variables
-    ENV.delete('CHEF_LICENSE')
+    ENV.delete("CHEF_LICENSE")
   end
 
   c.before(:all) do
