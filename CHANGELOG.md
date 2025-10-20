@@ -1,9 +1,17 @@
 # knife-azure Change Log
 
-<!-- latest_release -->
+<!-- latest_release 4.0.1 -->
+## [v4.0.1](https://github.com/chef/knife-azure/tree/v4.0.1) (2025-10-20)
+
+#### Merged Pull Requests
+- Add comprehensive GitHub Copilot instructions and MCP server configuration [#559](https://github.com/chef/knife-azure/pull/559) ([ashiqueps](https://github.com/ashiqueps))
 <!-- latest_release -->
 
-<!-- release_rollup -->
+<!-- release_rollup since=4.0.0 -->
+### Changes not yet released to rubygems.org
+
+#### Merged Pull Requests
+- Add comprehensive GitHub Copilot instructions and MCP server configuration [#559](https://github.com/chef/knife-azure/pull/559) ([ashiqueps](https://github.com/ashiqueps)) <!-- 4.0.1 -->
 <!-- release_rollup -->
 
 <!-- latest_stable_release -->
