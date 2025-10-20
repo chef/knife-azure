@@ -120,8 +120,6 @@ describe Chef::Knife::AzurermServerCreate do
       end
 
       it "vm name validation success for Linux" do
-        pp @arm_server_instance.config[:ohai_hints]
-        pp Chef::Config[:knife][:ohai_hints]
         @arm_server_instance.config[:azure_vm_name] = "test-vm1234"
         @arm_server_instance.config[:ssh_public_key] = "ssh_public_key"
         allow(@arm_server_instance).to receive(:is_image_windows?).and_return(false)
