@@ -501,7 +501,7 @@ module Azure
       end
 
       def common_arm_rescue_block(error)
-        if (error.class == MsRestAzure::AzureOperationError || error.class == MsRestAzure2::AzureOperationError) && error.body
+        if (error.is_a?(MsRestAzure::AzureOperationError) || error.is_a?(MsRestAzure2::AzureOperationError)) && error.body
           err_json = JSON.parse(error.response.body)
           err_details = err_json["error"]["details"] if err_json["error"]
           if err_details
