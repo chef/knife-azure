@@ -239,14 +239,16 @@ module Azure
       def security_group_exist?(resource_group_name, security_group_name)
         network_resource_client.network_security_groups.get(resource_group_name, security_group_name)
         true
-      rescue MsRestAzure2::AzureOperationError => e
-        if e.body
+      rescue MsRestAzure::AzureOperationError => e
+        if e.response && e.response.body
           err_json = JSON.parse(e.response.body)
           if err_json["error"]["code"] == "ResourceNotFound"
             false
           else
             raise e
           end
+        else
+          raise e
         end
       end
 
