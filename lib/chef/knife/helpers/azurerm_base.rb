@@ -1,8 +1,7 @@
 #
 # Author:: Aliasgar Batterywala (aliasgar.batterywala@clogeny.com)
 #
-# Copyright:: Copyright (c) Chef Software Inc.
-# License:: Apache License, Version 2.0
+# Copyright:: Copyright (c) 2012-2024 Progress Software Corporation and/or its subsidiaries or affiliates. All Rights Reserved.# License:: Apache License, Version 2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
