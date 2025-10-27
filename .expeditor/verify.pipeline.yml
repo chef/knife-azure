@@ -17,7 +17,7 @@ steps:
   expeditor:
     executor:
       docker:
-        image: ruby:3.1-buster
+        image: ruby:3.1
 
 - label: run-specs-ruby-3.4
   command:
