@@ -49,7 +49,7 @@ describe Chef::Knife::AzurermBase do
 
         # Mock the require of nokogiri to prevent GLIBC compatibility issues on older systems
         allow(Kernel).to receive(:require).and_call_original
-        allow(Kernel).to receive(:require).with('nokogiri').and_return(true)
+        allow(Kernel).to receive(:require).with("nokogiri").and_return(true)
 
         # Mock OpenSSL::PKCS12 to avoid RC2-40-CBC cipher issues in newer OpenSSL versions
         @mock_pkcs12 = double("OpenSSL::PKCS12")
