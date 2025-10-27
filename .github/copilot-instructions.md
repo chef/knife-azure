@@ -14,7 +14,7 @@ git commit --signoff -m "Your commit message"
 # Builds WILL FAIL without DCO signoff
 ```
 
-#### 🔴 2. AI COMPLIANCE - IMMEDIATE AFTER PR CREATION  
+#### 🔴 2. AI COMPLIANCE - IMMEDIATE AFTER PR CREATION
 ```bash
 # MANDATORY: Update Jira field IMMEDIATELY after PR creation
 # Use atlassian-mcp tools to update customfield_11170 = "Yes"
@@ -24,7 +24,7 @@ git commit --signoff -m "Your commit message"
 #### 🔴 3. AI-ASSISTED LABEL - NON-NEGOTIABLE
 ```bash
 # MANDATORY: All PRs MUST have ai-assisted label
-gh pr create --label "ai-assisted" 
+gh pr create --label "ai-assisted"
 # If label doesn't exist, create it first:
 gh label create "ai-assisted" --description "Work completed with AI assistance following Progress AI policies" --color "9A4DFF"
 ```
@@ -498,7 +498,7 @@ gh label create "ai-assisted" --description "Work completed with AI assistance f
 ```bash
 # Verify all compliance requirements met:
 # - DCO signoff present ✅
-# - ai-assisted label applied ✅  
+# - ai-assisted label applied ✅
 # - Jira field updated ✅
 # - >80% test coverage ✅
 ```
@@ -807,7 +807,7 @@ gh pr create --label "Type: Bug" --label "Aspect: Security" --label "Priority: C
 **Before starting ANY task, ALWAYS remind yourself of these NON-NEGOTIABLE requirements:**
 
 1. **🔴 DCO Signoff**: EVERY commit needs `git commit --signoff`
-2. **🔴 Test Coverage**: ALL code changes need >80% test coverage  
+2. **🔴 Test Coverage**: ALL code changes need >80% test coverage
 3. **🔴 AI Labels**: ALL PRs need `ai-assisted` label
 4. **🔴 Jira Field**: IMMEDIATELY update `customfield_11170` = "Yes" after PR creation
 
@@ -901,7 +901,7 @@ At the end of ANY implementation, ALWAYS verify:
 ```
 "🎯 FINAL COMPLIANCE CHECK:
 ✅ DCO Signoff: [Check if all commits are signed]
-✅ Test Coverage: [Verify >80% coverage achieved]  
+✅ Test Coverage: [Verify >80% coverage achieved]
 ✅ AI Labels: [Confirm ai-assisted label applied]
 ✅ Jira Field: [Verify customfield_11170 = 'Yes']
 

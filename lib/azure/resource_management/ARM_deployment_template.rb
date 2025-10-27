@@ -323,15 +323,16 @@ module Azure::ARM
           "sshKeyPath" => "[concat('/home/',parameters('adminUserName'),'/.ssh/authorized_keys')]",
         },
         "resources" => [
-          {
-            "type" => "Microsoft.Storage/storageAccounts",
-            "name" => "[variables('storageAccountName')]",
-            "apiVersion" => "[variables('apiVersion')]",
-            "location" => "[resourceGroup().location]",
-            "properties" => {
-              "accountType" => "[variables('storageAccountType')]",
-            },
-          },
+          # Storage account not needed for managed disks
+          # {
+          #   "type" => "Microsoft.Storage/storageAccounts",
+          #   "name" => "[variables('storageAccountName')]",
+          #   "apiVersion" => "[variables('apiVersion')]",
+          #   "location" => "[resourceGroup().location]",
+          #   "properties" => {
+          #     "accountType" => "[variables('storageAccountType')]",
+          #   },
+          # },
           {
             "apiVersion" => "[variables('apiVersion')]",
             "type" => "Microsoft.Network/publicIPAddresses",
@@ -391,7 +392,7 @@ module Azure::ARM
             },
           },
           {
-            "apiVersion" => "[variables('apiVersion')]",
+            "apiVersion" => "2017-03-30",
             "type" => "Microsoft.Compute/virtualMachines",
             "name" => vmName,
             "location" => "[resourceGroup().location]",
@@ -400,7 +401,6 @@ module Azure::ARM
               "count" => "[parameters('numberOfInstances')]",
             },
             "dependsOn" => [
-              "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
               depVm2,
             ],
             "properties" => {
@@ -431,11 +431,11 @@ module Azure::ARM
                 },
                 "osDisk" => {
                   "name" => "[variables('OSDiskName')]",
-                  "vhd" => {
-                    "uri" => uri,
-                  },
                   "caching" => "ReadWrite",
                   "createOption" => "FromImage",
+                  "managedDisk" => {
+                    "storageAccountType" => "Standard_LRS",
+                  },
                 },
               },
               "networkProfile" => {
@@ -447,8 +447,7 @@ module Azure::ARM
               },
               "diagnosticsProfile" => {
                 "bootDiagnostics" => {
-                  "enabled" => "true",
-                  "storageUri" => "[concat('http://',variables('storageAccountName'),'.blob.core.windows.net')]",
+                  "enabled" => "false",
                 },
               },
             },

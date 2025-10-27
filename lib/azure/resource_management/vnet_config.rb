@@ -37,7 +37,7 @@ module Azure::ARM
 
     def get_vnet(resource_group_name, vnet_name)
       network_resource_client.virtual_networks.get(resource_group_name, vnet_name)
-    rescue MsRestAzure::AzureOperationError => error
+    rescue MsRestAzure2::AzureOperationError => error
       if error.body
         err_json = JSON.parse(error.response.body)
         if err_json["error"]["code"] == "ResourceNotFound"
