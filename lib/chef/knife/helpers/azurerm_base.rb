@@ -172,7 +172,18 @@ class Chef
       end
 
       def parse_publish_settings_file(filename)
-        require "nokogiri" unless defined?(Nokogiri)
+        begin
+          require "nokogiri" unless defined?(Nokogiri)
+        rescue LoadError => e
+          if e.message.include?("GLIBC") || e.message.include?("nokogiri")
+            ui.error("Cannot load Nokogiri: #{e.message}")
+            ui.error("This may be due to system compatibility issues.")
+            ui.error("Please use Azure CLI authentication instead of publish settings files.")
+          else
+            raise e
+          end
+          exit 1
+        end
         require "base64" unless defined?(Base64)
         require "openssl" unless defined?(OpenSSL)
         require "uri" unless defined?(URI)

@@ -323,16 +323,13 @@ module Azure::ARM
           "sshKeyPath" => "[concat('/home/',parameters('adminUserName'),'/.ssh/authorized_keys')]",
         },
         "resources" => [
-          # Storage account not needed for managed disks
-          # {
-          #   "type" => "Microsoft.Storage/storageAccounts",
-          #   "name" => "[variables('storageAccountName')]",
-          #   "apiVersion" => "[variables('apiVersion')]",
-          #   "location" => "[resourceGroup().location]",
-          #   "properties" => {
-          #     "accountType" => "[variables('storageAccountType')]",
-          #   },
-          # },
+
+          # Storage account not needed for managed disks.
+          # NOTE: Existing deployments that were created with a storage account will continue to function as before.
+          # This template now uses managed disks, so new VMs will not create a separate storage account.
+          # If you have existing VMs using storage accounts and wish to migrate to managed disks, refer to Azure's migration documentation:
+          # https://docs.microsoft.com/en-us/azure/virtual-machines/windows/convert-unmanaged-to-managed-disks
+          # No changes are made to existing resources; this only affects new deployments.
           {
             "apiVersion" => "[variables('apiVersion')]",
             "type" => "Microsoft.Network/publicIPAddresses",
@@ -392,6 +389,8 @@ module Azure::ARM
             },
           },
           {
+            # NOTE: The API version '2017-03-30' is required for managed disk support in Microsoft.Compute/virtualMachines.
+            # Do not change to [variables('apiVersion')]; newer versions may not be compatible with this template.
             "apiVersion" => "2017-03-30",
             "type" => "Microsoft.Compute/virtualMachines",
             "name" => vmName,
@@ -447,6 +446,7 @@ module Azure::ARM
               },
               "diagnosticsProfile" => {
                 "bootDiagnostics" => {
+                  # Boot diagnostics is disabled because it requires a storage account, which was removed.
                   "enabled" => "false",
                 },
               },

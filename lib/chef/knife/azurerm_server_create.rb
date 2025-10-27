@@ -187,11 +187,7 @@ class Chef
         server_def[:azure_storage_account] = config[:azure_vm_name] if server_def[:azure_storage_account].nil?
         server_def[:azure_storage_account] = server_def[:azure_storage_account].gsub(/[!@#$%^&*()_-]/, "")
 
-        # Ensure storage account name + Azure uniquestring prefix stays under 24 chars
-        # Azure uniquestring() generates ~13 characters, so we limit to 10 chars max
-        if server_def[:azure_storage_account].length > 10
-          server_def[:azure_storage_account] = server_def[:azure_storage_account][0, 10]
-        end
+        # Storage account name length validation removed; managed disks are now used instead of storage accounts.
 
         server_def[:azure_os_disk_name] = config[:azure_vm_name] if server_def[:azure_os_disk_name].nil?
         server_def[:azure_os_disk_name] = server_def[:azure_os_disk_name].gsub(/[!@#$%^&*()_-]/, "")

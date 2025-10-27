@@ -211,8 +211,14 @@ module Azure
         network_resource_client.network_security_groups.get(resource_group_name, security_group_name)
         true
       rescue MsRestAzure::AzureOperationError => e
-        if e.response && e.response.body
-          err_json = JSON.parse(e.response.body)
+        error_body = nil
+        if e.body
+          error_body = e.body
+        elsif e.response && e.response.body
+          error_body = e.response.body
+        end
+        if error_body
+          err_json = JSON.parse(error_body)
           if err_json["error"]["code"] == "ResourceNotFound"
             false
           else
@@ -466,7 +472,7 @@ module Azure
       end
 
       def common_arm_rescue_block(error)
-        if (error.class == MsRestAzure::AzureOperationError || error.class == MsRestAzure2::AzureOperationError) && error.response && error.response.body
+        if (error.is_a?(MsRestAzure::AzureOperationError) || error.is_a?(MsRestAzure2::AzureOperationError)) && error.body
           err_json = JSON.parse(error.response.body)
           err_details = err_json["error"]["details"] if err_json["error"]
           if err_details
