@@ -46,6 +46,18 @@ describe Chef::Knife::AzurermBase do
       before do
         @dummy.config[:azure_api_host_name] = nil
         @dummy.config[:azure_subscription_id] = nil
+
+        # Mock OpenSSL::PKCS12 to avoid RC2-40-CBC cipher issues in newer OpenSSL versions
+        @mock_pkcs12 = double("OpenSSL::PKCS12")
+        @mock_certificate = double("certificate")
+        @mock_key = double("key")
+
+        allow(@mock_certificate).to receive(:to_pem).and_return("-----BEGIN CERTIFICATE-----\nMOCK_CERTIFICATE_DATA\n-----END CERTIFICATE-----\n")
+        allow(@mock_key).to receive(:to_pem).and_return("-----BEGIN RSA PRIVATE KEY-----\nMOCK_KEY_DATA\n-----END RSA PRIVATE KEY-----\n")
+        allow(@mock_pkcs12).to receive(:certificate).and_return(@mock_certificate)
+        allow(@mock_pkcs12).to receive(:key).and_return(@mock_key)
+
+        allow(OpenSSL::PKCS12).to receive(:new).and_return(@mock_pkcs12)
       end
 
       def validate_cert
