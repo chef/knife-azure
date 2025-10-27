@@ -29,24 +29,24 @@ steps:
 
 - label: run-specs-windows
   command:
-    - bundle config --local path vendor/bundle
-    - bundle config set --local without docs debug
-    - bundle install --jobs=7 --retry=3
-    - bundle exec rake spec
+    - powershell -ExecutionPolicy Bypass -File .expeditor/run_windows_tests.ps1 rake spec
   expeditor:
     executor:
       docker:
         host_os: windows
         image: rubydistros/windows-2019:3.1
+  retry:
+    automatic:
+      limit: 2
 
 - label: run-specs-windows-ruby-3.4
   command:
-    - bundle config --local path vendor/bundle
-    - bundle config set --local without docs debug
-    - bundle install --jobs=7 --retry=3
-    - bundle exec rake spec
+    - powershell -ExecutionPolicy Bypass -File .expeditor/run_windows_tests.ps1 rake spec
   expeditor:
     executor:
       docker:
         host_os: windows
         image: rubydistros/windows-2019:3.4
+  retry:
+    automatic:
+      limit: 2
