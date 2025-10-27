@@ -50,18 +50,18 @@ module Azure
       def initialize(params = {})
         # Create credentials for original gems (compute, storage)
         token_provider_v1 = if params[:azure_client_secret]
-                               MsRestAzure::ApplicationTokenProvider.new(params[:azure_tenant_id], params[:azure_client_id], params[:azure_client_secret])
-                             else
-                               MsRest::StringTokenProvider.new(params[:token], params[:tokentype])
-                             end
+                              MsRestAzure::ApplicationTokenProvider.new(params[:azure_tenant_id], params[:azure_client_id], params[:azure_client_secret])
+                            else
+                              MsRest::StringTokenProvider.new(params[:token], params[:tokentype])
+                            end
         @credentials_v1 = MsRest::TokenCredentials.new(token_provider_v1)
 
         # Create credentials for forked gems (resources2, network2)
         token_provider_v2 = if params[:azure_client_secret]
-                               MsRestAzure2::ApplicationTokenProvider.new(params[:azure_tenant_id], params[:azure_client_id], params[:azure_client_secret])
-                             else
-                               MsRest2::StringTokenProvider.new(params[:token], params[:tokentype])
-                             end
+                              MsRestAzure2::ApplicationTokenProvider.new(params[:azure_tenant_id], params[:azure_client_id], params[:azure_client_secret])
+                            else
+                              MsRest2::StringTokenProvider.new(params[:token], params[:tokentype])
+                            end
         @credentials_v2 = MsRest2::TokenCredentials.new(token_provider_v2)
 
         @azure_subscription_id = params[:azure_subscription_id]
