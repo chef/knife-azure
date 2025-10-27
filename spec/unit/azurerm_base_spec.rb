@@ -53,7 +53,7 @@ describe Chef::Knife::AzurermBase do
           @dummy.config[:azure_api_host_name] = "management.core.windows.net"
           @dummy.config[:azure_subscription_id] = "id1"
           @dummy.config[:azure_mgmt_cert] = "-----BEGIN CERTIFICATE-----\nMOCK_CERTIFICATE_DATA\n-----END CERTIFICATE-----\n" +
-                                            "-----BEGIN RSA PRIVATE KEY-----\nMOCK_KEY_DATA\n-----END RSA PRIVATE KEY-----\n"
+            "-----BEGIN RSA PRIVATE KEY-----\nMOCK_KEY_DATA\n-----END RSA PRIVATE KEY-----\n"
         end
       end
 

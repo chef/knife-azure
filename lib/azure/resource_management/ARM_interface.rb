@@ -64,10 +64,10 @@ module Azure
 
       def create_credentials(app_token_provider_class, string_token_provider_class, token_credentials_class, params)
         token_provider = if params[:azure_client_secret]
-                          app_token_provider_class.new(params[:azure_tenant_id], params[:azure_client_id], params[:azure_client_secret])
-                        else
-                          string_token_provider_class.new(params[:token], params[:tokentype])
-                        end
+                           app_token_provider_class.new(params[:azure_tenant_id], params[:azure_client_id], params[:azure_client_secret])
+                         else
+                           string_token_provider_class.new(params[:token], params[:tokentype])
+                         end
         token_credentials_class.new(token_provider)
       end
 
@@ -212,16 +212,21 @@ module Azure
         true
       rescue MsRestAzure::AzureOperationError => e
         error_body = nil
-        if e.body
-          error_body = e.body
-        elsif e.response && e.response.body
+        if e.response && e.response.body
           error_body = e.response.body
+        elsif e.body
+          error_body = e.body
         end
         if error_body
-          err_json = JSON.parse(error_body)
-          if err_json["error"]["code"] == "ResourceNotFound"
-            false
-          else
+          begin
+            err_json = JSON.parse(error_body)
+            if err_json["error"]["code"] == "ResourceNotFound"
+              false
+            else
+              raise e
+            end
+          rescue JSON::ParserError
+            # If we can't parse the error body as JSON, re-raise the original exception
             raise e
           end
         else

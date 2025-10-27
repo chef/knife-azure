@@ -295,7 +295,7 @@ describe Chef::Knife::AzurermServerCreate do
       shared_context "and other common parameters" do
         before do
           @vm_name_with_no_special_chars = "testvm"
-          @arm_server_instance.config[:azure_storage_account] = "azure_storage_account"
+          @arm_server_instance.config[:azure_storage_account] = "azurestorageaccount"
           @storage_account_name_with_no_special_chars = "azurestora" # Truncated to 10 chars for Azure compliance
           @arm_server_instance.config[:azure_os_disk_name] = "azure_os_disk_name"
           @os_disk_name_with_no_special_chars = "azureosdiskname"
