@@ -21,12 +21,13 @@ Gem::Specification.new do |s|
 
   s.add_dependency "knife", ">= 18.0"
   s.add_dependency "nokogiri", ">= 1.5.5"
-  s.add_dependency "azure_mgmt_resources", "~> 0.17", ">= 0.17.2"
-  s.add_dependency "azure_mgmt_compute", "~> 0.18", ">= 0.18.3"
-  s.add_dependency "azure_mgmt_storage", "~> 0.20", ">= 0.20.0"
-  s.add_dependency "azure_mgmt_network", "~> 0.18", ">= 0.18.2"
+  s.add_dependency "azure_mgmt_compute2", "~> 1.0"
+  s.add_dependency "azure_mgmt_storage2", "~> 1.0"
+  s.add_dependency "azure_mgmt_network2", "~> 1.1"
+  s.add_dependency "azure_mgmt_resources2", "~> 1.1"
   s.add_dependency "listen", "~> 3.1"
   s.add_dependency "ipaddress"
   s.add_dependency "ffi"
   s.add_dependency "rb-readline"
+  s.add_dependency "abbrev"
 end
