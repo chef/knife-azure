@@ -19,12 +19,10 @@ require_relative "../azure_interface"
 require_relative "ARM_deployment_template"
 require_relative "vnet_config"
 require "azure_mgmt_resources2"
-require "azure_mgmt_compute"
-require "azure_mgmt_storage"
+require "azure_mgmt_compute2"
+require "azure_mgmt_storage2"
 require "azure_mgmt_network2"
-require "ms_rest_azure"
 require "ms_rest_azure2"
-require "ms_rest"
 require "ms_rest2"
 
 module Azure
@@ -36,11 +34,11 @@ module Azure
       include Azure::Resources2::Mgmt::V2018_05_01
       include Azure::Resources2::Mgmt::V2018_05_01::Models
 
-      include Azure::Compute::Mgmt::V2018_06_01
-      include Azure::Compute::Mgmt::V2018_06_01::Models
+      include Azure::Compute2::Mgmt::V2018_06_01
+      include Azure::Compute2::Mgmt::V2018_06_01::Models
 
-      include Azure::Storage::Mgmt::V2018_07_01
-      include Azure::Storage::Mgmt::V2018_07_01::Models
+      include Azure::Storage2::Mgmt::V2018_07_01
+      include Azure::Storage2::Mgmt::V2018_07_01::Models
 
       include Azure::Network2::Mgmt::V2018_08_01
       include Azure::Network2::Mgmt::V2018_08_01::Models
@@ -49,7 +47,7 @@ module Azure
 
       def initialize(params = {})
         # Create credentials for original gems (compute, storage)
-        @credentials_v1 = create_credentials(MsRestAzure::ApplicationTokenProvider, MsRest::StringTokenProvider, MsRest::TokenCredentials, params)
+        @credentials_v1 = create_credentials(MsRestAzure2::ApplicationTokenProvider, MsRest2::StringTokenProvider, MsRest2::TokenCredentials, params)
 
         # Create credentials for forked gems (resources2, network2)
         @credentials_v2 = create_credentials(MsRestAzure2::ApplicationTokenProvider, MsRest2::StringTokenProvider, MsRest2::TokenCredentials, params)
@@ -196,7 +194,7 @@ module Azure
       def virtual_machine_exist?(resource_group_name, vm_name)
         compute_management_client.virtual_machines.get(resource_group_name, vm_name)
         true
-      rescue MsRestAzure::AzureOperationError => e
+      rescue MsRestAzure2::AzureOperationError => e
         if e.body
           err_json = JSON.parse(e.response.body)
           if err_json["error"]["code"] == "ResourceNotFound"
@@ -210,7 +208,7 @@ module Azure
       def security_group_exist?(resource_group_name, security_group_name)
         network_resource_client.network_security_groups.get(resource_group_name, security_group_name)
         true
-      rescue MsRestAzure::AzureOperationError => e
+      rescue MsRestAzure2::AzureOperationError => e
         error_body = nil
         if e.response && e.response.body
           error_body = e.response.body
@@ -477,7 +475,7 @@ module Azure
       end
 
       def common_arm_rescue_block(error)
-        if (error.is_a?(MsRestAzure::AzureOperationError) || error.is_a?(MsRestAzure2::AzureOperationError)) && error.body
+        if (error.is_a?(MsRestAzure2::AzureOperationError) || error.is_a?(MsRestAzure2::AzureOperationError)) && error.body
           err_json = JSON.parse(error.response.body)
           err_details = err_json["error"]["details"] if err_json["error"]
           if err_details
@@ -503,39 +501,39 @@ module Azure
         ui.error("Something went wrong. Please use -VV option for more details.")
         Chef::Log.debug(error.backtrace.join("\n").to_s)
       end
-    end
 
-    private
+      private
 
-    def resource_management_client
-      @resource_management_client ||= begin
-        resource_management_client = ResourceManagementClient.new(@credentials_v2)
-        resource_management_client.subscription_id = @azure_subscription_id
-        resource_management_client
+      def resource_management_client
+        @resource_management_client ||= begin
+          resource_management_client = ResourceManagementClient.new(@credentials_v2)
+          resource_management_client.subscription_id = @azure_subscription_id
+          resource_management_client
+        end
       end
-    end
 
-    def compute_management_client
-      @compute_management_client ||= begin
-        compute_management_client = ComputeManagementClient.new(@credentials_v1)
-        compute_management_client.subscription_id = @azure_subscription_id
-        compute_management_client
+      def compute_management_client
+        @compute_management_client ||= begin
+          compute_management_client = ComputeManagementClient.new(@credentials_v1)
+          compute_management_client.subscription_id = @azure_subscription_id
+          compute_management_client
+        end
       end
-    end
 
-    def storage_management_client
-      @storage_management_client ||= begin
-        storage_management_client = StorageManagementClient.new(@credentials_v1)
-        storage_management_client.subscription_id = @azure_subscription_id
-        storage_management_client
+      def storage_management_client
+        @storage_management_client ||= begin
+          storage_management_client = StorageManagementClient.new(@credentials_v1)
+          storage_management_client.subscription_id = @azure_subscription_id
+          storage_management_client
+        end
       end
-    end
 
-    def network_resource_client
-      @network_resource_client ||= begin
-        network_resource_client = NetworkManagementClient.new(@credentials_v2)
-        network_resource_client.subscription_id = @azure_subscription_id
-        network_resource_client
+      def network_resource_client
+        @network_resource_client ||= begin
+          network_resource_client = NetworkManagementClient.new(@credentials_v2)
+          network_resource_client.subscription_id = @azure_subscription_id
+          network_resource_client
+        end
       end
     end
   end
