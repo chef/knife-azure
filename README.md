@@ -3,13 +3,7 @@
 [![Gem Version](https://badge.fury.io/rb/knife-azure.svg)](https://rubygems.org/gems/knife-azure)
 [![Build status](https://badge.buildkite.com/7796bf2bd728a4a0ca714273e12ab2df436d6afccb862ea5bb.svg)](https://buildkite.com/chef-oss/chef-knife-azure-master-verify)
 
-**Umbrella Project**: [Knife](https://github.com/chef/chef-oss-practices/blob/master/projects/knife.md)
 
-**Project State**: [Active](https://github.com/chef/chef-oss-practices/blob/master/repo-management/repo-states.md#active)
-
-**Issues [Response Time Maximum](https://github.com/chef/chef-oss-practices/blob/master/repo-management/repo-states.md)**: 14 days
-
-**Pull Request [Response Time Maximum](https://github.com/chef/chef-oss-practices/blob/master/repo-management/repo-states.md)**: 14 days
 
 ## Description
 
