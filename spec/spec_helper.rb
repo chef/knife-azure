@@ -30,6 +30,39 @@ end
 RSpec.configure do |c|
   c.before(:each) do
     Chef::Config.reset
+
+    # Set environment variables to bypass licensing (same as CI)
+    ENV["CHEF_LICENSE"] = "accept-silent"
+
+    # Mock license acceptance to prevent tomlrb parsing issues
+    allow_any_instance_of(Chef::Knife::AzurermServerCreate).to receive(:check_license)
+    allow_any_instance_of(Chef::Knife::AzurermServerCreate).to receive(:check_eula_license)
+    allow_any_instance_of(Chef::Knife::BootstrapAzurerm).to receive(:check_license)
+    allow_any_instance_of(Chef::Knife::BootstrapAzurerm).to receive(:check_eula_license)
+
+    # Mock chef-licensing to prevent license file parsing
+    allow(Chef::Utils::LicensingHandler).to receive(:validate!) if defined?(Chef::Utils::LicensingHandler)
+    allow_any_instance_of(Chef::Knife::Bootstrap).to receive(:fetch_license) if defined?(Chef::Knife::Bootstrap)
+
+    # Mock Chef::Config paths
+    Chef::Config[:validation_key] = "/tmp/validation_key"
+    Chef::Config[:client_key] = "/tmp/client_key.pem"
+
+    # Less aggressive File mocking - only mock when files don't exist to prevent real file access
+    allow(File).to receive(:exist?).and_call_original
+    allow(File).to receive(:read).and_call_original
+    allow(File).to receive(:expand_path).and_call_original
+
+    # Only mock non-existent files to prevent file system access during tests
+    allow(File).to receive(:exist?).with(%r{/tmp/validation_key}).and_return(true)
+    allow(File).to receive(:exist?).with(%r{/etc/chef/validation\.pem}).and_return(true)
+    allow(File).to receive(:read).with(%r{/tmp/validation_key}).and_return("MOCK_VALIDATION_KEY")
+    allow(File).to receive(:read).with(%r{/etc/chef/validation\.pem}).and_return("MOCK_VALIDATION_PEM")
+  end
+
+  c.after(:each) do
+    # Clean up environment variables
+    ENV.delete("CHEF_LICENSE")
   end
 
   c.before(:all) do

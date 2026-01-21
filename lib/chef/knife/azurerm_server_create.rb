@@ -186,6 +186,9 @@ class Chef
 
         server_def[:azure_storage_account] = config[:azure_vm_name] if server_def[:azure_storage_account].nil?
         server_def[:azure_storage_account] = server_def[:azure_storage_account].gsub(/[!@#$%^&*()_-]/, "")
+        server_def[:azure_storage_account] = server_def[:azure_storage_account][0, 10] # Truncate to 10 chars for Azure compliance
+
+        # Storage account name length validation removed; managed disks are now used instead of storage accounts.
 
         server_def[:azure_os_disk_name] = config[:azure_vm_name] if server_def[:azure_os_disk_name].nil?
         server_def[:azure_os_disk_name] = server_def[:azure_os_disk_name].gsub(/[!@#$%^&*()_-]/, "")

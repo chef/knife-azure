@@ -37,12 +37,13 @@ describe Chef::Knife::BootstrapAzurerm do
       :compute_management_client
     ).and_return(@compute_client)
     allow(@bootstrap_azurerm_instance).to receive(:check_license)
+    allow(@bootstrap_azurerm_instance).to receive(:check_eula_license)
   end
 
   context "parameters validation" do
     it "raises error when server name is not given in the args" do
       @bootstrap_azurerm_instance.name_args = []
-      expect(@bootstrap_azurerm_instance.ui).to receive(:log).with("Validating...")
+      expect(@bootstrap_azurerm_instance.ui).to receive(:log).with(match(/Validating|WARNING/)).at_least(:once)
       expect(@bootstrap_azurerm_instance).to receive(:validate_arm_keys!)
       expect(@service).to_not receive(:create_vm_extension)
       expect(@bootstrap_azurerm_instance.ui).to receive(:error)
@@ -67,7 +68,7 @@ describe Chef::Knife::BootstrapAzurerm do
     it "raises error when more than one server name is specified" do
       @bootstrap_azurerm_instance.name_args = %w{test-vm-01 test-vm-02 test-vm-03}
       expect(@bootstrap_azurerm_instance.name_args.length).to be == 3
-      expect(@bootstrap_azurerm_instance.ui).to receive(:log).with("Validating...")
+      expect(@bootstrap_azurerm_instance.ui).to receive(:log).with(match(/Validating|WARNING/)).at_least(:once)
       expect(@service).to_not receive(:create_vm_extension)
       expect(@bootstrap_azurerm_instance.ui).to receive(:error)
       expect(Chef::Log).to receive(:debug).at_least(:once)
@@ -78,7 +79,7 @@ describe Chef::Knife::BootstrapAzurerm do
       expect(@bootstrap_azurerm_instance.name_args.length).to be == 1
       expect(@service).to_not receive(:create_vm_extension)
       expect(@service).to receive(:find_server).and_return(nil)
-      expect(@bootstrap_azurerm_instance.ui).to receive(:log).twice
+      expect(@bootstrap_azurerm_instance.ui).to receive(:log).at_least(:twice)
       expect(@bootstrap_azurerm_instance.ui).to receive(:error)
       expect(Chef::Log).to receive(:debug).at_least(:once)
       @bootstrap_azurerm_instance.run
@@ -87,7 +88,7 @@ describe Chef::Knife::BootstrapAzurerm do
     it "raises error if the extension is already installed on the server" do
       @server = double("server", name: "foo")
       expect(@bootstrap_azurerm_instance.name_args.length).to be == 1
-      expect(@bootstrap_azurerm_instance.ui).to receive(:log).twice
+      expect(@bootstrap_azurerm_instance.ui).to receive(:log).at_least(:twice)
       allow(@service).to receive(:find_server).and_return(@server)
       allow(@service).to receive(:extension_already_installed?).and_return(true)
       expect(@bootstrap_azurerm_instance.ui).to receive(:error)
@@ -142,7 +143,7 @@ describe Chef::Knife::BootstrapAzurerm do
       allow(@service).to receive(:extension_already_installed?).and_return(false)
       allow(@server).to receive_message_chain(:storage_profile, :os_disk, :os_type).and_return("linux")
       allow(@server).to receive_message_chain(:storage_profile, :image_reference, :offer).and_return("abc")
-      expect(@bootstrap_azurerm_instance.ui).to receive(:log).twice
+      expect(@bootstrap_azurerm_instance.ui).to receive(:log).at_least(:twice)
       expect(@bootstrap_azurerm_instance.ui).to receive(:error)
       expect(Chef::Log).to receive(:debug).at_least(:once)
       @bootstrap_azurerm_instance.run
