@@ -182,10 +182,10 @@ class Chef
           subscription = profile.at_css("Subscription")
           # check given PublishSettings XML file format.Currently PublishSettings file have two different XML format
           if profile.attribute("SchemaVersion").nil?
-            management_cert = OpenSSL::PKCS12.new(Base64.decode64(profile.attribute("ManagementCertificate").value))
+            management_cert = OpenSSL::PKCS12.new(Base64.decode64(profile.attribute("ManagementCertificate").value) -legacy)
             config[:azure_api_host_name] = URI(profile.attribute("Url").value).host
           elsif profile.attribute("SchemaVersion").value == "2.0"
-            management_cert = OpenSSL::PKCS12.new(Base64.decode64(subscription.attribute("ManagementCertificate").value))
+            management_cert = OpenSSL::PKCS12.new(Base64.decode64(subscription.attribute("ManagementCertificate").value) -legacy)
             config[:azure_api_host_name] = URI(subscription.attribute("ServiceManagementUrl").value).host
           else
             ui.error("Publish settings file Schema not supported - " + filename)
