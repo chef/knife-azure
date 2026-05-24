@@ -257,7 +257,7 @@ bundle exec rake style:auto_correct
 **2. Test Template:**
 ```ruby
 #
-# Copyright:: Copyright (c) Chef Software Inc.
+# Copyright:: Copyright (c) 2012-2024 Progress Software Corporation and/or its subsidiaries or affiliates. All Rights Reserved.
 # License:: Apache License, Version 2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -952,7 +952,7 @@ bundle exec chefstyle lib/chef/knife/azurerm_server_create.rb
 ```ruby
 # File header (REQUIRED for all new files)
 #
-# Copyright:: Copyright (c) Chef Software Inc.
+# Copyright:: Copyright (c) 2012-2024 Progress Software Corporation and/or its subsidiaries or affiliates. All Rights Reserved.
 # License:: Apache License, Version 2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
