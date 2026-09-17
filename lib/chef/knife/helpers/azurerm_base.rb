@@ -178,7 +178,11 @@ class Chef
         require "uri" unless defined?(URI)
         retried_with_legacy_provider = false
         begin
-          doc = Nokogiri::XML(File.open(find_file(filename)))
+          # Use the block form of File.open so the file handle is always closed
+          # after parsing, rather than left open for the GC to close later. This
+          # matters on Windows, where an open handle prevents a Tempfile-based
+          # fixture (used in specs) from being unlinked.
+          doc = File.open(find_file(filename)) { |file| Nokogiri::XML(file) }
           profile = doc.at_css("PublishProfile")
           subscription = profile.at_css("Subscription")
           # check given PublishSettings XML file format.Currently PublishSettings file have two different XML format
