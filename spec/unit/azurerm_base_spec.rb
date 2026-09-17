@@ -46,6 +46,14 @@ describe Chef::Knife::AzurermBase do
       before do
         @dummy.config[:azure_api_host_name] = nil
         @dummy.config[:azure_subscription_id] = nil
+
+        # OpenSSL 3.x disables the legacy RC2-40-CBC cipher used by these old PKCS12
+        # fixtures by default, so stub OpenSSL::PKCS12 to avoid environment-dependent
+        # failures while still exercising the surrounding parsing logic.
+        mock_certificate = instance_double(OpenSSL::X509::Certificate, to_pem: "-----BEGIN CERTIFICATE-----\nMOCK\n-----END CERTIFICATE-----\n")
+        mock_key = instance_double(OpenSSL::PKey::RSA, to_pem: "-----BEGIN RSA PRIVATE KEY-----\nMOCK\n-----END RSA PRIVATE KEY-----\n")
+        mock_pkcs12 = instance_double(OpenSSL::PKCS12, certificate: mock_certificate, key: mock_key)
+        allow(OpenSSL::PKCS12).to receive(:new).and_return(mock_pkcs12)
       end
 
       def validate_cert
@@ -94,6 +102,19 @@ describe Chef::Knife::AzurermBase do
         expect(@dummy.config[:azure_api_host_name]).to be == "management.core.windows.net"
         expect(@dummy.config[:azure_subscription_id]).to be == "id1"
         validate_cert
+      end
+
+      it "- should exit with a clear message when PKCS12 parsing fails due to unsupported RC2-40-CBC cipher" do
+        allow(OpenSSL::PKCS12).to receive(:new).and_raise(OpenSSL::PKCS12::PKCS12Error, "unsupported RC2-40-CBC cipher")
+        expect(@dummy.ui).to receive(:error).with(/Cannot parse certificate/)
+        expect(@dummy.ui).to receive(:error).with(/legacy RC2-40-CBC cipher/)
+        expect { @dummy.parse_publish_settings_file(get_publish_settings_file_path("azureValid.publishsettings")) }.to raise_error(SystemExit)
+      end
+
+      it "- should exit with a generic message for other PKCS12 parsing errors" do
+        allow(OpenSSL::PKCS12).to receive(:new).and_raise(OpenSSL::PKCS12::PKCS12Error, "some other pkcs12 failure")
+        expect(@dummy.ui).to receive(:error).with(/Error parsing PKCS12 certificate/)
+        expect { @dummy.parse_publish_settings_file(get_publish_settings_file_path("azureValid.publishsettings")) }.to raise_error(SystemExit)
       end
     end
   end

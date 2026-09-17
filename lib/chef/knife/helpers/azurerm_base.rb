@@ -192,6 +192,16 @@ class Chef
           end
           config[:azure_mgmt_cert] = management_cert.certificate.to_pem + management_cert.key.to_pem
           config[:azure_subscription_id] = doc.at_css("Subscription").attribute("Id").value
+        rescue OpenSSL::PKCS12::PKCS12Error => error
+          if error.message.include?("RC2-40-CBC")
+            ui.error("Cannot parse certificate: #{error.message}")
+            ui.error("The PKCS12 certificate uses the legacy RC2-40-CBC cipher, which is no longer " \
+              "supported by default on OpenSSL 3.x. Regenerate the publish settings file, or enable " \
+              "OpenSSL's legacy provider if you must use this file.")
+          else
+            ui.error("Error parsing PKCS12 certificate: #{error.message}")
+          end
+          exit 1
         rescue => error
           puts "#{error.class} and #{error.message}"
           exit 1
