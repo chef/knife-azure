@@ -199,17 +199,21 @@ class Chef
           config[:azure_subscription_id] = doc.at_css("Subscription").attribute("Id").value
         rescue OpenSSL::PKCS12::PKCS12Error => error
           # Older Azure publish settings files use PKCS12 certificates encrypted with
-          # the legacy RC2-40-CBC cipher, which OpenSSL 3.x disables by default. Only
-          # load OpenSSL's "legacy" provider (widening the process-wide crypto surface)
-          # if we actually hit that specific failure, and only retry once.
-          if !retried_with_legacy_provider && error.message.include?("RC2-40-CBC") && load_openssl_legacy_provider
+          # the legacy RC2-40-CBC cipher, which OpenSSL 3.x disables by default. On
+          # OpenSSL 3.x the raised error usually doesn't mention "RC2-40-CBC" at all -
+          # it's typically the generic "PKCS12_parse: unsupported" - so treat any
+          # "unsupported"-style PKCS12Error as a candidate for the legacy-cipher retry,
+          # not just messages that explicitly say RC2-40-CBC. Only load OpenSSL's
+          # "legacy" provider (widening the process-wide crypto surface) if we
+          # actually hit one of these failures, and only retry once.
+          if !retried_with_legacy_provider && legacy_cipher_error?(error) && load_openssl_legacy_provider
             retried_with_legacy_provider = true
             retry
           end
 
-          if error.message.include?("RC2-40-CBC")
+          if legacy_cipher_error?(error)
             ui.error("Cannot parse certificate: #{error.message}")
-            ui.error("The PKCS12 certificate uses the legacy RC2-40-CBC cipher, which is unavailable " \
+            ui.error("The PKCS12 certificate may use the legacy RC2-40-CBC cipher, which is unavailable " \
               "in the current OpenSSL configuration. Please regenerate the publish settings file " \
               "with a more recent cipher.")
           else
@@ -220,6 +224,14 @@ class Chef
           puts "#{error.class} and #{error.message}"
           exit 1
         end
+      end
+
+      # Returns true if the given OpenSSL::PKCS12::PKCS12Error looks like it was
+      # caused by a legacy/deprecated cipher (such as RC2-40-CBC) being disabled by
+      # default on OpenSSL 3.x. On OpenSSL 3.x this commonly surfaces as a generic
+      # "unsupported" error rather than one that names RC2-40-CBC explicitly.
+      def legacy_cipher_error?(error)
+        error.message =~ /RC2-40-CBC/i || error.message =~ /unsupported/i
       end
 
       # Attempts to load OpenSSL's "legacy" provider (needed to decrypt PKCS12 files

@@ -158,10 +158,19 @@ describe Chef::Knife::AzurermBase do
       end
 
       it "- should successfully parse a real legacy RC2-40-CBC publish settings file when the OpenSSL legacy provider is available" do
-        # This directly exercises load_openssl_legacy_provider and, when the provider
-        # is available on this system, the real (unmocked) OpenSSL::PKCS12.new parsing
-        # of an actual RC2-40-CBC-encrypted fixture - not just the error-message path.
-        skip "OpenSSL legacy provider is not available in this environment" unless @dummy.load_openssl_legacy_provider
+        # Check availability in a subprocess rather than calling
+        # @dummy.load_openssl_legacy_provider directly here: OpenSSL::Provider.load is
+        # process-wide and can't be unloaded, so calling it in this process before
+        # parse_publish_settings_file would make the very first OpenSSL::PKCS12.new
+        # call succeed and never exercise the rescue/load-provider/retry path this
+        # test is meant to cover. Running the check out-of-process keeps this
+        # process's OpenSSL state clean so the real retry path is exercised below.
+        legacy_provider_available = system(
+          RbConfig.ruby, "-ropenssl", "-e",
+          "exit(OpenSSL::Provider.load('legacy') && OpenSSL::Provider.load('default') ? 0 : 1)",
+          out: File::NULL, err: File::NULL
+        )
+        skip "OpenSSL legacy provider is not available in this environment" unless legacy_provider_available
 
         @dummy.parse_publish_settings_file(get_publish_settings_file_path("azureValid.publishsettings"))
         expect(@dummy.config[:azure_api_host_name]).to be == "management.core.windows.net"
