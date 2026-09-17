@@ -50,7 +50,9 @@ describe Chef::Knife::AzurermBase do
       end
 
       after do
-        @generated_publish_settings_file&.unlink
+        # close! closes the file handle before unlinking, avoiding a sharing
+        # violation on Windows where an open file cannot be removed.
+        @generated_publish_settings_file&.close!
       end
 
       def validate_cert
