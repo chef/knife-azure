@@ -176,8 +176,13 @@ class Chef
         require "base64" unless defined?(Base64)
         require "openssl" unless defined?(OpenSSL)
         require "uri" unless defined?(URI)
+        retried_with_legacy_provider = false
         begin
-          doc = Nokogiri::XML(File.open(find_file(filename)))
+          # Use the block form of File.open so the file handle is always closed
+          # after parsing, rather than left open for the GC to close later. This
+          # matters on Windows, where an open handle prevents a Tempfile-based
+          # fixture (used in specs) from being unlinked.
+          doc = File.open(find_file(filename)) { |file| Nokogiri::XML(file) }
           profile = doc.at_css("PublishProfile")
           subscription = profile.at_css("Subscription")
           # check given PublishSettings XML file format.Currently PublishSettings file have two different XML format
@@ -192,10 +197,54 @@ class Chef
           end
           config[:azure_mgmt_cert] = management_cert.certificate.to_pem + management_cert.key.to_pem
           config[:azure_subscription_id] = doc.at_css("Subscription").attribute("Id").value
+        rescue OpenSSL::PKCS12::PKCS12Error => error
+          # Older Azure publish settings files use PKCS12 certificates encrypted with
+          # the legacy RC2-40-CBC cipher, which OpenSSL 3.x disables by default. On
+          # OpenSSL 3.x the raised error usually doesn't mention "RC2-40-CBC" at all -
+          # it's typically the generic "PKCS12_parse: unsupported" - so treat any
+          # "unsupported"-style PKCS12Error as a candidate for the legacy-cipher retry,
+          # not just messages that explicitly say RC2-40-CBC. Only load OpenSSL's
+          # "legacy" provider (widening the process-wide crypto surface) if we
+          # actually hit one of these failures, and only retry once.
+          if !retried_with_legacy_provider && legacy_cipher_error?(error) && load_openssl_legacy_provider
+            retried_with_legacy_provider = true
+            retry
+          end
+
+          if legacy_cipher_error?(error)
+            ui.error("Cannot parse certificate: #{error.message}")
+            ui.error("The PKCS12 certificate may use the legacy RC2-40-CBC cipher, which is unavailable " \
+              "in the current OpenSSL configuration. Please regenerate the publish settings file " \
+              "with a more recent cipher.")
+          else
+            ui.error("Error parsing PKCS12 certificate: #{error.message}")
+          end
+          exit 1
         rescue => error
           puts "#{error.class} and #{error.message}"
           exit 1
         end
+      end
+
+      # Returns true if the given OpenSSL::PKCS12::PKCS12Error looks like it was
+      # caused by a legacy/deprecated cipher (such as RC2-40-CBC) being disabled by
+      # default on OpenSSL 3.x. On OpenSSL 3.x this commonly surfaces as a generic
+      # "unsupported" error rather than one that names RC2-40-CBC explicitly.
+      def legacy_cipher_error?(error)
+        error.message =~ /RC2-40-CBC/i || error.message =~ /unsupported/i
+      end
+
+      # Attempts to load OpenSSL's "legacy" provider (needed to decrypt PKCS12 files
+      # using deprecated ciphers such as RC2-40-CBC). Returns true if the provider was
+      # loaded successfully, false otherwise (e.g. it isn't available on this system).
+      def load_openssl_legacy_provider
+        return false unless defined?(OpenSSL::Provider)
+
+        OpenSSL::Provider.load("legacy")
+        OpenSSL::Provider.load("default")
+        true
+      rescue StandardError, LoadError
+        false
       end
 
       def find_file(name)

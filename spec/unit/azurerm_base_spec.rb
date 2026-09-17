@@ -18,6 +18,7 @@
 
 require_relative "../spec_helper"
 require_relative "query_azure_mock"
+require "tempfile"
 
 describe Chef::Knife::AzurermBase do
   include AzureSpecHelper
@@ -48,11 +49,71 @@ describe Chef::Knife::AzurermBase do
         @dummy.config[:azure_subscription_id] = nil
       end
 
+      after do
+        # close! closes the file handle before unlinking, avoiding a sharing
+        # violation on Windows where an open file cannot be removed.
+        @generated_publish_settings_file&.close!
+      end
+
       def validate_cert
         expect(@dummy.config[:azure_mgmt_cert]).to include("-----BEGIN CERTIFICATE-----")
         expect(@dummy.config[:azure_mgmt_cert]).to include("-----END CERTIFICATE-----")
         expect(@dummy.config[:azure_mgmt_cert]).to include("-----BEGIN RSA PRIVATE KEY-----")
         expect(@dummy.config[:azure_mgmt_cert]).to include("-----END RSA PRIVATE KEY-----")
+      end
+
+      # Generates a throwaway self-signed cert/key PKCS12 (using a modern, universally
+      # supported cipher) at test-run time so we can exercise the real
+      # OpenSSL::PKCS12.new parsing path without checking any certificate/key material
+      # into source control. Nothing generated here is persisted beyond the test run.
+      def generate_publish_settings_file(schema_version: nil)
+        key = OpenSSL::PKey::RSA.new(2048)
+        cert = OpenSSL::X509::Certificate.new
+        cert.version = 2
+        cert.serial = 1
+        cert.subject = cert.issuer = OpenSSL::X509::Name.parse("/CN=knife-azure-test")
+        cert.public_key = key.public_key
+        cert.not_before = Time.now
+        cert.not_after = Time.now + 3600
+        cert.sign(key, OpenSSL::Digest.new("SHA256"))
+        pkcs12_b64 = Base64.strict_encode64(OpenSSL::PKCS12.create("", "knife-azure-test", key, cert).to_der)
+
+        xml = if schema_version == "2.0"
+                <<~XML
+                  <?xml version="1.0" encoding="utf-8"?>
+                  <PublishData>
+                    <PublishProfile
+                      SchemaVersion="2.0"
+                      PublishMethod="AzureServiceManagementAPI">
+                      <Subscription
+                        ServiceManagementUrl="https://management.core.windows.net"
+                        Id="id1"
+                        Name="Name1"
+                        ManagementCertificate="#{pkcs12_b64}">
+                      </Subscription>
+                    </PublishProfile>
+                  </PublishData>
+                XML
+              else
+                <<~XML
+                  <?xml version="1.0" encoding="utf-8"?>
+                  <PublishData>
+                    <PublishProfile
+                      PublishMethod="AzureServiceManagementAPI"
+                      Url="https://management.core.windows.net/"
+                      ManagementCertificate="#{pkcs12_b64}">
+                      <Subscription
+                        Id="id1"
+                        Name="Name1" />
+                    </PublishProfile>
+                  </PublishData>
+                XML
+              end
+
+        @generated_publish_settings_file = Tempfile.new(["publishsettings", ".publishsettings"])
+        @generated_publish_settings_file.write(xml)
+        @generated_publish_settings_file.flush
+        @generated_publish_settings_file.path
       end
 
       it "- should continue to regular flow if publish settings file not provided" do
@@ -66,7 +127,7 @@ describe Chef::Knife::AzurermBase do
       end
 
       it "- should validate extract parameters" do
-        @dummy.config[:azure_publish_settings_file] = get_publish_settings_file_path("azureValid.publishsettings")
+        @dummy.config[:azure_publish_settings_file] = generate_publish_settings_file
         @dummy.validate_arm_keys!
         expect(@dummy.config[:azure_api_host_name]).to be == "management.core.windows.net"
         expect(@dummy.config[:azure_subscription_id]).to be == "id1"
@@ -74,14 +135,14 @@ describe Chef::Knife::AzurermBase do
       end
 
       it "- should validate parse method" do
-        @dummy.parse_publish_settings_file(get_publish_settings_file_path("azureValid.publishsettings"))
+        @dummy.parse_publish_settings_file(generate_publish_settings_file)
         expect(@dummy.config[:azure_api_host_name]).to be == "management.core.windows.net"
         expect(@dummy.config[:azure_subscription_id]).to be == "id1"
         validate_cert
       end
 
       it "- should validate parse method for SchemaVersion2-0 publishsettings file" do
-        @dummy.parse_publish_settings_file(get_publish_settings_file_path("azureValidSchemaVersion-2.0.publishsettings"))
+        @dummy.parse_publish_settings_file(generate_publish_settings_file(schema_version: "2.0"))
         expect(@dummy.config[:azure_api_host_name]).to be == "management.core.windows.net"
         expect(@dummy.config[:azure_subscription_id]).to be == "id1"
         validate_cert
@@ -89,11 +150,46 @@ describe Chef::Knife::AzurermBase do
 
       it "- should validate settings file and subscrition id" do
         @dummy.config[:azure_subscription_id] = "azure_subscription_id"
-        @dummy.config[:azure_publish_settings_file] = get_publish_settings_file_path("azureValid.publishsettings")
+        @dummy.config[:azure_publish_settings_file] = generate_publish_settings_file
         @dummy.validate_arm_keys!
         expect(@dummy.config[:azure_api_host_name]).to be == "management.core.windows.net"
         expect(@dummy.config[:azure_subscription_id]).to be == "id1"
         validate_cert
+      end
+
+      it "- should successfully parse a real legacy RC2-40-CBC publish settings file when the OpenSSL legacy provider is available" do
+        # Check availability in a subprocess rather than calling
+        # @dummy.load_openssl_legacy_provider directly here: OpenSSL::Provider.load is
+        # process-wide and can't be unloaded, so calling it in this process before
+        # parse_publish_settings_file would make the very first OpenSSL::PKCS12.new
+        # call succeed and never exercise the rescue/load-provider/retry path this
+        # test is meant to cover. Running the check out-of-process keeps this
+        # process's OpenSSL state clean so the real retry path is exercised below.
+        legacy_provider_available = system(
+          RbConfig.ruby, "-ropenssl", "-e",
+          "exit(OpenSSL::Provider.load('legacy') && OpenSSL::Provider.load('default') ? 0 : 1)",
+          out: File::NULL, err: File::NULL
+        )
+        skip "OpenSSL legacy provider is not available in this environment" unless legacy_provider_available
+
+        @dummy.parse_publish_settings_file(get_publish_settings_file_path("azureValid.publishsettings"))
+        expect(@dummy.config[:azure_api_host_name]).to be == "management.core.windows.net"
+        expect(@dummy.config[:azure_subscription_id]).to be == "id1"
+        validate_cert
+      end
+
+      it "- should exit with a clear message when PKCS12 parsing fails due to unsupported RC2-40-CBC cipher" do
+        allow(OpenSSL::PKCS12).to receive(:new).and_raise(OpenSSL::PKCS12::PKCS12Error, "unsupported RC2-40-CBC cipher")
+        allow(@dummy).to receive(:load_openssl_legacy_provider).and_return(false)
+        expect(@dummy.ui).to receive(:error).with(/Cannot parse certificate/)
+        expect(@dummy.ui).to receive(:error).with(/legacy RC2-40-CBC cipher/)
+        expect { @dummy.parse_publish_settings_file(get_publish_settings_file_path("azureValid.publishsettings")) }.to raise_error(SystemExit)
+      end
+
+      it "- should exit with a generic message for other PKCS12 parsing errors" do
+        allow(OpenSSL::PKCS12).to receive(:new).and_raise(OpenSSL::PKCS12::PKCS12Error, "some other pkcs12 failure")
+        expect(@dummy.ui).to receive(:error).with(/Error parsing PKCS12 certificate/)
+        expect { @dummy.parse_publish_settings_file(get_publish_settings_file_path("azureValid.publishsettings")) }.to raise_error(SystemExit)
       end
     end
   end

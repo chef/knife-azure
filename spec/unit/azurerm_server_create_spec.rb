@@ -407,12 +407,7 @@ describe Chef::Knife::AzurermServerCreate do
           %w{service task none}.each do |daemon|
             it "does not raises error if valid daemon option is provided" do
               @arm_server_instance.config[:daemon] = daemon
-              expect { @arm_server_instance.validate_params! }.not_to raise_error(
-                ArgumentError, "The daemon option is only support for Windows nodes."
-              )
-              expect { @arm_server_instance.validate_params! }.not_to raise_error(
-                ArgumentError, "Invalid value for --daemon option. Use valid daemon values i.e 'none', 'service' and 'task'."
-              )
+              expect { @arm_server_instance.validate_params! }.not_to raise_error
             end
           end
         end
@@ -521,8 +516,8 @@ describe Chef::Knife::AzurermServerCreate do
           response = OpenStruct.new(
             "body" => '{"error": {"code": "ResourceNotFound"}}'
           )
-          body = "MsRestAzure::AzureOperationError"
-          error = MsRestAzure::AzureOperationError.new(request, response, body)
+          body = "MsRestAzure2::AzureOperationError"
+          error = MsRestAzure2::AzureOperationError.new(request, response, body)
           network_resource_client = double("NetworkResourceClient",
             network_security_groups: double)
           allow(network_resource_client.network_security_groups).to receive(
@@ -547,8 +542,8 @@ describe Chef::Knife::AzurermServerCreate do
           response = OpenStruct.new(
             "body" => '{"error": {"code": "SomeProblemOccurred"}}'
           )
-          body = "MsRestAzure::AzureOperationError"
-          @error = MsRestAzure::AzureOperationError.new(request, response, body)
+          body = "MsRestAzure2::AzureOperationError"
+          @error = MsRestAzure2::AzureOperationError.new(request, response, body)
           network_resource_client = double("NetworkResourceClient",
             network_security_groups: double)
           allow(network_resource_client.network_security_groups).to receive(

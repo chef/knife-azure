@@ -23,6 +23,24 @@ https://downloads.chef.io/chef-workstation/
 
 `knife-azure 4.0` onwards removes the legacy `knife azure` commands that utilized the Azure Service Management API. This API was deprecated in March 2018.
 
+## Ruby Compatibility
+
+knife-azure supports Ruby >= 3.1, and is verified against Ruby 3.1 and Ruby 3.4 on both
+Linux and Windows in CI.
+
+**Note:** knife-azure depends on the `azure_mgmt_*2`/`ms_rest*2` gems published from the
+[chef/azure-sdk-for-ruby](https://github.com/chef/azure-sdk-for-ruby) fork rather than the
+original `Azure/azure-sdk-for-ruby` gems, since that upstream project is archived and no
+longer receives updates. Chef maintains the fork going forward (see CHEF-31993/CHEF-32103).
+
+**Note:** `knife-azure` supports `knife` >= 18.0 (see `knife-azure.gemspec`). If you use it
+with `knife` >= 19, note that `knife` now enforces Chef Infra license acceptance/fetch by
+default when running `knife bootstrap azurerm`. If you bootstrap nodes via the Chef Azure
+VM Extension (`knife bootstrap azurerm`) in unattended/CI environments with `knife` >= 19,
+make sure a Chef Infra license is available (e.g. via `CHEF_LICENSE_SERVER`/`--chef-license`)
+or use `--bootstrap-template`/`--bootstrap-url`/`--msi-url`, which bypass the local license
+check.
+
 ## Configuration
 
 1. [ARM Configuration](docs/configuration.md#arm-mode)
