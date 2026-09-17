@@ -46,14 +46,6 @@ describe Chef::Knife::AzurermBase do
       before do
         @dummy.config[:azure_api_host_name] = nil
         @dummy.config[:azure_subscription_id] = nil
-
-        # OpenSSL 3.x disables the legacy RC2-40-CBC cipher used by these old PKCS12
-        # fixtures by default, so stub OpenSSL::PKCS12 to avoid environment-dependent
-        # failures while still exercising the surrounding parsing logic.
-        mock_certificate = instance_double(OpenSSL::X509::Certificate, to_pem: "-----BEGIN CERTIFICATE-----\nMOCK\n-----END CERTIFICATE-----\n")
-        mock_key = instance_double(OpenSSL::PKey::RSA, to_pem: "-----BEGIN RSA PRIVATE KEY-----\nMOCK\n-----END RSA PRIVATE KEY-----\n")
-        mock_pkcs12 = instance_double(OpenSSL::PKCS12, certificate: mock_certificate, key: mock_key)
-        allow(OpenSSL::PKCS12).to receive(:new).and_return(mock_pkcs12)
       end
 
       def validate_cert

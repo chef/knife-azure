@@ -176,6 +176,7 @@ class Chef
         require "base64" unless defined?(Base64)
         require "openssl" unless defined?(OpenSSL)
         require "uri" unless defined?(URI)
+        load_openssl_legacy_provider
         begin
           doc = Nokogiri::XML(File.open(find_file(filename)))
           profile = doc.at_css("PublishProfile")
@@ -195,9 +196,10 @@ class Chef
         rescue OpenSSL::PKCS12::PKCS12Error => error
           if error.message.include?("RC2-40-CBC")
             ui.error("Cannot parse certificate: #{error.message}")
-            ui.error("The PKCS12 certificate uses the legacy RC2-40-CBC cipher, which is no longer " \
-              "supported by default on OpenSSL 3.x. Regenerate the publish settings file, or enable " \
-              "OpenSSL's legacy provider if you must use this file.")
+            ui.error("The PKCS12 certificate uses the legacy RC2-40-CBC cipher, which OpenSSL 3.x " \
+              "disables by default. We already attempted to load OpenSSL's legacy provider to " \
+              "support this file; if that provider isn't available on this system, please " \
+              "regenerate the publish settings file with a more recent cipher.")
           else
             ui.error("Error parsing PKCS12 certificate: #{error.message}")
           end
@@ -206,6 +208,22 @@ class Chef
           puts "#{error.class} and #{error.message}"
           exit 1
         end
+      end
+
+      # Older Azure publish settings files use PKCS12 certificates encrypted with the
+      # legacy RC2-40-CBC cipher, which OpenSSL 3.x (bundled with Ruby 3.4, and available
+      # as an upgrade on Ruby 3.1) disables by default. Proactively load OpenSSL's
+      # "legacy" provider so these files continue to parse successfully. This is a
+      # best-effort call: on systems where the legacy provider isn't available, this is
+      # silently skipped and OpenSSL::PKCS12.new will raise a PKCS12Error, which is
+      # handled with a clear message below.
+      def load_openssl_legacy_provider
+        return unless defined?(OpenSSL::Provider)
+
+        OpenSSL::Provider.load("legacy")
+        OpenSSL::Provider.load("default")
+      rescue StandardError, LoadError
+        nil
       end
 
       def find_file(name)

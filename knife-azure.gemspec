@@ -19,7 +19,8 @@ Gem::Specification.new do |s|
   s.require_paths = ["lib"]
   s.required_ruby_version = ">= 3.1"
 
-  s.add_dependency "knife", ">= 18.0"
+  s.add_dependency "knife", ">= 19.0"
+  s.add_dependency "chef", ">= 19.1"
   s.add_dependency "nokogiri", ">= 1.5.5"
   # Depend on the "2"-suffixed gems published from the chef/azure-sdk-for-ruby fork.
   # The original upstream Azure/azure-sdk-for-ruby project is archived and receives
