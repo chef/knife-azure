@@ -33,12 +33,12 @@ Linux and Windows in CI.
 original `Azure/azure-sdk-for-ruby` gems, since that upstream project is archived and no
 longer receives updates. Chef maintains the fork going forward (see CHEF-31993/CHEF-32103).
 
-**Note:** `knife-azure` requires `knife` >= 19 (see `knife-azure.gemspec`), which now
-enforces Chef Infra license acceptance/fetch by default when running `knife bootstrap
-azurerm`. If you bootstrap nodes via the Chef Azure VM Extension (`knife bootstrap
-azurerm`) in unattended/CI environments, make sure a Chef Infra license is available
-(e.g. via `CHEF_LICENSE_SERVER`/`--chef-license`) or use
-`--bootstrap-template`/`--bootstrap-url`/`--msi-url`, which bypass the local license
+**Note:** `knife-azure` supports `knife` >= 18.0 (see `knife-azure.gemspec`). If you use it
+with `knife` >= 19, note that `knife` now enforces Chef Infra license acceptance/fetch by
+default when running `knife bootstrap azurerm`. If you bootstrap nodes via the Chef Azure
+VM Extension (`knife bootstrap azurerm`) in unattended/CI environments with `knife` >= 19,
+make sure a Chef Infra license is available (e.g. via `CHEF_LICENSE_SERVER`/`--chef-license`)
+or use `--bootstrap-template`/`--bootstrap-url`/`--msi-url`, which bypass the local license
 check.
 
 ## Configuration

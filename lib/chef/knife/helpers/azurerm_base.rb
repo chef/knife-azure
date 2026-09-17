@@ -205,9 +205,9 @@ class Chef
 
           if error.message.include?("RC2-40-CBC")
             ui.error("Cannot parse certificate: #{error.message}")
-            ui.error("The PKCS12 certificate uses the legacy RC2-40-CBC cipher, which OpenSSL 3.x " \
-              "disables by default, and OpenSSL's legacy provider is not available on this system. " \
-              "Please regenerate the publish settings file with a more recent cipher.")
+            ui.error("The PKCS12 certificate uses the legacy RC2-40-CBC cipher, which is unavailable " \
+              "in the current OpenSSL configuration. Please regenerate the publish settings file " \
+              "with a more recent cipher.")
           else
             ui.error("Error parsing PKCS12 certificate: #{error.message}")
           end
