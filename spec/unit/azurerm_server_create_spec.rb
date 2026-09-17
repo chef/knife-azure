@@ -521,8 +521,8 @@ describe Chef::Knife::AzurermServerCreate do
           response = OpenStruct.new(
             "body" => '{"error": {"code": "ResourceNotFound"}}'
           )
-          body = "MsRestAzure::AzureOperationError"
-          error = MsRestAzure::AzureOperationError.new(request, response, body)
+          body = "MsRestAzure2::AzureOperationError"
+          error = MsRestAzure2::AzureOperationError.new(request, response, body)
           network_resource_client = double("NetworkResourceClient",
             network_security_groups: double)
           allow(network_resource_client.network_security_groups).to receive(
@@ -547,8 +547,8 @@ describe Chef::Knife::AzurermServerCreate do
           response = OpenStruct.new(
             "body" => '{"error": {"code": "SomeProblemOccurred"}}'
           )
-          body = "MsRestAzure::AzureOperationError"
-          @error = MsRestAzure::AzureOperationError.new(request, response, body)
+          body = "MsRestAzure2::AzureOperationError"
+          @error = MsRestAzure2::AzureOperationError.new(request, response, body)
           network_resource_client = double("NetworkResourceClient",
             network_security_groups: double)
           allow(network_resource_client.network_security_groups).to receive(

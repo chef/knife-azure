@@ -28,6 +28,11 @@ https://downloads.chef.io/chef-workstation/
 knife-azure supports Ruby >= 3.1, and is verified against Ruby 3.1 and Ruby 3.4 on both
 Linux and Windows in CI.
 
+**Note:** knife-azure depends on the `azure_mgmt_*2`/`ms_rest*2` gems published from the
+[chef/azure-sdk-for-ruby](https://github.com/chef/azure-sdk-for-ruby) fork rather than the
+original `Azure/azure-sdk-for-ruby` gems, since that upstream project is archived and no
+longer receives updates. Chef maintains the fork going forward (see CHEF-31993/CHEF-32103).
+
 **Note:** `knife-azure` depends on `knife` (>= 19), which now enforces Chef Infra license
 acceptance/fetch by default when running `knife bootstrap azurerm`. If you bootstrap nodes
 via the Chef Azure VM Extension (`knife bootstrap azurerm`) in unattended/CI environments,

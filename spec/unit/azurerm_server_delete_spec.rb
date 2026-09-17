@@ -76,7 +76,7 @@ describe Chef::Knife::AzurermServerDelete do
 
     it "rescues exception if the delete process fails" do
       expect(@arm_server_instance).to receive(:validate_arm_keys!).with(:azure_resource_group_name)
-      allow(@service).to receive(:delete_server).and_raise(MsRestAzure::AzureOperationError, "ResourceNotFound")
+      allow(@service).to receive(:delete_server).and_raise(MsRestAzure2::AzureOperationError, "ResourceNotFound")
       allow(@service.ui).to receive(:error).twice
       @arm_server_instance.run
     end
