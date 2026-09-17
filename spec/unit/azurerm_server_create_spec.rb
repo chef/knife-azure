@@ -407,12 +407,7 @@ describe Chef::Knife::AzurermServerCreate do
           %w{service task none}.each do |daemon|
             it "does not raises error if valid daemon option is provided" do
               @arm_server_instance.config[:daemon] = daemon
-              expect { @arm_server_instance.validate_params! }.not_to raise_error(
-                ArgumentError, "The daemon option is only support for Windows nodes."
-              )
-              expect { @arm_server_instance.validate_params! }.not_to raise_error(
-                ArgumentError, "Invalid value for --daemon option. Use valid daemon values i.e 'none', 'service' and 'task'."
-              )
+              expect { @arm_server_instance.validate_params! }.not_to raise_error
             end
           end
         end
