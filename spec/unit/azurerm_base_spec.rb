@@ -18,6 +18,7 @@
 
 require_relative "../spec_helper"
 require_relative "query_azure_mock"
+require "tempfile"
 
 describe Chef::Knife::AzurermBase do
   include AzureSpecHelper
@@ -48,11 +49,69 @@ describe Chef::Knife::AzurermBase do
         @dummy.config[:azure_subscription_id] = nil
       end
 
+      after do
+        @generated_publish_settings_file&.unlink
+      end
+
       def validate_cert
         expect(@dummy.config[:azure_mgmt_cert]).to include("-----BEGIN CERTIFICATE-----")
         expect(@dummy.config[:azure_mgmt_cert]).to include("-----END CERTIFICATE-----")
         expect(@dummy.config[:azure_mgmt_cert]).to include("-----BEGIN RSA PRIVATE KEY-----")
         expect(@dummy.config[:azure_mgmt_cert]).to include("-----END RSA PRIVATE KEY-----")
+      end
+
+      # Generates a throwaway self-signed cert/key PKCS12 (using a modern, universally
+      # supported cipher) at test-run time so we can exercise the real
+      # OpenSSL::PKCS12.new parsing path without checking any certificate/key material
+      # into source control. Nothing generated here is persisted beyond the test run.
+      def generate_publish_settings_file(schema_version: nil)
+        key = OpenSSL::PKey::RSA.new(2048)
+        cert = OpenSSL::X509::Certificate.new
+        cert.version = 2
+        cert.serial = 1
+        cert.subject = cert.issuer = OpenSSL::X509::Name.parse("/CN=knife-azure-test")
+        cert.public_key = key.public_key
+        cert.not_before = Time.now
+        cert.not_after = Time.now + 3600
+        cert.sign(key, OpenSSL::Digest.new("SHA256"))
+        pkcs12_b64 = Base64.strict_encode64(OpenSSL::PKCS12.create("", "knife-azure-test", key, cert).to_der)
+
+        xml = if schema_version == "2.0"
+                <<~XML
+                  <?xml version="1.0" encoding="utf-8"?>
+                  <PublishData>
+                    <PublishProfile
+                      SchemaVersion="2.0"
+                      PublishMethod="AzureServiceManagementAPI">
+                      <Subscription
+                        ServiceManagementUrl="https://management.core.windows.net"
+                        Id="id1"
+                        Name="Name1"
+                        ManagementCertificate="#{pkcs12_b64}">
+                      </Subscription>
+                    </PublishProfile>
+                  </PublishData>
+                XML
+              else
+                <<~XML
+                  <?xml version="1.0" encoding="utf-8"?>
+                  <PublishData>
+                    <PublishProfile
+                      PublishMethod="AzureServiceManagementAPI"
+                      Url="https://management.core.windows.net/"
+                      ManagementCertificate="#{pkcs12_b64}">
+                      <Subscription
+                        Id="id1"
+                        Name="Name1" />
+                    </PublishProfile>
+                  </PublishData>
+                XML
+              end
+
+        @generated_publish_settings_file = Tempfile.new(["publishsettings", ".publishsettings"])
+        @generated_publish_settings_file.write(xml)
+        @generated_publish_settings_file.flush
+        @generated_publish_settings_file.path
       end
 
       it "- should continue to regular flow if publish settings file not provided" do
@@ -66,7 +125,7 @@ describe Chef::Knife::AzurermBase do
       end
 
       it "- should validate extract parameters" do
-        @dummy.config[:azure_publish_settings_file] = get_publish_settings_file_path("azureValid.publishsettings")
+        @dummy.config[:azure_publish_settings_file] = generate_publish_settings_file
         @dummy.validate_arm_keys!
         expect(@dummy.config[:azure_api_host_name]).to be == "management.core.windows.net"
         expect(@dummy.config[:azure_subscription_id]).to be == "id1"
@@ -74,14 +133,14 @@ describe Chef::Knife::AzurermBase do
       end
 
       it "- should validate parse method" do
-        @dummy.parse_publish_settings_file(get_publish_settings_file_path("azureValid.publishsettings"))
+        @dummy.parse_publish_settings_file(generate_publish_settings_file)
         expect(@dummy.config[:azure_api_host_name]).to be == "management.core.windows.net"
         expect(@dummy.config[:azure_subscription_id]).to be == "id1"
         validate_cert
       end
 
       it "- should validate parse method for SchemaVersion2-0 publishsettings file" do
-        @dummy.parse_publish_settings_file(get_publish_settings_file_path("azureValidSchemaVersion-2.0.publishsettings"))
+        @dummy.parse_publish_settings_file(generate_publish_settings_file(schema_version: "2.0"))
         expect(@dummy.config[:azure_api_host_name]).to be == "management.core.windows.net"
         expect(@dummy.config[:azure_subscription_id]).to be == "id1"
         validate_cert
@@ -89,7 +148,7 @@ describe Chef::Knife::AzurermBase do
 
       it "- should validate settings file and subscrition id" do
         @dummy.config[:azure_subscription_id] = "azure_subscription_id"
-        @dummy.config[:azure_publish_settings_file] = get_publish_settings_file_path("azureValid.publishsettings")
+        @dummy.config[:azure_publish_settings_file] = generate_publish_settings_file
         @dummy.validate_arm_keys!
         expect(@dummy.config[:azure_api_host_name]).to be == "management.core.windows.net"
         expect(@dummy.config[:azure_subscription_id]).to be == "id1"
