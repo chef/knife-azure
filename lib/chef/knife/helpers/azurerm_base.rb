@@ -176,7 +176,7 @@ class Chef
         require "base64" unless defined?(Base64)
         require "openssl" unless defined?(OpenSSL)
         require "uri" unless defined?(URI)
-        load_openssl_legacy_provider
+        retried_with_legacy_provider = false
         begin
           doc = Nokogiri::XML(File.open(find_file(filename)))
           profile = doc.at_css("PublishProfile")
@@ -194,12 +194,20 @@ class Chef
           config[:azure_mgmt_cert] = management_cert.certificate.to_pem + management_cert.key.to_pem
           config[:azure_subscription_id] = doc.at_css("Subscription").attribute("Id").value
         rescue OpenSSL::PKCS12::PKCS12Error => error
+          # Older Azure publish settings files use PKCS12 certificates encrypted with
+          # the legacy RC2-40-CBC cipher, which OpenSSL 3.x disables by default. Only
+          # load OpenSSL's "legacy" provider (widening the process-wide crypto surface)
+          # if we actually hit that specific failure, and only retry once.
+          if !retried_with_legacy_provider && error.message.include?("RC2-40-CBC") && load_openssl_legacy_provider
+            retried_with_legacy_provider = true
+            retry
+          end
+
           if error.message.include?("RC2-40-CBC")
             ui.error("Cannot parse certificate: #{error.message}")
             ui.error("The PKCS12 certificate uses the legacy RC2-40-CBC cipher, which OpenSSL 3.x " \
-              "disables by default. We already attempted to load OpenSSL's legacy provider to " \
-              "support this file; if that provider isn't available on this system, please " \
-              "regenerate the publish settings file with a more recent cipher.")
+              "disables by default, and OpenSSL's legacy provider is not available on this system. " \
+              "Please regenerate the publish settings file with a more recent cipher.")
           else
             ui.error("Error parsing PKCS12 certificate: #{error.message}")
           end
@@ -210,20 +218,17 @@ class Chef
         end
       end
 
-      # Older Azure publish settings files use PKCS12 certificates encrypted with the
-      # legacy RC2-40-CBC cipher, which OpenSSL 3.x (bundled with Ruby 3.4, and available
-      # as an upgrade on Ruby 3.1) disables by default. Proactively load OpenSSL's
-      # "legacy" provider so these files continue to parse successfully. This is a
-      # best-effort call: on systems where the legacy provider isn't available, this is
-      # silently skipped and OpenSSL::PKCS12.new will raise a PKCS12Error, which is
-      # handled with a clear message below.
+      # Attempts to load OpenSSL's "legacy" provider (needed to decrypt PKCS12 files
+      # using deprecated ciphers such as RC2-40-CBC). Returns true if the provider was
+      # loaded successfully, false otherwise (e.g. it isn't available on this system).
       def load_openssl_legacy_provider
-        return unless defined?(OpenSSL::Provider)
+        return false unless defined?(OpenSSL::Provider)
 
         OpenSSL::Provider.load("legacy")
         OpenSSL::Provider.load("default")
+        true
       rescue StandardError, LoadError
-        nil
+        false
       end
 
       def find_file(name)

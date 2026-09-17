@@ -157,8 +157,21 @@ describe Chef::Knife::AzurermBase do
         validate_cert
       end
 
+      it "- should successfully parse a real legacy RC2-40-CBC publish settings file when the OpenSSL legacy provider is available" do
+        # This directly exercises load_openssl_legacy_provider and, when the provider
+        # is available on this system, the real (unmocked) OpenSSL::PKCS12.new parsing
+        # of an actual RC2-40-CBC-encrypted fixture - not just the error-message path.
+        skip "OpenSSL legacy provider is not available in this environment" unless @dummy.load_openssl_legacy_provider
+
+        @dummy.parse_publish_settings_file(get_publish_settings_file_path("azureValid.publishsettings"))
+        expect(@dummy.config[:azure_api_host_name]).to be == "management.core.windows.net"
+        expect(@dummy.config[:azure_subscription_id]).to be == "id1"
+        validate_cert
+      end
+
       it "- should exit with a clear message when PKCS12 parsing fails due to unsupported RC2-40-CBC cipher" do
         allow(OpenSSL::PKCS12).to receive(:new).and_raise(OpenSSL::PKCS12::PKCS12Error, "unsupported RC2-40-CBC cipher")
+        allow(@dummy).to receive(:load_openssl_legacy_provider).and_return(false)
         expect(@dummy.ui).to receive(:error).with(/Cannot parse certificate/)
         expect(@dummy.ui).to receive(:error).with(/legacy RC2-40-CBC cipher/)
         expect { @dummy.parse_publish_settings_file(get_publish_settings_file_path("azureValid.publishsettings")) }.to raise_error(SystemExit)
