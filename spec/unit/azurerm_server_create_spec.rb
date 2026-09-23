@@ -1482,6 +1482,20 @@ describe Chef::Knife::AzurermServerCreate do
       expect(vm_resource["properties"]["diagnosticsProfile"]["bootDiagnostics"]).not_to have_key("storageUri")
     end
 
+    it "creates an Aligned availability set (not a classic one) when --azure-availability-set is given, " \
+       "so VMs with managed OS disks can join it" do
+         @params[:azure_availability_set] = "test-avset"
+         template = @service.create_deployment_template(@params)
+
+         avset_resource = template["resources"].find { |resource| resource["type"] == "Microsoft.Compute/availabilitySets" }
+         expect(avset_resource).not_to be_nil
+         expect(avset_resource["sku"]).to be == { "name" => "Aligned" }
+         expect(avset_resource["apiVersion"]).to be == "2020-12-01"
+
+         vm_resource = template["resources"].find { |resource| resource["type"] == "Microsoft.Compute/virtualMachines" }
+         expect(vm_resource["properties"]["availabilitySet"]).to be == { "id" => "[resourceId('Microsoft.Compute/availabilitySets', parameters('availabilitySetName'))]" }
+       end
+
     it "deploys the VM with an apiVersion that supports the StandardSSD_ZRS/Premium_ZRS managed disk " \
        "SKUs accepted by --azure-storage-account-type (older API versions reject ZRS at deployment time)" do
          template = @service.create_deployment_template(@params)
