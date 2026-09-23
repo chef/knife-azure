@@ -277,7 +277,7 @@ class Chef
         require "ffi" unless defined?(FFI)
 
         # Bind to OSSL_PROVIDER_load in the *current process's* already-loaded
-        # symbol table (FFI::CURRENT_PROCESS) rather than dlopen-ing "ssl"/"crypto"
+        # symbol table (FFI::Library::CURRENT_PROCESS) rather than dlopen-ing "ssl"/"crypto"
         # again. Re-loading libcrypto as a second, separate mapping alongside the
         # one Ruby's own "openssl" extension already loaded can make OpenSSL 3.x
         # detect what it considers an unsafe double-load and abort the whole
@@ -285,7 +285,7 @@ class Chef
         # the existing in-process symbols avoids that entirely.
         provider_loader = Module.new do
           extend FFI::Library
-          ffi_lib FFI::CURRENT_PROCESS
+          ffi_lib FFI::Library::CURRENT_PROCESS
           attach_function :OSSL_PROVIDER_load, %i{pointer string}, :pointer
         end
 
