@@ -186,6 +186,46 @@ describe Chef::Knife::AzurermServerCreate do
         expect(@arm_server_instance.ui).to receive(:error)
         expect { @arm_server_instance.run }.to raise_error(SystemExit)
       end
+
+      it "accepts a valid managed disk SKU for --azure-storage-account-type" do
+        @arm_server_instance.config[:connection_password] = "connection_password"
+        @arm_server_instance.config[:azure_vm_name] = "test-vm1234"
+        @arm_server_instance.config[:azure_storage_account_type] = "Premium_LRS"
+        expect { @arm_server_instance.validate_params! }.not_to raise_error
+      end
+
+      %w{Standard_ZRS Standard_GRS Standard_RAGRS}.each do |legacy_type|
+        it "raises an actionable error for the legacy storage-account replication value " \
+           "'#{legacy_type}' for --azure-storage-account-type" do
+             @arm_server_instance.config[:connection_password] = "connection_password"
+             @arm_server_instance.config[:azure_vm_name] = "test-vm1234"
+             @arm_server_instance.config[:azure_storage_account_type] = legacy_type
+             expect { @arm_server_instance.validate_params! }.to raise_error(
+               ArgumentError, /no longer valid.*managed disk/
+             )
+           end
+      end
+
+      it "raises an error for an unrecognized --azure-storage-account-type value" do
+        @arm_server_instance.config[:connection_password] = "connection_password"
+        @arm_server_instance.config[:azure_vm_name] = "test-vm1234"
+        @arm_server_instance.config[:azure_storage_account_type] = "not-a-real-sku"
+        expect { @arm_server_instance.validate_params! }.to raise_error(ArgumentError, /Invalid value.*azure-storage-account-type/)
+      end
+    end
+
+    context "#warn_if_storage_account_ignored!" do
+      it "warns when --azure-storage-account is explicitly provided since it no longer has any effect" do
+        @arm_server_instance.config[:azure_storage_account] = "myoldstorageaccount"
+        expect(@arm_server_instance.ui).to receive(:warn).with(/azure-storage-account is deprecated/)
+        @arm_server_instance.send(:warn_if_storage_account_ignored!)
+      end
+
+      it "does not warn when --azure-storage-account is not provided" do
+        @arm_server_instance.config.delete(:azure_storage_account)
+        expect(@arm_server_instance.ui).not_to receive(:warn)
+        @arm_server_instance.send(:warn_if_storage_account_ignored!)
+      end
     end
 
     context "optional parameters" do
@@ -407,12 +447,7 @@ describe Chef::Knife::AzurermServerCreate do
           %w{service task none}.each do |daemon|
             it "does not raises error if valid daemon option is provided" do
               @arm_server_instance.config[:daemon] = daemon
-              expect { @arm_server_instance.validate_params! }.not_to raise_error(
-                ArgumentError, "The daemon option is only support for Windows nodes."
-              )
-              expect { @arm_server_instance.validate_params! }.not_to raise_error(
-                ArgumentError, "Invalid value for --daemon option. Use valid daemon values i.e 'none', 'service' and 'task'."
-              )
+              expect { @arm_server_instance.validate_params! }.not_to raise_error
             end
           end
         end
@@ -521,8 +556,8 @@ describe Chef::Knife::AzurermServerCreate do
           response = OpenStruct.new(
             "body" => '{"error": {"code": "ResourceNotFound"}}'
           )
-          body = "MsRestAzure::AzureOperationError"
-          error = MsRestAzure::AzureOperationError.new(request, response, body)
+          body = "MsRestAzure2::AzureOperationError"
+          error = MsRestAzure2::AzureOperationError.new(request, response, body)
           network_resource_client = double("NetworkResourceClient",
             network_security_groups: double)
           allow(network_resource_client.network_security_groups).to receive(
@@ -547,8 +582,8 @@ describe Chef::Knife::AzurermServerCreate do
           response = OpenStruct.new(
             "body" => '{"error": {"code": "SomeProblemOccurred"}}'
           )
-          body = "MsRestAzure::AzureOperationError"
-          @error = MsRestAzure::AzureOperationError.new(request, response, body)
+          body = "MsRestAzure2::AzureOperationError"
+          @error = MsRestAzure2::AzureOperationError.new(request, response, body)
           network_resource_client = double("NetworkResourceClient",
             network_security_groups: double)
           allow(network_resource_client.network_security_groups).to receive(
@@ -1009,9 +1044,47 @@ describe Chef::Knife::AzurermServerCreate do
       end
 
       context "get_chef_extension_public_params" do
+        it "sets chef_license to accept-no-persist in the generated client_rb" do
+          response = @arm_server_instance.get_chef_extension_public_params
+          expect(response[:client_rb]).to include("chef_license\t\"accept-no-persist\"")
+        end
+
+        it "does not inject chef_license when a custom --azure-extension-client-config is provided" do
+          @arm_server_instance.config[:azure_extension_client_config] = "/tmp/custom_client.rb"
+          allow(File).to receive(:read).and_return("custom_client_rb_contents")
+          response = @arm_server_instance.get_chef_extension_public_params
+          expect(response[:client_rb]).to be == "custom_client_rb_contents"
+        end
+
+        it "sets the top-level CHEF_LICENSE public setting to accept-no-persist so the VM extension's " \
+           "separate chef-apply cron-setup step (which does not read client_rb) also accepts the license" do
+             response = @arm_server_instance.get_chef_extension_public_params
+             expect(response[:CHEF_LICENSE]).to be == "accept-no-persist"
+           end
+
+        it "sets the top-level CHEF_LICENSE public setting even when a custom " \
+           "--azure-extension-client-config is provided" do
+             @arm_server_instance.config[:azure_extension_client_config] = "/tmp/custom_client.rb"
+             allow(File).to receive(:read).and_return("custom_client_rb_contents")
+             response = @arm_server_instance.get_chef_extension_public_params
+             expect(response[:CHEF_LICENSE]).to be == "accept-no-persist"
+           end
+
+        it "defaults the bootstrap_options environment to _default so the VM extension does not emit a " \
+           "bare -E flag with no value to chef-client" do
+             response = @arm_server_instance.get_chef_extension_public_params
+             expect(response[:bootstrap_options][:environment]).to be == "_default"
+           end
+
+        it "honors an explicit --environment value in bootstrap_options" do
+          @arm_server_instance.config[:environment] = "production"
+          response = @arm_server_instance.get_chef_extension_public_params
+          expect(response[:bootstrap_options][:environment]).to be == "production"
+        end
+
         it "sets bootstrapVersion variable in public_config" do
           @arm_server_instance.config[:bootstrap_version] = "12.4.2"
-          public_config = { client_rb: "chef_server_url \t \"https://localhost:443\"\nvalidation_client_name\t\"chef-validator\"", runlist: '"getting-started"', extendedLogs: "false", custom_json_attr: {}, hints: %w{vm_name public_fqdn platform}, bootstrap_options: { chef_server_url: "https://localhost:443", validation_client_name: "chef-validator", bootstrap_version: "12.4.2" } }
+          public_config = { client_rb: "chef_server_url \t \"https://localhost:443\"\nvalidation_client_name\t\"chef-validator\"\nchef_license\t\"accept-no-persist\"", CHEF_LICENSE: "accept-no-persist", runlist: '"getting-started"', extendedLogs: "false", custom_json_attr: {}, hints: %w{vm_name public_fqdn platform}, bootstrap_options: { environment: "_default", chef_server_url: "https://localhost:443", validation_client_name: "chef-validator", bootstrap_version: "12.4.2" } }
 
           response = @arm_server_instance.get_chef_extension_public_params
           expect(response).to be == public_config
@@ -1019,7 +1092,7 @@ describe Chef::Knife::AzurermServerCreate do
 
         it "should set extendedLogs flag to true" do
           @arm_server_instance.config[:extended_logs] = true
-          public_config = { client_rb: "chef_server_url \t \"https://localhost:443\"\nvalidation_client_name\t\"chef-validator\"", runlist: '"getting-started"', extendedLogs: "true", custom_json_attr: {}, hints: %w{vm_name public_fqdn platform}, bootstrap_options: { chef_server_url: "https://localhost:443", validation_client_name: "chef-validator" } }
+          public_config = { client_rb: "chef_server_url \t \"https://localhost:443\"\nvalidation_client_name\t\"chef-validator\"\nchef_license\t\"accept-no-persist\"", CHEF_LICENSE: "accept-no-persist", runlist: '"getting-started"', extendedLogs: "true", custom_json_attr: {}, hints: %w{vm_name public_fqdn platform}, bootstrap_options: { environment: "_default", chef_server_url: "https://localhost:443", validation_client_name: "chef-validator" } }
           response = @arm_server_instance.get_chef_extension_public_params
           expect(response).to be == public_config
         end
@@ -1044,7 +1117,7 @@ describe Chef::Knife::AzurermServerCreate do
 
         it "sets chefServiceInterval variable in public_config" do
           @arm_server_instance.config[:chef_daemon_interval] = "0"
-          public_config = { client_rb: "chef_server_url \t \"https://localhost:443\"\nvalidation_client_name\t\"chef-validator\"", runlist: '"getting-started"', extendedLogs: "false", custom_json_attr: {}, hints: %w{vm_name public_fqdn platform}, chef_daemon_interval: "0", bootstrap_options: { chef_server_url: "https://localhost:443", validation_client_name: "chef-validator" } }
+          public_config = { client_rb: "chef_server_url \t \"https://localhost:443\"\nvalidation_client_name\t\"chef-validator\"\nchef_license\t\"accept-no-persist\"", CHEF_LICENSE: "accept-no-persist", runlist: '"getting-started"', extendedLogs: "false", custom_json_attr: {}, hints: %w{vm_name public_fqdn platform}, chef_daemon_interval: "0", bootstrap_options: { environment: "_default", chef_server_url: "https://localhost:443", validation_client_name: "chef-validator" } }
 
           response = @arm_server_instance.get_chef_extension_public_params
           expect(response).to be == public_config
@@ -1053,7 +1126,7 @@ describe Chef::Knife::AzurermServerCreate do
         it "sets daemon variable in public config" do
           @arm_server_instance.config[:daemon] = "service"
           allow(@arm_server_instance).to receive(:is_image_windows?).and_return(true)
-          public_config = { client_rb: "chef_server_url \t \"https://localhost:443\"\nvalidation_client_name\t\"chef-validator\"", runlist: '"getting-started"', extendedLogs: "false", custom_json_attr: {}, hints: %w{vm_name public_fqdn platform}, daemon: "service", bootstrap_options: { chef_server_url: "https://localhost:443", validation_client_name: "chef-validator" } }
+          public_config = { client_rb: "chef_server_url \t \"https://localhost:443\"\nvalidation_client_name\t\"chef-validator\"\nchef_license\t\"accept-no-persist\"", CHEF_LICENSE: "accept-no-persist", runlist: '"getting-started"', extendedLogs: "false", custom_json_attr: {}, hints: %w{vm_name public_fqdn platform}, daemon: "service", bootstrap_options: { environment: "_default", chef_server_url: "https://localhost:443", validation_client_name: "chef-validator" } }
           response = @arm_server_instance.get_chef_extension_public_params
           expect(response).to be == public_config
         end
@@ -1358,7 +1431,6 @@ describe Chef::Knife::AzurermServerCreate do
       expect(template["variables"]["subnetName"]).to be == "azure_subnet_name"
       expect(template["variables"]["storageAccountType"]).to be == "azure_storage_account_type"
       expect(template["variables"]["publicIPAddressName"]).to be == "test-vm"
-      expect(template["variables"]["vmStorageAccountContainerName"]).to be == "test-vm"
       expect(template["variables"]["vmName"]).to be == "test-vm"
       expect(template["variables"]["vmSize"]).to be == "Standard_A1_v2"
       expect(template["variables"]["virtualNetworkName"]).to be == "vnet1"
@@ -1383,9 +1455,34 @@ describe Chef::Knife::AzurermServerCreate do
       expect(extension["properties"]["settings"]["bootstrap_options"]["node_verify_api_cert"]).to be == "[parameters('node_verify_api_cert')]"
       expect(extension["properties"]["settings"]["extendedLogs"]).to be == "true"
       expect(extension["properties"]["settings"]["bootstrap_options"]["environment"]).to be == "[parameters('environment')]"
+      expect(extension["properties"]["settings"]["CHEF_LICENSE"]).to be == "[parameters('CHEF_LICENSE')]"
 
       expect(extension["properties"]["protectedSettings"]["encrypted_data_bag_secret"]).to be == "[parameters('encrypted_data_bag_secret')]"
     end
+
+    it "uses a managed disk for the VM's OS disk and does not create a storage account resource" do
+      template = @service.create_deployment_template(@params)
+
+      expect(template["resources"].any? { |resource| resource["type"] == "Microsoft.Storage/storageAccounts" }).to be(false)
+
+      vm_resource = template["resources"].find { |resource| resource["type"] == "Microsoft.Compute/virtualMachines" }
+      os_disk = vm_resource["properties"]["storageProfile"]["osDisk"]
+      expect(os_disk).not_to have_key("vhd")
+      expect(os_disk["managedDisk"]["storageAccountType"]).to be == "[variables('storageAccountType')]"
+      expect(vm_resource["dependsOn"]).not_to include(a_string_matching(%r{Microsoft\.Storage/storageAccounts}))
+      expect(vm_resource["properties"]["diagnosticsProfile"]["bootDiagnostics"]["enabled"]).to be == "true"
+      expect(vm_resource["properties"]["diagnosticsProfile"]["bootDiagnostics"]).not_to have_key("storageUri")
+    end
+
+    it "uses a per-instance OS disk name (with copyIndex) so multiple VM instances don't contend " \
+       "for the same managed disk name" do
+         @params[:server_count] = 3
+         template = @service.create_deployment_template(@params)
+
+         vm_resource = template["resources"].find { |resource| resource["type"] == "Microsoft.Compute/virtualMachines" }
+         os_disk = vm_resource["properties"]["storageProfile"]["osDisk"]
+         expect(os_disk["name"]).to be == "[concat(variables('OSDiskName'),copyIndex())]"
+       end
 
     it "does not set extendedLogs parameter under extension config in the template" do
       @params[:chef_extension_public_param][:extendedLogs] = "false"
@@ -1487,7 +1584,7 @@ describe Chef::Knife::AzurermServerCreate do
                             node_verify_api_cert: "hfyreiur374294nehfdishf",
                             chef_node_name: "test-vm",
                             environment: "development" }
-      @params[:chef_extension_public_param] = { bootstrap_options: bootstrap_options }
+      @params[:chef_extension_public_param] = { bootstrap_options: bootstrap_options, CHEF_LICENSE: "accept-no-persist" }
       @params[:chef_extension_private_param] = {
         validation_key: "validation_key",
         encrypted_data_bag_secret: "rihrfwe739085928592nehrweirwefjsndwe",
@@ -1524,6 +1621,7 @@ describe Chef::Knife::AzurermServerCreate do
       expect(parameters["node_verify_api_cert"]["value"]).to be == "hfyreiur374294nehfdishf"
       expect(parameters["chef_node_name"]["value"]).to be == "test-vm"
       expect(parameters["environment"]["value"]).to be == "development"
+      expect(parameters["CHEF_LICENSE"]["value"]).to be == "accept-no-persist"
     end
 
     context "--ssh-public-key option is provided " do

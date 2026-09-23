@@ -68,11 +68,27 @@ class Chef
 
         def get_chef_extension_public_params
           pub_config = {}
+
           if config[:azure_extension_client_config]
             pub_config[:client_rb] = File.read(File.expand_path(config[:azure_extension_client_config]))
           else
-            pub_config[:client_rb] = "chef_server_url \t #{Chef::Config[:chef_server_url].to_json}\nvalidation_client_name\t#{Chef::Config[:validation_client_name].to_json}"
+            # `chef_license` is set here (rather than left to interactive/env-var
+            # acceptance) because the VM extension's first chef-client run
+            # otherwise fails with "Chef Infra Client cannot execute without
+            # accepting the license" -- there's no TTY/CHEF_LICENSE env var
+            # available inside the freshly-provisioned VM.
+            pub_config[:client_rb] = "chef_server_url \t #{Chef::Config[:chef_server_url].to_json}\nvalidation_client_name\t#{Chef::Config[:validation_client_name].to_json}\nchef_license\t\"accept-no-persist\""
           end
+
+          # The `chef_license` line in client_rb above only covers chef-client
+          # invocations that read that config file (`-c client.rb`). The VM
+          # extension also runs a separate `chef-apply -e "cron '...' do ... end"`
+          # step (with no `-c` flag) to install the periodic chef-client cron job,
+          # which does not read client.rb and fails with the same license error.
+          # The extension's own shared.sh reads this top-level "CHEF_LICENSE"
+          # public setting and exports it as an environment variable before
+          # running any step, so setting it here covers that cron step too.
+          pub_config[:CHEF_LICENSE] = "accept-no-persist"
 
           pub_config[:runlist] = config[:run_list].empty? ? "" : config[:run_list].join(",").to_json
           pub_config[:custom_json_attr] = config[:json_attributes] || {}
@@ -83,7 +99,13 @@ class Chef
 
           # bootstrap attributes
           pub_config[:bootstrap_options] = {}
-          pub_config[:bootstrap_options][:environment] = config[:environment] if config[:environment]
+          # The Chef VM extension always renders this value into a "-E <value>"
+          # chef-client argument. If it's left blank (nil interpolates to ""),
+          # chef-client's option parser fails with "missing argument: -E" because
+          # an empty string is still truthy and the flag gets emitted without a
+          # value. Default to Chef's standard "_default" environment so the
+          # flag is never emitted blank when --environment isn't supplied.
+          pub_config[:bootstrap_options][:environment] = config[:environment] || "_default"
           pub_config[:bootstrap_options][:chef_node_name] = config[:chef_node_name] if config[:chef_node_name]
           pub_config[:bootstrap_options][:chef_server_url] = Chef::Config[:chef_server_url] if Chef::Config[:chef_server_url]
           pub_config[:bootstrap_options][:validation_client_name] = Chef::Config[:validation_client_name] if Chef::Config[:validation_client_name]
