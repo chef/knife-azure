@@ -516,8 +516,17 @@ module Azure::ARM
         set_val = {
           "name" => "[parameters('availabilitySetName')]",
           "type" => "Microsoft.Compute/availabilitySets",
-          "apiVersion" => "[variables('apiVersion')]",
+          # NOTE: variables('apiVersion') ("2015-06-15") is intentionally not used
+          # here. That old API version (and the absence of an explicit "Aligned"
+          # sku) creates a classic (unmanaged-disk-only) availability set, which
+          # Azure rejects VMs with managed OS disks from joining. Managed-disk
+          # compatible ("Aligned") availability sets require apiVersion
+          # 2016-04-30-preview or later plus this explicit sku.
+          "apiVersion" => "2020-12-01",
           "location" => "[resourceGroup().location]",
+          "sku" => {
+            "name" => "Aligned",
+          },
           "properties" => {
             "platformFaultDomainCount" => "[parameters('availabilitySetPlatformFaultDomainCount')]",
             "platformUpdateDomainCount" => "[parameters('availabilitySetPlatformUpdateDomainCount')]",
