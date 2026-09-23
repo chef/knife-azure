@@ -100,12 +100,13 @@ class Chef
           # bootstrap attributes
           pub_config[:bootstrap_options] = {}
           # The Chef VM extension always renders this value into a "-E <value>"
-          # chef-client argument. If it's left blank (nil interpolates to ""),
-          # chef-client's option parser fails with "missing argument: -E" because
-          # an empty string is still truthy and the flag gets emitted without a
-          # value. Default to Chef's standard "_default" environment so the
-          # flag is never emitted blank when --environment isn't supplied.
-          pub_config[:bootstrap_options][:environment] = config[:environment] || "_default"
+          # chef-client argument. If it's left blank (nil, or an explicitly
+          # empty string, both of which are truthy in Ruby), chef-client's
+          # option parser fails with "missing argument: -E" because the flag
+          # gets emitted without a value. Default to Chef's standard
+          # "_default" environment whenever --environment isn't supplied or
+          # was supplied blank.
+          pub_config[:bootstrap_options][:environment] = config[:environment].to_s.empty? ? "_default" : config[:environment]
           pub_config[:bootstrap_options][:chef_node_name] = config[:chef_node_name] if config[:chef_node_name]
           pub_config[:bootstrap_options][:chef_server_url] = Chef::Config[:chef_server_url] if Chef::Config[:chef_server_url]
           pub_config[:bootstrap_options][:validation_client_name] = Chef::Config[:validation_client_name] if Chef::Config[:validation_client_name]

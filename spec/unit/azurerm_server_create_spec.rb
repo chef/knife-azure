@@ -1082,6 +1082,14 @@ describe Chef::Knife::AzurermServerCreate do
           expect(response[:bootstrap_options][:environment]).to be == "production"
         end
 
+        it "defaults the bootstrap_options environment to _default when --environment is explicitly " \
+           "set to an empty string (an empty string is truthy in Ruby, so it must be handled " \
+           "the same as nil)" do
+             @arm_server_instance.config[:environment] = ""
+             response = @arm_server_instance.get_chef_extension_public_params
+             expect(response[:bootstrap_options][:environment]).to be == "_default"
+           end
+
         it "sets bootstrapVersion variable in public_config" do
           @arm_server_instance.config[:bootstrap_version] = "12.4.2"
           public_config = { client_rb: "chef_server_url \t \"https://localhost:443\"\nvalidation_client_name\t\"chef-validator\"\nchef_license\t\"accept-no-persist\"", CHEF_LICENSE: "accept-no-persist", runlist: '"getting-started"', extendedLogs: "false", custom_json_attr: {}, hints: %w{vm_name public_fqdn platform}, bootstrap_options: { environment: "_default", chef_server_url: "https://localhost:443", validation_client_name: "chef-validator", bootstrap_version: "12.4.2" } }
@@ -1473,6 +1481,14 @@ describe Chef::Knife::AzurermServerCreate do
       expect(vm_resource["properties"]["diagnosticsProfile"]["bootDiagnostics"]["enabled"]).to be == "true"
       expect(vm_resource["properties"]["diagnosticsProfile"]["bootDiagnostics"]).not_to have_key("storageUri")
     end
+
+    it "deploys the VM with an apiVersion that supports the StandardSSD_ZRS/Premium_ZRS managed disk " \
+       "SKUs accepted by --azure-storage-account-type (older API versions reject ZRS at deployment time)" do
+         template = @service.create_deployment_template(@params)
+
+         vm_resource = template["resources"].find { |resource| resource["type"] == "Microsoft.Compute/virtualMachines" }
+         expect(vm_resource["apiVersion"]).to be == "2020-12-01"
+       end
 
     it "uses a per-instance OS disk name (with copyIndex) so multiple VM instances don't contend " \
        "for the same managed disk name" do
