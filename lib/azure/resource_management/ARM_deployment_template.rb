@@ -395,14 +395,15 @@ module Azure::ARM
             },
           },
           {
-            # NOTE: apiVersion "2020-06-01" is required (not just for managed disk
-            # support, which is available in older versions too) so that
-            # diagnosticsProfile.bootDiagnostics can be enabled without a storageUri,
-            # using Azure's managed-storage boot diagnostics (introduced in this
-            # API version) instead of the storage account this template no longer
-            # creates. Don't switch this back to an older apiVersion without
-            # re-verifying both managed disk and managed boot diagnostics support.
-            "apiVersion" => "2020-06-01",
+            # NOTE: apiVersion "2020-12-01" is required, not just for managed disk
+            # support and managed boot diagnostics (both available since
+            # "2020-06-01", using Azure's managed-storage boot diagnostics instead
+            # of the storage account this template no longer creates), but also
+            # for the StandardSSD_ZRS/Premium_ZRS managed disk SKUs accepted by
+            # --azure-storage-account-type, which older API versions reject at
+            # deployment time. Don't switch this back to an older apiVersion
+            # without re-verifying managed disk, ZRS, and boot diagnostics support.
+            "apiVersion" => "2020-12-01",
             "type" => "Microsoft.Compute/virtualMachines",
             "name" => vmName,
             "location" => "[resourceGroup().location]",
@@ -458,7 +459,7 @@ module Azure::ARM
               "diagnosticsProfile" => {
                 "bootDiagnostics" => {
                   # Managed boot diagnostics: no storageUri is provided (or needed)
-                  # since apiVersion 2020-06-01+ provisions Azure-managed storage
+                  # since apiVersion 2020-12-01+ provisions Azure-managed storage
                   # for boot diagnostics automatically, instead of the storage
                   # account this template no longer creates.
                   "enabled" => "true",
