@@ -431,6 +431,21 @@ class Chef
           end
         end
 
+        if config[:azure_availability_set]
+          # Azure availability set SKUs are immutable once created. The deployment
+          # template always creates/updates the set as "Aligned" (required for VMs with
+          # managed disks), so reusing the name of a pre-existing legacy "Classic" set
+          # (e.g. from an older unmanaged-disk deployment) would fail remotely with a
+          # cryptic ARM error. Detect that case here and fail fast with guidance instead.
+          existing_sku = service.existing_availability_set_sku(config[:azure_resource_group_name], config[:azure_availability_set])
+          if existing_sku != :not_found && existing_sku != "Aligned"
+            raise ArgumentError, "The availability set '#{config[:azure_availability_set]}' already exists as a " \
+              "legacy 'Classic' (unmanaged-disk) availability set. Azure availability set SKUs are immutable, so " \
+              "it cannot be converted to 'Aligned' for use with managed disks. Please choose a different, unused " \
+              "name for --azure-availability-set, or delete and recreate the existing availability set before reusing it."
+          end
+        end
+
         config[:ohai_hints] = format_ohai_hints(config[:ohai_hints])
         validate_ohai_hints unless config[:ohai_hints].casecmp("default").zero?
       end
