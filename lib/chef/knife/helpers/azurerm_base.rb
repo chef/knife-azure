@@ -39,7 +39,7 @@ class Chef
             require "json" unless defined?(JSON)
 
             if Chef::Platform.windows?
-              require_relative "../../azure/resource_management/windows_credentials"
+              require_relative "../../../azure/resource_management/windows_credentials"
               include Azure::ARM::WindowsCredentials
             end
           end
@@ -98,11 +98,25 @@ class Chef
 
       def get_azure_cli_version
         if @azure_version != ""
-          get_version = shell_out!("azure -v || az -v | grep azure-cli", returns: [0]).stdout
+          get_version = azure_cli_raw_version_output
           @azure_version = get_version.gsub(/[^0-9.]/, "")
         end
         @azure_prefix = @azure_version.to_i < 2 ? "azure" : "az"
         @azure_version
+      end
+
+      # Detects whether the deprecated xplat "azure" CLI or the modern "az"
+      # CLI is installed and returns its raw version output. Filtering for
+      # the "azure-cli" line is done in Ruby (rather than via `grep`, and
+      # without relying on unix-style shell chaining like `||`/`|`) so this
+      # works identically on Windows, where `grep` isn't available and
+      # Mixlib::ShellOut runs commands through cmd.exe.
+      def azure_cli_raw_version_output
+        result = shell_out("azure -v")
+        return result.stdout if result.exitstatus.zero?
+
+        result = shell_out!("az -v")
+        result.stdout.each_line.find { |line| line.include?("azure-cli") } || result.stdout
       end
 
       def token_details_for_windows
