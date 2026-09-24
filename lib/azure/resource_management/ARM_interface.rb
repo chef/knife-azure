@@ -236,6 +236,24 @@ module Azure
         end
       end
 
+      # Returns the sku name (e.g. "Aligned") of an existing availability set, nil if it
+      # exists but is a legacy "Classic" set (which has no sku property at all), or the
+      # :not_found symbol if it doesn't exist yet. Used to detect the case where a caller
+      # reuses an existing Classic availability set name: since Azure availability set
+      # SKUs are immutable once created, redeploying it as "Aligned" (required for managed
+      # disks) would fail remotely with a cryptic ARM error instead of the actionable one
+      # raised in validate_params!.
+      def existing_availability_set_sku(resource_group_name, availability_set_name)
+        availability_set = compute_management_client.availability_sets.get(resource_group_name, availability_set_name)
+        availability_set.sku && availability_set.sku.name
+      rescue MsRestAzure2::AzureOperationError => e
+        if e.body
+          err_json = JSON.parse(e.response.body)
+          return :not_found if err_json["error"]["code"] == "ResourceNotFound"
+        end
+        raise e
+      end
+
       def resource_group_exist?(resource_group_name)
         resource_management_client.resource_groups.check_existence(resource_group_name)
       end

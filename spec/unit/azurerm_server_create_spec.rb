@@ -214,6 +214,37 @@ describe Chef::Knife::AzurermServerCreate do
       end
     end
 
+    describe "--azure-availability-set" do
+      before do
+        @arm_server_instance.config[:connection_password] = "connection_password"
+        @arm_server_instance.config[:azure_vm_name] = "test-vm1234"
+        @arm_server_instance.config[:azure_availability_set] = "test-avset"
+      end
+
+      it "raises an actionable error when the availability set already exists as a legacy Classic set" do
+        allow(@service).to receive(:existing_availability_set_sku).with(
+          @arm_server_instance.config[:azure_resource_group_name], "test-avset"
+        ).and_return(nil)
+        expect { @arm_server_instance.validate_params! }.to raise_error(
+          ArgumentError, /immutable.*Please choose a different, unused name/m
+        )
+      end
+
+      it "does not raise when the availability set doesn't exist yet" do
+        allow(@service).to receive(:existing_availability_set_sku).with(
+          @arm_server_instance.config[:azure_resource_group_name], "test-avset"
+        ).and_return(:not_found)
+        expect { @arm_server_instance.validate_params! }.not_to raise_error
+      end
+
+      it "does not raise when the availability set already exists as an Aligned set" do
+        allow(@service).to receive(:existing_availability_set_sku).with(
+          @arm_server_instance.config[:azure_resource_group_name], "test-avset"
+        ).and_return("Aligned")
+        expect { @arm_server_instance.validate_params! }.not_to raise_error
+      end
+    end
+
     context "#warn_if_storage_account_ignored!" do
       it "warns when --azure-storage-account is explicitly provided since it no longer has any effect" do
         @arm_server_instance.config[:azure_storage_account] = "myoldstorageaccount"
@@ -597,6 +628,88 @@ describe Chef::Knife::AzurermServerCreate do
         it "raises error" do
           expect do
             @dummy_class.security_group_exist?(@resource_group_name, @sec_grp_name)
+          end.to raise_error(@error)
+        end
+      end
+    end
+
+    describe "existing_availability_set_sku" do
+      module Azure
+        module ARM
+          class DummyClass < Azure::ResourceManagement::ARMInterface
+          end
+        end
+      end
+
+      before do
+        @dummy_class = Azure::ARM::DummyClass.new
+        @resource_group_name = "rgrp-2"
+        @avset_name = "avset-2"
+      end
+
+      context "given an Aligned availability set already exists" do
+        before do
+          availability_set = double("AvailabilitySet", sku: double("Sku", name: "Aligned"))
+          compute_management_client = double("ComputeManagementClient", availability_sets: double)
+          allow(compute_management_client.availability_sets).to receive(:get).and_return(availability_set)
+          allow(@dummy_class).to receive(:compute_management_client).and_return(compute_management_client)
+        end
+
+        it "returns 'Aligned'" do
+          response = @dummy_class.existing_availability_set_sku(@resource_group_name, @avset_name)
+          expect(response).to be == "Aligned"
+        end
+      end
+
+      context "given a legacy Classic availability set already exists (no sku property)" do
+        before do
+          availability_set = double("AvailabilitySet", sku: nil)
+          compute_management_client = double("ComputeManagementClient", availability_sets: double)
+          allow(compute_management_client.availability_sets).to receive(:get).and_return(availability_set)
+          allow(@dummy_class).to receive(:compute_management_client).and_return(compute_management_client)
+        end
+
+        it "returns nil" do
+          response = @dummy_class.existing_availability_set_sku(@resource_group_name, @avset_name)
+          expect(response).to be_nil
+        end
+      end
+
+      context "given the availability set does not exist" do
+        before do
+          request = {}
+          response = OpenStruct.new(
+            "body" => '{"error": {"code": "ResourceNotFound"}}'
+          )
+          body = "MsRestAzure2::AzureOperationError"
+          error = MsRestAzure2::AzureOperationError.new(request, response, body)
+          compute_management_client = double("ComputeManagementClient", availability_sets: double)
+          allow(compute_management_client.availability_sets).to receive(:get).and_raise(error)
+          allow(@dummy_class).to receive(:compute_management_client).and_return(compute_management_client)
+        end
+
+        it "returns :not_found" do
+          response = @dummy_class.existing_availability_set_sku(@resource_group_name, @avset_name)
+          expect(response).to be == :not_found
+        end
+      end
+
+      context "get api call raises some unknown exception" do
+        before do
+          request = {}
+          response = OpenStruct.new(
+            "body" => '{"error": {"code": "SomeProblemOccurred"}}'
+          )
+          body = "MsRestAzure2::AzureOperationError"
+          @error = MsRestAzure2::AzureOperationError.new(request, response, body)
+          compute_management_client = double("ComputeManagementClient", availability_sets: double)
+          allow(compute_management_client.availability_sets).to receive(:get).and_raise(@error)
+          allow(@dummy_class).to receive(:compute_management_client).and_return(compute_management_client)
+        end
+
+        it "raises error" do
+          expect do
+            @dummy_class.existing_availability_set_sku(@resource_group_name, @avset_name)
           end.to raise_error(@error)
         end
       end
