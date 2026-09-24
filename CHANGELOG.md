@@ -1,16 +1,17 @@
 # knife-azure Change Log
 
-<!-- latest_release 4.0.1 -->
-## [v4.0.1](https://github.com/chef/knife-azure/tree/v4.0.1) (2025-10-20)
+<!-- latest_release 4.0.2 -->
+## [v4.0.2](https://github.com/chef/knife-azure/tree/v4.0.2) (2026-09-24)
 
 #### Merged Pull Requests
-- Add comprehensive GitHub Copilot instructions and MCP server configuration [#559](https://github.com/chef/knife-azure/pull/559) ([ashiqueps](https://github.com/ashiqueps))
+- CHEF-38124 / CHEF-27659 Update and standardize copyright notices to Progress Software Corporation - copyright_update [#563](https://github.com/chef/knife-azure/pull/563) ([clintoncwolfe](https://github.com/clintoncwolfe))
 <!-- latest_release -->
 
 <!-- release_rollup since=4.0.0 -->
 ### Changes not yet released to rubygems.org
 
 #### Merged Pull Requests
+- CHEF-38124 / CHEF-27659 Update and standardize copyright notices to Progress Software Corporation - copyright_update [#563](https://github.com/chef/knife-azure/pull/563) ([clintoncwolfe](https://github.com/clintoncwolfe)) <!-- 4.0.2 -->
 - Add comprehensive GitHub Copilot instructions and MCP server configuration [#559](https://github.com/chef/knife-azure/pull/559) ([ashiqueps](https://github.com/ashiqueps)) <!-- 4.0.1 -->
 <!-- release_rollup -->
 
