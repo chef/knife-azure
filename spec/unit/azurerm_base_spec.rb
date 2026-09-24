@@ -42,6 +42,19 @@ describe Chef::Knife::AzurermBase do
     @arm_server_instance.instance_variable_set(:@azure_prefix, "azure")
   end
 
+  # Regression test for a long-standing bug: the require_relative path for
+  # windows_credentials in the `deps do` block was missing a "../" level (only
+  # exercised on real Windows via Chef::Platform.windows?, so it was never
+  # caught by unit tests, which include Azure::ARM::WindowsCredentials
+  # directly instead of going through this require_relative path).
+  describe "windows_credentials require path" do
+    it "resolves to a file that actually exists on disk, from azurerm_base.rb's own location" do
+      azurerm_base_file = $LOADED_FEATURES.find { |f| f.end_with?("lib/chef/knife/helpers/azurerm_base.rb") }
+      resolved_path = File.expand_path("../../../azure/resource_management/windows_credentials.rb", File.dirname(azurerm_base_file))
+      expect(File.exist?(resolved_path)).to be true
+    end
+  end
+
   describe "azurerm base tests - " do
     context "Tests for publish settings file" do
       before do
@@ -469,12 +482,32 @@ describe Chef::Knife::AzurermBase do
   end
 
   describe "current_xplat_cli_version" do
-    let(:mixlib_object) { double("MixlibObject", stdout: "0.10.4") }
+    let(:xplat_mixlib_object) { double("MixlibObject", stdout: "0.10.4", exitstatus: 0) }
 
-    it "returns the version of xplat_cli" do
-      expect(@arm_server_instance).to receive(:shell_out!).and_return(mixlib_object)
+    it "returns the version of xplat_cli when the deprecated 'azure' CLI is installed" do
+      expect(@arm_server_instance).to receive(:shell_out).with("azure -v").and_return(xplat_mixlib_object)
       response = @arm_server_instance.get_azure_cli_version
       expect(response).to be == "0.10.4"
+    end
+
+    # Regression test: previously this fell back via unix-only shell syntax
+    # (`azure -v || az -v | grep azure-cli`), which broke on Windows because
+    # `grep` isn't available there. The fallback filtering must be done in
+    # Ruby so it works cross-platform.
+    it "falls back to 'az -v' and filters for the azure-cli line when 'azure' CLI is not installed" do
+      azure_not_found = double("MixlibObject", stdout: "", exitstatus: 1)
+      az_output = <<~OUTPUT
+        azure-cli                         2.55.0
+        core                              2.55.0
+        telemetry                          1.0.8
+      OUTPUT
+      az_mixlib_object = double("MixlibObject", stdout: az_output)
+
+      expect(@arm_server_instance).to receive(:shell_out).with("azure -v").and_return(azure_not_found)
+      expect(@arm_server_instance).to receive(:shell_out!).with("az -v").and_return(az_mixlib_object)
+
+      response = @arm_server_instance.get_azure_cli_version
+      expect(response).to be == "2.55.0"
     end
   end
 
