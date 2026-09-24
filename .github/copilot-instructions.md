@@ -4,6 +4,37 @@ This document provides comprehensive guidance for GitHub Copilot when working wi
 
 ## ⚡ Quick Start for GitHub Copilot
 
+### 🚨 CRITICAL MANDATORY REQUIREMENTS - NEVER SKIP THESE
+**⚠️ FAILURE TO FOLLOW THESE WILL CAUSE BUILD FAILURES AND COMPLIANCE VIOLATIONS ⚠️**
+
+#### 🔴 1. DCO SIGNOFF - EVERY SINGLE COMMIT
+```bash
+# MANDATORY: Use --signoff for EVERY commit
+git commit --signoff -m "Your commit message"
+# Builds WILL FAIL without DCO signoff
+```
+
+#### 🔴 2. AI COMPLIANCE - IMMEDIATE AFTER PR CREATION
+```bash
+# MANDATORY: Update Jira field IMMEDIATELY after PR creation
+# Use atlassian-mcp tools to update customfield_11170 = "Yes"
+# This is REQUIRED for Progress AI governance
+```
+
+#### 🔴 3. AI-ASSISTED LABEL - NON-NEGOTIABLE
+```bash
+# MANDATORY: All PRs MUST have ai-assisted label
+gh pr create --label "ai-assisted"
+# If label doesn't exist, create it first:
+gh label create "ai-assisted" --description "Work completed with AI assistance following Progress AI policies" --color "9A4DFF"
+```
+
+#### 🔴 4. TEST COVERAGE >80% - BUILD REQUIREMENT
+```bash
+# MANDATORY: All code changes must achieve >80% test coverage
+bundle exec rake spec  # Must pass with >80% coverage
+```
+
 ### 🎯 CRITICAL SUCCESS FACTORS
 1. **>80% Test Coverage** - NON-NEGOTIABLE for all code changes
 2. **AI Compliance** - ALL PRs MUST include `ai-assisted` label and Jira field updates
@@ -438,6 +469,42 @@ EOF
 )" --label "Type: Enhancement" --label "Platform: Azure" --label "ai-assisted"
 ```
 
+### 🚨 MANDATORY POST-PR CHECKLIST - DO NOT SKIP!
+**⚠️ COMPLETE THESE STEPS IMMEDIATELY AFTER PR CREATION ⚠️**
+
+#### ✅ **Step 1: Verify DCO Signoff**
+```bash
+# Check if commit has DCO signoff
+git log --format=fuller -1
+# Look for: "Signed-off-by: Your Name <your.email@example.com>"
+# If missing, fix with: git commit --amend --signoff --no-edit
+```
+
+#### ✅ **Step 2: Verify ai-assisted Label**
+```bash
+# If label doesn't exist, create it:
+gh label create "ai-assisted" --description "Work completed with AI assistance following Progress AI policies" --color "9A4DFF"
+# Verify PR has the label applied
+```
+
+#### ✅ **Step 3: Update Jira Field (MANDATORY)**
+```bash
+# IMMEDIATELY update customfield_11170 to "Yes"
+# Use atlassian-mcp tools with correct format:
+# {"customfield_11170": {"value": "Yes"}}
+```
+
+#### ✅ **Step 4: Final Verification**
+```bash
+# Verify all compliance requirements met:
+# - DCO signoff present ✅
+# - ai-assisted label applied ✅
+# - Jira field updated ✅
+# - >80% test coverage ✅
+```
+
+**🚫 DO NOT PROCEED WITHOUT COMPLETING ALL 4 STEPS ABOVE!**
+
 ### PR Description Template
 Use this HTML-formatted template for all PRs:
 
@@ -735,6 +802,15 @@ gh pr create --label "Type: Bug" --label "Aspect: Security" --label "Priority: C
 
 ## Prompt-Based Execution Protocol
 
+### 🚨 MANDATORY COMPLIANCE REMINDERS FOR EVERY TASK
+
+**Before starting ANY task, ALWAYS remind yourself of these NON-NEGOTIABLE requirements:**
+
+1. **🔴 DCO Signoff**: EVERY commit needs `git commit --signoff`
+2. **🔴 Test Coverage**: ALL code changes need >80% test coverage
+3. **🔴 AI Labels**: ALL PRs need `ai-assisted` label
+4. **🔴 Jira Field**: IMMEDIATELY update `customfield_11170` = "Yes" after PR creation
+
 ### Execution Flow
 
 All tasks must follow this interactive pattern:
@@ -818,6 +894,19 @@ Currently working on: Repository structure analysis
    - Get approval for implementation approach
 
 ❓ Do you want me to continue with the implementation planning?"
+```
+
+#### 6. Final Compliance Verification
+At the end of ANY implementation, ALWAYS verify:
+```
+"🎯 FINAL COMPLIANCE CHECK:
+✅ DCO Signoff: [Check if all commits are signed]
+✅ Test Coverage: [Verify >80% coverage achieved]
+✅ AI Labels: [Confirm ai-assisted label applied]
+✅ Jira Field: [Verify customfield_11170 = 'Yes']
+
+📋 All compliance requirements satisfied? [Yes/No]
+If No, identify and fix missing items before completing."
 ```
 
 ---
