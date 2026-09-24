@@ -249,7 +249,11 @@ module Azure
       rescue MsRestAzure2::AzureOperationError => e
         if e.body
           err_json = JSON.parse(e.response.body)
-          return :not_found if err_json["error"]["code"] == "ResourceNotFound"
+          # ResourceNotFound: the resource group exists but the availability set doesn't.
+          # ResourceGroupNotFound: the resource group itself doesn't exist yet (e.g. when
+          # creating a VM + availability set together in a brand-new resource group).
+          # Both mean "no existing availability set to conflict with".
+          return :not_found if %w{ResourceNotFound ResourceGroupNotFound}.include?(err_json["error"]["code"])
         end
         raise e
       end

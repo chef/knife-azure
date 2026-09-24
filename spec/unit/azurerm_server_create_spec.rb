@@ -694,6 +694,25 @@ describe Chef::Knife::AzurermServerCreate do
         end
       end
 
+      context "given the resource group does not exist yet" do
+        before do
+          request = {}
+          response = OpenStruct.new(
+            "body" => '{"error": {"code": "ResourceGroupNotFound"}}'
+          )
+          body = "MsRestAzure2::AzureOperationError"
+          error = MsRestAzure2::AzureOperationError.new(request, response, body)
+          compute_management_client = double("ComputeManagementClient", availability_sets: double)
+          allow(compute_management_client.availability_sets).to receive(:get).and_raise(error)
+          allow(@dummy_class).to receive(:compute_management_client).and_return(compute_management_client)
+        end
+
+        it "returns :not_found" do
+          response = @dummy_class.existing_availability_set_sku(@resource_group_name, @avset_name)
+          expect(response).to be == :not_found
+        end
+      end
+
       context "get api call raises some unknown exception" do
         before do
           request = {}
