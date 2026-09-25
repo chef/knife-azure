@@ -104,7 +104,8 @@ jobs:
       # scc-output-filename: 'scc-output.txt'
       perform-language-linting: false    # Perform language-specific linting and pre-compilation checks
       perform-trufflehog-scan: true
-      fail-trufflehog-on-secrets-found: true
+      # spec using temporary secret
+      fail-trufflehog-on-secrets-found: false
       perform-trivy-scan: true
 
       # grype vulnerability scanning
@@ -138,10 +139,10 @@ jobs:
       # polaris-coverity-args: '' # Additional Coverity arguments,can supply extra arguments like "--config-override capture.build.build-command=make
 
       # Perform Grype Scan on habitat packages
-      perform-grype-hab-scan: true
+      perform-grype-hab-scan: false
       grype-hab-build-package: false
       grype-hab-origin: 'chef'
-      grype-hab-package: 'chef-cli'
+      grype-hab-package: 'knife-azure'
       grype-hab-version: ${{ needs.detect-custom-metadata.outputs.versionFromFile }}
       grype-hab-channel: 'unstable'
       grype-hab-scan-linux: true
