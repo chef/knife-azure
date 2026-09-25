@@ -18,6 +18,7 @@
 
 require_relative "../spec_helper"
 require_relative "query_azure_mock"
+require "tempfile"
 
 describe Chef::Knife::AzurermBase do
   include AzureSpecHelper
@@ -41,6 +42,19 @@ describe Chef::Knife::AzurermBase do
     @arm_server_instance.instance_variable_set(:@azure_prefix, "azure")
   end
 
+  # Regression test for a long-standing bug: the require_relative path for
+  # windows_credentials in the `deps do` block was missing a "../" level (only
+  # exercised on real Windows via Chef::Platform.windows?, so it was never
+  # caught by unit tests, which include Azure::ARM::WindowsCredentials
+  # directly instead of going through this require_relative path).
+  describe "windows_credentials require path" do
+    it "resolves to a file that actually exists on disk, from azurerm_base.rb's own location" do
+      azurerm_base_file = $LOADED_FEATURES.find { |f| f.end_with?("lib/chef/knife/helpers/azurerm_base.rb") }
+      resolved_path = File.expand_path("../../../azure/resource_management/windows_credentials.rb", File.dirname(azurerm_base_file))
+      expect(File.exist?(resolved_path)).to be true
+    end
+  end
+
   describe "azurerm base tests - " do
     context "Tests for publish settings file" do
       before do
@@ -48,11 +62,71 @@ describe Chef::Knife::AzurermBase do
         @dummy.config[:azure_subscription_id] = nil
       end
 
+      after do
+        # close! closes the file handle before unlinking, avoiding a sharing
+        # violation on Windows where an open file cannot be removed.
+        @generated_publish_settings_file&.close!
+      end
+
       def validate_cert
         expect(@dummy.config[:azure_mgmt_cert]).to include("-----BEGIN CERTIFICATE-----")
         expect(@dummy.config[:azure_mgmt_cert]).to include("-----END CERTIFICATE-----")
         expect(@dummy.config[:azure_mgmt_cert]).to include("-----BEGIN RSA PRIVATE KEY-----")
         expect(@dummy.config[:azure_mgmt_cert]).to include("-----END RSA PRIVATE KEY-----")
+      end
+
+      # Generates a throwaway self-signed cert/key PKCS12 (using a modern, universally
+      # supported cipher) at test-run time so we can exercise the real
+      # OpenSSL::PKCS12.new parsing path without checking any certificate/key material
+      # into source control. Nothing generated here is persisted beyond the test run.
+      def generate_publish_settings_file(schema_version: nil)
+        key = OpenSSL::PKey::RSA.new(2048)
+        cert = OpenSSL::X509::Certificate.new
+        cert.version = 2
+        cert.serial = 1
+        cert.subject = cert.issuer = OpenSSL::X509::Name.parse("/CN=knife-azure-test")
+        cert.public_key = key.public_key
+        cert.not_before = Time.now
+        cert.not_after = Time.now + 3600
+        cert.sign(key, OpenSSL::Digest.new("SHA256"))
+        pkcs12_b64 = Base64.strict_encode64(OpenSSL::PKCS12.create("", "knife-azure-test", key, cert).to_der)
+
+        xml = if schema_version == "2.0"
+                <<~XML
+                  <?xml version="1.0" encoding="utf-8"?>
+                  <PublishData>
+                    <PublishProfile
+                      SchemaVersion="2.0"
+                      PublishMethod="AzureServiceManagementAPI">
+                      <Subscription
+                        ServiceManagementUrl="https://management.core.windows.net"
+                        Id="id1"
+                        Name="Name1"
+                        ManagementCertificate="#{pkcs12_b64}">
+                      </Subscription>
+                    </PublishProfile>
+                  </PublishData>
+                XML
+              else
+                <<~XML
+                  <?xml version="1.0" encoding="utf-8"?>
+                  <PublishData>
+                    <PublishProfile
+                      PublishMethod="AzureServiceManagementAPI"
+                      Url="https://management.core.windows.net/"
+                      ManagementCertificate="#{pkcs12_b64}">
+                      <Subscription
+                        Id="id1"
+                        Name="Name1" />
+                    </PublishProfile>
+                  </PublishData>
+                XML
+              end
+
+        @generated_publish_settings_file = Tempfile.new(["publishsettings", ".publishsettings"])
+        @generated_publish_settings_file.write(xml)
+        @generated_publish_settings_file.flush
+        @generated_publish_settings_file.path
       end
 
       it "- should continue to regular flow if publish settings file not provided" do
@@ -66,7 +140,7 @@ describe Chef::Knife::AzurermBase do
       end
 
       it "- should validate extract parameters" do
-        @dummy.config[:azure_publish_settings_file] = get_publish_settings_file_path("azureValid.publishsettings")
+        @dummy.config[:azure_publish_settings_file] = generate_publish_settings_file
         @dummy.validate_arm_keys!
         expect(@dummy.config[:azure_api_host_name]).to be == "management.core.windows.net"
         expect(@dummy.config[:azure_subscription_id]).to be == "id1"
@@ -74,14 +148,14 @@ describe Chef::Knife::AzurermBase do
       end
 
       it "- should validate parse method" do
-        @dummy.parse_publish_settings_file(get_publish_settings_file_path("azureValid.publishsettings"))
+        @dummy.parse_publish_settings_file(generate_publish_settings_file)
         expect(@dummy.config[:azure_api_host_name]).to be == "management.core.windows.net"
         expect(@dummy.config[:azure_subscription_id]).to be == "id1"
         validate_cert
       end
 
       it "- should validate parse method for SchemaVersion2-0 publishsettings file" do
-        @dummy.parse_publish_settings_file(get_publish_settings_file_path("azureValidSchemaVersion-2.0.publishsettings"))
+        @dummy.parse_publish_settings_file(generate_publish_settings_file(schema_version: "2.0"))
         expect(@dummy.config[:azure_api_host_name]).to be == "management.core.windows.net"
         expect(@dummy.config[:azure_subscription_id]).to be == "id1"
         validate_cert
@@ -89,11 +163,68 @@ describe Chef::Knife::AzurermBase do
 
       it "- should validate settings file and subscrition id" do
         @dummy.config[:azure_subscription_id] = "azure_subscription_id"
-        @dummy.config[:azure_publish_settings_file] = get_publish_settings_file_path("azureValid.publishsettings")
+        @dummy.config[:azure_publish_settings_file] = generate_publish_settings_file
         @dummy.validate_arm_keys!
         expect(@dummy.config[:azure_api_host_name]).to be == "management.core.windows.net"
         expect(@dummy.config[:azure_subscription_id]).to be == "id1"
         validate_cert
+      end
+
+      it "- should successfully parse a real legacy RC2-40-CBC publish settings file when the OpenSSL legacy provider is available" do
+        # Check availability in a subprocess rather than calling
+        # @dummy.load_openssl_legacy_provider directly here: OpenSSL::Provider.load is
+        # process-wide and can't be unloaded, so calling it in this process before
+        # parse_publish_settings_file would make the very first OpenSSL::PKCS12.new
+        # call succeed and never exercise the rescue/load-provider/retry path this
+        # test is meant to cover. Running the check out-of-process keeps this
+        # process's OpenSSL state clean so the real retry path is exercised below.
+        legacy_provider_available = system(
+          RbConfig.ruby, "-ropenssl", "-e",
+          "exit(OpenSSL::Provider.load('legacy') && OpenSSL::Provider.load('default') ? 0 : 1)",
+          out: File::NULL, err: File::NULL
+        )
+        skip "OpenSSL legacy provider is not available in this environment" unless legacy_provider_available
+
+        @dummy.parse_publish_settings_file(get_publish_settings_file_path("azureValid.publishsettings"))
+        expect(@dummy.config[:azure_api_host_name]).to be == "management.core.windows.net"
+        expect(@dummy.config[:azure_subscription_id]).to be == "id1"
+        validate_cert
+      end
+
+      it "- should exit with a clear message when PKCS12 parsing fails due to unsupported RC2-40-CBC cipher" do
+        allow(OpenSSL::PKCS12).to receive(:new).and_raise(OpenSSL::PKCS12::PKCS12Error, "unsupported RC2-40-CBC cipher")
+        allow(@dummy).to receive(:load_openssl_legacy_provider).and_return(false)
+        expect(@dummy.ui).to receive(:error).with(/Cannot parse certificate/)
+        expect(@dummy.ui).to receive(:error).with(/legacy RC2-40-CBC cipher, which is unavailable/)
+        expect { @dummy.parse_publish_settings_file(get_publish_settings_file_path("azureValid.publishsettings")) }.to raise_error(SystemExit)
+      end
+
+      it "- should exit with a different message when the legacy provider loads and the retry still fails " \
+         "with a legacy-cipher-looking error" do
+           allow(OpenSSL::PKCS12).to receive(:new).and_raise(OpenSSL::PKCS12::PKCS12Error, "unsupported RC2-40-CBC cipher")
+           allow(@dummy).to receive(:load_openssl_legacy_provider).and_return(true)
+           expect(@dummy.ui).to receive(:error).with(/Cannot parse certificate/)
+           expect(@dummy.ui).to receive(:error).with(/could not be parsed even after enabling OpenSSL's legacy provider/)
+           expect { @dummy.parse_publish_settings_file(get_publish_settings_file_path("azureValid.publishsettings")) }.to raise_error(SystemExit)
+         end
+
+      it "- should fall back to loading the legacy provider via FFI when OpenSSL::Provider isn't defined " \
+         "(e.g. on Ruby 3.1's bundled openssl gem)" do
+           hide_const("OpenSSL::Provider") if defined?(OpenSSL::Provider)
+           expect(@dummy).to receive(:load_openssl_legacy_provider_via_ffi).and_return(true)
+           expect(@dummy.load_openssl_legacy_provider).to be true
+         end
+
+      it "- should return false from the FFI fallback (without raising) when libcrypto doesn't " \
+         "expose OSSL_PROVIDER_load (e.g. OpenSSL 1.1.1 or LibreSSL)" do
+           expect { @dummy.load_openssl_legacy_provider_via_ffi }.not_to raise_error
+           expect([true, false]).to include(@dummy.load_openssl_legacy_provider_via_ffi)
+         end
+
+      it "- should exit with a generic message for other PKCS12 parsing errors" do
+        allow(OpenSSL::PKCS12).to receive(:new).and_raise(OpenSSL::PKCS12::PKCS12Error, "some other pkcs12 failure")
+        expect(@dummy.ui).to receive(:error).with(/Error parsing PKCS12 certificate/)
+        expect { @dummy.parse_publish_settings_file(get_publish_settings_file_path("azureValid.publishsettings")) }.to raise_error(SystemExit)
       end
     end
   end
@@ -351,12 +482,59 @@ describe Chef::Knife::AzurermBase do
   end
 
   describe "current_xplat_cli_version" do
-    let(:mixlib_object) { double("MixlibObject", stdout: "0.10.4") }
+    let(:xplat_mixlib_object) { double("MixlibObject", stdout: "0.10.4", exitstatus: 0) }
 
-    it "returns the version of xplat_cli" do
-      expect(@arm_server_instance).to receive(:shell_out!).and_return(mixlib_object)
+    it "returns the version of xplat_cli when the deprecated 'azure' CLI is installed" do
+      expect(@arm_server_instance).to receive(:shell_out).with("azure -v").and_return(xplat_mixlib_object)
       response = @arm_server_instance.get_azure_cli_version
       expect(response).to be == "0.10.4"
+    end
+
+    # Regression test: previously this fell back via unix-only shell syntax
+    # (`azure -v || az -v | grep azure-cli`), which broke on Windows because
+    # `grep` isn't available there. The fallback filtering must be done in
+    # Ruby so it works cross-platform.
+    it "falls back to 'az -v' and filters for the azure-cli line when 'azure' CLI is not installed" do
+      azure_not_found = double("MixlibObject", stdout: "", exitstatus: 1)
+      az_output = <<~OUTPUT
+        azure-cli                         2.55.0
+        core                              2.55.0
+        telemetry                          1.0.8
+      OUTPUT
+      az_mixlib_object = double("MixlibObject", stdout: az_output)
+
+      expect(@arm_server_instance).to receive(:shell_out).with("azure -v").and_return(azure_not_found)
+      expect(@arm_server_instance).to receive(:shell_out!).with("az -v").and_return(az_mixlib_object)
+
+      response = @arm_server_instance.get_azure_cli_version
+      expect(response).to be == "2.55.0"
+    end
+
+    # Regression test: shell_out (non-bang) raises Errno::ENOENT directly when
+    # the "azure" binary genuinely isn't on PATH (as opposed to returning a
+    # non-zero exitstatus), because there are no shell metacharacters in the
+    # command to force execution through a subshell. This is the common case
+    # today since the deprecated "azure" xplat CLI is rarely installed.
+    it "falls back to 'az -v' when the 'azure' binary isn't installed at all (Errno::ENOENT)" do
+      az_output = <<~OUTPUT
+        azure-cli                         2.55.0
+        core                              2.55.0
+        telemetry                          1.0.8
+      OUTPUT
+      az_mixlib_object = double("MixlibObject", stdout: az_output)
+
+      expect(@arm_server_instance).to receive(:shell_out).with("azure -v").and_raise(Errno::ENOENT)
+      expect(@arm_server_instance).to receive(:shell_out!).with("az -v").and_return(az_mixlib_object)
+
+      response = @arm_server_instance.get_azure_cli_version
+      expect(response).to be == "2.55.0"
+    end
+
+    it "raises a clear error when neither the 'azure' nor 'az' CLI is installed" do
+      expect(@arm_server_instance).to receive(:shell_out).with("azure -v").and_raise(Errno::ENOENT)
+      expect(@arm_server_instance).to receive(:shell_out!).with("az -v").and_raise(Errno::ENOENT)
+
+      expect { @arm_server_instance.get_azure_cli_version }.to raise_error(/Azure CLI could be found/)
     end
   end
 

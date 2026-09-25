@@ -41,13 +41,14 @@ class Chef
 
       option :azure_storage_account_type,
         long: "--azure-storage-account-type TYPE",
-        description: "Optional. One of the following account types (case-sensitive):
-                                      Standard_LRS (Standard Locally-redundant storage)
-                                      Standard_ZRS (Standard Zone-redundant storage)
-                                      Standard_GRS (Standard Geo-redundant storage)
-                                      Standard_RAGRS (Standard Read access geo-redundant storage)
-                                      Premium_LRS (Premium Locally-redundant storage)",
-        default: "Standard_GRS"
+        description: "Optional. Sets the storage account type (SKU) of the VM's managed OS
+                                      disk (case-sensitive). One of the following:
+                                      Standard_LRS (Standard HDD locally-redundant storage)
+                                      StandardSSD_LRS (Standard SSD locally-redundant storage)
+                                      Premium_LRS (Premium SSD locally-redundant storage)
+                                      StandardSSD_ZRS (Standard SSD zone-redundant storage)
+                                      Premium_ZRS (Premium SSD zone-redundant storage)",
+        default: "Standard_LRS"
 
       option :azure_image_reference_publisher,
         long: "--azure-image-reference-publisher PUBLISHER_NAME",
@@ -128,6 +129,7 @@ class Chef
           :azure_service_location
         )
         validate_params!
+        warn_if_storage_account_ignored!
       end
 
       def plugin_create_instance!
@@ -181,7 +183,7 @@ class Chef
 
         server_def[:tcp_endpoints] = config[:tcp_endpoints] if config[:tcp_endpoints]
 
-        # We assign azure_vm_name to chef_node_name If node name is nill because storage account name is combination of hash value and node name.
+        # We assign azure_vm_name to chef_node_name if node name is nil.
         config[:chef_node_name] ||= config[:azure_vm_name]
 
         server_def[:azure_storage_account] = config[:azure_vm_name] if server_def[:azure_storage_account].nil?
@@ -238,6 +240,16 @@ class Chef
       end
 
       private
+
+      def warn_if_storage_account_ignored!
+        return if config[:azure_storage_account].nil?
+
+        ui.warn("--azure-storage-account is deprecated and has no effect: VM OS disks now use " \
+                "Azure managed disks instead of an unmanaged VHD in a storage account. This option " \
+                "is kept only for backward compatibility with existing command invocations and will " \
+                "be removed in a future release. Use --azure-storage-account-type to control the " \
+                "managed disk SKU instead.")
+      end
 
       def set_defaults
         # set_default_image_reference!

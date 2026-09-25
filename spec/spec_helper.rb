@@ -30,6 +30,19 @@ end
 RSpec.configure do |c|
   c.before(:each) do
     Chef::Config.reset
+    # knife (>= 19) enforces Chef Infra license acceptance/fetch during bootstrap.
+    # Unit tests don't exercise real licensing, so stub these out globally to avoid
+    # hitting the license-acceptance TOML reader / ChefLicensing network calls.
+    allow_any_instance_of(Chef::Knife::Bootstrap).to receive(:check_eula_license).and_return(nil)
+    allow_any_instance_of(Chef::Knife::Bootstrap).to receive(:fetch_license).and_return(nil)
+    # Some knife 18.10.x patch releases also print a "will soon require a license
+    # key" nag via warn_license_usage at the end of #run. Stub it out for the same
+    # reason as above, but only when this optional hook actually exists on the
+    # installed knife version, so verify_partial_doubles-style setups can't fail.
+    if Chef::Knife::Bootstrap.method_defined?(:warn_license_usage) ||
+        Chef::Knife::Bootstrap.private_method_defined?(:warn_license_usage)
+      allow_any_instance_of(Chef::Knife::Bootstrap).to receive(:warn_license_usage).and_return(nil)
+    end
   end
 
   c.before(:all) do

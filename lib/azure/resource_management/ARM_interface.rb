@@ -18,10 +18,10 @@
 require_relative "../azure_interface"
 require_relative "ARM_deployment_template"
 require_relative "vnet_config"
-require "azure_mgmt_resources"
-require "azure_mgmt_compute"
-require "azure_mgmt_storage"
-require "azure_mgmt_network"
+require "azure_mgmt_resources2"
+require "azure_mgmt_compute2"
+require "azure_mgmt_storage2"
+require "azure_mgmt_network2"
 
 module Azure
   class ResourceManagement
@@ -29,27 +29,27 @@ module Azure
       include Azure::ARM::ARMDeploymentTemplate
       include Azure::ARM::VnetConfig
 
-      include Azure::Resources::Mgmt::V2018_05_01
-      include Azure::Resources::Mgmt::V2018_05_01::Models
+      include Azure::Resources2::Mgmt::V2018_05_01
+      include Azure::Resources2::Mgmt::V2018_05_01::Models
 
-      include Azure::Compute::Mgmt::V2018_06_01
-      include Azure::Compute::Mgmt::V2018_06_01::Models
+      include Azure::Compute2::Mgmt::V2018_06_01
+      include Azure::Compute2::Mgmt::V2018_06_01::Models
 
-      include Azure::Storage::Mgmt::V2018_07_01
-      include Azure::Storage::Mgmt::V2018_07_01::Models
+      include Azure::Storage2::Mgmt::V2018_07_01
+      include Azure::Storage2::Mgmt::V2018_07_01::Models
 
-      include Azure::Network::Mgmt::V2018_08_01
-      include Azure::Network::Mgmt::V2018_08_01::Models
+      include Azure::Network2::Mgmt::V2018_08_01
+      include Azure::Network2::Mgmt::V2018_08_01::Models
 
       attr_accessor :connection
 
       def initialize(params = {})
         token_provider = if params[:azure_client_secret]
-                           MsRestAzure::ApplicationTokenProvider.new(params[:azure_tenant_id], params[:azure_client_id], params[:azure_client_secret])
+                           MsRestAzure2::ApplicationTokenProvider.new(params[:azure_tenant_id], params[:azure_client_id], params[:azure_client_secret])
                          else
-                           MsRest::StringTokenProvider.new(params[:token], params[:tokentype])
+                           MsRest2::StringTokenProvider.new(params[:token], params[:tokentype])
                          end
-        @credentials = MsRest::TokenCredentials.new(token_provider)
+        @credentials = MsRest2::TokenCredentials.new(token_provider)
         @azure_subscription_id = params[:azure_subscription_id]
         super
       end
@@ -211,7 +211,7 @@ module Azure
       def virtual_machine_exist?(resource_group_name, vm_name)
         compute_management_client.virtual_machines.get(resource_group_name, vm_name)
         true
-      rescue MsRestAzure::AzureOperationError => e
+      rescue MsRestAzure2::AzureOperationError => e
         if e.body
           err_json = JSON.parse(e.response.body)
           if err_json["error"]["code"] == "ResourceNotFound"
@@ -225,7 +225,7 @@ module Azure
       def security_group_exist?(resource_group_name, security_group_name)
         network_resource_client.network_security_groups.get(resource_group_name, security_group_name)
         true
-      rescue MsRestAzure::AzureOperationError => e
+      rescue MsRestAzure2::AzureOperationError => e
         if e.body
           err_json = JSON.parse(e.response.body)
           if err_json["error"]["code"] == "ResourceNotFound"
@@ -234,6 +234,28 @@ module Azure
             raise e
           end
         end
+      end
+
+      # Returns the sku name (e.g. "Aligned") of an existing availability set, nil if it
+      # exists but is a legacy "Classic" set (which has no sku property at all), or the
+      # :not_found symbol if it doesn't exist yet. Used to detect the case where a caller
+      # reuses an existing Classic availability set name: since Azure availability set
+      # SKUs are immutable once created, redeploying it as "Aligned" (required for managed
+      # disks) would fail remotely with a cryptic ARM error instead of the actionable one
+      # raised in validate_params!.
+      def existing_availability_set_sku(resource_group_name, availability_set_name)
+        availability_set = compute_management_client.availability_sets.get(resource_group_name, availability_set_name)
+        availability_set.sku && availability_set.sku.name
+      rescue MsRestAzure2::AzureOperationError => e
+        if e.body
+          err_json = JSON.parse(e.response.body)
+          # ResourceNotFound: the resource group exists but the availability set doesn't.
+          # ResourceGroupNotFound: the resource group itself doesn't exist yet (e.g. when
+          # creating a VM + availability set together in a brand-new resource group).
+          # Both mean "no existing availability set to conflict with".
+          return :not_found if %w{ResourceNotFound ResourceGroupNotFound}.include?(err_json["error"]["code"])
+        end
+        raise e
       end
 
       def resource_group_exist?(resource_group_name)
@@ -479,7 +501,7 @@ module Azure
       end
 
       def common_arm_rescue_block(error)
-        if error.class == MsRestAzure::AzureOperationError && error.body
+        if error.class == MsRestAzure2::AzureOperationError && error.body
           err_json = JSON.parse(error.response.body)
           err_details = err_json["error"]["details"] if err_json["error"]
           if err_details

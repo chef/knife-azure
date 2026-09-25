@@ -39,7 +39,7 @@ class Chef
             require "json" unless defined?(JSON)
 
             if Chef::Platform.windows?
-              require_relative "../../azure/resource_management/windows_credentials"
+              require_relative "../../../azure/resource_management/windows_credentials"
               include Azure::ARM::WindowsCredentials
             end
           end
@@ -98,11 +98,36 @@ class Chef
 
       def get_azure_cli_version
         if @azure_version != ""
-          get_version = shell_out!("azure -v || az -v | grep azure-cli", returns: [0]).stdout
+          get_version = azure_cli_raw_version_output
           @azure_version = get_version.gsub(/[^0-9.]/, "")
         end
         @azure_prefix = @azure_version.to_i < 2 ? "azure" : "az"
         @azure_version
+      end
+
+      # Detects whether the deprecated xplat "azure" CLI or the modern "az"
+      # CLI is installed and returns its raw version output. Filtering for
+      # the "azure-cli" line is done in Ruby (rather than via `grep`, and
+      # without relying on unix-style shell chaining like `||`/`|`) so this
+      # works identically on Windows, where `grep` isn't available and
+      # Mixlib::ShellOut runs commands through cmd.exe.
+      def azure_cli_raw_version_output
+        begin
+          result = shell_out("azure -v")
+          return result.stdout if result.exitstatus.zero?
+        rescue Errno::ENOENT
+          # The deprecated "azure" xplat CLI isn't installed on this system's PATH,
+          # which is expected/fine for the vast majority of users today. Fall
+          # through and try the modern "az" CLI instead.
+        end
+
+        begin
+          result = shell_out!("az -v")
+        rescue Errno::ENOENT
+          raise "Neither the 'azure' (deprecated) nor the 'az' Azure CLI could be found on this system's PATH. " \
+            "Please install the Azure CLI: https://learn.microsoft.com/cli/azure/install-azure-cli"
+        end
+        result.stdout.each_line.find { |line| line.include?("azure-cli") } || result.stdout
       end
 
       def token_details_for_windows
@@ -176,8 +201,13 @@ class Chef
         require "base64" unless defined?(Base64)
         require "openssl" unless defined?(OpenSSL)
         require "uri" unless defined?(URI)
+        retried_with_legacy_provider = false
         begin
-          doc = Nokogiri::XML(File.open(find_file(filename)))
+          # Use the block form of File.open so the file handle is always closed
+          # after parsing, rather than left open for the GC to close later. This
+          # matters on Windows, where an open handle prevents a Tempfile-based
+          # fixture (used in specs) from being unlinked.
+          doc = File.open(find_file(filename)) { |file| Nokogiri::XML(file) }
           profile = doc.at_css("PublishProfile")
           subscription = profile.at_css("Subscription")
           # check given PublishSettings XML file format.Currently PublishSettings file have two different XML format
@@ -192,10 +222,103 @@ class Chef
           end
           config[:azure_mgmt_cert] = management_cert.certificate.to_pem + management_cert.key.to_pem
           config[:azure_subscription_id] = doc.at_css("Subscription").attribute("Id").value
+        rescue OpenSSL::PKCS12::PKCS12Error => error
+          # Older Azure publish settings files use PKCS12 certificates encrypted with
+          # the legacy RC2-40-CBC cipher, which OpenSSL 3.x disables by default. On
+          # OpenSSL 3.x the raised error usually doesn't mention "RC2-40-CBC" at all -
+          # it's typically the generic "PKCS12_parse: unsupported" - so treat any
+          # "unsupported"-style PKCS12Error as a candidate for the legacy-cipher retry,
+          # not just messages that explicitly say RC2-40-CBC. Only load OpenSSL's
+          # "legacy" provider (widening the process-wide crypto surface) if we
+          # actually hit one of these failures, and only retry once.
+          if !retried_with_legacy_provider && legacy_cipher_error?(error) && load_openssl_legacy_provider
+            retried_with_legacy_provider = true
+            retry
+          end
+
+          if legacy_cipher_error?(error)
+            ui.error("Cannot parse certificate: #{error.message}")
+            if retried_with_legacy_provider
+              # We already successfully loaded OpenSSL's legacy provider and retried,
+              # but parsing still failed with what looks like a legacy-cipher error.
+              # The cipher isn't "unavailable" in this case -- something else about
+              # the certificate is unparseable -- so don't tell the user to
+              # regenerate it with a "more recent cipher" as if the provider were
+              # still missing.
+              ui.error("The PKCS12 certificate could not be parsed even after enabling OpenSSL's " \
+                "legacy provider (used for ciphers such as RC2-40-CBC). The file may be corrupt " \
+                "or use a cipher that isn't supported even by the legacy provider.")
+            else
+              ui.error("The PKCS12 certificate may use the legacy RC2-40-CBC cipher, which is unavailable " \
+                "in the current OpenSSL configuration. Please regenerate the publish settings file " \
+                "with a more recent cipher.")
+            end
+          else
+            ui.error("Error parsing PKCS12 certificate: #{error.message}")
+          end
+          exit 1
         rescue => error
           puts "#{error.class} and #{error.message}"
           exit 1
         end
+      end
+
+      # Returns true if the given OpenSSL::PKCS12::PKCS12Error looks like it was
+      # caused by a legacy/deprecated cipher (such as RC2-40-CBC) being disabled by
+      # default on OpenSSL 3.x. On OpenSSL 3.x this commonly surfaces as a generic
+      # "unsupported" error rather than one that names RC2-40-CBC explicitly.
+      def legacy_cipher_error?(error)
+        error.message =~ /RC2-40-CBC/i || error.message =~ /unsupported/i
+      end
+
+      # Attempts to load OpenSSL's "legacy" provider (needed to decrypt PKCS12 files
+      # using deprecated ciphers such as RC2-40-CBC). Returns true if the provider was
+      # loaded successfully, false otherwise (e.g. it isn't available on this system).
+      def load_openssl_legacy_provider
+        if defined?(OpenSSL::Provider)
+          OpenSSL::Provider.load("legacy")
+          OpenSSL::Provider.load("default")
+          return true
+        end
+
+        # `OpenSSL::Provider` was only added to the "openssl" Ruby gem in version 3.0,
+        # which ships as a default gem starting with Ruby 3.2. On supported Ruby 3.1
+        # installations (bundled openssl gem < 3.0) there's no Ruby API to load an
+        # OpenSSL 3.x provider, even though the underlying libcrypto may itself be
+        # OpenSSL 3.x and support providers. Fall back to calling libcrypto's
+        # OSSL_PROVIDER_load directly via FFI (already a runtime dependency of this
+        # gem) so legacy PKCS12 files can still be decrypted on Ruby 3.1.
+        load_openssl_legacy_provider_via_ffi
+      rescue StandardError, LoadError
+        false
+      end
+
+      # Loads the OpenSSL "legacy" and "default" providers by calling libcrypto's
+      # OSSL_PROVIDER_load function directly through FFI. This only works when the
+      # linked libcrypto is OpenSSL 3.x (the function doesn't exist on OpenSSL 1.1.1
+      # or LibreSSL); any failure to locate the library/symbol is treated as the
+      # provider simply being unavailable.
+      def load_openssl_legacy_provider_via_ffi
+        require "ffi" unless defined?(FFI)
+
+        # Bind to OSSL_PROVIDER_load in the *current process's* already-loaded
+        # symbol table (FFI::Library::CURRENT_PROCESS) rather than dlopen-ing "ssl"/"crypto"
+        # again. Re-loading libcrypto as a second, separate mapping alongside the
+        # one Ruby's own "openssl" extension already loaded can make OpenSSL 3.x
+        # detect what it considers an unsafe double-load and abort the whole
+        # process (observed as "libcrypto in an unsafe way" on macOS); attaching to
+        # the existing in-process symbols avoids that entirely.
+        provider_loader = Module.new do
+          extend FFI::Library
+          ffi_lib FFI::Library::CURRENT_PROCESS
+          attach_function :OSSL_PROVIDER_load, %i{pointer string}, :pointer
+        end
+
+        legacy = provider_loader.OSSL_PROVIDER_load(nil, "legacy")
+        default = provider_loader.OSSL_PROVIDER_load(nil, "default")
+        !legacy.null? && !default.null?
+      rescue StandardError, LoadError
+        false
       end
 
       def find_file(name)
@@ -299,6 +422,38 @@ class Chef
         if config[:azure_image_os_type]
           unless %w{ubuntu centos rhel debian windows}.include?(config[:azure_image_os_type])
             raise ArgumentError, "Invalid value of --azure-image-os-type. Accepted values ubuntu|centos|rhel|debian|windows"
+          end
+        end
+
+        if config[:azure_storage_account_type]
+          # --azure-storage-account-type now sets the managed OS disk's SKU rather than a
+          # storage account's replication type; the old storage-account-only replication
+          # values (Standard_ZRS, Standard_GRS, Standard_RAGRS) are not valid managed disk
+          # SKUs and would otherwise be sent through to Azure and fail remotely.
+          legacy_storage_account_types = %w{Standard_ZRS Standard_GRS Standard_RAGRS}
+          valid_managed_disk_types = %w{Standard_LRS StandardSSD_LRS Premium_LRS StandardSSD_ZRS Premium_ZRS}
+          if legacy_storage_account_types.include?(config[:azure_storage_account_type])
+            raise ArgumentError, "'#{config[:azure_storage_account_type]}' is a storage-account replication type " \
+              "that is no longer valid for --azure-storage-account-type, since VMs now use managed disks. " \
+              "Please use one of the managed disk SKUs instead: #{valid_managed_disk_types.join(", ")}."
+          elsif !valid_managed_disk_types.include?(config[:azure_storage_account_type])
+            raise ArgumentError, "Invalid value '#{config[:azure_storage_account_type]}' for --azure-storage-account-type. " \
+              "Use one of the following managed disk SKUs: #{valid_managed_disk_types.join(", ")}."
+          end
+        end
+
+        if config[:azure_availability_set]
+          # Azure availability set SKUs are immutable once created. The deployment
+          # template always creates/updates the set as "Aligned" (required for VMs with
+          # managed disks), so reusing the name of a pre-existing legacy "Classic" set
+          # (e.g. from an older unmanaged-disk deployment) would fail remotely with a
+          # cryptic ARM error. Detect that case here and fail fast with guidance instead.
+          existing_sku = service.existing_availability_set_sku(config[:azure_resource_group_name], config[:azure_availability_set])
+          if existing_sku != :not_found && existing_sku != "Aligned"
+            raise ArgumentError, "The availability set '#{config[:azure_availability_set]}' already exists as a " \
+              "legacy 'Classic' (unmanaged-disk) availability set. Azure availability set SKUs are immutable, so " \
+              "it cannot be converted to 'Aligned' for use with managed disks. Please choose a different, unused " \
+              "name for --azure-availability-set, or delete and recreate the existing availability set before reusing it."
           end
         end
 
