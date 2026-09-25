@@ -509,6 +509,33 @@ describe Chef::Knife::AzurermBase do
       response = @arm_server_instance.get_azure_cli_version
       expect(response).to be == "2.55.0"
     end
+
+    # Regression test: shell_out (non-bang) raises Errno::ENOENT directly when
+    # the "azure" binary genuinely isn't on PATH (as opposed to returning a
+    # non-zero exitstatus), because there are no shell metacharacters in the
+    # command to force execution through a subshell. This is the common case
+    # today since the deprecated "azure" xplat CLI is rarely installed.
+    it "falls back to 'az -v' when the 'azure' binary isn't installed at all (Errno::ENOENT)" do
+      az_output = <<~OUTPUT
+        azure-cli                         2.55.0
+        core                              2.55.0
+        telemetry                          1.0.8
+      OUTPUT
+      az_mixlib_object = double("MixlibObject", stdout: az_output)
+
+      expect(@arm_server_instance).to receive(:shell_out).with("azure -v").and_raise(Errno::ENOENT)
+      expect(@arm_server_instance).to receive(:shell_out!).with("az -v").and_return(az_mixlib_object)
+
+      response = @arm_server_instance.get_azure_cli_version
+      expect(response).to be == "2.55.0"
+    end
+
+    it "raises a clear error when neither the 'azure' nor 'az' CLI is installed" do
+      expect(@arm_server_instance).to receive(:shell_out).with("azure -v").and_raise(Errno::ENOENT)
+      expect(@arm_server_instance).to receive(:shell_out!).with("az -v").and_raise(Errno::ENOENT)
+
+      expect { @arm_server_instance.get_azure_cli_version }.to raise_error(/Azure CLI could be found/)
+    end
   end
 
   describe "is_old_xplat?" do

@@ -112,10 +112,21 @@ class Chef
       # works identically on Windows, where `grep` isn't available and
       # Mixlib::ShellOut runs commands through cmd.exe.
       def azure_cli_raw_version_output
-        result = shell_out("azure -v")
-        return result.stdout if result.exitstatus.zero?
+        begin
+          result = shell_out("azure -v")
+          return result.stdout if result.exitstatus.zero?
+        rescue Errno::ENOENT
+          # The deprecated "azure" xplat CLI isn't installed on this system's PATH,
+          # which is expected/fine for the vast majority of users today. Fall
+          # through and try the modern "az" CLI instead.
+        end
 
-        result = shell_out!("az -v")
+        begin
+          result = shell_out!("az -v")
+        rescue Errno::ENOENT
+          raise "Neither the 'azure' (deprecated) nor the 'az' Azure CLI could be found on this system's PATH. " \
+            "Please install the Azure CLI: https://learn.microsoft.com/cli/azure/install-azure-cli"
+        end
         result.stdout.each_line.find { |line| line.include?("azure-cli") } || result.stdout
       end
 
