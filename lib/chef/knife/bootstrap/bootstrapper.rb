@@ -107,8 +107,19 @@ class Chef
           # same already-persisted/validated local license (`~/.chef/licenses.yaml`)
           # that knife-ec2/knife-google end up using for free, so this keeps
           # `--chef-license-key` fully optional in the common case.
-          license_key = config[:chef_license_key] || config[:license_id]
-          pub_config[:chef_license_key] = license_key if license_key
+          #
+          # Respect --disable-license-activation exactly like the stock
+          # SSH-based bootstrap does (Chef::Knife::Core::BootstrapContext and
+          # WindowsBootstrapContext both skip forwarding the license key
+          # when this is set): the VM extension can only read this value
+          # from plain, unencrypted publicSettings (see ARM_deployment_template.rb),
+          # so it is not treated as a secret once delivered to the VM. Users
+          # who consider that exposure unacceptable for their environment
+          # need a real way to opt out, same as knife-ec2/knife-google users do.
+          unless config[:disable_license_activation]
+            license_key = config[:chef_license_key] || config[:license_id]
+            pub_config[:chef_license_key] = license_key if license_key
+          end
 
           pub_config[:runlist] = config[:run_list].empty? ? "" : config[:run_list].join(",").to_json
           pub_config[:custom_json_attr] = config[:json_attributes] || {}

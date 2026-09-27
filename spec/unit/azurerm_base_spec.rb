@@ -534,7 +534,7 @@ describe Chef::Knife::AzurermBase do
       expect(@arm_server_instance).to receive(:shell_out).with("azure -v").and_raise(Errno::ENOENT)
       expect(@arm_server_instance).to receive(:shell_out!).with("az -v").and_raise(Errno::ENOENT)
 
-      expect { @arm_server_instance.get_azure_cli_version }.to raise_error(/Azure CLI could be found/)
+      expect { @arm_server_instance.get_azure_cli_version }.to raise_error(/Could not find.*Azure CLI/)
     end
   end
 

@@ -124,7 +124,7 @@ class Chef
         begin
           result = shell_out!("az -v")
         rescue Errno::ENOENT
-          raise "Neither the 'azure' (deprecated) nor the 'az' Azure CLI could be found on this system's PATH. " \
+          raise "Could not find either the 'azure' (deprecated) or the 'az' Azure CLI on this system's PATH. " \
             "Please install the Azure CLI: https://learn.microsoft.com/cli/azure/install-azure-cli"
         end
         result.stdout.each_line.find { |line| line.include?("azure-cli") } || result.stdout
