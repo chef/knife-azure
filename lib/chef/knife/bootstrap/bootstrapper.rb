@@ -90,6 +90,26 @@ class Chef
           # running any step, so setting it here covers that cron step too.
           pub_config[:CHEF_LICENSE] = "accept-no-persist"
 
+          # The extension's own install.sh reads a top-level "chef_license_key"
+          # public setting (via shared.sh's read_chef_license_key) and exports
+          # it as CHEF_LICENSE_KEY before attempting any Chef Infra Client
+          # download. Without it, chef-client/chef-ice versions >= 19 are
+          # refused outright by the extension (chef-ice requires a license
+          # key to download at all), and versions < 19 silently fall back to
+          # the deprecated, license-free omnitruck.chef.io host. `knife` already
+          # exposes `--chef-license-key`/`--chef-license-server` as inherited
+          # bootstrap options, so forward an explicitly-provided key through
+          # here. When no explicit key is given, fall back to `config[:license_id]`,
+          # which `Chef::Knife::Bootstrap#run` already populates for every
+          # bootstrap-based knife command (including this one, since
+          # AzurermServerCreate inherits `run` unchanged) by calling
+          # `fetch_license` before any of our `plugin_*` hooks run. That is the
+          # same already-persisted/validated local license (`~/.chef/licenses.yaml`)
+          # that knife-ec2/knife-google end up using for free, so this keeps
+          # `--chef-license-key` fully optional in the common case.
+          license_key = config[:chef_license_key] || config[:license_id]
+          pub_config[:chef_license_key] = license_key if license_key
+
           pub_config[:runlist] = config[:run_list].empty? ? "" : config[:run_list].join(",").to_json
           pub_config[:custom_json_attr] = config[:json_attributes] || {}
           pub_config[:extendedLogs] = config[:extended_logs] ? "true" : "false"
@@ -111,7 +131,16 @@ class Chef
           pub_config[:bootstrap_options][:chef_server_url] = Chef::Config[:chef_server_url] if Chef::Config[:chef_server_url]
           pub_config[:bootstrap_options][:validation_client_name] = Chef::Config[:validation_client_name] if Chef::Config[:validation_client_name]
           pub_config[:bootstrap_options][:node_verify_api_cert] = config[:node_verify_api_cert] ? "true" : "false" if config.key?(:node_verify_api_cert)
-          pub_config[:bootstrap_options][:bootstrap_version] = config[:bootstrap_version] if config[:bootstrap_version]
+          # If --bootstrap-version isn't given, the extension's chef-install.sh
+          # treats bootstrap_version as blank, can't tell the major version is
+          # >= 19, and falls back to installing the legacy "chef" product
+          # (currently capped in the 18.x line) instead of "chef-ice" (19.x+).
+          # Chef::Knife::Bootstrap#version_to_install (used by the stock
+          # SSH-based chef-full.erb bootstrap that knife-ec2/knife-google rely
+          # on) defaults to the major version of the `chef` gem bundled
+          # alongside `knife` itself (`Chef::VERSION.split(".").first`) in
+          # that same situation, so mirror that default here too.
+          pub_config[:bootstrap_options][:bootstrap_version] = config[:bootstrap_version] || Chef::VERSION.split(".").first
           pub_config[:bootstrap_options][:node_ssl_verify_mode] = config[:node_ssl_verify_mode] if config[:node_ssl_verify_mode]
           pub_config[:bootstrap_options][:bootstrap_proxy] = config[:bootstrap_proxy] if config[:bootstrap_proxy]
           pub_config

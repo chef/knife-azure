@@ -272,5 +272,56 @@ describe Chef::Knife::BootstrapAzurerm do
         expect(response.key?(:hints)).to be == false
       end
     end
+
+    context "when --chef-license-key is provided" do
+      before do
+        allow(@service).to receive(:instance_of?).and_return(true)
+        @bootstrap_azurerm_instance.config[:chef_license_key] = "my-license-key"
+      end
+
+      it "forwards chef_license_key into the extension's public config parameters" do
+        response = @bootstrap_azurerm_instance.get_chef_extension_public_params
+        expect(response[:chef_license_key]).to eq("my-license-key")
+      end
+    end
+
+    context "when --chef-license-key is not provided but a license was already fetched/persisted" do
+      before do
+        allow(@service).to receive(:instance_of?).and_return(true)
+        # Chef::Knife::Bootstrap#run calls fetch_license before any plugin_*
+        # hook runs, populating config[:license_id] with the locally
+        # persisted/validated license key.
+        @bootstrap_azurerm_instance.config[:license_id] = "persisted-license-key"
+      end
+
+      it "falls back to config[:license_id] for chef_license_key" do
+        response = @bootstrap_azurerm_instance.get_chef_extension_public_params
+        expect(response[:chef_license_key]).to eq("persisted-license-key")
+      end
+    end
+
+    context "when --chef-license-key is provided and a persisted license also exists" do
+      before do
+        allow(@service).to receive(:instance_of?).and_return(true)
+        @bootstrap_azurerm_instance.config[:chef_license_key] = "my-license-key"
+        @bootstrap_azurerm_instance.config[:license_id] = "persisted-license-key"
+      end
+
+      it "prefers the explicitly provided --chef-license-key" do
+        response = @bootstrap_azurerm_instance.get_chef_extension_public_params
+        expect(response[:chef_license_key]).to eq("my-license-key")
+      end
+    end
+
+    context "when neither --chef-license-key nor a persisted license is available" do
+      before do
+        allow(@service).to receive(:instance_of?).and_return(true)
+      end
+
+      it "does not set chef_license_key in extension's public config parameters" do
+        response = @bootstrap_azurerm_instance.get_chef_extension_public_params
+        expect(response.key?(:chef_license_key)).to be == false
+      end
+    end
   end
 end
