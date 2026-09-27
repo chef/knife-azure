@@ -1230,9 +1230,22 @@ describe Chef::Knife::AzurermServerCreate do
           expect(response).to be == public_config
         end
 
+        it "defaults bootstrap_version to the major version of the bundled chef gem when " \
+           "--bootstrap-version isn't given, so the extension installs chef-ice (19.x+) " \
+           "instead of silently falling back to the legacy chef (<=18.x) product" do
+             response = @arm_server_instance.get_chef_extension_public_params
+             expect(response[:bootstrap_options][:bootstrap_version]).to eq(Chef::VERSION.split(".").first)
+           end
+
+        it "honors an explicit --bootstrap-version instead of the bundled chef gem's major version" do
+          @arm_server_instance.config[:bootstrap_version] = "18.10.17"
+          response = @arm_server_instance.get_chef_extension_public_params
+          expect(response[:bootstrap_options][:bootstrap_version]).to eq("18.10.17")
+        end
+
         it "should set extendedLogs flag to true" do
           @arm_server_instance.config[:extended_logs] = true
-          public_config = { client_rb: "chef_server_url \t \"https://localhost:443\"\nvalidation_client_name\t\"chef-validator\"\nchef_license\t\"accept-no-persist\"", CHEF_LICENSE: "accept-no-persist", runlist: '"getting-started"', extendedLogs: "true", custom_json_attr: {}, hints: %w{vm_name public_fqdn platform}, bootstrap_options: { environment: "_default", chef_server_url: "https://localhost:443", validation_client_name: "chef-validator" } }
+          public_config = { client_rb: "chef_server_url \t \"https://localhost:443\"\nvalidation_client_name\t\"chef-validator\"\nchef_license\t\"accept-no-persist\"", CHEF_LICENSE: "accept-no-persist", runlist: '"getting-started"', extendedLogs: "true", custom_json_attr: {}, hints: %w{vm_name public_fqdn platform}, bootstrap_options: { environment: "_default", chef_server_url: "https://localhost:443", validation_client_name: "chef-validator", bootstrap_version: Chef::VERSION.split(".").first } }
           response = @arm_server_instance.get_chef_extension_public_params
           expect(response).to be == public_config
         end
@@ -1257,7 +1270,7 @@ describe Chef::Knife::AzurermServerCreate do
 
         it "sets chefServiceInterval variable in public_config" do
           @arm_server_instance.config[:chef_daemon_interval] = "0"
-          public_config = { client_rb: "chef_server_url \t \"https://localhost:443\"\nvalidation_client_name\t\"chef-validator\"\nchef_license\t\"accept-no-persist\"", CHEF_LICENSE: "accept-no-persist", runlist: '"getting-started"', extendedLogs: "false", custom_json_attr: {}, hints: %w{vm_name public_fqdn platform}, chef_daemon_interval: "0", bootstrap_options: { environment: "_default", chef_server_url: "https://localhost:443", validation_client_name: "chef-validator" } }
+          public_config = { client_rb: "chef_server_url \t \"https://localhost:443\"\nvalidation_client_name\t\"chef-validator\"\nchef_license\t\"accept-no-persist\"", CHEF_LICENSE: "accept-no-persist", runlist: '"getting-started"', extendedLogs: "false", custom_json_attr: {}, hints: %w{vm_name public_fqdn platform}, chef_daemon_interval: "0", bootstrap_options: { environment: "_default", chef_server_url: "https://localhost:443", validation_client_name: "chef-validator", bootstrap_version: Chef::VERSION.split(".").first } }
 
           response = @arm_server_instance.get_chef_extension_public_params
           expect(response).to be == public_config
@@ -1266,7 +1279,7 @@ describe Chef::Knife::AzurermServerCreate do
         it "sets daemon variable in public config" do
           @arm_server_instance.config[:daemon] = "service"
           allow(@arm_server_instance).to receive(:is_image_windows?).and_return(true)
-          public_config = { client_rb: "chef_server_url \t \"https://localhost:443\"\nvalidation_client_name\t\"chef-validator\"\nchef_license\t\"accept-no-persist\"", CHEF_LICENSE: "accept-no-persist", runlist: '"getting-started"', extendedLogs: "false", custom_json_attr: {}, hints: %w{vm_name public_fqdn platform}, daemon: "service", bootstrap_options: { environment: "_default", chef_server_url: "https://localhost:443", validation_client_name: "chef-validator" } }
+          public_config = { client_rb: "chef_server_url \t \"https://localhost:443\"\nvalidation_client_name\t\"chef-validator\"\nchef_license\t\"accept-no-persist\"", CHEF_LICENSE: "accept-no-persist", runlist: '"getting-started"', extendedLogs: "false", custom_json_attr: {}, hints: %w{vm_name public_fqdn platform}, daemon: "service", bootstrap_options: { environment: "_default", chef_server_url: "https://localhost:443", validation_client_name: "chef-validator", bootstrap_version: Chef::VERSION.split(".").first } }
           response = @arm_server_instance.get_chef_extension_public_params
           expect(response).to be == public_config
         end
@@ -1598,6 +1611,7 @@ describe Chef::Knife::AzurermServerCreate do
       expect(extension["properties"]["settings"]["CHEF_LICENSE"]).to be == "[parameters('CHEF_LICENSE')]"
 
       expect(extension["properties"]["protectedSettings"]["encrypted_data_bag_secret"]).to be == "[parameters('encrypted_data_bag_secret')]"
+      expect(extension["properties"]["settings"]["chef_license_key"]).to be == "[parameters('chef_license_key')]"
     end
 
     it "uses a managed disk for the VM's OS disk and does not create a storage account resource" do
@@ -1746,7 +1760,7 @@ describe Chef::Knife::AzurermServerCreate do
                             node_verify_api_cert: "hfyreiur374294nehfdishf",
                             chef_node_name: "test-vm",
                             environment: "development" }
-      @params[:chef_extension_public_param] = { bootstrap_options: bootstrap_options, CHEF_LICENSE: "accept-no-persist" }
+      @params[:chef_extension_public_param] = { bootstrap_options: bootstrap_options, CHEF_LICENSE: "accept-no-persist", chef_license_key: "free-license-key-123" }
       @params[:chef_extension_private_param] = {
         validation_key: "validation_key",
         encrypted_data_bag_secret: "rihrfwe739085928592nehrweirwefjsndwe",
@@ -1784,6 +1798,7 @@ describe Chef::Knife::AzurermServerCreate do
       expect(parameters["chef_node_name"]["value"]).to be == "test-vm"
       expect(parameters["environment"]["value"]).to be == "development"
       expect(parameters["CHEF_LICENSE"]["value"]).to be == "accept-no-persist"
+      expect(parameters["chef_license_key"]["value"]).to be == "free-license-key-123"
     end
 
     context "--ssh-public-key option is provided " do

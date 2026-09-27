@@ -267,6 +267,15 @@ module Azure::ARM
               "description" => "Optional. The version of Chef to install.",
             },
           },
+          "chef_license_key" => {
+            "type" => "string",
+            "metadata" => {
+              "description" => "Optional. Chef/Progress license key, forwarded to the VM extension's " \
+                "install.sh as chef_license_key so it can download Chef Infra Client from the licensed " \
+                "endpoints. Required by the extension whenever bootstrap_version resolves to chef-ice " \
+                "(Chef Infra Client >= 19).",
+            },
+          },
           "custom_json_attr" => {
             "type" => "string",
             "metadata" => {
@@ -501,6 +510,17 @@ module Azure::ARM
                 "client_rb" => "[parameters('client_rb')]",
                 "custom_json_attr" => "[parameters('custom_json_attr')]",
                 "CHEF_LICENSE" => "[parameters('CHEF_LICENSE')]",
+                # NOTE: intentionally in plain "settings" (publicSettings), not
+                # protectedSettings. The extension's own install.sh/shared.sh read
+                # this via a raw text search over the settings file it receives, which
+                # only sees plaintext publicSettings -- protectedSettings arrives as an
+                # opaque encrypted PKCS7 blob that only the extension's separate
+                # decryption code path parses, and that path only ever extracts
+                # validation_key/client_pem/chef_server_crt/secret, never
+                # chef_license_key. Putting it in protectedSettings means the
+                # extension can never see it, reproducing the exact "No
+                # chef_license_key provided" failure this parameter exists to fix.
+                "chef_license_key" => "[parameters('chef_license_key')]",
               },
               "protectedSettings" => {
                 "validation_key" => "[parameters('validation_key')]",
@@ -670,6 +690,9 @@ module Azure::ARM
         },
         "CHEF_LICENSE" => {
           "value" => "#{params[:chef_extension_public_param][:CHEF_LICENSE]}",
+        },
+        "chef_license_key" => {
+          "value" => "#{params[:chef_extension_public_param][:chef_license_key]}",
         },
         "bootstrap_version" => {
           "value" => "#{params[:chef_extension_public_param][:bootstrap_options][:bootstrap_version]}",
