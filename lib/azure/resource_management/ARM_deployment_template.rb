@@ -268,7 +268,17 @@ module Azure::ARM
             },
           },
           "chef_license_key" => {
-            "type" => "string",
+            # securestring keeps this out of ARM deployment history/logs and the
+            # Azure Portal's deployment "Inputs" view (same treatment as
+            # adminPassword above). Note this only protects the ARM parameter
+            # itself: the VM extension's install scripts (bash and PowerShell)
+            # can only read plain, unencrypted publicSettings (see the
+            # "settings" block below), so the key is still delivered to the VM
+            # in plaintext there - an inherent limitation of the extension's
+            # own settings-reading implementation, not something knife-azure
+            # can avoid without breaking chef-ice (>= 19) license enforcement
+            # entirely.
+            "type" => "securestring",
             "metadata" => {
               "description" => "Optional. Chef/Progress license key, forwarded to the VM extension's " \
                 "install.sh as chef_license_key so it can download Chef Infra Client from the licensed " \
