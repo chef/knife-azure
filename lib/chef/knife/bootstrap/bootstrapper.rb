@@ -118,7 +118,28 @@ class Chef
           # need a real way to opt out, same as knife-ec2/knife-google users do.
           unless config[:disable_license_activation]
             license_key = config[:chef_license_key] || config[:license_id]
-            pub_config[:chef_license_key] = license_key if license_key
+            if license_key
+              # The extension has no protected/secure settings path for this
+              # value (its decryption code only ever extracts a fixed set of
+              # keys - validation_key, client_pem, chef_server_crt, secret -
+              # from protectedSettings, never chef_license_key), so this is
+              # unavoidably delivered to the VM as recoverable plaintext,
+              # regardless of the ARM parameter's own "securestring" type
+              # (which only masks it in ARM deployment history/portal, not on
+              # the VM itself). Surface that clearly instead of silently
+              # forwarding a persisted license, and give users the existing
+              # --disable-license-activation opt-out.
+              ui.warn(
+                "A Chef license key is being forwarded to the '#{get_chef_extension_name}' " \
+                "VM extension's public (non-secret) settings so Chef Infra " \
+                "Client/chef-ice can be installed. Azure exposes public extension " \
+                "settings in plaintext to any principal with read access to the " \
+                "VM/extension - this is a limitation of the extension itself, not " \
+                "of knife-azure. Pass --disable-license-activation to skip this " \
+                "(chef-ice/Chef 19+ bootstrap will then fail without a license)."
+              )
+              pub_config[:chef_license_key] = license_key
+            end
           end
 
           pub_config[:runlist] = config[:run_list].empty? ? "" : config[:run_list].join(",").to_json
