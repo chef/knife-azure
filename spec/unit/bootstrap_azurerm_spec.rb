@@ -280,8 +280,14 @@ describe Chef::Knife::BootstrapAzurerm do
       end
 
       it "forwards chef_license_key into the extension's public config parameters" do
+        allow(@bootstrap_azurerm_instance.ui).to receive(:warn)
         response = @bootstrap_azurerm_instance.get_chef_extension_public_params
         expect(response[:chef_license_key]).to eq("my-license-key")
+      end
+
+      it "warns that the license key will be readable in the extension's public settings" do
+        expect(@bootstrap_azurerm_instance.ui).to receive(:warn).with(/forwarded.*public.*settings/)
+        @bootstrap_azurerm_instance.get_chef_extension_public_params
       end
     end
 
@@ -295,8 +301,14 @@ describe Chef::Knife::BootstrapAzurerm do
       end
 
       it "falls back to config[:license_id] for chef_license_key" do
+        allow(@bootstrap_azurerm_instance.ui).to receive(:warn)
         response = @bootstrap_azurerm_instance.get_chef_extension_public_params
         expect(response[:chef_license_key]).to eq("persisted-license-key")
+      end
+
+      it "warns that the persisted license will be readable in the extension's public settings" do
+        expect(@bootstrap_azurerm_instance.ui).to receive(:warn).with(/forwarded.*public.*settings/)
+        @bootstrap_azurerm_instance.get_chef_extension_public_params
       end
     end
 
@@ -317,6 +329,12 @@ describe Chef::Knife::BootstrapAzurerm do
         response = @bootstrap_azurerm_instance.get_chef_extension_public_params
         expect(response.key?(:chef_license_key)).to be == false
       end
+
+      it "does not warn about license exposure" do
+        @bootstrap_azurerm_instance.config[:license_id] = "persisted-license-key"
+        expect(@bootstrap_azurerm_instance.ui).not_to receive(:warn)
+        @bootstrap_azurerm_instance.get_chef_extension_public_params
+      end
     end
 
     context "when --chef-license-key is provided and a persisted license also exists" do
@@ -327,6 +345,7 @@ describe Chef::Knife::BootstrapAzurerm do
       end
 
       it "prefers the explicitly provided --chef-license-key" do
+        allow(@bootstrap_azurerm_instance.ui).to receive(:warn)
         response = @bootstrap_azurerm_instance.get_chef_extension_public_params
         expect(response[:chef_license_key]).to eq("my-license-key")
       end
@@ -340,6 +359,11 @@ describe Chef::Knife::BootstrapAzurerm do
       it "does not set chef_license_key in extension's public config parameters" do
         response = @bootstrap_azurerm_instance.get_chef_extension_public_params
         expect(response.key?(:chef_license_key)).to be == false
+      end
+
+      it "does not warn about license exposure" do
+        expect(@bootstrap_azurerm_instance.ui).not_to receive(:warn)
+        @bootstrap_azurerm_instance.get_chef_extension_public_params
       end
     end
   end
