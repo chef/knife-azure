@@ -283,8 +283,8 @@ module Azure::ARM
             "metadata" => {
               "description" => "Optional. Chef/Progress license key, forwarded to the VM extension's " \
                 "install.sh as chef_license_key so it can download Chef Infra Client from the licensed " \
-                "endpoints. Required by the extension by default (chef_license_bypass must be explicitly " \
-                "set to opt into the deprecated, unlicensed omnitruck fallback).",
+                "endpoints. When omitted, the extension falls back to the unlicensed omnitruck.chef.io " \
+                "download host with a warning.",
             },
           },
           "custom_json_attr" => {

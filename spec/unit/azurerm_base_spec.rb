@@ -49,8 +49,12 @@ describe Chef::Knife::AzurermBase do
   # directly instead of going through this require_relative path).
   describe "windows_credentials require path" do
     it "resolves to a file that actually exists on disk, from azurerm_base.rb's own location" do
-      azurerm_base_file = $LOADED_FEATURES.find { |f| f.end_with?("lib/chef/knife/helpers/azurerm_base.rb") }
-      resolved_path = File.expand_path("../../../azure/resource_management/windows_credentials.rb", File.dirname(azurerm_base_file))
+      # windows_credentials.rb is only require_relative'd from azurerm_base.rb
+      # when Chef::Platform.windows? is true, so it may not be in
+      # $LOADED_FEATURES on Linux/macOS CI. Resolve the same relative path
+      # azurerm_base.rb itself uses, anchored on this spec file's own
+      # location instead, so the assertion runs on every platform.
+      resolved_path = File.expand_path("../../lib/azure/resource_management/windows_credentials.rb", __dir__)
       expect(File.exist?(resolved_path)).to be true
     end
   end
