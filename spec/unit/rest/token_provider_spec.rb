@@ -65,6 +65,8 @@ describe Azure::ResourceManagement::Rest::TokenProvider do
 
       before do
         allow(Net::HTTP).to receive(:new).and_return(net_http)
+        allow(net_http).to receive(:open_timeout=)
+        allow(net_http).to receive(:read_timeout=)
         allow(net_http).to receive(:use_ssl=)
         allow(net_http).to receive(:verify_mode=)
         allow(net_http).to receive(:cert_store=)
