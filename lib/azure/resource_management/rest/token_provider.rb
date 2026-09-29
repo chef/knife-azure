@@ -20,6 +20,7 @@ require "uri" unless defined?(URI)
 require "json" unless defined?(JSON)
 require_relative "environments"
 require_relative "errors"
+require_relative "secure_connection"
 
 module Azure
   class ResourceManagement
@@ -72,8 +73,7 @@ module Azure
 
         def request_client_credentials_token
           uri = URI.parse("#{@environment.active_directory_endpoint_url}/#{@params[:azure_tenant_id]}/oauth2/token")
-          http = Net::HTTP.new(uri.host, uri.port)
-          http.use_ssl = (uri.scheme == "https")
+          http = SecureConnection.build(uri)
 
           request = Net::HTTP::Post.new(uri.request_uri)
           request.set_form_data(
