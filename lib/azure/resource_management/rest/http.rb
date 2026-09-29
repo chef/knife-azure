@@ -178,30 +178,50 @@ module Azure
           (parsed && parsed["error"] && parsed["error"]["message"]) || "Azure API error (HTTP #{status})."
         end
 
-        # Poll the Azure-AsyncOperation / Location header until the operation
-        # reaches a terminal state, honouring Retry-After.
+        # Poll a long-running operation to a terminal state, honouring
+        # Retry-After. Azure exposes two distinct monitor styles that must be
+        # handled differently:
+        #
+        #   * Azure-AsyncOperation: a status monitor whose body carries a
+        #     "status" field ("InProgress"/"Succeeded"/"Failed"/"Canceled").
+        #     Terminal state comes from that field, not the HTTP code.
+        #   * Location: a resource monitor that returns 202 while the operation
+        #     is still running and a non-202 (200/204, often with no status
+        #     body) once it has completed. Terminal success is signalled by the
+        #     HTTP code, so a bodyless 200/204 here means "done", not "keep
+        #     polling". Azure-AsyncOperation takes precedence when both exist.
         def poll_until_complete(response)
-          async_url = response.headers["azure-asyncoperation"] || response.headers["location"]
-          return response.body if async_url.nil?
+          async_op_url = response.headers["azure-asyncoperation"]
+          location_url = response.headers["location"]
+          return response.body if async_op_url.nil? && location_url.nil?
 
           loop do
             sleep(retry_after(response))
-            response = get(async_url)
-            state = provisioning_state(response.body)
 
-            case state
-            when "Succeeded"
-              return response.body
-            when "Failed", "Canceled"
-              raise OperationError.new(
-                "Long-running operation ended in state '#{state}'.",
-                body: JSON.generate(response.body || {}),
-                code: state,
-                http_status: response.status
-              )
+            if async_op_url
+              response = get(async_op_url)
+              state = provisioning_state(response.body)
+              case state
+              when "Succeeded"
+                return response.body
+              when "Failed", "Canceled"
+                raise OperationError.new(
+                  "Long-running operation ended in state '#{state}'.",
+                  body: JSON.generate(response.body || {}),
+                  code: state,
+                  http_status: response.status
+                )
+              end
+              async_op_url = response.headers["azure-asyncoperation"] || async_op_url
+              location_url = response.headers["location"] || location_url
+            else
+              response = get(location_url)
+              # Any non-202 response on a Location monitor is terminal success,
+              # even when there is no status body.
+              return response.body if response.status != 202
+
+              location_url = response.headers["location"] || location_url
             end
-
-            async_url = response.headers["azure-asyncoperation"] || response.headers["location"] || async_url
           end
         end
 
