@@ -20,6 +20,7 @@ require "uri" unless defined?(URI)
 require "json" unless defined?(JSON)
 require "time" unless defined?(Time.httpdate)
 require_relative "errors"
+require_relative "secure_connection"
 
 module Azure
   class ResourceManagement
@@ -118,8 +119,7 @@ module Azure
 
         def do_request(method, url, body)
           uri = URI.parse(url)
-          http = Net::HTTP.new(uri.host, uri.port)
-          http.use_ssl = (uri.scheme == "https")
+          http = SecureConnection.build(uri)
 
           request = build_request(method, uri, body)
 

@@ -66,6 +66,16 @@ describe Azure::ResourceManagement::Rest::TokenProvider do
       before do
         allow(Net::HTTP).to receive(:new).and_return(net_http)
         allow(net_http).to receive(:use_ssl=)
+        allow(net_http).to receive(:verify_mode=)
+        allow(net_http).to receive(:cert_store=)
+      end
+
+      it "enables TLS peer verification before sending the client secret" do
+        raw = double(code: "200", body: '{"access_token":"t","expires_in":3599}')
+        allow(net_http).to receive(:request).and_return(raw)
+
+        expect(net_http).to receive(:verify_mode=).with(OpenSSL::SSL::VERIFY_PEER)
+        provider.access_token
       end
 
       it "returns the access token on a successful response" do
