@@ -44,12 +44,16 @@ module Azure
         DEFAULT_MAX_POLLS = 360
 
         def initialize(token_provider, max_retries: DEFAULT_MAX_RETRIES, retry_interval: DEFAULT_RETRY_INTERVAL,
-                       lro_timeout: DEFAULT_LRO_TIMEOUT, max_polls: DEFAULT_MAX_POLLS)
+                       lro_timeout: DEFAULT_LRO_TIMEOUT, max_polls: DEFAULT_MAX_POLLS,
+                       open_timeout: SecureConnection::DEFAULT_OPEN_TIMEOUT,
+                       read_timeout: SecureConnection::DEFAULT_READ_TIMEOUT)
           @token_provider = token_provider
           @max_retries = max_retries
           @retry_interval = retry_interval
           @lro_timeout = lro_timeout
           @max_polls = max_polls
+          @open_timeout = open_timeout
+          @read_timeout = read_timeout
         end
 
         def get(url)
@@ -119,7 +123,7 @@ module Azure
 
         def do_request(method, url, body)
           uri = URI.parse(url)
-          http = SecureConnection.build(uri)
+          http = SecureConnection.build(uri, open_timeout: @open_timeout, read_timeout: @read_timeout)
 
           request = build_request(method, uri, body)
 

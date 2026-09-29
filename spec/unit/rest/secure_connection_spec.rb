@@ -32,4 +32,18 @@ describe Azure::ResourceManagement::Rest::SecureConnection do
 
     expect(http.use_ssl?).to be false
   end
+
+  it "applies bounded connection and read timeouts by default" do
+    http = described_class.build(URI.parse("https://management.azure.com"))
+
+    expect(http.open_timeout).to eq(described_class::DEFAULT_OPEN_TIMEOUT)
+    expect(http.read_timeout).to eq(described_class::DEFAULT_READ_TIMEOUT)
+  end
+
+  it "lets callers override the timeouts" do
+    http = described_class.build(URI.parse("https://management.azure.com"), open_timeout: 5, read_timeout: 9)
+
+    expect(http.open_timeout).to eq(5)
+    expect(http.read_timeout).to eq(9)
+  end
 end

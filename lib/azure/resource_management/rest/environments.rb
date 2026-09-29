@@ -59,6 +59,20 @@ module Azure
         def self.default
           new(DEFAULT_ENVIRONMENT)
         end
+
+        # Resolves a caller-supplied cloud name (e.g. "AzureUSGovernment") to an
+        # Environments instance, falling back to the public cloud for a blank or
+        # unknown value so a bad setting can never send credentials nowhere.
+        def self.from_name(name)
+          normalized = name.to_s.strip
+          new(ENVIRONMENTS.key?(normalized) ? normalized : DEFAULT_ENVIRONMENT)
+        end
+
+        # Names of the clouds this client understands, exposed so callers can
+        # validate a user-provided setting.
+        def self.names
+          ENVIRONMENTS.keys
+        end
       end
     end
   end
