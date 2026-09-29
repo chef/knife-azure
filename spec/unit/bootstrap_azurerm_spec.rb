@@ -272,12 +272,16 @@ describe Chef::Knife::BootstrapAzurerm do
         expect(response.key?(:hints)).to be == false
       end
     end
-
   end
 
-  describe "get_chef_extension_public_params" do
+  describe "get_chef_extension_private_params" do
     before do
-      allow(@service).to receive(:instance_of?).and_return(true)
+      allow(@bootstrap_azurerm_instance).to receive(:create_node_and_client_pem).and_return("/tmp/client.pem")
+      allow(File).to receive(:exist?).and_call_original
+      allow(File).to receive(:exist?).with("/tmp/client.pem").and_return(true)
+      allow(File).to receive(:read).and_call_original
+      allow(File).to receive(:read).with("/tmp/client.pem").and_return("client-pem-content")
+      allow(@bootstrap_azurerm_instance).to receive(:load_correct_secret).and_return(nil)
     end
 
     context "when --chef-license-key is provided" do
@@ -285,8 +289,8 @@ describe Chef::Knife::BootstrapAzurerm do
         @bootstrap_azurerm_instance.config[:chef_license_key] = "my-license-key"
       end
 
-      it "forwards chef_license_key into the extension's public config parameters" do
-        response = @bootstrap_azurerm_instance.get_chef_extension_public_params
+      it "forwards chef_license_key into the extension's protected config parameters" do
+        response = @bootstrap_azurerm_instance.get_chef_extension_private_params
         expect(response[:chef_license_key]).to eq("my-license-key")
       end
     end
@@ -299,8 +303,8 @@ describe Chef::Knife::BootstrapAzurerm do
         @bootstrap_azurerm_instance.config[:license_id] = "persisted-license-key"
       end
 
-      it "auto-forwards the persisted license into the extension's public config parameters" do
-        response = @bootstrap_azurerm_instance.get_chef_extension_public_params
+      it "auto-forwards the persisted license into the extension's protected config parameters" do
+        response = @bootstrap_azurerm_instance.get_chef_extension_private_params
         expect(response[:chef_license_key]).to eq("persisted-license-key")
       end
     end
@@ -312,13 +316,13 @@ describe Chef::Knife::BootstrapAzurerm do
 
       it "does not forward an explicitly provided --chef-license-key" do
         @bootstrap_azurerm_instance.config[:chef_license_key] = "my-license-key"
-        response = @bootstrap_azurerm_instance.get_chef_extension_public_params
+        response = @bootstrap_azurerm_instance.get_chef_extension_private_params
         expect(response.key?(:chef_license_key)).to be == false
       end
 
       it "does not forward a persisted license" do
         @bootstrap_azurerm_instance.config[:license_id] = "persisted-license-key"
-        response = @bootstrap_azurerm_instance.get_chef_extension_public_params
+        response = @bootstrap_azurerm_instance.get_chef_extension_private_params
         expect(response.key?(:chef_license_key)).to be == false
       end
     end
@@ -330,14 +334,14 @@ describe Chef::Knife::BootstrapAzurerm do
       end
 
       it "prefers the explicitly provided --chef-license-key" do
-        response = @bootstrap_azurerm_instance.get_chef_extension_public_params
+        response = @bootstrap_azurerm_instance.get_chef_extension_private_params
         expect(response[:chef_license_key]).to eq("my-license-key")
       end
     end
 
     context "when neither --chef-license-key nor a persisted license is available" do
-      it "does not set chef_license_key in extension's public config parameters" do
-        response = @bootstrap_azurerm_instance.get_chef_extension_public_params
+      it "does not set chef_license_key in extension's protected config parameters" do
+        response = @bootstrap_azurerm_instance.get_chef_extension_private_params
         expect(response.key?(:chef_license_key)).to be == false
       end
     end

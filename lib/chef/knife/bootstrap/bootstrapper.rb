@@ -90,34 +90,10 @@ class Chef
           # running any step, so setting it here covers that cron step too.
           pub_config[:CHEF_LICENSE] = "accept-no-persist"
 
-          # chef_license_key is forwarded here (plain "settings"/publicSettings)
-          # because the extension's own install scripts (chef-install.sh/
-          # shared.sh, chef-install.psm1/shared.ps1 - see
-          # chef-partners/azure-chef-extension#384) only ever read
-          # chef_license_key via a raw text search over the plaintext settings
-          # file; there is no protectedSettings-decrypted path for it. That
-          # means the key is unavoidably delivered to the VM as recoverable
-          # plaintext regardless of the ARM parameter's own "securestring"
-          # type (which only masks it in ARM deployment history/portal, not on
-          # the VM itself).
-          #
-          # As of chef-partners/azure-chef-extension#384, the extension also
-          # *requires* chef_license_key by default -- omitting it now makes
-          # chef-install.sh/shared.sh exit 1 with "No chef_license_key
-          # provided" unless the caller also explicitly sets a
-          # chef_license_bypass setting to opt into the deprecated,
-          # soon-to-be-shut-down unlicensed omnitruck download. Given that,
-          # auto-forwarding here (rather than requiring --chef-license-key on
-          # every single invocation) mirrors exactly what upstream
-          # Chef::Knife::Core::BootstrapContext/WindowsBootstrapContext do for
-          # the stock SSH-based bootstrap that knife-ec2/knife-google rely on:
-          # prefer an explicitly passed --chef-license-key, else fall back to
-          # config[:license_id] (the already-persisted/validated local
-          # license that Chef::Knife::Bootstrap#run populates via
-          # fetch_license before any plugin_* hook runs), and skip forwarding
-          # entirely when --disable-license-activation is set.
-          license_key = config[:chef_license_key] || config[:license_id]
-          pub_config[:chef_license_key] = license_key if license_key && !config[:disable_license_activation]
+          # chef_license_key is now forwarded via get_chef_extension_private_params
+          # below (protectedSettings), not here -- see
+          # chef-partners/azure-chef-extension#413 (version 1210.15.11.1,
+          # rolled out to all regions), which added a decrypt path for it.
 
           pub_config[:runlist] = config[:run_list].empty? ? "" : config[:run_list].join(",").to_json
           pub_config[:custom_json_attr] = config[:json_attributes] || {}
@@ -218,6 +194,36 @@ class Chef
 
           # encrypted_data_bag_secret key for encrypting/decrypting the data bags
           pri_config[:encrypted_data_bag_secret] = load_correct_secret
+
+          # The extension's install scripts (chef-install.sh/shared.sh,
+          # chef-install.psm1/shared.ps1) now decrypt protectedSettings for
+          # chef_license_key and prefer it over the deprecated publicSettings
+          # location (chef-partners/azure-chef-extension#413, shipped as
+          # version 1210.15.11.1, rolled out to all regions for both
+          # ChefClient and LinuxChefClient). Forwarding it here instead of via
+          # get_chef_extension_public_params means it is delivered to the VM
+          # encrypted (CMS/PKCS7, decrypted locally using the cert the Azure
+          # Guest Agent provisions), matching the treatment already given to
+          # validation_key/chef_server_crt/encrypted_data_bag_secret above,
+          # instead of as recoverable plaintext.
+          #
+          # As of chef-partners/azure-chef-extension#384, the extension also
+          # requires chef_license_key by default -- omitting it makes
+          # chef-install.sh/shared.sh exit 1 with "No chef_license_key
+          # provided" unless the caller also explicitly sets a
+          # chef_license_bypass setting to opt into the deprecated,
+          # soon-to-be-shut-down unlicensed omnitruck download. Given that,
+          # auto-forwarding here (rather than requiring --chef-license-key on
+          # every single invocation) mirrors exactly what upstream
+          # Chef::Knife::Core::BootstrapContext/WindowsBootstrapContext do for
+          # the stock SSH-based bootstrap that knife-ec2/knife-google rely on:
+          # prefer an explicitly passed --chef-license-key, else fall back to
+          # config[:license_id] (the already-persisted/validated local
+          # license that Chef::Knife::Bootstrap#run populates via
+          # fetch_license before any plugin_* hook runs), and skip forwarding
+          # entirely when --disable-license-activation is set.
+          license_key = config[:chef_license_key] || config[:license_id]
+          pri_config[:chef_license_key] = license_key if license_key && !config[:disable_license_activation]
 
           pri_config
         end
