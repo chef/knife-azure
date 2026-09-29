@@ -106,6 +106,21 @@ describe Azure::ResourceManagement::Rest::ArmClient do
     end
   end
 
+  describe "#list_vm_extension_versions" do
+    it "uses get_all (handles the bare-array response) and wraps each version" do
+      url = "https://management.azure.com/subscriptions/sub-123" \
+            "/providers/Microsoft.Compute/locations/eastus/publishers/Chef.Bootstrap.WindowsAzure" \
+            "/artifacttypes/vmextension/types/LinuxChefClient/versions" \
+            "?api-version=#{described_class::COMPUTE_API_VERSION}"
+      expect(http).to receive(:get_all).with(url).and_return(
+        [{ "name" => "1210.12.10.1" }, { "name" => "1210.12.10.2" }]
+      )
+
+      versions = client.list_vm_extension_versions("eastus", "Chef.Bootstrap.WindowsAzure", "LinuxChefClient")
+      expect(versions.last.name).to eq("1210.12.10.2")
+    end
+  end
+
   describe "URI path encoding" do
     it "percent-encodes spaces in a resource name as %20 (path encoding), not +" do
       expect(http).to receive(:get)

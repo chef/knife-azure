@@ -453,15 +453,22 @@ module Azure
       def common_arm_rescue_block(error)
         if error.is_a?(OperationError) && error.body
           err_json = JSON.parse(error.response.body)
-          err_details = err_json["error"]["details"] if err_json["error"]
-          if err_details
-            err_details.each do |err|
-              ui.error(JSON.parse(err["message"])["error"]["message"])
-            rescue JSON::ParserError => e
-              ui.error(err["message"])
+          arm_error = err_json["error"]
+          if arm_error.is_a?(Hash)
+            err_details = arm_error["details"]
+            if err_details
+              err_details.each do |err|
+                ui.error(JSON.parse(err["message"])["error"]["message"])
+              rescue JSON::ParserError => e
+                ui.error(err["message"])
+              end
+            else
+              ui.error(arm_error["message"])
             end
           else
-            ui.error(err_json["error"]["message"])
+            # OAuth token endpoint errors are flat: the "error" value is a
+            # string code and the human-readable text is in "error_description".
+            ui.error(err_json["error_description"] || arm_error || error.message)
           end
           Chef::Log.debug(error.response.body)
         else

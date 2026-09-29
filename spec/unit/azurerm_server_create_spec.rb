@@ -2009,6 +2009,24 @@ describe Chef::Knife::AzurermServerCreate do
     }
   end
 
+  describe "common_arm_rescue_block" do
+    def operation_error(body)
+      Azure::ResourceManagement::ARMInterface::OperationError.new("boom", body: body)
+    end
+
+    it "surfaces the message from ARM's nested error object" do
+      error = operation_error('{"error": {"code": "BadRequest", "message": "arm failure"}}')
+      expect(@service.ui).to receive(:error).with("arm failure")
+      @service.common_arm_rescue_block(error)
+    end
+
+    it "surfaces error_description from an OAuth flat error shape" do
+      error = operation_error('{"error": "invalid_client", "error_description": "bad secret"}')
+      expect(@service.ui).to receive(:error).with("bad secret")
+      @service.common_arm_rescue_block(error)
+    end
+  end
+
   def stub_client_builder
     client_builder_mock = double("ClientBuilder")
     key = "/key.pem"

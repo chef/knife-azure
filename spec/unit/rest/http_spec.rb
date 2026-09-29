@@ -119,6 +119,14 @@ describe Azure::ResourceManagement::Rest::Http do
 
       expect(http.get_all("https://page1").map { |h| h["id"] }).to eq([1, 2, 3, 4])
     end
+
+    it "returns a bare JSON array directly (endpoints without the value envelope)" do
+      allow(http).to receive(:do_request).and_return(
+        response(200, {}, [{ "name" => "v1" }, { "name" => "v2" }])
+      )
+
+      expect(http.get_all("https://x").map { |h| h["name"] }).to eq(%w{v1 v2})
+    end
   end
 
   describe "#request retry behaviour" do

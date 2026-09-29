@@ -121,8 +121,9 @@ module Azure
         def list_vm_extension_versions(location, publisher, type)
           path = "/providers/Microsoft.Compute/locations/#{e(location)}/publishers/#{e(publisher)}" \
                  "/artifacttypes/vmextension/types/#{e(type)}/versions"
-          response = @http.get(base_url(path, COMPUTE_API_VERSION))
-          Array(response.body).map { |v| RestObject.wrap(v) }
+          # This endpoint returns a bare JSON array; get_all handles that shape
+          # as well as the paged { "value": ... } envelope.
+          @http.get_all(base_url(path, COMPUTE_API_VERSION)).map { |v| RestObject.wrap(v) }
         end
 
         # ----- Network (Microsoft.Network) -----
