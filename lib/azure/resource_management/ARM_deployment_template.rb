@@ -270,16 +270,15 @@ module Azure::ARM
           "chef_license_key" => {
             # securestring keeps this out of ARM deployment history/logs and the
             # Azure Portal's deployment "Inputs" view (same treatment as
-            # adminPassword above). Note this only protects the ARM parameter
-            # itself: per chef-partners/azure-chef-extension#384, the VM
-            # extension's install scripts (bash and PowerShell) only ever read
-            # chef_license_key from plain, unencrypted publicSettings (see the
-            # "settings" block below) - there is no protectedSettings path for
-            # this value - so it is still delivered to the VM in plaintext
-            # there, an inherent limitation of the extension's own
-            # settings-reading implementation, not something knife-azure can
-            # avoid without breaking chef-ice (>= 19) license enforcement
-            # entirely.
+            # adminPassword above). Per chef-partners/azure-chef-extension#413
+            # (version 1210.15.11.1, rolled out to all regions for both
+            # ChefClient and LinuxChefClient), the VM extension's install
+            # scripts now decrypt protectedSettings for this value and prefer
+            # it over the deprecated publicSettings location, so it is
+            # forwarded via the "protectedSettings" block below instead of
+            # plain "settings" - delivered to the VM CMS/PKCS7-encrypted and
+            # decrypted locally, the same treatment already given to
+            # validation_key/chef_server_crt/encrypted_data_bag_secret.
             "type" => "securestring",
             "metadata" => {
               "description" => "Optional. Chef/Progress license key, forwarded to the VM extension's " \
@@ -522,21 +521,16 @@ module Azure::ARM
                 "client_rb" => "[parameters('client_rb')]",
                 "custom_json_attr" => "[parameters('custom_json_attr')]",
                 "CHEF_LICENSE" => "[parameters('CHEF_LICENSE')]",
-                # NOTE: intentionally in plain "settings" (publicSettings), not
-                # protectedSettings. Per chef-partners/azure-chef-extension#384,
-                # the extension's own install.sh/shared.sh read this via a raw
-                # text search over the settings file it receives, which only
-                # sees plaintext publicSettings -- there is no
-                # protectedSettings-decrypted path for chef_license_key.
-                # Putting it in protectedSettings means the extension can
-                # never see it, reproducing the exact "No chef_license_key
-                # provided" failure this parameter exists to fix.
-                "chef_license_key" => "[parameters('chef_license_key')]",
               },
               "protectedSettings" => {
                 "validation_key" => "[parameters('validation_key')]",
                 "chef_server_crt" => "[parameters('chef_server_crt')]",
                 "encrypted_data_bag_secret" => "[parameters('encrypted_data_bag_secret')]",
+                # Per chef-partners/azure-chef-extension#413 (version
+                # 1210.15.11.1, rolled out to all regions), the extension's
+                # install scripts decrypt this from protectedSettings and
+                # prefer it over the deprecated publicSettings location.
+                "chef_license_key" => "[parameters('chef_license_key')]",
               },
             },
           },
@@ -703,7 +697,7 @@ module Azure::ARM
           "value" => "#{params[:chef_extension_public_param][:CHEF_LICENSE]}",
         },
         "chef_license_key" => {
-          "value" => "#{params[:chef_extension_public_param][:chef_license_key]}",
+          "value" => "#{params[:chef_extension_private_param][:chef_license_key]}",
         },
         "bootstrap_version" => {
           "value" => "#{params[:chef_extension_public_param][:bootstrap_options][:bootstrap_version]}",

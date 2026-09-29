@@ -1611,7 +1611,7 @@ describe Chef::Knife::AzurermServerCreate do
       expect(extension["properties"]["settings"]["CHEF_LICENSE"]).to be == "[parameters('CHEF_LICENSE')]"
 
       expect(extension["properties"]["protectedSettings"]["encrypted_data_bag_secret"]).to be == "[parameters('encrypted_data_bag_secret')]"
-      expect(extension["properties"]["settings"]["chef_license_key"]).to be == "[parameters('chef_license_key')]"
+      expect(extension["properties"]["protectedSettings"]["chef_license_key"]).to be == "[parameters('chef_license_key')]"
     end
 
     it "uses a managed disk for the VM's OS disk and does not create a storage account resource" do
@@ -1760,10 +1760,11 @@ describe Chef::Knife::AzurermServerCreate do
                             node_verify_api_cert: "hfyreiur374294nehfdishf",
                             chef_node_name: "test-vm",
                             environment: "development" }
-      @params[:chef_extension_public_param] = { bootstrap_options: bootstrap_options, CHEF_LICENSE: "accept-no-persist", chef_license_key: "free-license-key-123" }
+      @params[:chef_extension_public_param] = { bootstrap_options: bootstrap_options, CHEF_LICENSE: "accept-no-persist" }
       @params[:chef_extension_private_param] = {
         validation_key: "validation_key",
         encrypted_data_bag_secret: "rihrfwe739085928592nehrweirwefjsndwe",
+        chef_license_key: "free-license-key-123",
       }
       {
         azure_image_reference_publisher: "OpenLogic",
