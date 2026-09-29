@@ -71,16 +71,24 @@ module Azure
           request(:delete, url)
         end
 
-        # Issues a GET and follows nextLink until all pages are collected,
-        # returning the concatenated "value" arrays.
+        # Issues a GET and returns the full list of items. Handles both ARM
+        # list shapes: most endpoints return a paged { "value": [...],
+        # "nextLink": ... } envelope, but a few (e.g. VM extension image
+        # versions) return a bare JSON array. nextLink is followed for the
+        # paged shape.
         def get_all(url)
           items = []
           next_url = url
           until next_url.nil?
-            response = get(next_url)
-            body = response.body || {}
-            items.concat(Array(body["value"]))
-            next_url = body["nextLink"]
+            body = get(next_url).body
+            if body.is_a?(Array)
+              items.concat(body)
+              next_url = nil
+            else
+              body ||= {}
+              items.concat(Array(body["value"]))
+              next_url = body["nextLink"]
+            end
           end
           items
         end
