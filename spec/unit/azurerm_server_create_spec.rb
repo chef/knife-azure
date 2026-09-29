@@ -1301,7 +1301,8 @@ describe Chef::Knife::AzurermServerCreate do
         context "when encrypted_data_bag_secret option is passed" do
           let(:private_config) do
             { validation_key: "my_validation_key",
-              encrypted_data_bag_secret: "my_encrypted_data_bag_secret" }
+              encrypted_data_bag_secret: "my_encrypted_data_bag_secret",
+              chef_license_key: "test-chef-license-key" }
           end
 
           before do
@@ -1314,7 +1315,8 @@ describe Chef::Knife::AzurermServerCreate do
         context "when encrypted_data_bag_secret_file option is passed" do
           let(:private_config) do
             { validation_key: "my_validation_key",
-              encrypted_data_bag_secret: "PgIxStCmMDsuIw3ygRhmdMtStpc9EMiWisQXoP" }
+              encrypted_data_bag_secret: "PgIxStCmMDsuIw3ygRhmdMtStpc9EMiWisQXoP",
+              chef_license_key: "test-chef-license-key" }
           end
 
           before do
@@ -1348,7 +1350,7 @@ describe Chef::Knife::AzurermServerCreate do
         end
 
         it "copies SSL certificate contents into chef_server_crt attribute of extension's private params" do
-          pri_config = { validation_key: "foo", chef_server_crt: "foo", encrypted_data_bag_secret: nil }
+          pri_config = { validation_key: "foo", chef_server_crt: "foo", encrypted_data_bag_secret: nil, chef_license_key: "test-chef-license-key" }
           response = @arm_server_instance.get_chef_extension_private_params
           expect(response).to be == pri_config
         end
