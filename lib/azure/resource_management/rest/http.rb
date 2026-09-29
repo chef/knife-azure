@@ -18,6 +18,7 @@
 require "net/http" unless defined?(Net::HTTP)
 require "uri" unless defined?(URI)
 require "json" unless defined?(JSON)
+require "time" unless defined?(Time.httpdate)
 require_relative "errors"
 
 module Azure
@@ -37,11 +38,17 @@ module Azure
         TRANSIENT_STATUS = [429, 500, 502, 503, 504].freeze
         DEFAULT_MAX_RETRIES = 3
         DEFAULT_RETRY_INTERVAL = 5 # seconds
+        # Hard caps so a stuck long-running operation cannot poll forever.
+        DEFAULT_LRO_TIMEOUT = 30 * 60 # seconds
+        DEFAULT_MAX_POLLS = 360
 
-        def initialize(token_provider, max_retries: DEFAULT_MAX_RETRIES, retry_interval: DEFAULT_RETRY_INTERVAL)
+        def initialize(token_provider, max_retries: DEFAULT_MAX_RETRIES, retry_interval: DEFAULT_RETRY_INTERVAL,
+                       lro_timeout: DEFAULT_LRO_TIMEOUT, max_polls: DEFAULT_MAX_POLLS)
           @token_provider = token_provider
           @max_retries = max_retries
           @retry_interval = retry_interval
+          @lro_timeout = lro_timeout
+          @max_polls = max_polls
         end
 
         def get(url)
@@ -91,11 +98,12 @@ module Azure
           attempts = 0
           begin
             do_request(method, url, body)
-          rescue TransientError
+          rescue TransientError => e
             attempts += 1
             raise if attempts > @max_retries
 
-            sleep(@retry_interval)
+            # Honour the server's Retry-After hint (throttling) when present.
+            sleep(e.retry_after || @retry_interval)
             retry
           end
         end
@@ -143,7 +151,10 @@ module Azure
           parsed = parse_body(raw.body)
 
           if TRANSIENT_STATUS.include?(status)
-            raise TransientError, "Azure returned a transient error (HTTP #{status})."
+            raise TransientError.new(
+              "Azure returned a transient error (HTTP #{status}).",
+              retry_after: parse_retry_after(headers["retry-after"])
+            )
           elsif status >= 400
             raise OperationError.new(
               error_message(parsed, status),
@@ -170,12 +181,44 @@ module Azure
           headers
         end
 
+        # Azure Resource Manager errors are nested ({ "error": { "code",
+        # "message" } }); the AAD/OAuth token endpoint returns a flat shape
+        # ({ "error": "invalid_client", "error_description": "..." }). Both are
+        # handled here so a meaningful message/code is surfaced either way.
         def error_code(parsed)
-          parsed && parsed["error"] && parsed["error"]["code"]
+          return nil unless parsed.is_a?(Hash)
+
+          err = parsed["error"]
+          err.is_a?(Hash) ? err["code"] : err
         end
 
         def error_message(parsed, status)
-          (parsed && parsed["error"] && parsed["error"]["message"]) || "Azure API error (HTTP #{status})."
+          fallback = "Azure API error (HTTP #{status})."
+          return fallback unless parsed.is_a?(Hash)
+
+          err = parsed["error"]
+          if err.is_a?(Hash)
+            err["message"] || fallback
+          elsif err.is_a?(String)
+            parsed["error_description"] ? "#{err}: #{parsed["error_description"]}" : err
+          else
+            fallback
+          end
+        end
+
+        # Parse a Retry-After header value (delta-seconds or an HTTP-date) into
+        # a number of seconds, or nil when absent/unparseable.
+        def parse_retry_after(value)
+          return nil if value.nil? || value.to_s.strip.empty?
+
+          return value.to_i if value.to_s =~ /\A\d+\z/
+
+          begin
+            seconds = (Time.httpdate(value) - Time.now).round
+            seconds > 0 ? seconds : 0
+          rescue ArgumentError
+            nil
+          end
         end
 
         # Poll a long-running operation to a terminal state, honouring
@@ -195,7 +238,20 @@ module Azure
           location_url = response.headers["location"]
           return response.body if async_op_url.nil? && location_url.nil?
 
+          deadline = Time.now + @lro_timeout
+          polls = 0
           loop do
+            polls += 1
+            if polls > @max_polls || Time.now >= deadline
+              raise OperationError.new(
+                "Timed out waiting for the long-running operation to complete " \
+                  "(after #{polls - 1} polls / #{@lro_timeout}s).",
+                body: JSON.generate(response.body || {}),
+                code: "PollingTimeout",
+                http_status: response.status
+              )
+            end
+
             sleep(retry_after(response))
 
             if async_op_url
@@ -232,8 +288,7 @@ module Azure
         end
 
         def retry_after(response)
-          value = response.headers && response.headers["retry-after"]
-          value.nil? ? @retry_interval : value.to_i
+          parse_retry_after(response.headers && response.headers["retry-after"]) || @retry_interval
         end
       end
     end

@@ -86,13 +86,38 @@ module Azure
           raw = http.request(request)
           if raw.code.to_i >= 400
             raise OperationError.new(
-              "Failed to acquire an Azure access token (HTTP #{raw.code}).",
+              token_error_message(raw),
               body: raw.body,
               http_status: raw.code.to_i
             )
           end
 
           JSON.parse(raw.body)
+        end
+
+        # The AAD/OAuth token endpoint returns a flat error shape
+        # ({ "error": "invalid_client", "error_description": "..." }); tolerate
+        # an ARM-style nested error too, and fall back gracefully when the body
+        # is missing or not JSON.
+        def token_error_message(raw)
+          base = "Failed to acquire an Azure access token (HTTP #{raw.code})."
+          parsed = parse_json(raw.body)
+          return base unless parsed.is_a?(Hash)
+
+          detail =
+            if parsed["error"].is_a?(Hash)
+              parsed["error"]["message"]
+            else
+              parsed["error_description"] || parsed["error"]
+            end
+
+          detail ? "#{base} #{detail}" : base
+        end
+
+        def parse_json(body)
+          JSON.parse(body.to_s)
+        rescue JSON::ParserError
+          nil
         end
       end
     end

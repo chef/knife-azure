@@ -15,6 +15,7 @@
 # limitations under the License.
 #
 
+require "erb" unless defined?(ERB::Util)
 require "uri" unless defined?(URI)
 require_relative "environments"
 require_relative "errors"
@@ -193,8 +194,12 @@ module Azure
           )
         end
 
+        # Percent-encode a value for use as a single URI *path* segment.
+        # URI.encode_www_form_component is for query strings (it turns spaces
+        # into "+"), which is wrong inside a path; ERB::Util.url_encode emits
+        # %20 and escapes "/" so a name can never break out of its segment.
         def e(value)
-          URI.encode_www_form_component(value.to_s)
+          ERB::Util.url_encode(value.to_s)
         end
       end
     end
