@@ -48,12 +48,18 @@ class Chef
             short: "-r RESOURCE_GROUP_NAME",
             long: "--azure-resource-group-name RESOURCE_GROUP_NAME",
             description: "The Resource Group name."
+
+          option :azure_environment,
+            long: "--azure-environment ENVIRONMENT",
+            description: "Optional. The Azure cloud to target: AzureCloud (default), " \
+              "AzureUSGovernment, AzureChinaCloud, or AzureGermanCloud.",
+            default: "AzureCloud"
         end
       end
 
       def service
         details = authentication_details
-        details.update(azure_subscription_id: config[:azure_subscription_id])
+        details.update(azure_subscription_id: config[:azure_subscription_id], azure_environment: config[:azure_environment])
         @service ||= begin
                       require_relative "../../../azure/resource_management/ARM_interface"
                       service = Azure::ResourceManagement::ARMInterface.new(details)

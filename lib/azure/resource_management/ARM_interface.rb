@@ -37,7 +37,7 @@ module Azure
       attr_accessor :connection
 
       def initialize(params = {})
-        @environment = Azure::ResourceManagement::Rest::Environments.default
+        @environment = Azure::ResourceManagement::Rest::Environments.from_name(params[:azure_environment])
         @token_provider = Azure::ResourceManagement::Rest::TokenProvider.new(params, @environment)
         @azure_subscription_id = params[:azure_subscription_id]
         super

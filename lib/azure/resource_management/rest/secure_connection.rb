@@ -28,8 +28,17 @@ module Azure
       module SecureConnection
         module_function
 
-        def build(uri)
+        # Bounded, overridable defaults. Net::HTTP defaults both timeouts to
+        # unlimited, so without these a stalled Azure or token endpoint could
+        # block the CLI forever (and the HTTP layer's LRO deadline can't help
+        # while http.request itself is blocked).
+        DEFAULT_OPEN_TIMEOUT = 60  # seconds to establish the connection
+        DEFAULT_READ_TIMEOUT = 120 # seconds to wait for each response
+
+        def build(uri, open_timeout: DEFAULT_OPEN_TIMEOUT, read_timeout: DEFAULT_READ_TIMEOUT)
           http = Net::HTTP.new(uri.host, uri.port)
+          http.open_timeout = open_timeout
+          http.read_timeout = read_timeout
           if uri.scheme == "https"
             http.use_ssl = true
             http.verify_mode = OpenSSL::SSL::VERIFY_PEER
