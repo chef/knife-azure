@@ -105,4 +105,22 @@ describe Azure::ResourceManagement::Rest::ArmClient do
       expect(client.list_virtual_machines("rg").map(&:name)).to eq(%w{a b})
     end
   end
+
+  describe "URI path encoding" do
+    it "percent-encodes spaces in a resource name as %20 (path encoding), not +" do
+      expect(http).to receive(:get)
+        .with(a_string_including("/resourceGroups/my%20rg/"))
+        .and_return(resp("name" => "vm"))
+
+      client.get_virtual_machine("my rg", "vm")
+    end
+
+    it "escapes a slash in a name so it cannot break out of its path segment" do
+      expect(http).to receive(:get)
+        .with(a_string_including("/virtualMachines/a%2Fb?"))
+        .and_return(resp("name" => "a/b"))
+
+      client.get_virtual_machine("rg", "a/b")
+    end
+  end
 end

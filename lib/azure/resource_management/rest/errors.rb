@@ -19,8 +19,16 @@ module Azure
   class ResourceManagement
     module Rest
       # Raised for network/transport failures and throttling (HTTP 429/5xx).
-      # These are considered retryable by the HTTP layer.
-      class TransientError < StandardError; end
+      # These are considered retryable by the HTTP layer. When Azure supplies a
+      # Retry-After hint, it is carried here so the caller can honour it.
+      class TransientError < StandardError
+        attr_reader :retry_after
+
+        def initialize(message = nil, retry_after: nil)
+          @retry_after = retry_after
+          super(message)
+        end
+      end
 
       # Raised when Azure Resource Manager returns an API error (HTTP 4xx, or a
       # failed long-running operation). This is the direct replacement for the

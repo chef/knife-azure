@@ -91,5 +91,64 @@ describe Azure::ResourceManagement::Rest::Http do
         expect(http.request_and_poll(:delete, "https://x")).to eq("id" => "sync")
       end
     end
+
+    context "when the operation never reaches a terminal state" do
+      it "gives up after the poll limit instead of looping forever" do
+        capped = described_class.new(token_provider, retry_interval: 0, max_polls: 2)
+        allow(capped).to receive(:sleep)
+        allow(capped).to receive(:do_request).and_return(
+          response(202, { "location" => "https://monitor/loc" }, nil),
+          response(202, { "location" => "https://monitor/loc" }, nil),
+          response(202, { "location" => "https://monitor/loc" }, nil)
+        )
+
+        expect { capped.request_and_poll(:delete, "https://x") }.to raise_error(
+          Azure::ResourceManagement::Rest::OperationError, /Timed out/
+        )
+      end
+    end
+  end
+
+  describe "#get_all" do
+    it "follows nextLink across multiple pages and concatenates the results" do
+      allow(http).to receive(:do_request).and_return(
+        response(200, {}, { "value" => [{ "id" => 1 }, { "id" => 2 }], "nextLink" => "https://page2" }),
+        response(200, {}, { "value" => [{ "id" => 3 }], "nextLink" => "https://page3" }),
+        response(200, {}, { "value" => [{ "id" => 4 }] })
+      )
+
+      expect(http.get_all("https://page1").map { |h| h["id"] }).to eq([1, 2, 3, 4])
+    end
+  end
+
+  describe "#request retry behaviour" do
+    it "honours the Retry-After delay carried on a throttled response" do
+      calls = 0
+      allow(http).to receive(:do_request) do
+        calls += 1
+        if calls == 1
+          raise Azure::ResourceManagement::Rest::TransientError.new("429", retry_after: 7)
+        end
+
+        response(200, {}, { "ok" => true })
+      end
+
+      expect(http).to receive(:sleep).with(7)
+      expect(http.get("https://x").body).to eq("ok" => true)
+    end
+
+    it "falls back to the default retry interval when no Retry-After is given" do
+      calls = 0
+      throttler = described_class.new(token_provider, retry_interval: 3)
+      allow(throttler).to receive(:do_request) do
+        calls += 1
+        raise Azure::ResourceManagement::Rest::TransientError.new("503") if calls == 1
+
+        response(200, {}, {})
+      end
+
+      expect(throttler).to receive(:sleep).with(3)
+      throttler.get("https://x")
+    end
   end
 end
