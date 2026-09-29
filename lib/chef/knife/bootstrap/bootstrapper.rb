@@ -207,14 +207,16 @@ class Chef
           # validation_key/chef_server_crt/encrypted_data_bag_secret above,
           # instead of as recoverable plaintext.
           #
-          # As of chef-partners/azure-chef-extension#384, the extension also
-          # requires chef_license_key by default -- omitting it makes
-          # chef-install.sh/shared.sh exit 1 with "No chef_license_key
-          # provided" unless the caller also explicitly sets a
-          # chef_license_bypass setting to opt into the deprecated,
-          # soon-to-be-shut-down unlicensed omnitruck download. Given that,
-          # auto-forwarding here (rather than requiring --chef-license-key on
-          # every single invocation) mirrors exactly what upstream
+          # chef_license_key is optional, not required: when it (and
+          # config[:license_id]) are both absent -- including when
+          # --disable-license-activation is set, which intentionally skips
+          # forwarding below -- the extension's chef-install.sh/shared.sh
+          # (chef-partners/azure-chef-extension#384) simply fall back to the
+          # unlicensed omnitruck.chef.io download host with a warning; there
+          # is no "chef_license_bypass" setting to set and no exit/failure
+          # path to work around. Auto-forwarding here when a key IS available
+          # (rather than requiring --chef-license-key on every single
+          # invocation) mirrors exactly what upstream
           # Chef::Knife::Core::BootstrapContext/WindowsBootstrapContext do for
           # the stock SSH-based bootstrap that knife-ec2/knife-google rely on:
           # prefer an explicitly passed --chef-license-key, else fall back to
