@@ -110,8 +110,11 @@ module Azure
 
         def create_vm_extension(resource_group_name, vm_name, extension_name, extension_body)
           url = vm_extension_url(resource_group_name, vm_name, extension_name)
-          body = @http.request_and_poll(:put, url, extension_body)
-          RestObject.wrap(body)
+          # The async PUT resolves to an operation-status document, not the
+          # extension itself, so GET the resource once polling completes.
+          @http.request_and_poll(:put, url, extension_body)
+          response = @http.get(url)
+          RestObject.wrap(response.body)
         end
 
         def list_vm_extension_versions(location, publisher, type)
