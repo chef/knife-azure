@@ -123,6 +123,14 @@ module Azure
 
         def do_request(method, url, body)
           uri = URI.parse(url)
+          # ARM-supplied follow-up URLs (nextLink, Location, Azure-AsyncOperation)
+          # are requested with the same bearer token as the original call, so a
+          # malformed or compromised monitor URL must never be allowed to
+          # downgrade the connection to plaintext HTTP.
+          unless uri.scheme == "https"
+            raise ArgumentError, "Refusing to send an Azure request to a non-HTTPS URL: #{url}"
+          end
+
           http = SecureConnection.build(uri, open_timeout: @open_timeout, read_timeout: @read_timeout)
 
           request = build_request(method, uri, body)

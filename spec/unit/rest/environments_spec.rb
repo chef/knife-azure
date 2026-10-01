@@ -50,8 +50,14 @@ describe Azure::ResourceManagement::Rest::Environments do
       expect(described_class.from_name(nil).resource_manager_endpoint_url).to eq("https://management.azure.com")
     end
 
-    it "falls back to the public cloud for an unknown name" do
-      expect(described_class.from_name("NotACloud").resource_manager_endpoint_url).to eq("https://management.azure.com")
+    it "raises for an unknown name instead of silently using the public cloud" do
+      expect { described_class.from_name("NotACloud") }.to raise_error(
+        ArgumentError, /Unknown Azure environment 'NotACloud'/
+      )
+    end
+
+    it "falls back to the public cloud for an empty name" do
+      expect(described_class.from_name("").resource_manager_endpoint_url).to eq("https://management.azure.com")
     end
   end
 

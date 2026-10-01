@@ -2025,6 +2025,18 @@ describe Chef::Knife::AzurermServerCreate do
       expect(@service.ui).to receive(:error).with("bad secret")
       @service.common_arm_rescue_block(error)
     end
+
+    it "falls back to the error message for a non-JSON ARM body instead of masking it" do
+      error = operation_error("Internal Server Error")
+      expect(@service.ui).to receive(:error).with("boom")
+      @service.common_arm_rescue_block(error)
+    end
+
+    it "falls back to the error message for an empty/nil ARM body" do
+      error = Azure::ResourceManagement::ARMInterface::OperationError.new("boom", body: "null")
+      expect(@service.ui).to receive(:error).with("boom")
+      @service.common_arm_rescue_block(error)
+    end
   end
 
   def stub_client_builder

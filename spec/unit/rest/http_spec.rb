@@ -159,4 +159,30 @@ describe Azure::ResourceManagement::Rest::Http do
       throttler.get("https://x")
     end
   end
+
+  describe "#do_request transport safety" do
+    # nextLink/Location/Azure-AsyncOperation URLs come straight from the Azure
+    # response and are requested with the same bearer token as the original
+    # call, so a plain http:// URL must never be dereferenced.
+    it "refuses to send a request (and the bearer token) to a plain HTTP URL" do
+      expect { http.get("http://insecure.example.com/resource") }.to raise_error(
+        ArgumentError, /non-HTTPS/
+      )
+    end
+
+    it "allows an HTTPS URL through to the transport layer" do
+      net_http = double("Net::HTTP")
+      allow(Net::HTTP).to receive(:new).and_return(net_http)
+      allow(net_http).to receive(:open_timeout=)
+      allow(net_http).to receive(:read_timeout=)
+      allow(net_http).to receive(:use_ssl=)
+      allow(net_http).to receive(:verify_mode=)
+      allow(net_http).to receive(:cert_store=)
+      allow(net_http).to receive(:request).and_return(
+        double("raw", code: "200", body: "{}", each_header: nil)
+      )
+
+      expect(http.get("https://management.azure.com/resource").body).to eq({})
+    end
+  end
 end
