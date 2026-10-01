@@ -58,7 +58,10 @@ module Azure
         end
 
         def key?(name)
-          !lookup_key(name).nil?
+          return true unless lookup_key(name).nil?
+
+          properties = @data["properties"]
+          properties.is_a?(Hash) && !lookup_key(name, properties).nil?
         end
 
         def nil?

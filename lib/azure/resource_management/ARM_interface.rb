@@ -452,7 +452,17 @@ module Azure
 
       def common_arm_rescue_block(error)
         if error.is_a?(OperationError) && error.body
-          err_json = JSON.parse(error.response.body)
+          err_json = begin
+                       JSON.parse(error.response.body)
+                     rescue JSON::ParserError, TypeError
+                       nil
+                     end
+          unless err_json.is_a?(Hash)
+            ui.error(error.message)
+            Chef::Log.debug(error.response.body)
+            return
+          end
+
           arm_error = err_json["error"]
           if arm_error.is_a?(Hash)
             err_details = arm_error["details"]

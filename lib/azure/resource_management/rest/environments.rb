@@ -61,11 +61,21 @@ module Azure
         end
 
         # Resolves a caller-supplied cloud name (e.g. "AzureUSGovernment") to an
-        # Environments instance, falling back to the public cloud for a blank or
-        # unknown value so a bad setting can never send credentials nowhere.
+        # Environments instance, defaulting to the public cloud only when no
+        # value was given. An unrecognized name is rejected outright: silently
+        # falling back to the public cloud would otherwise post service-principal
+        # secrets and ARM requests to the wrong (public) endpoints whenever an
+        # operator intending a sovereign cloud makes a typo.
         def self.from_name(name)
           normalized = name.to_s.strip
-          new(ENVIRONMENTS.key?(normalized) ? normalized : DEFAULT_ENVIRONMENT)
+          return new(DEFAULT_ENVIRONMENT) if normalized.empty?
+
+          unless ENVIRONMENTS.key?(normalized)
+            raise ArgumentError,
+              "Unknown Azure environment '#{normalized}'. Valid values are: #{names.join(", ")}."
+          end
+
+          new(normalized)
         end
 
         # Names of the clouds this client understands, exposed so callers can
