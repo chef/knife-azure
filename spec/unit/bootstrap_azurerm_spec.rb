@@ -315,14 +315,29 @@ describe Chef::Knife::BootstrapAzurerm do
       end
     end
 
-    context "when --disable-license-activation is set even though a license key is present" do
-      it "fails fast because the license would not actually be forwarded" do
+    context "when --disable-license-activation is set" do
+      # --disable-license-activation is inherited from Chef::Knife::Bootstrap
+      # specifically to suppress copying/activation of the local license, so
+      # it must bypass the mandatory-license policy entirely -- regardless of
+      # whether a license key happens to be available -- rather than being
+      # treated as yet another "no usable license" failure.
+      it "succeeds even without any license key available" do
+        @bootstrap_azurerm_instance.config[:bootstrap_version] = "19"
+        @bootstrap_azurerm_instance.config[:chef_license_key] = nil
+        @bootstrap_azurerm_instance.config[:license_id] = nil
+        @bootstrap_azurerm_instance.config[:disable_license_activation] = true
+        expect(@bootstrap_azurerm_instance.ui).to_not receive(:error)
+        response = @bootstrap_azurerm_instance.get_chef_extension_public_params
+        expect(response[:bootstrap_options][:bootstrap_version]).to eq("19")
+      end
+
+      it "succeeds even when a license key is present, without forwarding it" do
         @bootstrap_azurerm_instance.config[:bootstrap_version] = "19"
         @bootstrap_azurerm_instance.config[:chef_license_key] = "my-license-key"
         @bootstrap_azurerm_instance.config[:disable_license_activation] = true
-        expect(@bootstrap_azurerm_instance.ui).to receive(:error)
-          .with(/license key is required/)
-        expect { @bootstrap_azurerm_instance.get_chef_extension_public_params }.to raise_error(SystemExit)
+        expect(@bootstrap_azurerm_instance.ui).to_not receive(:error)
+        response = @bootstrap_azurerm_instance.get_chef_extension_public_params
+        expect(response[:bootstrap_options][:bootstrap_version]).to eq("19")
       end
     end
   end
@@ -398,6 +413,69 @@ describe Chef::Knife::BootstrapAzurerm do
 
     context "when neither --chef-license-key nor a persisted license is available" do
       it "does not set chef_license_key in extension's protected config parameters" do
+        response = @bootstrap_azurerm_instance.get_chef_extension_private_params
+        expect(response.key?(:chef_license_key)).to be == false
+      end
+    end
+
+    context "when --azure-chef-extension-version pins a build older than protectedSettings support" do
+      before do
+        @bootstrap_azurerm_instance.config[:chef_license_key] = "my-license-key"
+        @bootstrap_azurerm_instance.config[:azure_chef_extension_version] = "1210.15.11.0"
+      end
+
+      it "fails fast instead of silently forwarding an unusable license key" do
+        expect(@bootstrap_azurerm_instance.ui).to receive(:error)
+          .with(/older than 1210.15.11.1/)
+        expect { @bootstrap_azurerm_instance.get_chef_extension_private_params }.to raise_error(SystemExit)
+      end
+    end
+
+    context "when --azure-chef-extension-version pins a build at the minimum supported version" do
+      before do
+        @bootstrap_azurerm_instance.config[:chef_license_key] = "my-license-key"
+        @bootstrap_azurerm_instance.config[:azure_chef_extension_version] = "1210.15.11.1"
+      end
+
+      it "forwards chef_license_key normally" do
+        response = @bootstrap_azurerm_instance.get_chef_extension_private_params
+        expect(response[:chef_license_key]).to eq("my-license-key")
+      end
+    end
+
+    context "when --azure-chef-extension-version pins a build newer than the minimum supported version" do
+      before do
+        @bootstrap_azurerm_instance.config[:chef_license_key] = "my-license-key"
+        @bootstrap_azurerm_instance.config[:azure_chef_extension_version] = "1312.11"
+      end
+
+      it "forwards chef_license_key normally" do
+        response = @bootstrap_azurerm_instance.get_chef_extension_private_params
+        expect(response[:chef_license_key]).to eq("my-license-key")
+      end
+    end
+
+    context "when --azure-chef-extension-version is a family wildcard" do
+      before do
+        @bootstrap_azurerm_instance.config[:chef_license_key] = "my-license-key"
+        @bootstrap_azurerm_instance.config[:azure_chef_extension_version] = "1210.*"
+      end
+
+      it "forwards chef_license_key without rejecting the ambiguous pin" do
+        response = @bootstrap_azurerm_instance.get_chef_extension_private_params
+        expect(response[:chef_license_key]).to eq("my-license-key")
+      end
+    end
+
+    context "when an old pinned --azure-chef-extension-version is set but --disable-license-activation suppresses forwarding" do
+      before do
+        @bootstrap_azurerm_instance.config[:chef_license_key] = "my-license-key"
+        @bootstrap_azurerm_instance.config[:azure_chef_extension_version] = "1210.15.11.0"
+        @bootstrap_azurerm_instance.config[:disable_license_activation] = true
+      end
+
+      it "does not reject the pin, since no license key is forwarded anyway" do
+        expect(@bootstrap_azurerm_instance.ui).to_not receive(:error)
         response = @bootstrap_azurerm_instance.get_chef_extension_private_params
         expect(response.key?(:chef_license_key)).to be == false
       end

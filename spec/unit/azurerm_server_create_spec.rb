@@ -770,7 +770,7 @@ describe Chef::Knife::AzurermServerCreate do
             azure_image_reference_sku: "6.5",
             azure_image_reference_version: "latest",
             connection_user: "connection_user",
-            azure_chef_extension_version: "1210.12",
+            azure_chef_extension_version: "1312.11",
           }.each do |key, value|
             @arm_server_instance.config[key] = value
           end
@@ -863,7 +863,7 @@ describe Chef::Knife::AzurermServerCreate do
       context "for multiple VM creation" do
         before do
           @arm_server_instance.config[:server_count] = 3
-          @arm_server_instance.config[:azure_chef_extension_version] = "1210.12"
+          @arm_server_instance.config[:azure_chef_extension_version] = "1312.11"
 
           expect(@arm_server_instance).to receive(
             :is_image_windows?
@@ -1114,9 +1114,9 @@ describe Chef::Knife::AzurermServerCreate do
         end
 
         it "sets user supplied value for chef_extension_version parameter" do
-          @arm_server_instance.config[:azure_chef_extension_version] = "1210.12"
+          @arm_server_instance.config[:azure_chef_extension_version] = "1312.11"
           @server_params = @arm_server_instance.create_server_def
-          expect(@server_params[:chef_extension_version]).to be == "1210.12"
+          expect(@server_params[:chef_extension_version]).to be == "1312.11"
         end
 
         it "sets nil value for chef_extension_version parameter when user has not supplied any value for it" do
