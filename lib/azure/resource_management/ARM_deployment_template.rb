@@ -94,8 +94,8 @@ module Azure::ARM
         vmId = "[resourceId('Microsoft.Compute/virtualMachines', concat(variables('vmName'),copyIndex()))]"
         depVm2 = "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'), copyIndex())]"
         computerName = "[concat(variables('vmName'),copyIndex())]"
-        uri = "[concat('http://',variables('storageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',concat(variables('vmName'),copyIndex()),'.vhd')]"
         netid = "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('nicName'), copyIndex()))]"
+        osDiskName = "[concat(variables('OSDiskName'),copyIndex())]"
 
         # Extension Variables
         extName = "[concat(variables('vmName'),copyIndex(),'/', variables('vmExtensionName'))]"
@@ -117,8 +117,8 @@ module Azure::ARM
         vmId = "[resourceId('Microsoft.Compute/virtualMachines', variables('vmName'))]"
         depVm2 = "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
         computerName = "[variables('vmName')]"
-        uri = "[concat('http://',variables('storageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',variables('vmName'),'.vhd')]"
         netid = "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]"
+        osDiskName = "[variables('OSDiskName')]"
 
         # Extension Variables
         extName = "[concat(variables('vmName'),'/', variables('vmExtensionName'))]"
@@ -252,10 +252,39 @@ module Azure::ARM
               "description" => "Optional. Path to a client.rb file for use by the bootstrapped node.",
             },
           },
+          "CHEF_LICENSE" => {
+            "type" => "string",
+            "defaultValue" => "accept-no-persist",
+            "metadata" => {
+              "description" => "Optional. Chef Infra license acceptance value read and exported as an " \
+                "environment variable by the VM extension's own bootstrap script, so it also covers " \
+                "the extension's separate chef-apply cron-setup step (which does not read client_rb).",
+            },
+          },
           "bootstrap_version" => {
             "type" => "string",
             "metadata" => {
               "description" => "Optional. The version of Chef to install.",
+            },
+          },
+          "chef_license_key" => {
+            # securestring keeps this out of ARM deployment history/logs and the
+            # Azure Portal's deployment "Inputs" view (same treatment as
+            # adminPassword above). Per chef-partners/azure-chef-extension#413
+            # (version 1210.15.11.1, rolled out to all regions for both
+            # ChefClient and LinuxChefClient), the VM extension's install
+            # scripts now decrypt protectedSettings for this value and prefer
+            # it over the deprecated publicSettings location, so it is
+            # forwarded via the "protectedSettings" block below instead of
+            # plain "settings" - delivered to the VM CMS/PKCS7-encrypted and
+            # decrypted locally, the same treatment already given to
+            # validation_key/chef_server_crt/encrypted_data_bag_secret.
+            "type" => "securestring",
+            "metadata" => {
+              "description" => "Optional. Chef/Progress license key, forwarded to the VM extension's " \
+                "install.sh as chef_license_key so it can download Chef Infra Client from the licensed " \
+                "endpoints. When omitted, the extension falls back to the unlicensed omnitruck.chef.io " \
+                "download host with a warning.",
             },
           },
           "custom_json_attr" => {
@@ -302,7 +331,6 @@ module Azure::ARM
           },
         },
         "variables" => {
-          "storageAccountName" => "[concat(uniquestring(resourceGroup().id), '#{params[:azure_storage_account]}')]",
           "imagePublisher" => "#{params[:azure_image_reference_publisher]}",
           "imageOffer" => "#{params[:azure_image_reference_offer]}",
           "OSDiskName" => "#{params[:azure_os_disk_name]}",
@@ -311,7 +339,6 @@ module Azure::ARM
           "storageAccountType" => "#{params[:azure_storage_account_type]}",
           "publicIPAddressName" => "#{params[:azure_vm_name]}",
           "publicIPAddressType" => "Dynamic",
-          "vmStorageAccountContainerName" => "#{params[:azure_vm_name]}",
           "vmName" => "#{params[:azure_vm_name]}",
           "vmSize" => "#{params[:vm_size]}",
           "virtualNetworkName" => "#{params[:vnet_config][:virtualNetworkName]}",
@@ -323,15 +350,12 @@ module Azure::ARM
           "sshKeyPath" => "[concat('/home/',parameters('adminUserName'),'/.ssh/authorized_keys')]",
         },
         "resources" => [
-          {
-            "type" => "Microsoft.Storage/storageAccounts",
-            "name" => "[variables('storageAccountName')]",
-            "apiVersion" => "[variables('apiVersion')]",
-            "location" => "[resourceGroup().location]",
-            "properties" => {
-              "accountType" => "[variables('storageAccountType')]",
-            },
-          },
+          # NOTE: Managed disks are used for the OS disk below, so no separate
+          # Microsoft.Storage/storageAccounts resource is created here. Existing
+          # deployments created with an unmanaged-disk storage account continue to
+          # function as-is; this only affects new VM deployments. See Azure's
+          # migration guide if you want to move existing VMs to managed disks:
+          # https://docs.microsoft.com/en-us/azure/virtual-machines/windows/convert-unmanaged-to-managed-disks
           {
             "apiVersion" => "[variables('apiVersion')]",
             "type" => "Microsoft.Network/publicIPAddresses",
@@ -391,7 +415,15 @@ module Azure::ARM
             },
           },
           {
-            "apiVersion" => "[variables('apiVersion')]",
+            # NOTE: apiVersion "2020-12-01" is required, not just for managed disk
+            # support and managed boot diagnostics (both available since
+            # "2020-06-01", using Azure's managed-storage boot diagnostics instead
+            # of the storage account this template no longer creates), but also
+            # for the StandardSSD_ZRS/Premium_ZRS managed disk SKUs accepted by
+            # --azure-storage-account-type, which older API versions reject at
+            # deployment time. Don't switch this back to an older apiVersion
+            # without re-verifying managed disk, ZRS, and boot diagnostics support.
+            "apiVersion" => "2020-12-01",
             "type" => "Microsoft.Compute/virtualMachines",
             "name" => vmName,
             "location" => "[resourceGroup().location]",
@@ -400,7 +432,6 @@ module Azure::ARM
               "count" => "[parameters('numberOfInstances')]",
             },
             "dependsOn" => [
-              "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
               depVm2,
             ],
             "properties" => {
@@ -430,12 +461,12 @@ module Azure::ARM
                   "version" => "[parameters('imageVersion')]",
                 },
                 "osDisk" => {
-                  "name" => "[variables('OSDiskName')]",
-                  "vhd" => {
-                    "uri" => uri,
-                  },
+                  "name" => osDiskName,
                   "caching" => "ReadWrite",
                   "createOption" => "FromImage",
+                  "managedDisk" => {
+                    "storageAccountType" => "[variables('storageAccountType')]",
+                  },
                 },
               },
               "networkProfile" => {
@@ -447,8 +478,11 @@ module Azure::ARM
               },
               "diagnosticsProfile" => {
                 "bootDiagnostics" => {
+                  # Managed boot diagnostics: no storageUri is provided (or needed)
+                  # since apiVersion 2020-12-01+ provisions Azure-managed storage
+                  # for boot diagnostics automatically, instead of the storage
+                  # account this template no longer creates.
                   "enabled" => "true",
-                  "storageUri" => "[concat('http://',variables('storageAccountName'),'.blob.core.windows.net')]",
                 },
               },
             },
@@ -486,11 +520,17 @@ module Azure::ARM
                 "hints" => hints_json,
                 "client_rb" => "[parameters('client_rb')]",
                 "custom_json_attr" => "[parameters('custom_json_attr')]",
+                "CHEF_LICENSE" => "[parameters('CHEF_LICENSE')]",
               },
               "protectedSettings" => {
                 "validation_key" => "[parameters('validation_key')]",
                 "chef_server_crt" => "[parameters('chef_server_crt')]",
                 "encrypted_data_bag_secret" => "[parameters('encrypted_data_bag_secret')]",
+                # Per chef-partners/azure-chef-extension#413 (version
+                # 1210.15.11.1, rolled out to all regions), the extension's
+                # install scripts decrypt this from protectedSettings and
+                # prefer it over the deprecated publicSettings location.
+                "chef_license_key" => "[parameters('chef_license_key')]",
               },
             },
           },
@@ -501,8 +541,17 @@ module Azure::ARM
         set_val = {
           "name" => "[parameters('availabilitySetName')]",
           "type" => "Microsoft.Compute/availabilitySets",
-          "apiVersion" => "[variables('apiVersion')]",
+          # NOTE: variables('apiVersion') ("2015-06-15") is intentionally not used
+          # here. That old API version (and the absence of an explicit "Aligned"
+          # sku) creates a classic (unmanaged-disk-only) availability set, which
+          # Azure rejects VMs with managed OS disks from joining. Managed-disk
+          # compatible ("Aligned") availability sets require apiVersion
+          # 2016-04-30-preview or later plus this explicit sku.
+          "apiVersion" => "2020-12-01",
           "location" => "[resourceGroup().location]",
+          "sku" => {
+            "name" => "Aligned",
+          },
           "properties" => {
             "platformFaultDomainCount" => "[parameters('availabilitySetPlatformFaultDomainCount')]",
             "platformUpdateDomainCount" => "[parameters('availabilitySetPlatformUpdateDomainCount')]",
@@ -643,6 +692,12 @@ module Azure::ARM
         },
         "client_rb" => {
           "value" => "#{params[:chef_extension_public_param][:client_rb]}",
+        },
+        "CHEF_LICENSE" => {
+          "value" => "#{params[:chef_extension_public_param][:CHEF_LICENSE]}",
+        },
+        "chef_license_key" => {
+          "value" => "#{params[:chef_extension_private_param][:chef_license_key]}",
         },
         "bootstrap_version" => {
           "value" => "#{params[:chef_extension_public_param][:bootstrap_options][:bootstrap_version]}",
