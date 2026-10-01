@@ -45,7 +45,7 @@ module Azure
 
       def arm_client
         @arm_client ||= begin
-          http = Azure::ResourceManagement::Rest::Http.new(@token_provider)
+          http = Azure::ResourceManagement::Rest::Http.new(@token_provider, environment: @environment)
           Azure::ResourceManagement::Rest::ArmClient.new(@azure_subscription_id, http, @environment)
         end
       end

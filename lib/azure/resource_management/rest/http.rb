@@ -21,6 +21,7 @@ require "json" unless defined?(JSON)
 require "time" unless defined?(Time.httpdate)
 require_relative "errors"
 require_relative "secure_connection"
+require_relative "environments"
 
 module Azure
   class ResourceManagement
@@ -46,7 +47,8 @@ module Azure
         def initialize(token_provider, max_retries: DEFAULT_MAX_RETRIES, retry_interval: DEFAULT_RETRY_INTERVAL,
                        lro_timeout: DEFAULT_LRO_TIMEOUT, max_polls: DEFAULT_MAX_POLLS,
                        open_timeout: SecureConnection::DEFAULT_OPEN_TIMEOUT,
-                       read_timeout: SecureConnection::DEFAULT_READ_TIMEOUT)
+                       read_timeout: SecureConnection::DEFAULT_READ_TIMEOUT,
+                       environment: Environments.default)
           @token_provider = token_provider
           @max_retries = max_retries
           @retry_interval = retry_interval
@@ -54,6 +56,12 @@ module Azure
           @max_polls = max_polls
           @open_timeout = open_timeout
           @read_timeout = read_timeout
+          # nextLink, Location and Azure-AsyncOperation URLs are followed from
+          # values Azure itself returns and are requested with the same bearer
+          # token as the original call. Pin them to the configured ARM host so
+          # a malformed/compromised follow-up URL can never exfiltrate the
+          # token to an unrelated HTTPS host.
+          @allowed_host = URI.parse(environment.resource_manager_endpoint_url).host
         end
 
         def get(url)
@@ -123,13 +131,7 @@ module Azure
 
         def do_request(method, url, body)
           uri = URI.parse(url)
-          # ARM-supplied follow-up URLs (nextLink, Location, Azure-AsyncOperation)
-          # are requested with the same bearer token as the original call, so a
-          # malformed or compromised monitor URL must never be allowed to
-          # downgrade the connection to plaintext HTTP.
-          unless uri.scheme == "https"
-            raise ArgumentError, "Refusing to send an Azure request to a non-HTTPS URL: #{url}"
-          end
+          validate_uri!(uri, url)
 
           http = SecureConnection.build(uri, open_timeout: @open_timeout, read_timeout: @read_timeout)
 
@@ -142,6 +144,23 @@ module Azure
           end
 
           handle_response(raw)
+        end
+
+        # ARM-supplied follow-up URLs (nextLink, Location, Azure-AsyncOperation)
+        # are requested with the same bearer token as the original call, so a
+        # malformed or compromised monitor URL must never be allowed to
+        # downgrade the connection to plaintext HTTP, nor redirect the token to
+        # a host outside the configured ARM cloud.
+        def validate_uri!(uri, url)
+          unless uri.scheme == "https"
+            raise ArgumentError, "Refusing to send an Azure request to a non-HTTPS URL: #{url}"
+          end
+
+          unless uri.host && uri.host.casecmp?(@allowed_host)
+            raise ArgumentError,
+              "Refusing to send an Azure request (with the bearer token) to untrusted host " \
+                "'#{uri.host}'; expected '#{@allowed_host}': #{url}"
+          end
         end
 
         def build_request(method, uri, body)
