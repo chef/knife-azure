@@ -152,9 +152,20 @@ class Chef
         # into a silent "no license" result instead of an exception. This
         # closes that gap for both products, before the ARM deployment is
         # even built, instead of letting bootstraps continue unlicensed.
+        #
+        # --disable-license-activation is inherited from
+        # Chef::Knife::Bootstrap and is explicitly meant to suppress
+        # copying/activation of the local license, so it must bypass this
+        # mandatory-license policy entirely rather than being treated as yet
+        # another "no usable license" case: get_chef_extension_private_params
+        # already skips forwarding chef_license_key whenever this flag is
+        # set, which is exactly the extension's supported unlicensed/bypass
+        # path (falling back to omnitruck.chef.io with a warning).
         def validate_license_available!(bootstrap_version)
+          return if config[:disable_license_activation]
+
           license_key = config[:chef_license_key] || config[:license_id]
-          return if license_key && !config[:disable_license_activation]
+          return if license_key
 
           ui.error(
             "A Chef/Progress license key is required to bootstrap Chef Infra Client " \
@@ -259,9 +270,59 @@ class Chef
           # fetch_license before any plugin_* hook runs), and skip forwarding
           # entirely when --disable-license-activation is set.
           license_key = config[:chef_license_key] || config[:license_id]
-          pri_config[:chef_license_key] = license_key if license_key && !config[:disable_license_activation]
+          if license_key && !config[:disable_license_activation]
+            reject_pinned_extension_without_protected_license_support!(license_key)
+            pri_config[:chef_license_key] = license_key
+          end
 
           pri_config
+        end
+
+        # chef-partners/azure-chef-extension release that first decrypts
+        # protectedSettings for chef_license_key (see the comment above the
+        # pri_config[:chef_license_key] assignment); builds older than this
+        # only read the deprecated, plaintext publicSettings location.
+        MIN_LICENSE_CAPABLE_EXTENSION_VERSION = "1210.15.11.1".freeze
+
+        # --azure-chef-extension-version lets a user pin an older extension
+        # build via get_chef_extension_version. If that pinned build predates
+        # MIN_LICENSE_CAPABLE_EXTENSION_VERSION, it cannot read the
+        # protectedSettings-only chef_license_key we now forward, so the VM
+        # would silently receive no usable license and the licensed Chef
+        # Infra Client install would fail. Fail fast here instead, before the
+        # ARM deployment is even built.
+        def reject_pinned_extension_without_protected_license_support!(license_key)
+          return unless license_key
+
+          pinned_version = config[:azure_chef_extension_version]
+          # Not pinned (resolved via get_latest_chef_extension_version) or a
+          # "<major>.*" family selector: Azure resolves either to a current
+          # build that supports protectedSettings, so there's nothing to
+          # reject here.
+          return if pinned_version.nil? || pinned_version.include?("*")
+
+          begin
+            pinned = Gem::Version.new(pinned_version)
+          rescue ArgumentError
+            # Not a comparable version string; let the Azure API validate (or
+            # reject) it instead of guessing here.
+            return
+          end
+
+          return if pinned >= Gem::Version.new(MIN_LICENSE_CAPABLE_EXTENSION_VERSION)
+
+          ui.error(
+            "--azure-chef-extension-version #{pinned_version} is older than " \
+            "#{MIN_LICENSE_CAPABLE_EXTENSION_VERSION}, the chef-partners/azure-chef-extension " \
+            "release that added protectedSettings support for chef_license_key. That version " \
+            "only reads the deprecated, plaintext publicSettings location, so the forwarded " \
+            "license key would be silently ignored and the licensed Chef Infra Client install " \
+            "would fail. Pin a version >= #{MIN_LICENSE_CAPABLE_EXTENSION_VERSION}, omit " \
+            "--azure-chef-extension-version to use the latest extension build, or pass " \
+            "--disable-license-activation to intentionally bootstrap without forwarding a " \
+            "license key."
+          )
+          exit 1
         end
 
       end
