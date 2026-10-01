@@ -184,5 +184,35 @@ describe Azure::ResourceManagement::Rest::Http do
 
       expect(http.get("https://management.azure.com/resource").body).to eq({})
     end
+
+    it "refuses to send a request (and the bearer token) to an HTTPS host outside the configured ARM cloud" do
+      expect { http.get("https://evil.example.com/resource") }.to raise_error(
+        ArgumentError, /untrusted host 'evil\.example\.com'/
+      )
+    end
+
+    it "allows follow-up URLs (e.g. Location/Azure-AsyncOperation monitors) on the same ARM host" do
+      net_http = double("Net::HTTP")
+      allow(Net::HTTP).to receive(:new).and_return(net_http)
+      allow(net_http).to receive(:open_timeout=)
+      allow(net_http).to receive(:read_timeout=)
+      allow(net_http).to receive(:use_ssl=)
+      allow(net_http).to receive(:verify_mode=)
+      allow(net_http).to receive(:cert_store=)
+      allow(net_http).to receive(:request).and_return(
+        double("raw", code: "200", body: "{}", each_header: nil)
+      )
+
+      expect(http.get("https://management.azure.com/subscriptions/x/operations/y").body).to eq({})
+    end
+
+    it "honours a custom environment's ARM host instead of the public cloud default" do
+      gov_http = described_class.new(token_provider, retry_interval: 0,
+        environment: Azure::ResourceManagement::Rest::Environments.from_name("AzureUSGovernment"))
+
+      expect { gov_http.get("https://management.azure.com/resource") }.to raise_error(
+        ArgumentError, /untrusted host 'management\.azure\.com'/
+      )
+    end
   end
 end
