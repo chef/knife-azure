@@ -515,34 +515,15 @@ describe Chef::Knife::AzurermServerCreate do
       @arm_server_instance.config[:connection_password] = "connection_password"
       @arm_server_instance.config[:connection_password] = "connection_password"
 
-      @resource_client = double("ResourceManagementClient")
-      @compute_client = double("ComputeManagementClient")
-      @storage_client = double("StorageManagementClient")
-      @network_client = double("NetworkResourceClient")
+      @arm_client = double("ArmClient")
+      # Keep the historical instance-variable names pointing at the single
+      # ArmClient double so existing expectations continue to read naturally.
+      @resource_client = @arm_client
+      @compute_client = @arm_client
+      @storage_client = @arm_client
+      @network_client = @arm_client
 
-      @resource_promise = double("ResourcePromise")
-      @compute_promise = double("ComputePromise")
-
-      allow(@service).to receive(
-        :resource_management_client
-      ).and_return(
-        @resource_client
-      )
-      allow(@service).to receive(
-        :compute_management_client
-      ).and_return(
-        @compute_client
-      )
-      allow(@service).to receive(
-        :storage_management_client
-      ).and_return(
-        @storage_client
-      )
-      allow(@service).to receive(
-        :network_resource_client
-      ).and_return(
-        @network_client
-      )
+      allow(@service).to receive(:arm_client).and_return(@arm_client)
       allow(@arm_server_instance).to receive(
         :msg_server_summary
       )
@@ -568,7 +549,7 @@ describe Chef::Knife::AzurermServerCreate do
           @resource_group_name = "rgrp-2"
           @vnet_name = "vnet-2"
           @sec_grp_name = "sec_grp_2"
-          allow(@dummy_class).to receive(:network_resource_client).and_return(
+          allow(@dummy_class).to receive(:arm_client).and_return(
             stub_network_resource_client(nil, @resource_group_name, @vnet_name, @sec_grp_name)
           )
         end
@@ -583,20 +564,13 @@ describe Chef::Knife::AzurermServerCreate do
         before do
           @resource_group_name = "rgrp-2"
           @sec_grp_name = "sec_grp_2"
-          request = {}
-          response = OpenStruct.new(
-            "body" => '{"error": {"code": "ResourceNotFound"}}'
+          error = Azure::ResourceManagement::ARMInterface::OperationError.new(
+            "ResourceNotFound",
+            body: '{"error": {"code": "ResourceNotFound"}}'
           )
-          body = "MsRestAzure2::AzureOperationError"
-          error = MsRestAzure2::AzureOperationError.new(request, response, body)
-          network_resource_client = double("NetworkResourceClient",
-            network_security_groups: double)
-          allow(network_resource_client.network_security_groups).to receive(
-            :get
-          ).and_raise(error)
-          allow(@dummy_class).to receive(:network_resource_client).and_return(
-            network_resource_client
-          )
+          arm_client = double("ArmClient")
+          allow(arm_client).to receive(:get_network_security_group).and_raise(error)
+          allow(@dummy_class).to receive(:arm_client).and_return(arm_client)
         end
 
         it "returns false" do
@@ -609,20 +583,13 @@ describe Chef::Knife::AzurermServerCreate do
         before do
           @resource_group_name = "rgrp-2"
           @sec_grp_name = "sec_grp_2"
-          request = {}
-          response = OpenStruct.new(
-            "body" => '{"error": {"code": "SomeProblemOccurred"}}'
+          @error = Azure::ResourceManagement::ARMInterface::OperationError.new(
+            "SomeProblemOccurred",
+            body: '{"error": {"code": "SomeProblemOccurred"}}'
           )
-          body = "MsRestAzure2::AzureOperationError"
-          @error = MsRestAzure2::AzureOperationError.new(request, response, body)
-          network_resource_client = double("NetworkResourceClient",
-            network_security_groups: double)
-          allow(network_resource_client.network_security_groups).to receive(
-            :get
-          ).and_raise(@error)
-          allow(@dummy_class).to receive(:network_resource_client).and_return(
-            network_resource_client
-          )
+          arm_client = double("ArmClient")
+          allow(arm_client).to receive(:get_network_security_group).and_raise(@error)
+          allow(@dummy_class).to receive(:arm_client).and_return(arm_client)
         end
 
         it "raises error" do
@@ -650,9 +617,9 @@ describe Chef::Knife::AzurermServerCreate do
       context "given an Aligned availability set already exists" do
         before do
           availability_set = double("AvailabilitySet", sku: double("Sku", name: "Aligned"))
-          compute_management_client = double("ComputeManagementClient", availability_sets: double)
-          allow(compute_management_client.availability_sets).to receive(:get).and_return(availability_set)
-          allow(@dummy_class).to receive(:compute_management_client).and_return(compute_management_client)
+          arm_client = double("ArmClient")
+          allow(arm_client).to receive(:get_availability_set).and_return(availability_set)
+          allow(@dummy_class).to receive(:arm_client).and_return(arm_client)
         end
 
         it "returns 'Aligned'" do
@@ -664,9 +631,9 @@ describe Chef::Knife::AzurermServerCreate do
       context "given a legacy Classic availability set already exists (no sku property)" do
         before do
           availability_set = double("AvailabilitySet", sku: nil)
-          compute_management_client = double("ComputeManagementClient", availability_sets: double)
-          allow(compute_management_client.availability_sets).to receive(:get).and_return(availability_set)
-          allow(@dummy_class).to receive(:compute_management_client).and_return(compute_management_client)
+          arm_client = double("ArmClient")
+          allow(arm_client).to receive(:get_availability_set).and_return(availability_set)
+          allow(@dummy_class).to receive(:arm_client).and_return(arm_client)
         end
 
         it "returns nil" do
@@ -677,15 +644,13 @@ describe Chef::Knife::AzurermServerCreate do
 
       context "given the availability set does not exist" do
         before do
-          request = {}
-          response = OpenStruct.new(
-            "body" => '{"error": {"code": "ResourceNotFound"}}'
+          error = Azure::ResourceManagement::ARMInterface::OperationError.new(
+            "ResourceNotFound",
+            body: '{"error": {"code": "ResourceNotFound"}}'
           )
-          body = "MsRestAzure2::AzureOperationError"
-          error = MsRestAzure2::AzureOperationError.new(request, response, body)
-          compute_management_client = double("ComputeManagementClient", availability_sets: double)
-          allow(compute_management_client.availability_sets).to receive(:get).and_raise(error)
-          allow(@dummy_class).to receive(:compute_management_client).and_return(compute_management_client)
+          arm_client = double("ArmClient")
+          allow(arm_client).to receive(:get_availability_set).and_raise(error)
+          allow(@dummy_class).to receive(:arm_client).and_return(arm_client)
         end
 
         it "returns :not_found" do
@@ -696,15 +661,13 @@ describe Chef::Knife::AzurermServerCreate do
 
       context "given the resource group does not exist yet" do
         before do
-          request = {}
-          response = OpenStruct.new(
-            "body" => '{"error": {"code": "ResourceGroupNotFound"}}'
+          error = Azure::ResourceManagement::ARMInterface::OperationError.new(
+            "ResourceGroupNotFound",
+            body: '{"error": {"code": "ResourceGroupNotFound"}}'
           )
-          body = "MsRestAzure2::AzureOperationError"
-          error = MsRestAzure2::AzureOperationError.new(request, response, body)
-          compute_management_client = double("ComputeManagementClient", availability_sets: double)
-          allow(compute_management_client.availability_sets).to receive(:get).and_raise(error)
-          allow(@dummy_class).to receive(:compute_management_client).and_return(compute_management_client)
+          arm_client = double("ArmClient")
+          allow(arm_client).to receive(:get_availability_set).and_raise(error)
+          allow(@dummy_class).to receive(:arm_client).and_return(arm_client)
         end
 
         it "returns :not_found" do
@@ -715,15 +678,13 @@ describe Chef::Knife::AzurermServerCreate do
 
       context "get api call raises some unknown exception" do
         before do
-          request = {}
-          response = OpenStruct.new(
-            "body" => '{"error": {"code": "SomeProblemOccurred"}}'
+          @error = Azure::ResourceManagement::ARMInterface::OperationError.new(
+            "SomeProblemOccurred",
+            body: '{"error": {"code": "SomeProblemOccurred"}}'
           )
-          body = "MsRestAzure2::AzureOperationError"
-          @error = MsRestAzure2::AzureOperationError.new(request, response, body)
-          compute_management_client = double("ComputeManagementClient", availability_sets: double)
-          allow(compute_management_client.availability_sets).to receive(:get).and_raise(@error)
-          allow(@dummy_class).to receive(:compute_management_client).and_return(compute_management_client)
+          arm_client = double("ArmClient")
+          allow(arm_client).to receive(:get_availability_set).and_raise(@error)
+          allow(@dummy_class).to receive(:arm_client).and_return(arm_client)
         end
 
         it "raises error" do
@@ -741,9 +702,7 @@ describe Chef::Knife::AzurermServerCreate do
       end
 
       it "create resource group when it does not exist already" do
-        expect(@resource_client).to receive_message_chain(
-          :resource_groups, :check_existence
-        ).and_return(false)
+        expect(@arm_client).to receive(:resource_group_exist?).and_return(false)
         expect(@service).to receive(
           :create_resource_group
         ).exactly(1).and_return(
@@ -753,9 +712,7 @@ describe Chef::Knife::AzurermServerCreate do
       end
 
       it "skip resource group creation when it does exist already" do
-        expect(@resource_client).to receive_message_chain(
-          :resource_groups, :check_existence
-        ).and_return(true)
+        expect(@arm_client).to receive(:resource_group_exist?).and_return(true)
         expect(@service).to_not receive(:create_resource_group)
         @arm_server_instance.run
       end
@@ -779,9 +736,7 @@ describe Chef::Knife::AzurermServerCreate do
             :is_image_windows?
           ).at_least(:twice).and_return(false)
 
-          allow(@resource_client).to receive_message_chain(
-            :resource_groups, :check_existence
-          ).and_return(false)
+          allow(@arm_client).to receive(:resource_group_exist?).and_return(false)
           allow(@service).to receive(
             :create_resource_group
           ).and_return(
@@ -840,9 +795,7 @@ describe Chef::Knife::AzurermServerCreate do
             :is_image_windows?
           ).at_least(:twice).and_return(true)
 
-          allow(@resource_client).to receive_message_chain(
-            :resource_groups, :check_existence
-          ).and_return(false)
+          allow(@arm_client).to receive(:resource_group_exist?).and_return(false)
           allow(@service).to receive(
             :create_resource_group
           ).and_return(
@@ -869,9 +822,7 @@ describe Chef::Knife::AzurermServerCreate do
             :is_image_windows?
           ).at_least(:twice).and_return(false)
 
-          allow(@resource_client).to receive_message_chain(
-            :resource_groups, :check_existence
-          ).and_return(false)
+          allow(@arm_client).to receive(:resource_group_exist?).and_return(false)
           allow(@service).to receive(
             :create_resource_group
           ).and_return(
@@ -927,7 +878,7 @@ describe Chef::Knife::AzurermServerCreate do
 
     describe "create_resource_group" do
       it "successfully returns resource group create response" do
-        expect(@service).to receive(:resource_management_client).and_return(
+        expect(@service).to receive(:arm_client).and_return(
           stub_resource_management_client
         )
         response = @service.create_resource_group(@params)
@@ -942,7 +893,7 @@ describe Chef::Knife::AzurermServerCreate do
       it "creates deployment template and deployment parameters" do
         expect(@service).to receive(:create_deployment_template).with(@params)
         expect(@service).to receive(:create_deployment_parameters)
-        expect(@service).to receive(:resource_management_client).and_return(
+        expect(@service).to receive(:arm_client).and_return(
           stub_resource_management_client
         )
         @service.create_virtual_machine_using_template(@params)
@@ -951,7 +902,7 @@ describe Chef::Knife::AzurermServerCreate do
       it "successfully returns virtual machine create response" do
         @platform = "Linux"
         allow(@service).to receive(:set_platform).and_return("Linux")
-        expect(@service).to receive(:resource_management_client).and_return(
+        expect(@service).to receive(:arm_client).and_return(
           stub_resource_management_client
         )
         response = @service.create_virtual_machine_using_template(@params)
@@ -960,14 +911,14 @@ describe Chef::Knife::AzurermServerCreate do
 
       context "when VM size is given by user" do
         before do
-          allow(@service).to receive(:resource_management_client).and_return(@resource_client)
+          allow(@service).to receive(:arm_client).and_return(@resource_client)
         end
 
         it "If VM size is valid, successfully returns virtual machine create response" do
           @params[:azure_vm_size] = "Standard_F2"
           expect(@service).to receive(:create_deployment_template).with(@params)
           expect(@service).to receive(:create_deployment_parameters)
-          expect(@service).to receive(:resource_management_client).and_return(
+          expect(@service).to receive(:arm_client).and_return(
             stub_resource_management_client
           )
           @service.create_virtual_machine_using_template(@params)
@@ -977,44 +928,8 @@ describe Chef::Knife::AzurermServerCreate do
           @params[:azure_vm_size] = "abcdf"
           expect(@service).to receive(:create_deployment_template).with(@params)
           expect(@service).to receive(:create_deployment_parameters)
-          allow(@resource_client).to receive_message_chain(
-            :deployments, :create_or_update
-          ).and_raise(Exception)
+          allow(@resource_client).to receive(:create_deployment).and_raise(Exception)
           expect { @service.create_virtual_machine_using_template(@params) }.to raise_error(Exception)
-        end
-      end
-    end
-
-    describe "vm_public_ip" do
-      it "successfully returns vm public ip response" do
-        expect(@service).to receive(:network_resource_client).and_return(stub_network_resource_client("Windows"))
-        response = @service.vm_public_ip(@params)
-        expect(response).to be == "1.2.3.4"
-      end
-    end
-
-    describe "vm_default_port" do
-      context "for Linux" do
-        before do
-          @platform = "Linux"
-        end
-
-        it "successfully returns vm default port response" do
-          expect(@service).to receive(:network_resource_client).and_return(stub_network_resource_client(@platform))
-          response = @service.vm_default_port(@params)
-          expect(response).to be == "22"
-        end
-      end
-
-      context "for Windows" do
-        before do
-          @platform = "Windows"
-        end
-
-        it "successfully returns vm default port response" do
-          expect(@service).to receive(:network_resource_client).and_return(stub_network_resource_client(@platform))
-          response = @service.vm_default_port(@params)
-          expect(response).to be == "3389"
         end
       end
     end
@@ -1022,7 +937,7 @@ describe Chef::Knife::AzurermServerCreate do
     describe "create_vm_extension" do
       context "when user has supplied chef extension version value" do
         it "successfully creates virtual machine extension with the user supplied version value" do
-          expect(@service).to receive(:compute_management_client).and_return(stub_compute_management_client("yes"))
+          expect(@service).to receive(:arm_client).and_return(stub_compute_management_client("yes"))
           expect(@service).to_not receive(:get_latest_chef_extension_version)
           response = @service.create_vm_extension(@params)
           expect(response.name).to be == "test-vm-ext"
@@ -1044,7 +959,7 @@ describe Chef::Knife::AzurermServerCreate do
 
         it "successfully creates virtual machine extension with the latest version" do
           expect(@service).to receive(:get_latest_chef_extension_version)
-          expect(@service).to receive(:compute_management_client).and_return(stub_compute_management_client("no"))
+          expect(@service).to receive(:arm_client).and_return(stub_compute_management_client("no"))
           response = @service.create_vm_extension(@params)
           expect(response.name).to be == "test-vm-ext"
           expect(response.id).to_not be nil
@@ -1061,7 +976,7 @@ describe Chef::Knife::AzurermServerCreate do
 
     describe "get_latest_chef_extension_version" do
       it "successfully returns latest Chef Extension version" do
-        expect(@service).to receive(:compute_management_client).and_return(
+        expect(@service).to receive(:arm_client).and_return(
           stub_compute_management_client("NA")
         )
         response = @service.get_latest_chef_extension_version(@params)
@@ -1519,13 +1434,14 @@ describe Chef::Knife::AzurermServerCreate do
   describe "create_multiple_virtual_machine_using_template" do
     before do
       @params[:server_count] = 3
-      allow(@service).to receive(:resource_management_client).and_return(@resource_client)
+      @resource_client = double("ArmClient")
+      allow(@service).to receive(:arm_client).and_return(@resource_client)
     end
 
     it "creates deployment template and deployment parameters" do
       expect(@service).to receive(:create_deployment_template).with(@params)
       expect(@service).to receive(:create_deployment_parameters)
-      expect(@service).to receive(:resource_management_client).and_return(
+      expect(@service).to receive(:arm_client).and_return(
         stub_resource_management_client
       )
       @service.create_virtual_machine_using_template(@params)
@@ -1534,9 +1450,7 @@ describe Chef::Knife::AzurermServerCreate do
     it "raises exception if deployment is not successful" do
       expect(@service).to receive(:create_deployment_template).with(@params)
       expect(@service).to receive(:create_deployment_parameters)
-      allow(@resource_client).to receive_message_chain(
-        :deployments, :create_or_update
-      ).and_raise(Exception)
+      allow(@resource_client).to receive(:create_deployment).and_raise(Exception)
       expect { @service.create_virtual_machine_using_template(@params) }.to raise_error(Exception)
     end
 
@@ -1971,7 +1885,7 @@ describe Chef::Knife::AzurermServerCreate do
   describe "fetch_substatus" do
     context "no substatuses returned" do
       before do
-        allow(@service).to receive(:compute_management_client).and_return(
+        allow(@service).to receive(:arm_client).and_return(
           stub_compute_management_client("substatuses_not_found")
         )
       end
@@ -1988,7 +1902,7 @@ describe Chef::Knife::AzurermServerCreate do
     context "substatuses returned" do
       context "but it does not contain chef-client run logs substatus" do
         before do
-          allow(@service).to receive(:compute_management_client).and_return(
+          allow(@service).to receive(:arm_client).and_return(
             stub_compute_management_client("substatuses_found_with_no_chef_client_run_logs")
           )
         end
@@ -2004,7 +1918,7 @@ describe Chef::Knife::AzurermServerCreate do
 
       context "and it do not contain chef-client run logs substatus" do
         before do
-          allow(@service).to receive(:compute_management_client).and_return(
+          allow(@service).to receive(:arm_client).and_return(
             stub_compute_management_client("substatuses_found_with_chef_client_run_logs")
           )
         end
@@ -2096,6 +2010,36 @@ describe Chef::Knife::AzurermServerCreate do
       public_fqdn
       platform
     }
+  end
+
+  describe "common_arm_rescue_block" do
+    def operation_error(body)
+      Azure::ResourceManagement::ARMInterface::OperationError.new("boom", body: body)
+    end
+
+    it "surfaces the message from ARM's nested error object" do
+      error = operation_error('{"error": {"code": "BadRequest", "message": "arm failure"}}')
+      expect(@service.ui).to receive(:error).with("arm failure")
+      @service.common_arm_rescue_block(error)
+    end
+
+    it "surfaces error_description from an OAuth flat error shape" do
+      error = operation_error('{"error": "invalid_client", "error_description": "bad secret"}')
+      expect(@service.ui).to receive(:error).with("bad secret")
+      @service.common_arm_rescue_block(error)
+    end
+
+    it "falls back to the error message for a non-JSON ARM body instead of masking it" do
+      error = operation_error("Internal Server Error")
+      expect(@service.ui).to receive(:error).with("boom")
+      @service.common_arm_rescue_block(error)
+    end
+
+    it "falls back to the error message for an empty/nil ARM body" do
+      error = Azure::ResourceManagement::ARMInterface::OperationError.new("boom", body: "null")
+      expect(@service.ui).to receive(:error).with("boom")
+      @service.common_arm_rescue_block(error)
+    end
   end
 
   def stub_client_builder

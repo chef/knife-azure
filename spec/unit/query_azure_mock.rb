@@ -67,18 +67,13 @@ module QueryAzureMock
     resource_group
   end
 
+  # Returns an ArmClient-shaped double covering the resource-group/deployment
+  # operations used by the create flow.
   def stub_resource_management_client
-    resource_management_client = double("ResourceManagementClient",
-      resource_groups: double, deployments: double)
-    allow(resource_management_client.resource_groups).to receive(
-      :create_or_update
-    ).and_return(stub_resource_group_create_response)
-    allow(resource_management_client.deployments).to receive_message_chain(
-      create_or_update: "create_or_update",
-      value!: nil,
-      body: nil
-    ).and_return(stub_deployments_response)
-    resource_management_client
+    arm_client = double("ArmClient")
+    allow(arm_client).to receive(:create_resource_group).and_return(stub_resource_group_create_response)
+    allow(arm_client).to receive(:create_deployment).and_return(stub_deployments_response)
+    arm_client
   end
 
   def stub_deployments_response
@@ -88,27 +83,18 @@ module QueryAzureMock
     deployments
   end
 
+  # Returns an ArmClient-shaped double covering the compute operations
+  # (extension create, extension version listing, extension get with instanceView).
   def stub_compute_management_client(user_supplied_value)
-    compute_management_client = double("ComputeManagementClient",
-      virtual_machines: double,
-      virtual_machine_extensions: double,
-      virtual_machine_extension_images: double)
-    allow(compute_management_client.virtual_machine_extensions).to receive_message_chain(
-      create_or_update: "create_or_update"
-    ).and_return(stub_vm_extension_create_response(user_supplied_value))
-    allow(compute_management_client.virtual_machine_extension_images).to receive_message_chain(
-      :list_versions,
-      :last,
-      :name
-    ).and_return("1210.12.10.100")
-
-    allow(compute_management_client.virtual_machine_extensions).to receive_message_chain(
-      :get,
-      :instance_view,
-      :substatuses
-    ).and_return(stub_substatuses(user_supplied_value))
-
-    compute_management_client
+    arm_client = double("ArmClient")
+    allow(arm_client).to receive(:create_vm_extension).and_return(stub_vm_extension_create_response(user_supplied_value))
+    allow(arm_client).to receive(:list_vm_extension_versions).and_return(
+      [double("extension_version", name: "1210.12.10.100")]
+    )
+    allow(arm_client).to receive(:get_vm_extension).and_return(
+      double("extension", instance_view: double("instance_view", substatuses: stub_substatuses(user_supplied_value)))
+    )
+    arm_client
   end
 
   def stub_substatuses(user_supplied_value)
@@ -158,73 +144,20 @@ module QueryAzureMock
     end
   end
 
+  # Returns an ArmClient-shaped double covering the network operations used by
+  # the security-group and vnet flows.
   def stub_network_resource_client(platform = nil, resource_group_name = nil, vnet_name = nil, security_group_name = nil)
-    network_resource_client = double("NetworkResourceClient",
-      public_ipaddresses: double,
-      network_security_groups: double,
-      virtual_networks: double,
-      subnets: double,
-      network_interfaces: double,
-      security_rules: double)
-    allow(network_resource_client.public_ipaddresses).to receive_message_chain(
-      get: "get",
-      value!: nil,
-      body: nil,
-      properties: nil,
-      ip_address: nil
-    ).and_return(stub_vm_public_ip_get_response)
-    allow(network_resource_client.network_security_groups).to receive(
-      :get
-    ).and_return("security_group")
-    allow(network_resource_client.network_security_groups).to receive_message_chain(
-      :get,
-      :value!,
-      :body,
-      :properties,
-      :security_rules
-    ).and_return(["default_security_rule"])
+    arm_client = double("ArmClient")
+    allow(arm_client).to receive(:get_network_security_group).and_return("security_group")
+    allow(arm_client).to receive(:get_public_ip_address).and_return(stub_network_security_group_create_response)
     if resource_group_name.nil? && vnet_name.nil?
-      allow(network_resource_client.virtual_networks).to receive(
-        :get
-      ).and_return(nil)
+      allow(arm_client).to receive(:get_virtual_network).and_return(nil)
+      allow(arm_client).to receive(:list_subnets).and_return(nil)
     else
-      allow(network_resource_client.virtual_networks).to receive(
-        :get
-      ).and_return(stub_vnet_get_response(resource_group_name, vnet_name))
+      allow(arm_client).to receive(:get_virtual_network).and_return(stub_vnet_get_response(resource_group_name, vnet_name))
+      allow(arm_client).to receive(:list_subnets).and_return(stub_subnets_list_response(resource_group_name, vnet_name))
     end
-    if platform == "Windows"
-      allow(network_resource_client.network_security_groups.get.value!.body.properties.security_rules[0]).to receive_message_chain(
-        :properties,
-        :destination_port_range
-      ).and_return("3389")
-    else
-      allow(network_resource_client.network_security_groups.get.value!.body.properties.security_rules[0]).to receive_message_chain(
-        :properties,
-        :destination_port_range
-      ).and_return("22")
-    end
-    allow(network_resource_client.network_security_groups).to receive_message_chain(
-      create_or_update: "create_or_update",
-      value!: nil,
-      body: nil
-    ).and_return(stub_network_security_group_create_response)
-    allow(network_resource_client.security_rules).to receive_message_chain(
-      create_or_update: "create_or_update",
-      value!: nil,
-      body: nil
-    ).and_return(stub_default_security_rule_add_response(platform))
-    if resource_group_name.nil? && vnet_name.nil?
-      allow(network_resource_client.subnets).to receive_message_chain(
-        :list,
-        :value
-      ).and_return(nil)
-    else
-      allow(network_resource_client.subnets).to receive_message_chain(
-        :list
-      ).and_return(stub_subnets_list_response(resource_group_name, vnet_name))
-    end
-
-    network_resource_client
+    arm_client
   end
 
   def locate_resource_group_and_vnet(resource_group_name, vnet_name)
