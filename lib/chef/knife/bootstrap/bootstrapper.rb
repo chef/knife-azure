@@ -288,10 +288,8 @@ class Chef
             "release that added protectedSettings support for chef_license_key. That version " \
             "only reads the deprecated, plaintext publicSettings location, so the forwarded " \
             "license key would be silently ignored and the licensed Chef Infra Client install " \
-            "would fail. Pin a version >= #{MIN_LICENSE_CAPABLE_EXTENSION_VERSION}, omit " \
-            "--azure-chef-extension-version to use the latest extension build, or pass " \
-            "--disable-license-activation to intentionally bootstrap without forwarding a " \
-            "license key."
+            "would fail. Pin a version >= #{MIN_LICENSE_CAPABLE_EXTENSION_VERSION}, or omit " \
+            "--azure-chef-extension-version to use the latest extension build."
           )
           exit 1
         end
