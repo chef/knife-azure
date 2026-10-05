@@ -212,10 +212,21 @@ class Chef
           # config[:license_id]) are both absent -- including when
           # --disable-license-activation is set, which intentionally skips
           # forwarding below -- the extension's chef-install.sh/shared.sh
-          # (chef-partners/azure-chef-extension#384) simply fall back to the
-          # unlicensed omnitruck.chef.io download host with a warning; there
-          # is no "chef_license_bypass" setting to set and no exit/failure
-          # path to work around. Auto-forwarding here when a key IS available
+          # simply fall back to the unlicensed omnitruck.chef.io download
+          # host with a warning; there is no "chef_license_bypass" setting
+          # to set and no exit/failure path to work around.
+          #
+          # NOTE: chef-partners/azure-chef-extension#384 briefly made
+          # chef_license_key required-by-default with a chef_license_bypass
+          # escape hatch, but #409 ("Route to omnitruck when no license_id
+          # is specified, instead of chef_license_bypass") removed
+          # chef_license_bypass entirely and restored the always-optional,
+          # warning-only fallback described above for both the Linux and
+          # Windows install scripts. Do not reintroduce bypass handling
+          # here based on #384 alone -- check the extension's current HEAD
+          # first, since that requirement no longer exists as of #409.
+          #
+          # Auto-forwarding here when a key IS available
           # (rather than requiring --chef-license-key on every single
           # invocation) mirrors exactly what upstream
           # Chef::Knife::Core::BootstrapContext/WindowsBootstrapContext do for
