@@ -290,54 +290,27 @@ describe Chef::Knife::BootstrapAzurerm do
     end
 
     context "when no license key is available" do
-      # A license key is required for every bootstrap as a matter of
-      # knife-azure policy (see Bootstrapper#validate_license_available!),
-      # even though chef-partners/azure-chef-extension's chef-install.sh only
-      # hard-requires one for the "chef-ice" product (major >= 19) and would
-      # otherwise tolerate an unlicensed legacy "chef" (< 19) install.
+      # A license key is not mandated here: Chef::Knife::Bootstrap#fetch_license
+      # (called before any plugin_* hook runs) is responsible for license
+      # enforcement for the knife CLI as a whole. get_chef_extension_public_params
+      # simply sets bootstrap_version regardless of license availability;
+      # get_chef_extension_private_params decides separately whether to
+      # forward a license key to the extension (see that method/spec).
       before do
         @bootstrap_azurerm_instance.config[:chef_license_key] = nil
         @bootstrap_azurerm_instance.config[:license_id] = nil
       end
 
-      it "fails fast for chef-ice (major >= 19)" do
+      it "succeeds and sets bootstrap_version for chef-ice (major >= 19)" do
         @bootstrap_azurerm_instance.config[:bootstrap_version] = "19"
-        expect(@bootstrap_azurerm_instance.ui).to receive(:error)
-          .with(/license key is required/)
-        expect { @bootstrap_azurerm_instance.get_chef_extension_public_params }.to raise_error(SystemExit)
+        response = @bootstrap_azurerm_instance.get_chef_extension_public_params
+        expect(response[:bootstrap_options][:bootstrap_version]).to eq("19")
       end
 
-      it "fails fast for the legacy chef product (major < 19) too" do
+      it "succeeds and sets bootstrap_version for the legacy chef product (major < 19)" do
         @bootstrap_azurerm_instance.config[:bootstrap_version] = "18"
-        expect(@bootstrap_azurerm_instance.ui).to receive(:error)
-          .with(/license key is required/)
-        expect { @bootstrap_azurerm_instance.get_chef_extension_public_params }.to raise_error(SystemExit)
-      end
-    end
-
-    context "when --disable-license-activation is set" do
-      # --disable-license-activation is inherited from Chef::Knife::Bootstrap
-      # specifically to suppress copying/activation of the local license, so
-      # it must bypass the mandatory-license policy entirely -- regardless of
-      # whether a license key happens to be available -- rather than being
-      # treated as yet another "no usable license" failure.
-      it "succeeds even without any license key available" do
-        @bootstrap_azurerm_instance.config[:bootstrap_version] = "19"
-        @bootstrap_azurerm_instance.config[:chef_license_key] = nil
-        @bootstrap_azurerm_instance.config[:license_id] = nil
-        @bootstrap_azurerm_instance.config[:disable_license_activation] = true
-        expect(@bootstrap_azurerm_instance.ui).to_not receive(:error)
         response = @bootstrap_azurerm_instance.get_chef_extension_public_params
-        expect(response[:bootstrap_options][:bootstrap_version]).to eq("19")
-      end
-
-      it "succeeds even when a license key is present, without forwarding it" do
-        @bootstrap_azurerm_instance.config[:bootstrap_version] = "19"
-        @bootstrap_azurerm_instance.config[:chef_license_key] = "my-license-key"
-        @bootstrap_azurerm_instance.config[:disable_license_activation] = true
-        expect(@bootstrap_azurerm_instance.ui).to_not receive(:error)
-        response = @bootstrap_azurerm_instance.get_chef_extension_public_params
-        expect(response[:bootstrap_options][:bootstrap_version]).to eq("19")
+        expect(response[:bootstrap_options][:bootstrap_version]).to eq("18")
       end
     end
   end
