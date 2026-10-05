@@ -195,24 +195,45 @@ describe Chef::Knife::BootstrapAzurerm do
 
   context "extension_already_installed?" do
     it "returns true if the VM has ChefClient extension installed" do
-      extension = double(virtual_machine_extension_type: "ChefClient")
+      extension = double(properties: double(type: "ChefClient"))
       @server = double("server", resources: [extension])
       extension_installed = @service.extension_already_installed?(@server)
       expect(extension_installed).to be(true)
     end
 
     it "returns true if the VM has LinuxChefClient extension installed" do
-      extension = double(virtual_machine_extension_type: "LinuxChefClient")
+      extension = double(properties: double(type: "LinuxChefClient"))
       @server = double("server", resources: [extension])
       extension_installed = @service.extension_already_installed?(@server)
       expect(extension_installed).to be(true)
     end
 
     it "returns false if the VM doesn't have chef extension installed" do
-      extension = double(virtual_machine_extension_type: "some_type")
+      extension = double(properties: double(type: "some_type"))
       @server = double("server", resources: [extension])
       extension_installed = @service.extension_already_installed?(@server)
       expect(extension_installed).to be(false)
+    end
+
+    it "returns true against a real ARM response where properties.type collides with the top-level type field" do
+      # Mirrors what Azure actually returns for
+      # Microsoft.Compute/virtualMachines/extensions: a top-level "type" that
+      # names the ARM resource kind, and a nested properties.type that names
+      # the extension handler (ChefClient/LinuxChefClient). Using a real
+      # RestObject here (rather than a plain double) exercises the wrapper's
+      # key-lookup behavior, which a double cannot catch regressions in.
+      extension = Azure::ResourceManagement::Rest::RestObject.wrap(
+        "name" => "ChefClient",
+        "type" => "Microsoft.Compute/virtualMachines/extensions",
+        "properties" => {
+          "publisher" => "Chef.Bootstrap.WindowsAzure",
+          "type" => "ChefClient",
+          "typeHandlerVersion" => "1210.15",
+        }
+      )
+      @server = double("server", resources: [extension])
+      extension_installed = @service.extension_already_installed?(@server)
+      expect(extension_installed).to be(true)
     end
   end
 
