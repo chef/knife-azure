@@ -427,7 +427,14 @@ module Azure
       def extension_already_installed?(server)
         if server.resources
           server.resources.each do |extension|
-            return true if extension.virtual_machine_extension_type == "ChefClient" || extension.virtual_machine_extension_type == "LinuxChefClient"
+            # Azure returns the extension handler name (ChefClient/LinuxChefClient)
+            # as the nested properties.type field, not a top-level
+            # virtual_machine_extension_type attribute -- that name was an
+            # artifact of the retired azure_mgmt_compute SDK's generated
+            # model, which doesn't exist on the raw ARM JSON this REST
+            # client wraps.
+            extension_type = extension.properties && extension.properties.type
+            return true if extension_type == "ChefClient" || extension_type == "LinuxChefClient"
           end
         end
         false
