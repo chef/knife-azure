@@ -45,11 +45,9 @@ module QueryAzureMock
       azure_service_location: "West Europe",
       connection_user: "test-user",
       validation_key: "/tmp/validation_key",
-      # A license key is required for every bootstrap (see
-      # Bootstrapper#validate_license_available!); default one here so
-      # specs unrelated to license handling don't all need to set it
-      # explicitly. Specs exercising the "no license available" path
-      # explicitly nil this out.
+      # Default license key so specs unrelated to license forwarding don't
+      # all need to set it explicitly. Specs exercising the "no license
+      # available" path explicitly nil this out.
       chef_license_key: "test-chef-license-key",
     }.each do |key, value|
       @server_instance.config[key] = value

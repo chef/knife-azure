@@ -126,54 +126,10 @@ class Chef
           # alongside `knife` itself (`Chef::VERSION.split(".").first`) in
           # that same situation, so mirror that default here too.
           resolved_bootstrap_version = config[:bootstrap_version] || Chef::VERSION.split(".").first
-          # See validate_license_available! below for why this is required
-          # for every bootstrap version, not only "chef-ice" (>= 19).
-          validate_license_available!(resolved_bootstrap_version)
           pub_config[:bootstrap_options][:bootstrap_version] = resolved_bootstrap_version
           pub_config[:bootstrap_options][:node_ssl_verify_mode] = config[:node_ssl_verify_mode] if config[:node_ssl_verify_mode]
           pub_config[:bootstrap_options][:bootstrap_proxy] = config[:bootstrap_proxy] if config[:bootstrap_proxy]
           pub_config
-        end
-
-        # A Chef/Progress license key is required for every knife-azure
-        # bootstrap, regardless of the target Chef Infra Client version --
-        # this is a knife-azure policy decision, not purely an
-        # extension-enforced one: chef-partners/azure-chef-extension's
-        # chef-install.sh/chef-install.psm1 only hard-requires a license key
-        # for the "chef-ice" product (major >= 19); the legacy "chef" product
-        # (< 19) would tolerate an unlicensed install by falling back to
-        # omnitruck.chef.io with a warning. We guard both here for
-        # consistency, since Chef::Knife::Bootstrap#fetch_license (called
-        # automatically before any plugin_* hook runs, for every bootstrap
-        # version) already treats a license as mandatory -- except for the one
-        # edge case where ChefLicensing::RestfulClientConnectionError is
-        # raised (e.g. the licensing service is unreachable/airgapped), which
-        # Chef::Utils::LicensingHandler.validate! explicitly rescues and turns
-        # into a silent "no license" result instead of an exception. This
-        # closes that gap for both products, before the ARM deployment is
-        # even built, instead of letting bootstraps continue unlicensed.
-        #
-        # --disable-license-activation is inherited from
-        # Chef::Knife::Bootstrap and is explicitly meant to suppress
-        # copying/activation of the local license, so it must bypass this
-        # mandatory-license policy entirely rather than being treated as yet
-        # another "no usable license" case: get_chef_extension_private_params
-        # already skips forwarding chef_license_key whenever this flag is
-        # set, which is exactly the extension's supported unlicensed/bypass
-        # path (falling back to omnitruck.chef.io with a warning).
-        def validate_license_available!(bootstrap_version)
-          return if config[:disable_license_activation]
-
-          license_key = config[:chef_license_key] || config[:license_id]
-          return if license_key
-
-          ui.error(
-            "A Chef/Progress license key is required to bootstrap Chef Infra Client " \
-            "#{bootstrap_version} via the Azure VM extension, but none is available. " \
-            "Pass --chef-license-key <key>, or resolve the license lookup failure " \
-            "(e.g. licensing service connectivity) reported earlier."
-          )
-          exit 1
         end
 
         def load_correct_secret
