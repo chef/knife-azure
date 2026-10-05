@@ -209,12 +209,11 @@ class Chef
           # instead of as recoverable plaintext.
           #
           # chef_license_key is optional, not required: when it (and
-          # config[:license_id]) are both absent -- including when
-          # --disable-license-activation is set, which intentionally skips
-          # forwarding below -- the extension's chef-install.sh/shared.sh
-          # simply fall back to the unlicensed omnitruck.chef.io download
-          # host with a warning; there is no "chef_license_bypass" setting
-          # to set and no exit/failure path to work around.
+          # config[:license_id]) are both absent, the extension's
+          # chef-install.sh/shared.sh simply fall back to the unlicensed
+          # omnitruck.chef.io download host with a warning; there is no
+          # "chef_license_bypass" setting to set and no exit/failure path
+          # to work around.
           #
           # NOTE: chef-partners/azure-chef-extension#384 briefly made
           # chef_license_key required-by-default with a chef_license_bypass
@@ -234,10 +233,15 @@ class Chef
           # prefer an explicitly passed --chef-license-key, else fall back to
           # config[:license_id] (the already-persisted/validated local
           # license that Chef::Knife::Bootstrap#run populates via
-          # fetch_license before any plugin_* hook runs), and skip forwarding
-          # entirely when --disable-license-activation is set.
+          # fetch_license before any plugin_* hook runs). Unlike the stock
+          # SSH-based context classes, there is no knife-azure-specific
+          # handling of --disable-license-activation: that upstream option
+          # isn't honored by this VM-extension delivery path, matching
+          # knife-ec2/knife-google, which also have no special-case code for
+          # it (their stock bootstrap context handles it generically for
+          # SSH/WinRM delivery only, which doesn't apply here either).
           license_key = config[:chef_license_key] || config[:license_id]
-          if license_key && !config[:disable_license_activation]
+          if license_key
             reject_pinned_extension_without_protected_license_support!(license_key)
             pri_config[:chef_license_key] = license_key
           end
