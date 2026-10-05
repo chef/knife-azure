@@ -18,10 +18,11 @@
 require_relative "../azure_interface"
 require_relative "ARM_deployment_template"
 require_relative "vnet_config"
-require "azure_mgmt_resources"
-require "azure_mgmt_compute"
-require "azure_mgmt_storage"
-require "azure_mgmt_network"
+require_relative "rest/environments"
+require_relative "rest/errors"
+require_relative "rest/token_provider"
+require_relative "rest/http"
+require_relative "rest/arm_client"
 
 module Azure
   class ResourceManagement
@@ -29,60 +30,23 @@ module Azure
       include Azure::ARM::ARMDeploymentTemplate
       include Azure::ARM::VnetConfig
 
-      include Azure::Resources::Mgmt::V2018_05_01
-      include Azure::Resources::Mgmt::V2018_05_01::Models
-
-      include Azure::Compute::Mgmt::V2018_06_01
-      include Azure::Compute::Mgmt::V2018_06_01::Models
-
-      include Azure::Storage::Mgmt::V2018_07_01
-      include Azure::Storage::Mgmt::V2018_07_01::Models
-
-      include Azure::Network::Mgmt::V2018_08_01
-      include Azure::Network::Mgmt::V2018_08_01::Models
+      # Backwards-compatible alias so existing rescue clauses and consumers can
+      # keep referring to a single error type for Azure API failures.
+      OperationError = Azure::ResourceManagement::Rest::OperationError
 
       attr_accessor :connection
 
       def initialize(params = {})
-        token_provider = if params[:azure_client_secret]
-                           MsRestAzure::ApplicationTokenProvider.new(params[:azure_tenant_id], params[:azure_client_id], params[:azure_client_secret])
-                         else
-                           MsRest::StringTokenProvider.new(params[:token], params[:tokentype])
-                         end
-        @credentials = MsRest::TokenCredentials.new(token_provider)
+        @environment = Azure::ResourceManagement::Rest::Environments.from_name(params[:azure_environment])
+        @token_provider = Azure::ResourceManagement::Rest::TokenProvider.new(params, @environment)
         @azure_subscription_id = params[:azure_subscription_id]
         super
       end
 
-      def resource_management_client
-        @resource_management_client ||= begin
-          resource_management_client = ResourceManagementClient.new(@credentials)
-          resource_management_client.subscription_id = @azure_subscription_id
-          resource_management_client
-        end
-      end
-
-      def compute_management_client
-        @compute_management_client ||= begin
-          compute_management_client = ComputeManagementClient.new(@credentials)
-          compute_management_client.subscription_id = @azure_subscription_id
-          compute_management_client
-        end
-      end
-
-      def storage_management_client
-        @storage_management_client ||= begin
-          storage_management_client = StorageManagementClient.new(@credentials)
-          storage_management_client.subscription_id = @azure_subscription_id
-          storage_management_client
-        end
-      end
-
-      def network_resource_client
-        @network_resource_client ||= begin
-          network_resource_client = NetworkManagementClient.new(@credentials)
-          network_resource_client.subscription_id = @azure_subscription_id
-          network_resource_client
+      def arm_client
+        @arm_client ||= begin
+          http = Azure::ResourceManagement::Rest::Http.new(@token_provider, environment: @environment)
+          Azure::ResourceManagement::Rest::ArmClient.new(@azure_subscription_id, http, @environment)
         end
       end
 
@@ -90,9 +54,9 @@ module Azure
 
       def list_servers(resource_group_name = nil)
         servers = if resource_group_name.nil?
-                    compute_management_client.virtual_machines.list_all
+                    arm_client.list_all_virtual_machines
                   else
-                    compute_management_client.virtual_machines.list(resource_group_name)
+                    arm_client.list_virtual_machines(resource_group_name)
                   end
 
         cols = ["VM Name", "Resource Group Name", "Location", "Provisioning State", "OS Type"]
@@ -119,7 +83,7 @@ module Azure
       end
 
       def delete_server(resource_group_name, vm_name)
-        server = compute_management_client.virtual_machines.get(resource_group_name, vm_name)
+        server = arm_client.get_virtual_machine(resource_group_name, vm_name)
         if server && server.name == vm_name
           puts "\n\n"
           msg_pair(ui, "VM Name", server.name)
@@ -136,9 +100,7 @@ module Azure
 
           ui.info "Deleting .."
 
-          begin
-            server_detail = compute_management_client.virtual_machines.delete(resource_group_name, vm_name)
-          end until server_detail.nil?
+          arm_client.delete_virtual_machine(resource_group_name, vm_name)
 
           puts "\n"
           ui.warn "Deleted server #{vm_name}"
@@ -149,13 +111,13 @@ module Azure
         server = find_server(resource_group, name)
         if server
           network_interface_name = server.network_profile.network_interfaces[0].id.split("/")[-1]
-          network_interface_data = network_resource_client.network_interfaces.get(resource_group, network_interface_name)
+          network_interface_data = arm_client.get_network_interface(resource_group, network_interface_name)
           public_ip_id_data = network_interface_data.ip_configurations[0].public_ipaddress
           if public_ip_id_data.nil?
             public_ip_data = nil
           else
             public_ip_name = public_ip_id_data.id.split("/")[-1]
-            public_ip_data = network_resource_client.public_ipaddresses.get(resource_group, public_ip_name)
+            public_ip_data = arm_client.get_public_ip_address(resource_group, public_ip_name)
           end
 
           details = []
@@ -205,13 +167,13 @@ module Azure
       end
 
       def find_server(resource_group, name)
-        compute_management_client.virtual_machines.get(resource_group, name)
+        arm_client.get_virtual_machine(resource_group, name)
       end
 
       def virtual_machine_exist?(resource_group_name, vm_name)
-        compute_management_client.virtual_machines.get(resource_group_name, vm_name)
+        arm_client.get_virtual_machine(resource_group_name, vm_name)
         true
-      rescue MsRestAzure::AzureOperationError => e
+      rescue OperationError => e
         if e.body
           err_json = JSON.parse(e.response.body)
           if err_json["error"]["code"] == "ResourceNotFound"
@@ -223,9 +185,9 @@ module Azure
       end
 
       def security_group_exist?(resource_group_name, security_group_name)
-        network_resource_client.network_security_groups.get(resource_group_name, security_group_name)
+        arm_client.get_network_security_group(resource_group_name, security_group_name)
         true
-      rescue MsRestAzure::AzureOperationError => e
+      rescue OperationError => e
         if e.body
           err_json = JSON.parse(e.response.body)
           if err_json["error"]["code"] == "ResourceNotFound"
@@ -236,8 +198,30 @@ module Azure
         end
       end
 
+      # Returns the sku name (e.g. "Aligned") of an existing availability set, nil if it
+      # exists but is a legacy "Classic" set (which has no sku property at all), or the
+      # :not_found symbol if it doesn't exist yet. Used to detect the case where a caller
+      # reuses an existing Classic availability set name: since Azure availability set
+      # SKUs are immutable once created, redeploying it as "Aligned" (required for managed
+      # disks) would fail remotely with a cryptic ARM error instead of the actionable one
+      # raised in validate_params!.
+      def existing_availability_set_sku(resource_group_name, availability_set_name)
+        availability_set = arm_client.get_availability_set(resource_group_name, availability_set_name)
+        availability_set.sku && availability_set.sku.name
+      rescue OperationError => e
+        if e.body
+          err_json = JSON.parse(e.response.body)
+          # ResourceNotFound: the resource group exists but the availability set doesn't.
+          # ResourceGroupNotFound: the resource group itself doesn't exist yet (e.g. when
+          # creating a VM + availability set together in a brand-new resource group).
+          # Both mean "no existing availability set to conflict with".
+          return :not_found if %w{ResourceNotFound ResourceGroupNotFound}.include?(err_json["error"]["code"])
+        end
+        raise e
+      end
+
       def resource_group_exist?(resource_group_name)
-        resource_management_client.resource_groups.check_existence(resource_group_name)
+        arm_client.resource_group_exist?(resource_group_name)
       end
 
       def platform(image_reference)
@@ -256,7 +240,7 @@ module Azure
       end
 
       def fetch_substatus(resource_group_name, virtual_machine_name, chef_extension_name)
-        substatuses = compute_management_client.virtual_machine_extensions.get(
+        substatuses = arm_client.get_vm_extension(
           resource_group_name,
           virtual_machine_name,
           chef_extension_name,
@@ -381,27 +365,12 @@ module Azure
         end
       end
 
-      def vm_public_ip(params = {})
-        network_resource_client.public_ipaddresses.get(
-          params[:azure_resource_group_name],
-          params[:azure_vm_name]
-        ).value!.body.properties.ip_address
-      end
-
-      def vm_default_port(params = {})
-        network_resource_client.network_security_groups.get(
-          params[:azure_resource_group_name],
-          params[:azure_vm_name]
-        ).value!.body.properties.security_rules[0].properties.destination_port_range
-      end
-
       def create_resource_group(params = {})
-        resource_group = ResourceGroup.new
-        resource_group.name = params[:azure_resource_group_name]
-        resource_group.location = params[:azure_service_location]
-
         begin
-          resource_group = resource_management_client.resource_groups.create_or_update(resource_group.name, resource_group)
+          resource_group = arm_client.create_resource_group(
+            params[:azure_resource_group_name],
+            params[:azure_service_location]
+          )
         rescue Exception => e
           Chef::Log.error("Failed to create the Resource Group -- exception being rescued: #{e}")
           common_arm_rescue_block(e)
@@ -414,33 +383,38 @@ module Azure
         template = create_deployment_template(params)
         parameters = create_deployment_parameters(params)
 
-        deploy_prop = DeploymentProperties.new
-        deploy_prop.template = template
-        deploy_prop.parameters = parameters
-        deploy_prop.mode = "Incremental"
+        deployment_body = {
+          "properties" => {
+            "template" => template,
+            "parameters" => parameters,
+            "mode" => "Incremental",
+          },
+        }
 
-        deploy_params = Deployment.new
-        deploy_params.properties = deploy_prop
-
-        resource_management_client.deployments.create_or_update(params[:azure_resource_group_name], "#{params[:azure_vm_name]}_deploy", deploy_params)
+        arm_client.create_deployment(params[:azure_resource_group_name], "#{params[:azure_vm_name]}_deploy", deployment_body)
       end
 
       def create_vm_extension(params)
-        vm_ext = VirtualMachineExtension.new
-        vm_ext.name = params[:chef_extension]
-        vm_ext.location = params[:azure_service_location]
-        vm_ext.publisher = params[:chef_extension_publisher]
-        vm_ext.virtual_machine_extension_type = params[:chef_extension]
-        vm_ext.type_handler_version = params[:chef_extension_version].nil? ? get_latest_chef_extension_version(params) : params[:chef_extension_version]
-        vm_ext.auto_upgrade_minor_version = false
-        vm_ext.settings = params[:chef_extension_public_param]
-        vm_ext.protected_settings = params[:chef_extension_private_param]
+        extension_name = params[:chef_extension]
+        extension_body = {
+          "name" => extension_name,
+          "location" => params[:azure_service_location],
+          "properties" => {
+            "publisher" => params[:chef_extension_publisher],
+            "type" => extension_name,
+            "typeHandlerVersion" => params[:chef_extension_version].nil? ? get_latest_chef_extension_version(params) : params[:chef_extension_version],
+            "autoUpgradeMinorVersion" => false,
+            "settings" => params[:chef_extension_public_param],
+            "protectedSettings" => params[:chef_extension_private_param],
+          },
+        }
+
         begin
-          vm_extension = compute_management_client.virtual_machine_extensions.create_or_update(
+          vm_extension = arm_client.create_vm_extension(
             params[:azure_resource_group_name],
             params[:azure_vm_name],
-            vm_ext.name,
-            vm_ext
+            extension_name,
+            extension_body
           )
         rescue Exception => e
           Chef::Log.error("Failed to create the Virtual Machine Extension -- exception being rescued.")
@@ -453,14 +427,21 @@ module Azure
       def extension_already_installed?(server)
         if server.resources
           server.resources.each do |extension|
-            return true if extension.virtual_machine_extension_type == "ChefClient" || extension.virtual_machine_extension_type == "LinuxChefClient"
+            # Azure returns the extension handler name (ChefClient/LinuxChefClient)
+            # as the nested properties.type field, not a top-level
+            # virtual_machine_extension_type attribute -- that name was an
+            # artifact of the retired azure_mgmt_compute SDK's generated
+            # model, which doesn't exist on the raw ARM JSON this REST
+            # client wraps.
+            extension_type = extension.properties && extension.properties.type
+            return true if extension_type == "ChefClient" || extension_type == "LinuxChefClient"
           end
         end
         false
       end
 
       def get_latest_chef_extension_version(params)
-        ext_version = compute_management_client.virtual_machine_extension_images.list_versions(
+        ext_version = arm_client.list_vm_extension_versions(
           params[:azure_service_location],
           params[:chef_extension_publisher],
           params[:chef_extension]
@@ -472,24 +453,39 @@ module Azure
       def delete_resource_group(resource_group_name)
         ui.info "Resource group deletion takes some time. Please wait ..."
 
-        begin
-          server = resource_management_client.resource_groups.delete(resource_group_name)
-        end until server.nil?
+        arm_client.delete_resource_group(resource_group_name)
         puts "\n"
       end
 
       def common_arm_rescue_block(error)
-        if error.class == MsRestAzure::AzureOperationError && error.body
-          err_json = JSON.parse(error.response.body)
-          err_details = err_json["error"]["details"] if err_json["error"]
-          if err_details
-            err_details.each do |err|
-              ui.error(JSON.parse(err["message"])["error"]["message"])
-            rescue JSON::ParserError => e
-              ui.error(err["message"])
+        if error.is_a?(OperationError) && error.body
+          err_json = begin
+                       JSON.parse(error.response.body)
+                     rescue JSON::ParserError, TypeError
+                       nil
+                     end
+          unless err_json.is_a?(Hash)
+            ui.error(error.message)
+            Chef::Log.debug(error.response.body)
+            return
+          end
+
+          arm_error = err_json["error"]
+          if arm_error.is_a?(Hash)
+            err_details = arm_error["details"]
+            if err_details
+              err_details.each do |err|
+                ui.error(JSON.parse(err["message"])["error"]["message"])
+              rescue JSON::ParserError => e
+                ui.error(err["message"])
+              end
+            else
+              ui.error(arm_error["message"])
             end
           else
-            ui.error(err_json["error"]["message"])
+            # OAuth token endpoint errors are flat: the "error" value is a
+            # string code and the human-readable text is in "error_description".
+            ui.error(err_json["error_description"] || arm_error || error.message)
           end
           Chef::Log.debug(error.response.body)
         else

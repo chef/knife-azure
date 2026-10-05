@@ -32,9 +32,9 @@ describe Chef::Knife::BootstrapAzurerm do
     @bootstrap_azurerm_instance.config[:azure_resource_group_name] = "test-rgp-01"
     @bootstrap_azurerm_instance.config[:azure_service_location] = "West US"
 
-    @compute_client = double("ComputeManagementClient")
+    @compute_client = double("ArmClient")
     allow(@bootstrap_azurerm_instance.service).to receive(
-      :compute_management_client
+      :arm_client
     ).and_return(@compute_client)
     allow(@bootstrap_azurerm_instance).to receive(:check_license)
   end
@@ -187,7 +187,7 @@ describe Chef::Knife::BootstrapAzurerm do
 
   context "find_server" do
     it "returns error if the server or resource group doesn't exist" do
-      allow(@compute_client).to receive_message_chain(:virtual_machines, :get).and_return(nil)
+      allow(@compute_client).to receive(:get_virtual_machine).and_return(nil)
       response = @service.find_server("test-vm-01", "test-rgp-01")
       expect(response).to be(nil)
     end
@@ -195,24 +195,45 @@ describe Chef::Knife::BootstrapAzurerm do
 
   context "extension_already_installed?" do
     it "returns true if the VM has ChefClient extension installed" do
-      extension = double(virtual_machine_extension_type: "ChefClient")
+      extension = double(properties: double(type: "ChefClient"))
       @server = double("server", resources: [extension])
       extension_installed = @service.extension_already_installed?(@server)
       expect(extension_installed).to be(true)
     end
 
     it "returns true if the VM has LinuxChefClient extension installed" do
-      extension = double(virtual_machine_extension_type: "LinuxChefClient")
+      extension = double(properties: double(type: "LinuxChefClient"))
       @server = double("server", resources: [extension])
       extension_installed = @service.extension_already_installed?(@server)
       expect(extension_installed).to be(true)
     end
 
     it "returns false if the VM doesn't have chef extension installed" do
-      extension = double(virtual_machine_extension_type: "some_type")
+      extension = double(properties: double(type: "some_type"))
       @server = double("server", resources: [extension])
       extension_installed = @service.extension_already_installed?(@server)
       expect(extension_installed).to be(false)
+    end
+
+    it "returns true against a real ARM response where properties.type collides with the top-level type field" do
+      # Mirrors what Azure actually returns for
+      # Microsoft.Compute/virtualMachines/extensions: a top-level "type" that
+      # names the ARM resource kind, and a nested properties.type that names
+      # the extension handler (ChefClient/LinuxChefClient). Using a real
+      # RestObject here (rather than a plain double) exercises the wrapper's
+      # key-lookup behavior, which a double cannot catch regressions in.
+      extension = Azure::ResourceManagement::Rest::RestObject.wrap(
+        "name" => "ChefClient",
+        "type" => "Microsoft.Compute/virtualMachines/extensions",
+        "properties" => {
+          "publisher" => "Chef.Bootstrap.WindowsAzure",
+          "type" => "ChefClient",
+          "typeHandlerVersion" => "1210.15",
+        }
+      )
+      @server = double("server", resources: [extension])
+      extension_installed = @service.extension_already_installed?(@server)
+      expect(extension_installed).to be(true)
     end
   end
 
@@ -272,5 +293,155 @@ describe Chef::Knife::BootstrapAzurerm do
         expect(response.key?(:hints)).to be == false
       end
     end
+
+    context "when a license key is available" do
+      it "succeeds and sets bootstrap_version for chef-ice (major >= 19)" do
+        @bootstrap_azurerm_instance.config[:bootstrap_version] = "19"
+        @bootstrap_azurerm_instance.config[:chef_license_key] = "my-license-key"
+        response = @bootstrap_azurerm_instance.get_chef_extension_public_params
+        expect(response[:bootstrap_options][:bootstrap_version]).to eq("19")
+      end
+
+      it "succeeds and sets bootstrap_version for the legacy chef product (major < 19)" do
+        @bootstrap_azurerm_instance.config[:bootstrap_version] = "18"
+        @bootstrap_azurerm_instance.config[:chef_license_key] = "my-license-key"
+        response = @bootstrap_azurerm_instance.get_chef_extension_public_params
+        expect(response[:bootstrap_options][:bootstrap_version]).to eq("18")
+      end
+    end
+
+    context "when no license key is available" do
+      # A license key is not mandated here: Chef::Knife::Bootstrap#fetch_license
+      # (called before any plugin_* hook runs) is responsible for license
+      # enforcement for the knife CLI as a whole. get_chef_extension_public_params
+      # simply sets bootstrap_version regardless of license availability;
+      # get_chef_extension_private_params decides separately whether to
+      # forward a license key to the extension (see that method/spec).
+      before do
+        @bootstrap_azurerm_instance.config[:chef_license_key] = nil
+        @bootstrap_azurerm_instance.config[:license_id] = nil
+      end
+
+      it "succeeds and sets bootstrap_version for chef-ice (major >= 19)" do
+        @bootstrap_azurerm_instance.config[:bootstrap_version] = "19"
+        response = @bootstrap_azurerm_instance.get_chef_extension_public_params
+        expect(response[:bootstrap_options][:bootstrap_version]).to eq("19")
+      end
+
+      it "succeeds and sets bootstrap_version for the legacy chef product (major < 19)" do
+        @bootstrap_azurerm_instance.config[:bootstrap_version] = "18"
+        response = @bootstrap_azurerm_instance.get_chef_extension_public_params
+        expect(response[:bootstrap_options][:bootstrap_version]).to eq("18")
+      end
+    end
+  end
+
+  describe "get_chef_extension_private_params" do
+    before do
+      allow(@bootstrap_azurerm_instance).to receive(:create_node_and_client_pem).and_return("/tmp/client.pem")
+      allow(File).to receive(:exist?).and_call_original
+      allow(File).to receive(:exist?).with("/tmp/client.pem").and_return(true)
+      allow(File).to receive(:read).and_call_original
+      allow(File).to receive(:read).with("/tmp/client.pem").and_return("client-pem-content")
+      allow(@bootstrap_azurerm_instance).to receive(:load_correct_secret).and_return(nil)
+      # create_arm_instance defaults config[:chef_license_key] so unrelated
+      # specs don't need to set it explicitly; clear it here so these
+      # license-specific contexts can control it precisely.
+      @bootstrap_azurerm_instance.config[:chef_license_key] = nil
+    end
+
+    context "when --chef-license-key is provided" do
+      before do
+        @bootstrap_azurerm_instance.config[:chef_license_key] = "my-license-key"
+      end
+
+      it "forwards chef_license_key into the extension's protected config parameters" do
+        response = @bootstrap_azurerm_instance.get_chef_extension_private_params
+        expect(response[:chef_license_key]).to eq("my-license-key")
+      end
+    end
+
+    context "when --chef-license-key is not provided but a license was already fetched/persisted" do
+      before do
+        # Chef::Knife::Bootstrap#run calls fetch_license before any plugin_*
+        # hook runs, populating config[:license_id] with the locally
+        # persisted/validated license key.
+        @bootstrap_azurerm_instance.config[:license_id] = "persisted-license-key"
+      end
+
+      it "auto-forwards the persisted license into the extension's protected config parameters" do
+        response = @bootstrap_azurerm_instance.get_chef_extension_private_params
+        expect(response[:chef_license_key]).to eq("persisted-license-key")
+      end
+    end
+
+    context "when --chef-license-key is provided and a persisted license also exists" do
+      before do
+        @bootstrap_azurerm_instance.config[:chef_license_key] = "my-license-key"
+        @bootstrap_azurerm_instance.config[:license_id] = "persisted-license-key"
+      end
+
+      it "prefers the explicitly provided --chef-license-key" do
+        response = @bootstrap_azurerm_instance.get_chef_extension_private_params
+        expect(response[:chef_license_key]).to eq("my-license-key")
+      end
+    end
+
+    context "when neither --chef-license-key nor a persisted license is available" do
+      it "does not set chef_license_key in extension's protected config parameters" do
+        response = @bootstrap_azurerm_instance.get_chef_extension_private_params
+        expect(response.key?(:chef_license_key)).to be == false
+      end
+    end
+
+    context "when --azure-chef-extension-version pins a build older than protectedSettings support" do
+      before do
+        @bootstrap_azurerm_instance.config[:chef_license_key] = "my-license-key"
+        @bootstrap_azurerm_instance.config[:azure_chef_extension_version] = "1210.15.11.0"
+      end
+
+      it "fails fast instead of silently forwarding an unusable license key" do
+        expect(@bootstrap_azurerm_instance.ui).to receive(:error)
+          .with(/older than 1210.15.11.1/)
+        expect { @bootstrap_azurerm_instance.get_chef_extension_private_params }.to raise_error(SystemExit)
+      end
+    end
+
+    context "when --azure-chef-extension-version pins a build at the minimum supported version" do
+      before do
+        @bootstrap_azurerm_instance.config[:chef_license_key] = "my-license-key"
+        @bootstrap_azurerm_instance.config[:azure_chef_extension_version] = "1210.15.11.1"
+      end
+
+      it "forwards chef_license_key normally" do
+        response = @bootstrap_azurerm_instance.get_chef_extension_private_params
+        expect(response[:chef_license_key]).to eq("my-license-key")
+      end
+    end
+
+    context "when --azure-chef-extension-version pins a build newer than the minimum supported version" do
+      before do
+        @bootstrap_azurerm_instance.config[:chef_license_key] = "my-license-key"
+        @bootstrap_azurerm_instance.config[:azure_chef_extension_version] = "1312.11"
+      end
+
+      it "forwards chef_license_key normally" do
+        response = @bootstrap_azurerm_instance.get_chef_extension_private_params
+        expect(response[:chef_license_key]).to eq("my-license-key")
+      end
+    end
+
+    context "when --azure-chef-extension-version is a family wildcard" do
+      before do
+        @bootstrap_azurerm_instance.config[:chef_license_key] = "my-license-key"
+        @bootstrap_azurerm_instance.config[:azure_chef_extension_version] = "1210.*"
+      end
+
+      it "forwards chef_license_key without rejecting the ambiguous pin" do
+        response = @bootstrap_azurerm_instance.get_chef_extension_private_params
+        expect(response[:chef_license_key]).to eq("my-license-key")
+      end
+    end
+
   end
 end
