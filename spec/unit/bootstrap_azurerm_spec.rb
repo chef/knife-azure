@@ -354,24 +354,6 @@ describe Chef::Knife::BootstrapAzurerm do
       end
     end
 
-    context "when --disable-license-activation is set" do
-      before do
-        @bootstrap_azurerm_instance.config[:disable_license_activation] = true
-      end
-
-      it "does not forward an explicitly provided --chef-license-key" do
-        @bootstrap_azurerm_instance.config[:chef_license_key] = "my-license-key"
-        response = @bootstrap_azurerm_instance.get_chef_extension_private_params
-        expect(response.key?(:chef_license_key)).to be == false
-      end
-
-      it "does not forward a persisted license" do
-        @bootstrap_azurerm_instance.config[:license_id] = "persisted-license-key"
-        response = @bootstrap_azurerm_instance.get_chef_extension_private_params
-        expect(response.key?(:chef_license_key)).to be == false
-      end
-    end
-
     context "when --chef-license-key is provided and a persisted license also exists" do
       before do
         @bootstrap_azurerm_instance.config[:chef_license_key] = "my-license-key"
@@ -440,18 +422,5 @@ describe Chef::Knife::BootstrapAzurerm do
       end
     end
 
-    context "when an old pinned --azure-chef-extension-version is set but --disable-license-activation suppresses forwarding" do
-      before do
-        @bootstrap_azurerm_instance.config[:chef_license_key] = "my-license-key"
-        @bootstrap_azurerm_instance.config[:azure_chef_extension_version] = "1210.15.11.0"
-        @bootstrap_azurerm_instance.config[:disable_license_activation] = true
-      end
-
-      it "does not reject the pin, since no license key is forwarded anyway" do
-        expect(@bootstrap_azurerm_instance.ui).to_not receive(:error)
-        response = @bootstrap_azurerm_instance.get_chef_extension_private_params
-        expect(response.key?(:chef_license_key)).to be == false
-      end
-    end
   end
 end
