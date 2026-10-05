@@ -32,9 +32,9 @@ describe Chef::Knife::BootstrapAzurerm do
     @bootstrap_azurerm_instance.config[:azure_resource_group_name] = "test-rgp-01"
     @bootstrap_azurerm_instance.config[:azure_service_location] = "West US"
 
-    @compute_client = double("ComputeManagementClient")
+    @compute_client = double("ArmClient")
     allow(@bootstrap_azurerm_instance.service).to receive(
-      :compute_management_client
+      :arm_client
     ).and_return(@compute_client)
     allow(@bootstrap_azurerm_instance).to receive(:check_license)
   end
@@ -187,7 +187,7 @@ describe Chef::Knife::BootstrapAzurerm do
 
   context "find_server" do
     it "returns error if the server or resource group doesn't exist" do
-      allow(@compute_client).to receive_message_chain(:virtual_machines, :get).and_return(nil)
+      allow(@compute_client).to receive(:get_virtual_machine).and_return(nil)
       response = @service.find_server("test-vm-01", "test-rgp-01")
       expect(response).to be(nil)
     end
