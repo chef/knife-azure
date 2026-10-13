@@ -1,16 +1,17 @@
 # knife-azure Change Log
 
-<!-- latest_release 4.0.2 -->
-## [v4.0.2](https://github.com/chef/knife-azure/tree/v4.0.2) (2026-09-24)
+<!-- latest_release 4.0.3 -->
+## [v4.0.3](https://github.com/chef/knife-azure/tree/v4.0.3) (2026-10-13)
 
 #### Merged Pull Requests
-- CHEF-38124 / CHEF-27659 Update and standardize copyright notices to Progress Software Corporation - copyright_update [#563](https://github.com/chef/knife-azure/pull/563) ([clintoncwolfe](https://github.com/clintoncwolfe))
+- CHEF-32107: Add BlackDuck Polaris CI stub and update SonarQube configuration [#565](https://github.com/chef/knife-azure/pull/565) ([sanjain-progress](https://github.com/sanjain-progress))
 <!-- latest_release -->
 
 <!-- release_rollup since=4.0.0 -->
 ### Changes not yet released to rubygems.org
 
 #### Merged Pull Requests
+- CHEF-32107: Add BlackDuck Polaris CI stub and update SonarQube configuration [#565](https://github.com/chef/knife-azure/pull/565) ([sanjain-progress](https://github.com/sanjain-progress)) <!-- 4.0.3 -->
 - CHEF-38124 / CHEF-27659 Update and standardize copyright notices to Progress Software Corporation - copyright_update [#563](https://github.com/chef/knife-azure/pull/563) ([clintoncwolfe](https://github.com/clintoncwolfe)) <!-- 4.0.2 -->
 - Add comprehensive GitHub Copilot instructions and MCP server configuration [#559](https://github.com/chef/knife-azure/pull/559) ([ashiqueps](https://github.com/ashiqueps)) <!-- 4.0.1 -->
 <!-- release_rollup -->
