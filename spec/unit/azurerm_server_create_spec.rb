@@ -132,6 +132,22 @@ describe Chef::Knife::AzurermServerCreate do
         expect { @arm_server_instance.validate_params! }.to raise_error(ArgumentError)
       end
 
+      ["test_vm", "test[vm", "test\\vm", "test]vm", "test^vm", "test`vm"].each do |name|
+        it "vm name validation failure for '#{name}' for Linux" do
+          @arm_server_instance.config[:azure_vm_name] = name
+          @arm_server_instance.config[:ssh_public_key] = "ssh_public_key"
+          allow(@arm_server_instance).to receive(:is_image_windows?).and_return(false)
+          expect { @arm_server_instance.validate_params! }.to raise_error(ArgumentError, /VM name can only contain/)
+        end
+
+        it "vm name validation failure for '#{name}' for Windows" do
+          @arm_server_instance.config[:azure_vm_name] = name
+          @arm_server_instance.config[:connection_password] = "connection_password"
+          allow(@arm_server_instance).to receive(:is_image_windows?).and_return(true)
+          expect { @arm_server_instance.validate_params! }.to raise_error(ArgumentError, /VM name can only contain/)
+        end
+      end
+
       it "vm name validation failure for name containing special characters for Windows" do
         @arm_server_instance.config[:azure_vm_name] = "test_vm1234!@#"
         allow(@arm_server_instance).to receive(:is_image_windows?).and_return(true)
