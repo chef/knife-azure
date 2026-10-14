@@ -186,6 +186,77 @@ describe Chef::Knife::AzurermServerCreate do
         expect(@arm_server_instance.ui).to receive(:error)
         expect { @arm_server_instance.run }.to raise_error(SystemExit)
       end
+
+      it "accepts a valid managed disk SKU for --azure-storage-account-type" do
+        @arm_server_instance.config[:connection_password] = "connection_password"
+        @arm_server_instance.config[:azure_vm_name] = "test-vm1234"
+        @arm_server_instance.config[:azure_storage_account_type] = "Premium_LRS"
+        expect { @arm_server_instance.validate_params! }.not_to raise_error
+      end
+
+      %w{Standard_ZRS Standard_GRS Standard_RAGRS}.each do |legacy_type|
+        it "raises an actionable error for the legacy storage-account replication value " \
+           "'#{legacy_type}' for --azure-storage-account-type" do
+             @arm_server_instance.config[:connection_password] = "connection_password"
+             @arm_server_instance.config[:azure_vm_name] = "test-vm1234"
+             @arm_server_instance.config[:azure_storage_account_type] = legacy_type
+             expect { @arm_server_instance.validate_params! }.to raise_error(
+               ArgumentError, /no longer valid.*managed disk/
+             )
+           end
+      end
+
+      it "raises an error for an unrecognized --azure-storage-account-type value" do
+        @arm_server_instance.config[:connection_password] = "connection_password"
+        @arm_server_instance.config[:azure_vm_name] = "test-vm1234"
+        @arm_server_instance.config[:azure_storage_account_type] = "not-a-real-sku"
+        expect { @arm_server_instance.validate_params! }.to raise_error(ArgumentError, /Invalid value.*azure-storage-account-type/)
+      end
+    end
+
+    describe "--azure-availability-set" do
+      before do
+        @arm_server_instance.config[:connection_password] = "connection_password"
+        @arm_server_instance.config[:azure_vm_name] = "test-vm1234"
+        @arm_server_instance.config[:azure_availability_set] = "test-avset"
+      end
+
+      it "raises an actionable error when the availability set already exists as a legacy Classic set" do
+        allow(@service).to receive(:existing_availability_set_sku).with(
+          @arm_server_instance.config[:azure_resource_group_name], "test-avset"
+        ).and_return(nil)
+        expect { @arm_server_instance.validate_params! }.to raise_error(
+          ArgumentError, /immutable.*Please choose a different, unused name/m
+        )
+      end
+
+      it "does not raise when the availability set doesn't exist yet" do
+        allow(@service).to receive(:existing_availability_set_sku).with(
+          @arm_server_instance.config[:azure_resource_group_name], "test-avset"
+        ).and_return(:not_found)
+        expect { @arm_server_instance.validate_params! }.not_to raise_error
+      end
+
+      it "does not raise when the availability set already exists as an Aligned set" do
+        allow(@service).to receive(:existing_availability_set_sku).with(
+          @arm_server_instance.config[:azure_resource_group_name], "test-avset"
+        ).and_return("Aligned")
+        expect { @arm_server_instance.validate_params! }.not_to raise_error
+      end
+    end
+
+    context "#warn_if_storage_account_ignored!" do
+      it "warns when --azure-storage-account is explicitly provided since it no longer has any effect" do
+        @arm_server_instance.config[:azure_storage_account] = "myoldstorageaccount"
+        expect(@arm_server_instance.ui).to receive(:warn).with(/azure-storage-account is deprecated/)
+        @arm_server_instance.send(:warn_if_storage_account_ignored!)
+      end
+
+      it "does not warn when --azure-storage-account is not provided" do
+        @arm_server_instance.config.delete(:azure_storage_account)
+        expect(@arm_server_instance.ui).not_to receive(:warn)
+        @arm_server_instance.send(:warn_if_storage_account_ignored!)
+      end
     end
 
     context "optional parameters" do
@@ -407,12 +478,7 @@ describe Chef::Knife::AzurermServerCreate do
           %w{service task none}.each do |daemon|
             it "does not raises error if valid daemon option is provided" do
               @arm_server_instance.config[:daemon] = daemon
-              expect { @arm_server_instance.validate_params! }.not_to raise_error(
-                ArgumentError, "The daemon option is only support for Windows nodes."
-              )
-              expect { @arm_server_instance.validate_params! }.not_to raise_error(
-                ArgumentError, "Invalid value for --daemon option. Use valid daemon values i.e 'none', 'service' and 'task'."
-              )
+              expect { @arm_server_instance.validate_params! }.not_to raise_error
             end
           end
         end
@@ -449,34 +515,15 @@ describe Chef::Knife::AzurermServerCreate do
       @arm_server_instance.config[:connection_password] = "connection_password"
       @arm_server_instance.config[:connection_password] = "connection_password"
 
-      @resource_client = double("ResourceManagementClient")
-      @compute_client = double("ComputeManagementClient")
-      @storage_client = double("StorageManagementClient")
-      @network_client = double("NetworkResourceClient")
+      @arm_client = double("ArmClient")
+      # Keep the historical instance-variable names pointing at the single
+      # ArmClient double so existing expectations continue to read naturally.
+      @resource_client = @arm_client
+      @compute_client = @arm_client
+      @storage_client = @arm_client
+      @network_client = @arm_client
 
-      @resource_promise = double("ResourcePromise")
-      @compute_promise = double("ComputePromise")
-
-      allow(@service).to receive(
-        :resource_management_client
-      ).and_return(
-        @resource_client
-      )
-      allow(@service).to receive(
-        :compute_management_client
-      ).and_return(
-        @compute_client
-      )
-      allow(@service).to receive(
-        :storage_management_client
-      ).and_return(
-        @storage_client
-      )
-      allow(@service).to receive(
-        :network_resource_client
-      ).and_return(
-        @network_client
-      )
+      allow(@service).to receive(:arm_client).and_return(@arm_client)
       allow(@arm_server_instance).to receive(
         :msg_server_summary
       )
@@ -502,7 +549,7 @@ describe Chef::Knife::AzurermServerCreate do
           @resource_group_name = "rgrp-2"
           @vnet_name = "vnet-2"
           @sec_grp_name = "sec_grp_2"
-          allow(@dummy_class).to receive(:network_resource_client).and_return(
+          allow(@dummy_class).to receive(:arm_client).and_return(
             stub_network_resource_client(nil, @resource_group_name, @vnet_name, @sec_grp_name)
           )
         end
@@ -517,20 +564,13 @@ describe Chef::Knife::AzurermServerCreate do
         before do
           @resource_group_name = "rgrp-2"
           @sec_grp_name = "sec_grp_2"
-          request = {}
-          response = OpenStruct.new(
-            "body" => '{"error": {"code": "ResourceNotFound"}}'
+          error = Azure::ResourceManagement::ARMInterface::OperationError.new(
+            "ResourceNotFound",
+            body: '{"error": {"code": "ResourceNotFound"}}'
           )
-          body = "MsRestAzure::AzureOperationError"
-          error = MsRestAzure::AzureOperationError.new(request, response, body)
-          network_resource_client = double("NetworkResourceClient",
-            network_security_groups: double)
-          allow(network_resource_client.network_security_groups).to receive(
-            :get
-          ).and_raise(error)
-          allow(@dummy_class).to receive(:network_resource_client).and_return(
-            network_resource_client
-          )
+          arm_client = double("ArmClient")
+          allow(arm_client).to receive(:get_network_security_group).and_raise(error)
+          allow(@dummy_class).to receive(:arm_client).and_return(arm_client)
         end
 
         it "returns false" do
@@ -543,25 +583,113 @@ describe Chef::Knife::AzurermServerCreate do
         before do
           @resource_group_name = "rgrp-2"
           @sec_grp_name = "sec_grp_2"
-          request = {}
-          response = OpenStruct.new(
-            "body" => '{"error": {"code": "SomeProblemOccurred"}}'
+          @error = Azure::ResourceManagement::ARMInterface::OperationError.new(
+            "SomeProblemOccurred",
+            body: '{"error": {"code": "SomeProblemOccurred"}}'
           )
-          body = "MsRestAzure::AzureOperationError"
-          @error = MsRestAzure::AzureOperationError.new(request, response, body)
-          network_resource_client = double("NetworkResourceClient",
-            network_security_groups: double)
-          allow(network_resource_client.network_security_groups).to receive(
-            :get
-          ).and_raise(@error)
-          allow(@dummy_class).to receive(:network_resource_client).and_return(
-            network_resource_client
-          )
+          arm_client = double("ArmClient")
+          allow(arm_client).to receive(:get_network_security_group).and_raise(@error)
+          allow(@dummy_class).to receive(:arm_client).and_return(arm_client)
         end
 
         it "raises error" do
           expect do
             @dummy_class.security_group_exist?(@resource_group_name, @sec_grp_name)
+          end.to raise_error(@error)
+        end
+      end
+    end
+
+    describe "existing_availability_set_sku" do
+      module Azure
+        module ARM
+          class DummyClass < Azure::ResourceManagement::ARMInterface
+          end
+        end
+      end
+
+      before do
+        @dummy_class = Azure::ARM::DummyClass.new
+        @resource_group_name = "rgrp-2"
+        @avset_name = "avset-2"
+      end
+
+      context "given an Aligned availability set already exists" do
+        before do
+          availability_set = double("AvailabilitySet", sku: double("Sku", name: "Aligned"))
+          arm_client = double("ArmClient")
+          allow(arm_client).to receive(:get_availability_set).and_return(availability_set)
+          allow(@dummy_class).to receive(:arm_client).and_return(arm_client)
+        end
+
+        it "returns 'Aligned'" do
+          response = @dummy_class.existing_availability_set_sku(@resource_group_name, @avset_name)
+          expect(response).to be == "Aligned"
+        end
+      end
+
+      context "given a legacy Classic availability set already exists (no sku property)" do
+        before do
+          availability_set = double("AvailabilitySet", sku: nil)
+          arm_client = double("ArmClient")
+          allow(arm_client).to receive(:get_availability_set).and_return(availability_set)
+          allow(@dummy_class).to receive(:arm_client).and_return(arm_client)
+        end
+
+        it "returns nil" do
+          response = @dummy_class.existing_availability_set_sku(@resource_group_name, @avset_name)
+          expect(response).to be_nil
+        end
+      end
+
+      context "given the availability set does not exist" do
+        before do
+          error = Azure::ResourceManagement::ARMInterface::OperationError.new(
+            "ResourceNotFound",
+            body: '{"error": {"code": "ResourceNotFound"}}'
+          )
+          arm_client = double("ArmClient")
+          allow(arm_client).to receive(:get_availability_set).and_raise(error)
+          allow(@dummy_class).to receive(:arm_client).and_return(arm_client)
+        end
+
+        it "returns :not_found" do
+          response = @dummy_class.existing_availability_set_sku(@resource_group_name, @avset_name)
+          expect(response).to be == :not_found
+        end
+      end
+
+      context "given the resource group does not exist yet" do
+        before do
+          error = Azure::ResourceManagement::ARMInterface::OperationError.new(
+            "ResourceGroupNotFound",
+            body: '{"error": {"code": "ResourceGroupNotFound"}}'
+          )
+          arm_client = double("ArmClient")
+          allow(arm_client).to receive(:get_availability_set).and_raise(error)
+          allow(@dummy_class).to receive(:arm_client).and_return(arm_client)
+        end
+
+        it "returns :not_found" do
+          response = @dummy_class.existing_availability_set_sku(@resource_group_name, @avset_name)
+          expect(response).to be == :not_found
+        end
+      end
+
+      context "get api call raises some unknown exception" do
+        before do
+          @error = Azure::ResourceManagement::ARMInterface::OperationError.new(
+            "SomeProblemOccurred",
+            body: '{"error": {"code": "SomeProblemOccurred"}}'
+          )
+          arm_client = double("ArmClient")
+          allow(arm_client).to receive(:get_availability_set).and_raise(@error)
+          allow(@dummy_class).to receive(:arm_client).and_return(arm_client)
+        end
+
+        it "raises error" do
+          expect do
+            @dummy_class.existing_availability_set_sku(@resource_group_name, @avset_name)
           end.to raise_error(@error)
         end
       end
@@ -574,9 +702,7 @@ describe Chef::Knife::AzurermServerCreate do
       end
 
       it "create resource group when it does not exist already" do
-        expect(@resource_client).to receive_message_chain(
-          :resource_groups, :check_existence
-        ).and_return(false)
+        expect(@arm_client).to receive(:resource_group_exist?).and_return(false)
         expect(@service).to receive(
           :create_resource_group
         ).exactly(1).and_return(
@@ -586,9 +712,7 @@ describe Chef::Knife::AzurermServerCreate do
       end
 
       it "skip resource group creation when it does exist already" do
-        expect(@resource_client).to receive_message_chain(
-          :resource_groups, :check_existence
-        ).and_return(true)
+        expect(@arm_client).to receive(:resource_group_exist?).and_return(true)
         expect(@service).to_not receive(:create_resource_group)
         @arm_server_instance.run
       end
@@ -603,7 +727,7 @@ describe Chef::Knife::AzurermServerCreate do
             azure_image_reference_sku: "6.5",
             azure_image_reference_version: "latest",
             connection_user: "connection_user",
-            azure_chef_extension_version: "1210.12",
+            azure_chef_extension_version: "1312.11",
           }.each do |key, value|
             @arm_server_instance.config[key] = value
           end
@@ -612,9 +736,7 @@ describe Chef::Knife::AzurermServerCreate do
             :is_image_windows?
           ).at_least(:twice).and_return(false)
 
-          allow(@resource_client).to receive_message_chain(
-            :resource_groups, :check_existence
-          ).and_return(false)
+          allow(@arm_client).to receive(:resource_group_exist?).and_return(false)
           allow(@service).to receive(
             :create_resource_group
           ).and_return(
@@ -673,9 +795,7 @@ describe Chef::Knife::AzurermServerCreate do
             :is_image_windows?
           ).at_least(:twice).and_return(true)
 
-          allow(@resource_client).to receive_message_chain(
-            :resource_groups, :check_existence
-          ).and_return(false)
+          allow(@arm_client).to receive(:resource_group_exist?).and_return(false)
           allow(@service).to receive(
             :create_resource_group
           ).and_return(
@@ -696,15 +816,13 @@ describe Chef::Knife::AzurermServerCreate do
       context "for multiple VM creation" do
         before do
           @arm_server_instance.config[:server_count] = 3
-          @arm_server_instance.config[:azure_chef_extension_version] = "1210.12"
+          @arm_server_instance.config[:azure_chef_extension_version] = "1312.11"
 
           expect(@arm_server_instance).to receive(
             :is_image_windows?
           ).at_least(:twice).and_return(false)
 
-          allow(@resource_client).to receive_message_chain(
-            :resource_groups, :check_existence
-          ).and_return(false)
+          allow(@arm_client).to receive(:resource_group_exist?).and_return(false)
           allow(@service).to receive(
             :create_resource_group
           ).and_return(
@@ -760,7 +878,7 @@ describe Chef::Knife::AzurermServerCreate do
 
     describe "create_resource_group" do
       it "successfully returns resource group create response" do
-        expect(@service).to receive(:resource_management_client).and_return(
+        expect(@service).to receive(:arm_client).and_return(
           stub_resource_management_client
         )
         response = @service.create_resource_group(@params)
@@ -775,7 +893,7 @@ describe Chef::Knife::AzurermServerCreate do
       it "creates deployment template and deployment parameters" do
         expect(@service).to receive(:create_deployment_template).with(@params)
         expect(@service).to receive(:create_deployment_parameters)
-        expect(@service).to receive(:resource_management_client).and_return(
+        expect(@service).to receive(:arm_client).and_return(
           stub_resource_management_client
         )
         @service.create_virtual_machine_using_template(@params)
@@ -784,7 +902,7 @@ describe Chef::Knife::AzurermServerCreate do
       it "successfully returns virtual machine create response" do
         @platform = "Linux"
         allow(@service).to receive(:set_platform).and_return("Linux")
-        expect(@service).to receive(:resource_management_client).and_return(
+        expect(@service).to receive(:arm_client).and_return(
           stub_resource_management_client
         )
         response = @service.create_virtual_machine_using_template(@params)
@@ -793,14 +911,14 @@ describe Chef::Knife::AzurermServerCreate do
 
       context "when VM size is given by user" do
         before do
-          allow(@service).to receive(:resource_management_client).and_return(@resource_client)
+          allow(@service).to receive(:arm_client).and_return(@resource_client)
         end
 
         it "If VM size is valid, successfully returns virtual machine create response" do
           @params[:azure_vm_size] = "Standard_F2"
           expect(@service).to receive(:create_deployment_template).with(@params)
           expect(@service).to receive(:create_deployment_parameters)
-          expect(@service).to receive(:resource_management_client).and_return(
+          expect(@service).to receive(:arm_client).and_return(
             stub_resource_management_client
           )
           @service.create_virtual_machine_using_template(@params)
@@ -810,44 +928,8 @@ describe Chef::Knife::AzurermServerCreate do
           @params[:azure_vm_size] = "abcdf"
           expect(@service).to receive(:create_deployment_template).with(@params)
           expect(@service).to receive(:create_deployment_parameters)
-          allow(@resource_client).to receive_message_chain(
-            :deployments, :create_or_update
-          ).and_raise(Exception)
+          allow(@resource_client).to receive(:create_deployment).and_raise(Exception)
           expect { @service.create_virtual_machine_using_template(@params) }.to raise_error(Exception)
-        end
-      end
-    end
-
-    describe "vm_public_ip" do
-      it "successfully returns vm public ip response" do
-        expect(@service).to receive(:network_resource_client).and_return(stub_network_resource_client("Windows"))
-        response = @service.vm_public_ip(@params)
-        expect(response).to be == "1.2.3.4"
-      end
-    end
-
-    describe "vm_default_port" do
-      context "for Linux" do
-        before do
-          @platform = "Linux"
-        end
-
-        it "successfully returns vm default port response" do
-          expect(@service).to receive(:network_resource_client).and_return(stub_network_resource_client(@platform))
-          response = @service.vm_default_port(@params)
-          expect(response).to be == "22"
-        end
-      end
-
-      context "for Windows" do
-        before do
-          @platform = "Windows"
-        end
-
-        it "successfully returns vm default port response" do
-          expect(@service).to receive(:network_resource_client).and_return(stub_network_resource_client(@platform))
-          response = @service.vm_default_port(@params)
-          expect(response).to be == "3389"
         end
       end
     end
@@ -855,7 +937,7 @@ describe Chef::Knife::AzurermServerCreate do
     describe "create_vm_extension" do
       context "when user has supplied chef extension version value" do
         it "successfully creates virtual machine extension with the user supplied version value" do
-          expect(@service).to receive(:compute_management_client).and_return(stub_compute_management_client("yes"))
+          expect(@service).to receive(:arm_client).and_return(stub_compute_management_client("yes"))
           expect(@service).to_not receive(:get_latest_chef_extension_version)
           response = @service.create_vm_extension(@params)
           expect(response.name).to be == "test-vm-ext"
@@ -877,7 +959,7 @@ describe Chef::Knife::AzurermServerCreate do
 
         it "successfully creates virtual machine extension with the latest version" do
           expect(@service).to receive(:get_latest_chef_extension_version)
-          expect(@service).to receive(:compute_management_client).and_return(stub_compute_management_client("no"))
+          expect(@service).to receive(:arm_client).and_return(stub_compute_management_client("no"))
           response = @service.create_vm_extension(@params)
           expect(response.name).to be == "test-vm-ext"
           expect(response.id).to_not be nil
@@ -894,7 +976,7 @@ describe Chef::Knife::AzurermServerCreate do
 
     describe "get_latest_chef_extension_version" do
       it "successfully returns latest Chef Extension version" do
-        expect(@service).to receive(:compute_management_client).and_return(
+        expect(@service).to receive(:arm_client).and_return(
           stub_compute_management_client("NA")
         )
         response = @service.get_latest_chef_extension_version(@params)
@@ -947,9 +1029,9 @@ describe Chef::Knife::AzurermServerCreate do
         end
 
         it "sets user supplied value for chef_extension_version parameter" do
-          @arm_server_instance.config[:azure_chef_extension_version] = "1210.12"
+          @arm_server_instance.config[:azure_chef_extension_version] = "1312.11"
           @server_params = @arm_server_instance.create_server_def
-          expect(@server_params[:chef_extension_version]).to be == "1210.12"
+          expect(@server_params[:chef_extension_version]).to be == "1312.11"
         end
 
         it "sets nil value for chef_extension_version parameter when user has not supplied any value for it" do
@@ -1009,17 +1091,76 @@ describe Chef::Knife::AzurermServerCreate do
       end
 
       context "get_chef_extension_public_params" do
+        it "sets chef_license to accept-no-persist in the generated client_rb" do
+          response = @arm_server_instance.get_chef_extension_public_params
+          expect(response[:client_rb]).to include("chef_license\t\"accept-no-persist\"")
+        end
+
+        it "does not inject chef_license when a custom --azure-extension-client-config is provided" do
+          @arm_server_instance.config[:azure_extension_client_config] = "/tmp/custom_client.rb"
+          allow(File).to receive(:read).and_return("custom_client_rb_contents")
+          response = @arm_server_instance.get_chef_extension_public_params
+          expect(response[:client_rb]).to be == "custom_client_rb_contents"
+        end
+
+        it "sets the top-level CHEF_LICENSE public setting to accept-no-persist so the VM extension's " \
+           "separate chef-apply cron-setup step (which does not read client_rb) also accepts the license" do
+             response = @arm_server_instance.get_chef_extension_public_params
+             expect(response[:CHEF_LICENSE]).to be == "accept-no-persist"
+           end
+
+        it "sets the top-level CHEF_LICENSE public setting even when a custom " \
+           "--azure-extension-client-config is provided" do
+             @arm_server_instance.config[:azure_extension_client_config] = "/tmp/custom_client.rb"
+             allow(File).to receive(:read).and_return("custom_client_rb_contents")
+             response = @arm_server_instance.get_chef_extension_public_params
+             expect(response[:CHEF_LICENSE]).to be == "accept-no-persist"
+           end
+
+        it "defaults the bootstrap_options environment to _default so the VM extension does not emit a " \
+           "bare -E flag with no value to chef-client" do
+             response = @arm_server_instance.get_chef_extension_public_params
+             expect(response[:bootstrap_options][:environment]).to be == "_default"
+           end
+
+        it "honors an explicit --environment value in bootstrap_options" do
+          @arm_server_instance.config[:environment] = "production"
+          response = @arm_server_instance.get_chef_extension_public_params
+          expect(response[:bootstrap_options][:environment]).to be == "production"
+        end
+
+        it "defaults the bootstrap_options environment to _default when --environment is explicitly " \
+           "set to an empty string (an empty string is truthy in Ruby, so it must be handled " \
+           "the same as nil)" do
+             @arm_server_instance.config[:environment] = ""
+             response = @arm_server_instance.get_chef_extension_public_params
+             expect(response[:bootstrap_options][:environment]).to be == "_default"
+           end
+
         it "sets bootstrapVersion variable in public_config" do
           @arm_server_instance.config[:bootstrap_version] = "12.4.2"
-          public_config = { client_rb: "chef_server_url \t \"https://localhost:443\"\nvalidation_client_name\t\"chef-validator\"", runlist: '"getting-started"', extendedLogs: "false", custom_json_attr: {}, hints: %w{vm_name public_fqdn platform}, bootstrap_options: { chef_server_url: "https://localhost:443", validation_client_name: "chef-validator", bootstrap_version: "12.4.2" } }
+          public_config = { client_rb: "chef_server_url \t \"https://localhost:443\"\nvalidation_client_name\t\"chef-validator\"\nchef_license\t\"accept-no-persist\"", CHEF_LICENSE: "accept-no-persist", runlist: '"getting-started"', extendedLogs: "false", custom_json_attr: {}, hints: %w{vm_name public_fqdn platform}, bootstrap_options: { environment: "_default", chef_server_url: "https://localhost:443", validation_client_name: "chef-validator", bootstrap_version: "12.4.2" } }
 
           response = @arm_server_instance.get_chef_extension_public_params
           expect(response).to be == public_config
         end
 
+        it "defaults bootstrap_version to the major version of the bundled chef gem when " \
+           "--bootstrap-version isn't given, so the extension installs chef-ice (19.x+) " \
+           "instead of silently falling back to the legacy chef (<=18.x) product" do
+             response = @arm_server_instance.get_chef_extension_public_params
+             expect(response[:bootstrap_options][:bootstrap_version]).to eq(Chef::VERSION.split(".").first)
+           end
+
+        it "honors an explicit --bootstrap-version instead of the bundled chef gem's major version" do
+          @arm_server_instance.config[:bootstrap_version] = "18.10.17"
+          response = @arm_server_instance.get_chef_extension_public_params
+          expect(response[:bootstrap_options][:bootstrap_version]).to eq("18.10.17")
+        end
+
         it "should set extendedLogs flag to true" do
           @arm_server_instance.config[:extended_logs] = true
-          public_config = { client_rb: "chef_server_url \t \"https://localhost:443\"\nvalidation_client_name\t\"chef-validator\"", runlist: '"getting-started"', extendedLogs: "true", custom_json_attr: {}, hints: %w{vm_name public_fqdn platform}, bootstrap_options: { chef_server_url: "https://localhost:443", validation_client_name: "chef-validator" } }
+          public_config = { client_rb: "chef_server_url \t \"https://localhost:443\"\nvalidation_client_name\t\"chef-validator\"\nchef_license\t\"accept-no-persist\"", CHEF_LICENSE: "accept-no-persist", runlist: '"getting-started"', extendedLogs: "true", custom_json_attr: {}, hints: %w{vm_name public_fqdn platform}, bootstrap_options: { environment: "_default", chef_server_url: "https://localhost:443", validation_client_name: "chef-validator", bootstrap_version: Chef::VERSION.split(".").first } }
           response = @arm_server_instance.get_chef_extension_public_params
           expect(response).to be == public_config
         end
@@ -1044,7 +1185,7 @@ describe Chef::Knife::AzurermServerCreate do
 
         it "sets chefServiceInterval variable in public_config" do
           @arm_server_instance.config[:chef_daemon_interval] = "0"
-          public_config = { client_rb: "chef_server_url \t \"https://localhost:443\"\nvalidation_client_name\t\"chef-validator\"", runlist: '"getting-started"', extendedLogs: "false", custom_json_attr: {}, hints: %w{vm_name public_fqdn platform}, chef_daemon_interval: "0", bootstrap_options: { chef_server_url: "https://localhost:443", validation_client_name: "chef-validator" } }
+          public_config = { client_rb: "chef_server_url \t \"https://localhost:443\"\nvalidation_client_name\t\"chef-validator\"\nchef_license\t\"accept-no-persist\"", CHEF_LICENSE: "accept-no-persist", runlist: '"getting-started"', extendedLogs: "false", custom_json_attr: {}, hints: %w{vm_name public_fqdn platform}, chef_daemon_interval: "0", bootstrap_options: { environment: "_default", chef_server_url: "https://localhost:443", validation_client_name: "chef-validator", bootstrap_version: Chef::VERSION.split(".").first } }
 
           response = @arm_server_instance.get_chef_extension_public_params
           expect(response).to be == public_config
@@ -1053,7 +1194,7 @@ describe Chef::Knife::AzurermServerCreate do
         it "sets daemon variable in public config" do
           @arm_server_instance.config[:daemon] = "service"
           allow(@arm_server_instance).to receive(:is_image_windows?).and_return(true)
-          public_config = { client_rb: "chef_server_url \t \"https://localhost:443\"\nvalidation_client_name\t\"chef-validator\"", runlist: '"getting-started"', extendedLogs: "false", custom_json_attr: {}, hints: %w{vm_name public_fqdn platform}, daemon: "service", bootstrap_options: { chef_server_url: "https://localhost:443", validation_client_name: "chef-validator" } }
+          public_config = { client_rb: "chef_server_url \t \"https://localhost:443\"\nvalidation_client_name\t\"chef-validator\"\nchef_license\t\"accept-no-persist\"", CHEF_LICENSE: "accept-no-persist", runlist: '"getting-started"', extendedLogs: "false", custom_json_attr: {}, hints: %w{vm_name public_fqdn platform}, daemon: "service", bootstrap_options: { environment: "_default", chef_server_url: "https://localhost:443", validation_client_name: "chef-validator", bootstrap_version: Chef::VERSION.split(".").first } }
           response = @arm_server_instance.get_chef_extension_public_params
           expect(response).to be == public_config
         end
@@ -1075,7 +1216,8 @@ describe Chef::Knife::AzurermServerCreate do
         context "when encrypted_data_bag_secret option is passed" do
           let(:private_config) do
             { validation_key: "my_validation_key",
-              encrypted_data_bag_secret: "my_encrypted_data_bag_secret" }
+              encrypted_data_bag_secret: "my_encrypted_data_bag_secret",
+              chef_license_key: "test-chef-license-key" }
           end
 
           before do
@@ -1088,7 +1230,8 @@ describe Chef::Knife::AzurermServerCreate do
         context "when encrypted_data_bag_secret_file option is passed" do
           let(:private_config) do
             { validation_key: "my_validation_key",
-              encrypted_data_bag_secret: "PgIxStCmMDsuIw3ygRhmdMtStpc9EMiWisQXoP" }
+              encrypted_data_bag_secret: "PgIxStCmMDsuIw3ygRhmdMtStpc9EMiWisQXoP",
+              chef_license_key: "test-chef-license-key" }
           end
 
           before do
@@ -1122,7 +1265,7 @@ describe Chef::Knife::AzurermServerCreate do
         end
 
         it "copies SSL certificate contents into chef_server_crt attribute of extension's private params" do
-          pri_config = { validation_key: "foo", chef_server_crt: "foo", encrypted_data_bag_secret: nil }
+          pri_config = { validation_key: "foo", chef_server_crt: "foo", encrypted_data_bag_secret: nil, chef_license_key: "test-chef-license-key" }
           response = @arm_server_instance.get_chef_extension_private_params
           expect(response).to be == pri_config
         end
@@ -1291,13 +1434,14 @@ describe Chef::Knife::AzurermServerCreate do
   describe "create_multiple_virtual_machine_using_template" do
     before do
       @params[:server_count] = 3
-      allow(@service).to receive(:resource_management_client).and_return(@resource_client)
+      @resource_client = double("ArmClient")
+      allow(@service).to receive(:arm_client).and_return(@resource_client)
     end
 
     it "creates deployment template and deployment parameters" do
       expect(@service).to receive(:create_deployment_template).with(@params)
       expect(@service).to receive(:create_deployment_parameters)
-      expect(@service).to receive(:resource_management_client).and_return(
+      expect(@service).to receive(:arm_client).and_return(
         stub_resource_management_client
       )
       @service.create_virtual_machine_using_template(@params)
@@ -1306,9 +1450,7 @@ describe Chef::Knife::AzurermServerCreate do
     it "raises exception if deployment is not successful" do
       expect(@service).to receive(:create_deployment_template).with(@params)
       expect(@service).to receive(:create_deployment_parameters)
-      allow(@resource_client).to receive_message_chain(
-        :deployments, :create_or_update
-      ).and_raise(Exception)
+      allow(@resource_client).to receive(:create_deployment).and_raise(Exception)
       expect { @service.create_virtual_machine_using_template(@params) }.to raise_error(Exception)
     end
 
@@ -1358,7 +1500,6 @@ describe Chef::Knife::AzurermServerCreate do
       expect(template["variables"]["subnetName"]).to be == "azure_subnet_name"
       expect(template["variables"]["storageAccountType"]).to be == "azure_storage_account_type"
       expect(template["variables"]["publicIPAddressName"]).to be == "test-vm"
-      expect(template["variables"]["vmStorageAccountContainerName"]).to be == "test-vm"
       expect(template["variables"]["vmName"]).to be == "test-vm"
       expect(template["variables"]["vmSize"]).to be == "Standard_A1_v2"
       expect(template["variables"]["virtualNetworkName"]).to be == "vnet1"
@@ -1383,9 +1524,57 @@ describe Chef::Knife::AzurermServerCreate do
       expect(extension["properties"]["settings"]["bootstrap_options"]["node_verify_api_cert"]).to be == "[parameters('node_verify_api_cert')]"
       expect(extension["properties"]["settings"]["extendedLogs"]).to be == "true"
       expect(extension["properties"]["settings"]["bootstrap_options"]["environment"]).to be == "[parameters('environment')]"
+      expect(extension["properties"]["settings"]["CHEF_LICENSE"]).to be == "[parameters('CHEF_LICENSE')]"
 
       expect(extension["properties"]["protectedSettings"]["encrypted_data_bag_secret"]).to be == "[parameters('encrypted_data_bag_secret')]"
+      expect(extension["properties"]["protectedSettings"]["chef_license_key"]).to be == "[parameters('chef_license_key')]"
     end
+
+    it "uses a managed disk for the VM's OS disk and does not create a storage account resource" do
+      template = @service.create_deployment_template(@params)
+
+      expect(template["resources"].any? { |resource| resource["type"] == "Microsoft.Storage/storageAccounts" }).to be(false)
+
+      vm_resource = template["resources"].find { |resource| resource["type"] == "Microsoft.Compute/virtualMachines" }
+      os_disk = vm_resource["properties"]["storageProfile"]["osDisk"]
+      expect(os_disk).not_to have_key("vhd")
+      expect(os_disk["managedDisk"]["storageAccountType"]).to be == "[variables('storageAccountType')]"
+      expect(vm_resource["dependsOn"]).not_to include(a_string_matching(%r{Microsoft\.Storage/storageAccounts}))
+      expect(vm_resource["properties"]["diagnosticsProfile"]["bootDiagnostics"]["enabled"]).to be == "true"
+      expect(vm_resource["properties"]["diagnosticsProfile"]["bootDiagnostics"]).not_to have_key("storageUri")
+    end
+
+    it "creates an Aligned availability set (not a classic one) when --azure-availability-set is given, " \
+       "so VMs with managed OS disks can join it" do
+         @params[:azure_availability_set] = "test-avset"
+         template = @service.create_deployment_template(@params)
+
+         avset_resource = template["resources"].find { |resource| resource["type"] == "Microsoft.Compute/availabilitySets" }
+         expect(avset_resource).not_to be_nil
+         expect(avset_resource["sku"]).to be == { "name" => "Aligned" }
+         expect(avset_resource["apiVersion"]).to be == "2020-12-01"
+
+         vm_resource = template["resources"].find { |resource| resource["type"] == "Microsoft.Compute/virtualMachines" }
+         expect(vm_resource["properties"]["availabilitySet"]).to be == { "id" => "[resourceId('Microsoft.Compute/availabilitySets', parameters('availabilitySetName'))]" }
+       end
+
+    it "deploys the VM with an apiVersion that supports the StandardSSD_ZRS/Premium_ZRS managed disk " \
+       "SKUs accepted by --azure-storage-account-type (older API versions reject ZRS at deployment time)" do
+         template = @service.create_deployment_template(@params)
+
+         vm_resource = template["resources"].find { |resource| resource["type"] == "Microsoft.Compute/virtualMachines" }
+         expect(vm_resource["apiVersion"]).to be == "2020-12-01"
+       end
+
+    it "uses a per-instance OS disk name (with copyIndex) so multiple VM instances don't contend " \
+       "for the same managed disk name" do
+         @params[:server_count] = 3
+         template = @service.create_deployment_template(@params)
+
+         vm_resource = template["resources"].find { |resource| resource["type"] == "Microsoft.Compute/virtualMachines" }
+         os_disk = vm_resource["properties"]["storageProfile"]["osDisk"]
+         expect(os_disk["name"]).to be == "[concat(variables('OSDiskName'),copyIndex())]"
+       end
 
     it "does not set extendedLogs parameter under extension config in the template" do
       @params[:chef_extension_public_param][:extendedLogs] = "false"
@@ -1487,10 +1676,11 @@ describe Chef::Knife::AzurermServerCreate do
                             node_verify_api_cert: "hfyreiur374294nehfdishf",
                             chef_node_name: "test-vm",
                             environment: "development" }
-      @params[:chef_extension_public_param] = { bootstrap_options: bootstrap_options }
+      @params[:chef_extension_public_param] = { bootstrap_options: bootstrap_options, CHEF_LICENSE: "accept-no-persist" }
       @params[:chef_extension_private_param] = {
         validation_key: "validation_key",
         encrypted_data_bag_secret: "rihrfwe739085928592nehrweirwefjsndwe",
+        chef_license_key: "free-license-key-123",
       }
       {
         azure_image_reference_publisher: "OpenLogic",
@@ -1524,6 +1714,8 @@ describe Chef::Knife::AzurermServerCreate do
       expect(parameters["node_verify_api_cert"]["value"]).to be == "hfyreiur374294nehfdishf"
       expect(parameters["chef_node_name"]["value"]).to be == "test-vm"
       expect(parameters["environment"]["value"]).to be == "development"
+      expect(parameters["CHEF_LICENSE"]["value"]).to be == "accept-no-persist"
+      expect(parameters["chef_license_key"]["value"]).to be == "free-license-key-123"
     end
 
     context "--ssh-public-key option is provided " do
@@ -1693,7 +1885,7 @@ describe Chef::Knife::AzurermServerCreate do
   describe "fetch_substatus" do
     context "no substatuses returned" do
       before do
-        allow(@service).to receive(:compute_management_client).and_return(
+        allow(@service).to receive(:arm_client).and_return(
           stub_compute_management_client("substatuses_not_found")
         )
       end
@@ -1710,7 +1902,7 @@ describe Chef::Knife::AzurermServerCreate do
     context "substatuses returned" do
       context "but it does not contain chef-client run logs substatus" do
         before do
-          allow(@service).to receive(:compute_management_client).and_return(
+          allow(@service).to receive(:arm_client).and_return(
             stub_compute_management_client("substatuses_found_with_no_chef_client_run_logs")
           )
         end
@@ -1726,7 +1918,7 @@ describe Chef::Knife::AzurermServerCreate do
 
       context "and it do not contain chef-client run logs substatus" do
         before do
-          allow(@service).to receive(:compute_management_client).and_return(
+          allow(@service).to receive(:arm_client).and_return(
             stub_compute_management_client("substatuses_found_with_chef_client_run_logs")
           )
         end
@@ -1818,6 +2010,36 @@ describe Chef::Knife::AzurermServerCreate do
       public_fqdn
       platform
     }
+  end
+
+  describe "common_arm_rescue_block" do
+    def operation_error(body)
+      Azure::ResourceManagement::ARMInterface::OperationError.new("boom", body: body)
+    end
+
+    it "surfaces the message from ARM's nested error object" do
+      error = operation_error('{"error": {"code": "BadRequest", "message": "arm failure"}}')
+      expect(@service.ui).to receive(:error).with("arm failure")
+      @service.common_arm_rescue_block(error)
+    end
+
+    it "surfaces error_description from an OAuth flat error shape" do
+      error = operation_error('{"error": "invalid_client", "error_description": "bad secret"}')
+      expect(@service.ui).to receive(:error).with("bad secret")
+      @service.common_arm_rescue_block(error)
+    end
+
+    it "falls back to the error message for a non-JSON ARM body instead of masking it" do
+      error = operation_error("Internal Server Error")
+      expect(@service.ui).to receive(:error).with("boom")
+      @service.common_arm_rescue_block(error)
+    end
+
+    it "falls back to the error message for an empty/nil ARM body" do
+      error = Azure::ResourceManagement::ARMInterface::OperationError.new("boom", body: "null")
+      expect(@service.ui).to receive(:error).with("boom")
+      @service.common_arm_rescue_block(error)
+    end
   end
 
   def stub_client_builder

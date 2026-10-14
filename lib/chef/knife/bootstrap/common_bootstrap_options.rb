@@ -51,11 +51,9 @@ class Chef
             option :azure_storage_account,
               short: "-a NAME",
               long: "--azure-storage-account NAME",
-              description: "Required for advanced server-create option.
-                            A name for the storage account that is unique within Windows Azure. Storage account names must be
-                            between 3 and 24 characters in length and use numbers and lower-case letters only.
-                            This name is the DNS prefix name and can be used to access blobs, queues, and tables in the storage account.
-                            For example: http://ServiceName.blob.core.windows.net/mycontainer/"
+              description: "Deprecated. No longer has any effect: VM OS disks now use Azure managed
+                            disks instead of an unmanaged VHD in a storage account. Kept only for
+                            backward compatibility with existing command invocations."
 
             option :azure_vm_name,
               long: "--azure-vm-name NAME",

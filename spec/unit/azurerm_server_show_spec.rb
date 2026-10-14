@@ -26,15 +26,15 @@ describe Chef::Knife::AzurermServerShow do
     @arm_server_instance = create_arm_instance(Chef::Knife::AzurermServerShow)
     @arm_server_instance.config[:azure_resource_group_name] = "RESOURCE_GROUP"
     @arm_server_instance.name_args = %w{vmname}
-    @compute_client = double("ComputeManagementClient")
-    @network_client = double("NetworkManagementClient")
-    allow(@arm_server_instance.service).to receive(:compute_management_client).and_return(@compute_client)
-    allow(@arm_server_instance.service).to receive(:network_resource_client).and_return(@network_client)
+    @arm_client = double("ArmClient")
+    @compute_client = @arm_client
+    @network_client = @arm_client
+    allow(@arm_server_instance.service).to receive(:arm_client).and_return(@arm_client)
     allow_any_instance_of(Chef::Knife::AzurermBase).to receive(:get_azure_cli_version).and_return("1.0.0")
   end
 
   it "raises error if there is no server with the given name" do
-    expect(@compute_client).to receive_message_chain(:virtual_machines, :get).and_raise("ResourceNotFound")
+    expect(@compute_client).to receive(:get_virtual_machine).and_raise("ResourceNotFound")
     expect(@arm_server_instance.service).to receive(:common_arm_rescue_block)
     @arm_server_instance.run
   end
@@ -64,9 +64,9 @@ describe Chef::Knife::AzurermServerShow do
     allow(@network_interface_data.ip_configurations[0]).to receive(:public_ipaddress).and_return(@public_ip_id_data)
     allow(@public_ip_id_data).to receive(:id).and_return(public_ip_id)
     expect(public_ip_id).to receive(:split).with("/").and_return(public_ip_name)
-    expect(@compute_client).to receive_message_chain(:virtual_machines, :get).and_return(@server)
-    expect(@network_client).to receive_message_chain(:network_interfaces, :get).and_return(@network_interface_data)
-    expect(@network_client).to receive_message_chain(:public_ipaddresses, :get).and_return(@public_ip_data)
+    expect(@compute_client).to receive(:get_virtual_machine).and_return(@server)
+    expect(@network_client).to receive(:get_network_interface).and_return(@network_interface_data)
+    expect(@network_client).to receive(:get_public_ip_address).and_return(@public_ip_data)
 
     details = [ "Server Name", @server.name,
                 "Size", @server.hardware_profile.vm_size,
@@ -103,8 +103,8 @@ describe Chef::Knife::AzurermServerShow do
     expect(network_interface_id).to receive(:split).with("/").and_return(network_interface_name)
     allow(@network_interface_data).to receive(:ip_configurations).and_return(["ip_configurations"])
     allow(@network_interface_data.ip_configurations[0]).to receive(:public_ipaddress).and_return(public_ip_id_data)
-    expect(@compute_client).to receive_message_chain(:virtual_machines, :get).and_return(@server)
-    expect(@network_client).to receive_message_chain(:network_interfaces, :get).and_return(@network_interface_data)
+    expect(@compute_client).to receive(:get_virtual_machine).and_return(@server)
+    expect(@network_client).to receive(:get_network_interface).and_return(@network_interface_data)
 
     details = [ "Server Name", @server.name,
                 "Size", @server.hardware_profile.vm_size,
@@ -147,9 +147,9 @@ describe Chef::Knife::AzurermServerShow do
     allow(@network_interface_data.ip_configurations[0]).to receive(:public_ipaddress).and_return(@public_ip_id_data)
     allow(@public_ip_id_data).to receive(:id).and_return(public_ip_id)
     expect(public_ip_id).to receive(:split).with("/").and_return(public_ip_name)
-    expect(@compute_client).to receive_message_chain(:virtual_machines, :get).and_return(@server)
-    expect(@network_client).to receive_message_chain(:network_interfaces, :get).and_return(@network_interface_data)
-    expect(@network_client).to receive_message_chain(:public_ipaddresses, :get).and_return(@public_ip_data)
+    expect(@compute_client).to receive(:get_virtual_machine).and_return(@server)
+    expect(@network_client).to receive(:get_network_interface).and_return(@network_interface_data)
+    expect(@network_client).to receive(:get_public_ip_address).and_return(@public_ip_data)
 
     details = [ "Server Name", @server.name,
                 "Size", @server.hardware_profile.vm_size,

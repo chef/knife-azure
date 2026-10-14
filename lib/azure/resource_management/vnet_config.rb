@@ -36,8 +36,8 @@ module Azure::ARM
     end
 
     def get_vnet(resource_group_name, vnet_name)
-      network_resource_client.virtual_networks.get(resource_group_name, vnet_name)
-    rescue MsRestAzure::AzureOperationError => error
+      arm_client.get_virtual_network(resource_group_name, vnet_name)
+    rescue Azure::ResourceManagement::Rest::OperationError => error
       if error.body
         err_json = JSON.parse(error.response.body)
         if err_json["error"]["code"] == "ResourceNotFound"
@@ -50,7 +50,7 @@ module Azure::ARM
 
     ## lists all subnets under a virtual network or lists subnets of only a particular address space ##
     def subnets_list(resource_group_name, vnet_name, address_prefix = nil)
-      list = network_resource_client.subnets.list(resource_group_name, vnet_name)
+      list = arm_client.list_subnets(resource_group_name, vnet_name)
       !address_prefix.nil? && !list.empty? ? subnets_list_for_specific_address_space(address_prefix, list) : list
     end
 

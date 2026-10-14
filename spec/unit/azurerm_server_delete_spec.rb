@@ -26,7 +26,7 @@ describe Chef::Knife::AzurermServerDelete do
     before do
       @arm_server_instance = create_arm_instance(Chef::Knife::AzurermServerDelete)
       allow(@arm_server_instance.service.ui).to receive(:confirm).and_return(true)
-      @compute_client = double("ComputeManagementClient")
+      @compute_client = double("ArmClient")
 
       @service = @arm_server_instance.service
 
@@ -45,13 +45,13 @@ describe Chef::Knife::AzurermServerDelete do
       allow(delete_server).to receive(:nil?).and_return("false")
 
       expect(@arm_server_instance).to receive(:validate_arm_keys!).with(:azure_resource_group_name)
-      allow(@arm_server_instance.service).to receive(:compute_management_client).and_return(@compute_client)
-      allow(@compute_client).to receive_message_chain(:virtual_machines, :get).with("test-rg-group", "VM001").and_return(@server_detail)
+      allow(@arm_server_instance.service).to receive(:arm_client).and_return(@compute_client)
+      allow(@compute_client).to receive(:get_virtual_machine).with("test-rg-group", "VM001").and_return(@server_detail)
 
       expect(@service).to receive(:msg_pair).with(@service.ui, "VM Name", "VM001")
       expect(@service).to receive(:msg_pair).with(@service.ui, "VM Size", "10")
       expect(@service).to receive(:msg_pair).with(@service.ui, "VM OS", "Linux")
-      allow(@compute_client).to receive_message_chain(:virtual_machines, :delete).with("test-rg-group", "VM001").and_return(delete_server)
+      allow(@compute_client).to receive(:delete_virtual_machine).with("test-rg-group", "VM001").and_return(delete_server)
       expect(@service.ui).to receive(:info).once
       expect(@service.ui).to receive(:warn).twice
       @arm_server_instance.run
@@ -60,8 +60,8 @@ describe Chef::Knife::AzurermServerDelete do
     it "does nothing if the server is not found" do
       server = double("server", name: "VM002")
       expect(@arm_server_instance).to receive(:validate_arm_keys!).with(:azure_resource_group_name)
-      expect(@arm_server_instance.service).to receive(:compute_management_client).and_return(@compute_client)
-      expect(@compute_client).to receive_message_chain(:virtual_machines, :get).with("test-rg-group", "VM001").and_return(server)
+      expect(@arm_server_instance.service).to receive(:arm_client).and_return(@compute_client)
+      expect(@compute_client).to receive(:get_virtual_machine).with("test-rg-group", "VM001").and_return(server)
       expect(@service.ui).to receive(:warn).once
       @arm_server_instance.run
     end
@@ -76,7 +76,7 @@ describe Chef::Knife::AzurermServerDelete do
 
     it "rescues exception if the delete process fails" do
       expect(@arm_server_instance).to receive(:validate_arm_keys!).with(:azure_resource_group_name)
-      allow(@service).to receive(:delete_server).and_raise(MsRestAzure::AzureOperationError, "ResourceNotFound")
+      allow(@service).to receive(:delete_server).and_raise(Azure::ResourceManagement::ARMInterface::OperationError, "ResourceNotFound")
       allow(@service.ui).to receive(:error).twice
       @arm_server_instance.run
     end
@@ -87,7 +87,7 @@ describe Chef::Knife::AzurermServerDelete do
       @arm_server_instance = create_arm_instance(Chef::Knife::AzurermServerDelete)
       allow(@arm_server_instance.service.ui).to receive(:confirm).and_return(true)
       allow_any_instance_of(Chef::Knife::AzurermBase).to receive(:get_azure_cli_version).and_return("1.0.0")
-      @resource_client = double("ResourceManagementClient")
+      @resource_client = double("ArmClient")
       @service = @arm_server_instance.service
 
       @arm_server_instance.config[:azure_resource_group_name] = "test-rg-group"
@@ -102,8 +102,8 @@ describe Chef::Knife::AzurermServerDelete do
       allow(@arm_server_instance.service.ui).to receive(:confirm).and_return(true)
 
       expect(@arm_server_instance).to receive(:validate_arm_keys!).with(:azure_resource_group_name)
-      expect(@arm_server_instance.service).to receive(:resource_management_client).and_return(@resource_client)
-      expect(@resource_client).to receive_message_chain(:resource_groups, :delete).with("test-rg-group").and_return(server)
+      expect(@arm_server_instance.service).to receive(:arm_client).and_return(@resource_client)
+      expect(@resource_client).to receive(:delete_resource_group).with("test-rg-group").and_return(server)
       expect(@service.ui).to receive(:warn).thrice
       expect(@service.ui).to receive(:info).twice
 

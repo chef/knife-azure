@@ -26,7 +26,7 @@ describe Chef::Knife::AzurermServerList do
     @arm_server_instance = create_arm_instance(Chef::Knife::AzurermServerList)
     @service = @arm_server_instance.service
 
-    @compute_client = double("ComputeManagementClient")
+    @compute_client = double("ArmClient")
 
     @server1 = double("server1", name: "MyVM1", id: double, location: "west-us")
     allow(@server1.id).to receive(:split).and_return(["", "subscriptions", "subscription_id", "resourcegroups", "myresourcegroup1", "Microsoft.compute", "virtualmachines", "MyVM1"])
@@ -53,7 +53,7 @@ describe Chef::Knife::AzurermServerList do
     ).and_return("windows")
 
     allow(@arm_server_instance.service).to receive(
-      :compute_management_client
+      :arm_client
     ).and_return(@compute_client)
     allow_any_instance_of(Chef::Knife::AzurermBase).to receive(:get_azure_cli_version).and_return("1.0.0")
   end
@@ -64,8 +64,8 @@ describe Chef::Knife::AzurermServerList do
     end
 
     it "should display only labels if there are no servers" do
-      expect(@compute_client).to receive_message_chain(
-        :virtual_machines, :list_all
+      expect(@compute_client).to receive(
+        :list_all_virtual_machines
       ).and_return([])
       expect(@arm_server_instance.service).to receive(:display_list).with(
         @arm_server_instance.service.ui,
@@ -80,8 +80,8 @@ describe Chef::Knife::AzurermServerList do
                     @server2.name, @server2.id.split[4], @server2.location, @server2.provisioning_state, @server2.storage_profile.os_disk.os_type,
                     @server3.name, @server3.id.split[4], @server3.location, @server3.provisioning_state, @server3.storage_profile.os_disk.os_type
                    ]
-      expect(@compute_client).to receive_message_chain(
-        :virtual_machines, :list_all
+      expect(@compute_client).to receive(
+        :list_all_virtual_machines
       ).and_return(
         [@server1, @server2, @server3]
       )
@@ -100,8 +100,8 @@ describe Chef::Knife::AzurermServerList do
     end
 
     it "should display only labels if there are no servers under the given resource_group" do
-      expect(@compute_client).to receive_message_chain(
-        :virtual_machines, :list
+      expect(@compute_client).to receive(
+        :list_virtual_machines
       ).and_return([])
       expect(@arm_server_instance.service).to receive(:display_list).with(
         @arm_server_instance.service.ui,
@@ -115,8 +115,8 @@ describe Chef::Knife::AzurermServerList do
       output_row = [@server1.name, @server1.id.split[4], @server1.location, @server1.provisioning_state, @server1.storage_profile.os_disk.os_type,
                     @server3.name, @server3.id.split[4], @server3.location, @server3.provisioning_state, @server3.storage_profile.os_disk.os_type
                    ]
-      expect(@compute_client).to receive_message_chain(
-        :virtual_machines, :list
+      expect(@compute_client).to receive(
+        :list_virtual_machines
       ).and_return(
         [@server1, @server3]
       )
