@@ -1,0 +1,49 @@
+# Scenario catalogue for the knife-azure e2e harness.
+# Each scenario runs on every host platform (mac / linux / windows) against
+# a target VM OS (linux / windows). Fill qmetry_test_case_id with the
+# CHEF-TC-xxxxx key of the matching QMetry test case; scenarios with an
+# empty id are run but never reported to QMetry.
+#
+# Scenarios for one target OS run in the listed order: show/list/delete
+# depend on create. If create fails they are reported as SKIP.
+scenarios:
+  - id: AZ-LNX-01
+    title: knife azurerm server create - Linux VM
+    command: create
+    target_os: linux
+    qmetry_test_case_id: "CHEF-TC-23765"
+  # - id: AZ-LNX-02
+  #   title: knife azurerm server show - Linux VM
+  #   command: show
+  #   target_os: linux
+  #   qmetry_test_case_id: ""
+  # - id: AZ-LNX-03
+  #   title: knife azurerm server list - Linux VM
+  #   command: list
+  #   target_os: linux
+  #   qmetry_test_case_id: ""
+  # - id: AZ-LNX-04
+  #   title: knife azurerm server delete - Linux VM
+  #   command: delete
+  #   target_os: linux
+  #   qmetry_test_case_id: ""
+  # - id: AZ-WIN-01
+  #   title: knife azurerm server create - Windows VM
+  #   command: create
+  #   target_os: windows
+  #   qmetry_test_case_id: ""
+  # - id: AZ-WIN-02
+  #   title: knife azurerm server show - Windows VM
+  #   command: show
+  #   target_os: windows
+  #   qmetry_test_case_id: ""
+  # - id: AZ-WIN-03
+  #   title: knife azurerm server list - Windows VM
+  #   command: list
+  #   target_os: windows
+  #   qmetry_test_case_id: ""
+  # - id: AZ-WIN-04
+  #   title: knife azurerm server delete - Windows VM
+  #   command: delete
+  #   target_os: windows
+  #   qmetry_test_case_id: ""

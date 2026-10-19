@@ -1,0 +1,46 @@
+# knife-azure e2e config template.
+#
+# Copy to test/e2e/config.yml (git-ignored), then replace every {{placeholder}}.
+# run_tests.sh refuses to run while any {{...}} placeholder is left.
+#
+# Key -> knife flag mapping (see test/e2e/lib/cfg.rb):
+#   resource-group-name, vm-name, service-location, vm-size, image-reference-*
+#                         -> --azure-<key>
+#   confirm: true         -> --yes
+#   node-verify-api-cert  -> --[no-]node-verify-api-cert
+#   everything else       -> --<key> <value>
+#   Empty values are omitted.
+
+# AzureRM server configuration
+# Linux VM configuration
+linux:
+  resource-group-name: "nikhil-test"
+  vm-name: "knife-azure-test-vm1"
+  service-location: "eastus"
+  image-reference-publisher: "Canonical"
+  image-reference-offer: "0001-com-ubuntu-server-jammy"
+  image-reference-sku: "22_04-lts"
+  image-reference-version: "latest"
+  vm-size: "Standard_B1s"
+  connection-user: "azureuser"
+  connection-password: "{{connection-password}}"
+  node-ssl-verify-mode: "none"
+  node-verify-api-cert: false
+  bootstrap-version: ""   # optional; empty = flag omitted
+  confirm: true
+
+# Windows VM configuration
+windows:
+  resource-group-name: "nikhil-test"
+  vm-name: "knife-azure-win1"
+  service-location: "eastus"
+  image-reference-publisher: "MicrosoftWindowsServer"
+  image-reference-offer: "WindowsServer"
+  image-reference-sku: "2022-datacenter-azure-edition"
+  image-reference-version: "latest"
+  vm-size: "Standard_D4s_v6"
+  connection-user: "azureuser"
+  connection-password: "{{windows-connection-password}}"
+  node-ssl-verify-mode: "none"
+  node-verify-api-cert: false
+  confirm: true
