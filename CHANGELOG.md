@@ -1,31 +1,28 @@
 # knife-azure Change Log
 
-<!-- latest_release 5.0.1 -->
-## [v5.0.1](https://github.com/chef/knife-azure/tree/v5.0.1) (2026-10-15)
-
-#### Merged Pull Requests
-- Fix overly permissive regex range in VM name validation [#567](https://github.com/chef/knife-azure/pull/567) ([nikhil2611](https://github.com/nikhil2611))
+<!-- latest_release -->
 <!-- latest_release -->
 
-<!-- release_rollup since=4.0.0 -->
-### Changes not yet released to rubygems.org
-
-#### Merged Pull Requests
-- Fix overly permissive regex range in VM name validation [#567](https://github.com/chef/knife-azure/pull/567) ([nikhil2611](https://github.com/nikhil2611)) <!-- 5.0.1 -->
-- CHEF-15721: Ruby 3.4 support, ARM REST client migration, and Azure bootstrap/licensing fixes [#564](https://github.com/chef/knife-azure/pull/564) ([nikhil2611](https://github.com/nikhil2611)) <!-- 5.0.0 -->
-- CHEF-32107: Add BlackDuck Polaris CI stub and update SonarQube configuration [#565](https://github.com/chef/knife-azure/pull/565) ([sanjain-progress](https://github.com/sanjain-progress)) <!-- 4.0.3 -->
-- CHEF-38124 / CHEF-27659 Update and standardize copyright notices to Progress Software Corporation - copyright_update [#563](https://github.com/chef/knife-azure/pull/563) ([clintoncwolfe](https://github.com/clintoncwolfe)) <!-- 4.0.2 -->
-- Add comprehensive GitHub Copilot instructions and MCP server configuration [#559](https://github.com/chef/knife-azure/pull/559) ([ashiqueps](https://github.com/ashiqueps)) <!-- 4.0.1 -->
+<!-- release_rollup -->
 <!-- release_rollup -->
 
 <!-- latest_stable_release -->
+## [v5.0.1](https://github.com/chef/knife-azure/tree/v5.0.1) (2026-10-22)
+
+#### Merged Pull Requests
+- Add comprehensive GitHub Copilot instructions and MCP server configuration [#559](https://github.com/chef/knife-azure/pull/559) ([ashiqueps](https://github.com/ashiqueps))
+- CHEF-38124 / CHEF-27659 Update and standardize copyright notices to Progress Software Corporation - copyright_update [#563](https://github.com/chef/knife-azure/pull/563) ([clintoncwolfe](https://github.com/clintoncwolfe))
+- CHEF-32107: Add BlackDuck Polaris CI stub and update SonarQube configuration [#565](https://github.com/chef/knife-azure/pull/565) ([sanjain-progress](https://github.com/sanjain-progress))
+- CHEF-15721: Ruby 3.4 support, ARM REST client migration, and Azure bootstrap/licensing fixes [#564](https://github.com/chef/knife-azure/pull/564) ([nikhil2611](https://github.com/nikhil2611))
+- Fix overly permissive regex range in VM name validation [#567](https://github.com/chef/knife-azure/pull/567) ([nikhil2611](https://github.com/nikhil2611))
+<!-- latest_stable_release -->
+
 ## [v4.0.0](https://github.com/chef/knife-azure/tree/v4.0.0) (2021-06-03)
 
 #### Merged Pull Requests
 - Update activesupport requirement from 6.0.3.1 to 6.0.3.3 [#536](https://github.com/chef/knife-azure/pull/536) ([dependabot-preview[bot]](https://github.com/dependabot-preview[bot]))
 - Upgrade to GitHub-native Dependabot [#544](https://github.com/chef/knife-azure/pull/544) ([dependabot-preview[bot]](https://github.com/dependabot-preview[bot]))
 - Remove the legacy azure commands that use the new deprecated API [#548](https://github.com/chef/knife-azure/pull/548) ([tas50](https://github.com/tas50))
-<!-- latest_stable_release -->
 
 ## [v3.0.6](https://github.com/chef/knife-azure/tree/v3.0.6) (2020-09-09)
 
