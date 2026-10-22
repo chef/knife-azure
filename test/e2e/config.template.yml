@@ -1,9 +1,9 @@
 # knife-azure e2e config template.
 #
 # Copy to test/e2e/config.yml (git-ignored), then replace every {{placeholder}}.
-# run_tests.sh refuses to run while any {{...}} placeholder is left.
+# run_plan.rb needs every value filled in (no {{...}} left).
 #
-# Key -> knife flag mapping (see test/e2e/lib/cfg.rb):
+# Key -> knife flag mapping (applied by test/e2e/scripts/run_plan.rb):
 #   resource-group-name, vm-name, service-location, vm-size, image-reference-*
 #                         -> --azure-<key>
 #   confirm: true         -> --yes
