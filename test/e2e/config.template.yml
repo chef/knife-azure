@@ -1,21 +1,20 @@
 # knife-azure e2e config template.
 #
-# Copy to test/e2e/config.yml (git-ignored), then replace every {{placeholder}}.
-# run_plan.rb needs every value filled in (no {{...}} left).
+# Copy to test/e2e/config.yml (git-ignored) and replace every <fill-me> value.
+# QMetry step commands contain {{placeholders}}; they are resolved from the
+# section matching the VM OS (linux: / windows:).
 #
-# Key -> knife flag mapping (applied by test/e2e/scripts/run_plan.rb):
-#   resource-group-name, vm-name, service-location, vm-size, image-reference-*
-#                         -> --azure-<key>
-#   confirm: true         -> --yes
-#   node-verify-api-cert  -> --[no-]node-verify-api-cert
-#   everything else       -> --<key> <value>
-#   Empty values are omitted.
+# Placeholder -> config key:
+#   {{vm-name}}, {{vm-name-timestamp}}, {{vm-name-linux}}, {{vm-name-window}}
+#                          -> vm-name-linux / vm-name-window + "-<timestamp>"
+#                             (one unique VM per test case, shared by its steps)
+#   {{<any other key>}}    -> same key in the section (e.g. {{vm-size}})
+# Keys with an empty value are dropped from the command (with their flag).
+# {{current-timestamp}} = MMddHHmmss, resolved when the run starts.
 
-# AzureRM server configuration
-# Linux VM configuration
 linux:
-  resource-group-name: "nikhil-test"
-  vm-name: "knife-azure-test-vm1"
+  resource-group-name: "resource-group-name"
+  vm-name-linux: "knife-azure-test-vm1-{{current-timestamp}}"
   service-location: "eastus"
   image-reference-publisher: "Canonical"
   image-reference-offer: "0001-com-ubuntu-server-jammy"
@@ -23,16 +22,14 @@ linux:
   image-reference-version: "latest"
   vm-size: "Standard_B1s"
   connection-user: "azureuser"
-  connection-password: "{{connection-password}}"
+  connection-password: "TestPass123!@#"
   node-ssl-verify-mode: "none"
   node-verify-api-cert: false
-  bootstrap-version: ""   # optional; empty = flag omitted
   confirm: true
 
-# Windows VM configuration
 windows:
-  resource-group-name: "nikhil-test"
-  vm-name: "knife-azure-win1"
+  resource-group-name: "resource-group-name"
+  vm-name-window: "knife-azure-test-{{current-timestamp}}"   # Windows VM names are max 15 chars
   service-location: "eastus"
   image-reference-publisher: "MicrosoftWindowsServer"
   image-reference-offer: "WindowsServer"
@@ -40,7 +37,7 @@ windows:
   image-reference-version: "latest"
   vm-size: "Standard_D4s_v6"
   connection-user: "azureuser"
-  connection-password: "{{windows-connection-password}}"
+  connection-password: "TestPass123!@#"
   node-ssl-verify-mode: "none"
   node-verify-api-cert: false
   confirm: true

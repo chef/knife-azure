@@ -1,163 +1,163 @@
 ---
 name: qmetry-test-cycle
-description: 'Ask which QMetry (QTM4J Cloud) test cycle to run, then execute EVERY linked test case with ALL of its steps (knife azurerm commands taken from the QMetry step test data, against real Azure Linux/Windows VMs) from the current host platform, and report each case and step result (Pass/Fail/Not Executed) back into the cycle. Use when asked to "run QMetry cycle CHEF-TR-XXXX", run the knife-azure e2e tests, or sync e2e results into QMetry.'
-argument-hint: 'Optional QMetry test cycle key, e.g. CHEF-TR-3720 (the skill asks if omitted). Optionally "skip confirmation" / "--yes", "preview only", "linux only"/"windows only".'
+description: 'Run a QMetry (QTM4J Cloud) test cycle end to end for knife-azure: read every test case and step from QMetry, show a dry run with real values, then (after approval) run each step''s knife azurerm command against real Azure VMs and report Pass/Fail per step and per case back into the cycle. Use when asked to "run QMetry cycle CHEF-TR-XXXX", run the knife-azure e2e tests, or sync e2e results into QMetry.'
+argument-hint: 'Optional QMetry test cycle key, e.g. CHEF-TR-3787 (asked if omitted). Optionally which cases to run or skip.'
 user-invocable: true
 ---
 
 # knife-azure QMetry Test Cycle Runner
 
-## What this skill does
+Flow: **cycle -> cases -> read steps (ask doubts) -> dry run -> real run -> report to QMetry.**
+No runner script: you (the agent) run each step's knife command yourself with the
+installed `knife` (the released knife-azure gem). No Ruby/bundler setup is needed
+beyond what `knife` itself needs.
 
-1. Asks which test cycle to run (if not given).
-2. Reads all test cases linked to the cycle and all steps of each case from
-   QMetry. No local scenario mapping file is used.
-3. Runs every step's knife command with `test/e2e/scripts/run_plan.rb` on
-   the **current host platform**. Creates **real, billable Azure VMs**.
-4. Reports each case and each step into QMetry as a new execution round
-   using the configured `qtm4j` MCP server.
+The real run creates **real, billable Azure VMs**. The only questions are: which
+cycle, which cases, and whether to show a dry run (plus missing config values).
+**No other confirmation is asked**: once cases are chosen (and the dry run shown, if
+chosen), run for real straight away and report to QMetry automatically.
+Never write to QMetry before the real run finished.
 
-It does not install or configure MCP servers. **If `qtm4j_*` tools are
-unavailable, stop and tell the user.**
+## Avoiding tool-permission prompts
 
-## Prerequisites (check first, stop and tell the user if missing)
+The only prompts besides the case/dry-run question come from the Copilot CLI's
+tool-permission system, not from this skill. Start the CLI pre-approved:
 
-- **QMetry MCP server** named `qtm4j` (tools appear as `qtm4j-qtm4j_*`).
-  Setup: Jira → **QMetry → Configuration → Open API** → generate an API Key;
-  install `@smartbear/mcp` (Node.js 22+) e.g. under
-  `~/.copilot/mcp-servers/smartbear-mcp`; merge `mcp-config.template.json`
-  (this folder) into `~/.copilot/mcp-config.json` (US:
-  `https://qtmcloud.qmetry.com`; AU: `https://syd-qtmcloud.qmetry.com`).
-  Keep it private (`chmod 600`), never commit a key. Restart the CLI.
-- `test/e2e/config.yml`, created from `test/e2e/config.template.yml`, with
-  `linux:` and `windows:` sections and no `{{placeholders}}` left. It
-  supplies every `{{placeholder}}` used in step test data (resource group,
-  location, image, size, user/password, `bootstrap-version`, …). Git-ignored;
-  never commit it or print `connection-password`.
-- Azure auth for knife: knife-azure reads `~/.azure/accessTokens.json`
-  (legacy). After `az login`, regenerate it from
-  `az account get-access-token --resource https://management.azure.com/`;
-  it must have > 10 minutes left. Or use service principal values in a
-  knife.rb (`KNIFE_CONFIG=/path/to/knife.rb`).
-- `bundle install` done in the repo root (or set `KNIFE_CMD`).
-- On Windows hosts run from Git Bash. Ruby must be on PATH.
+```
+copilot --allow-tool 'qtm4j' --allow-tool 'shell(knife)' --allow-tool 'shell(ruby)' --allow-tool 'write'
+```
+
+(or choose "always allow" on first use; `--allow-all-tools` approves everything, use
+only in a trusted environment). Agent: never add your own confirmation questions.
+
+## Prerequisites (check ALL first; if any is missing, stop and tell the user. Do not touch QMetry)
+
+1. `knife azurerm server create --help` works (knife-azure gem installed). Missing
+   `knife`, license, Azure token or MCP server are stop-and-tell items (not asked
+   as values); missing config values are asked, see item 3.
+2. Chef license: `CHEF_LICENSE_KEY` is set in the environment (or knife is already
+   licensed). Never print it.
+3. `test/e2e/config.yml` (copy of `test/e2e/config.template.yml`, git-ignored; never
+   commit it or print passwords). **config.yml has priority:** every placeholder value
+   is taken from it first. If the file or a value is missing, empty, `<fill-me>` or an
+   unresolved `{{...}}` (other than `{{current-timestamp}}` in the vm-name keys), **ask
+   the user for that value** with ask_user (secrets like passwords: never echo them
+   back), use it for this run, and offer to save it into `config.yml`.
+   Exception: `bootstrap-version` and other optional keys may stay empty (flag
+   omitted) unless a step/case needs them (e.g. "Chef Infra Client 18"); then ask.
+4. Azure auth for knife: `~/.azure/accessTokens.json` (from `az login` /
+   `az account get-access-token --resource https://management.azure.com/`) with
+   more than 10 minutes left, or service principal values in a knife.rb
+   (`KNIFE_CONFIG=/path/to/knife.rb`).
+5. QMetry MCP server `qtm4j` (tools `qtm4j-qtm4j_*`). Setup: Jira -> QMetry ->
+   Configuration -> Open API -> API key; install `@smartbear/mcp` (Node 22+) under
+   `~/.copilot/mcp-servers/smartbear-mcp`; merge `mcp-config.template.json` into
+   `~/.copilot/mcp-config.json` (`chmod 600`, never commit the key); restart the CLI.
 
 ## Procedure
 
 ### 1. Get the cycle
-
-If the user did not give a cycle key (`CHEF-TR-…`), **ask for it with the
-ask_user tool** ("Which QMetry test cycle should I run?") and wait. A test
-case key (`CHEF-TC-…`) is not a cycle: ask again.
+If no cycle key (`CHEF-TR-...`) was given, ask with ask_user. A test case key
+(`CHEF-TC-...`) is not a cycle: ask again.
 
 ### 2. Resolve the cycle (hard stop if not found)
-
 `qtm4j-qtm4j_set_project_context({ projectKey: "CHEF" })`, then
-`qtm4j-qtm4j_search_test_cycles({ filter: { searchText: "<CYCLE-KEY>" } })`
-and **exact-match** `key`. No match → STOP, do not substitute another cycle.
+`qtm4j-qtm4j_search_test_cycles({ filter: { searchText: "<KEY>" } })` and exact-match
+`key`. No match -> STOP.
 
-### 3. Load all cases and all steps
+### 3. Choose the test cases (and the dry run) in ONE question
+`qtm4j-qtm4j_search_linked_test_cases_in_test_cycle({ cycleKey })`. List the cases
+(key + summary, in the question text) and ask once (ask_user) with these fields:
+- selection: **run all**, **only selected**, or **all except selected**;
+- case keys as a **free-text field, never a multi-select checklist** (the checklist can
+  come back empty even when the user picked items). Accept "CHEF-TC-23766", "23766" or
+  a comma list ("23765, 23766"); normalise bare numbers to `CHEF-TC-<n>` and check
+  each against the cycle's linked cases (unknown keys -> ask again). If the mode needs
+  keys and the answer is empty, ask once more in plain free text. Show the cases with
+  their numbers in the question text so the user can type them;
+- **show dry run first?** (yes/no, default yes).
+If the user already named cases or the dry run in the request, don't ask for those.
 
-`qtm4j-qtm4j_search_linked_test_cases_in_test_cycle({ cycleKey })`, then
-`qtm4j-qtm4j_get_test_steps({ key })` for **every** linked case (always
-fetch fresh; steps change). Write `/tmp/e2e-plan.json` with the create tool:
+### 4. Read all steps and clear doubts
+For every selected case call `qtm4j-qtm4j_get_test_steps({ key })` (always fresh).
+Read every step. **If anything is unclear, ask the user before going on**, e.g.
+a step with no knife command, an unknown `{{placeholder}}`, a Chef version that
+needs `bootstrap-version`, a Windows case with no password, or a step order that
+looks wrong. Do not guess.
 
-```json
-[{ "testCaseKey": "CHEF-TC-1", "summary": "...",
-   "steps": [{ "seqNo": 1, "stepDetails": "...", "testData": "..." }] }]
-```
+### 5. Build the commands (placeholders -> real values)
+Take the knife command from each step's `testData` (strip `{noformat}`, join `\`
+continuations, fix nesting like `{{{{vm-name-timestamp}} }}`).
+Use the `windows:` section if the case summary mentions Windows, else `linux:`.
 
-Show the user the cases and step counts. If the user named specific test
-cases (e.g. "only CHEF-TC-23765"), include only those in the plan. If they
-asked to preview only,
-stop here (optionally run `run_plan.rb /tmp/e2e-plan.json --dry-run`).
+Value priority: 1) `config.yml` section value, 2) otherwise ask the user (never
+invent defaults, never use values from the template).
 
-### 4. Confirm before creating cloud resources
+- `{{key}}` -> value of `key` in the section.
+- `{{vm-name}}`, `{{vm-name-timestamp}}`, `{{vm-name-linux}}`, `{{vm-name-window}}`
+  -> the section's `vm-name-linux` / `vm-name-window` with `{{current-timestamp}}`
+  replaced by `date +%m%d%H%M%S`. **One unique VM name per test case**, shared by all
+  its steps. Always timestamped, so names never collide.
+- Empty optional keys (e.g. `bootstrap-version`) -> drop that flag. A required
+  value that is missing or empty in config -> ask the user (see Prerequisites 3),
+  before the dry run so the dry run shows the final values.
+- `server delete` gets `--yes`.
 
-Show the cases, steps, host platform and resource group / VM names from
-`config.yml` (not passwords), and ask for explicit confirmation unless the
-user said "skip confirmation"/"--yes". Note any `bootstrap-version` need
-(e.g. a case saying Chef Client 18) and check `config.yml` has it set.
+### 6. Dry run (only if chosen in step 3; do not ask again)
+If the user chose the dry run in step 3, print, per case and step, the **exact
+command with real values, including the password exactly as it will be executed**
+(the dry run is only for the user; logs and QMetry evidence still mask the password),
+plus the resource group, VM name and OS. Execute nothing, make no Azure or QMetry
+calls. Ask again for any remaining doubt. If the user declined the dry run, skip it.
 
-### 5. Run
+### 7. Real run (no confirmation)
+Do NOT ask for any confirmation, and do not pre-check or ask about passwords/tokens
+beyond Prerequisites. Start immediately. For each case, in order, for each step in order:
+run the command (a single `knife ...` invocation) with a long timeout (VM creation
+takes minutes), capture the full output and exit code.
 
-```bash
-ruby test/e2e/scripts/run_plan.rb /tmp/e2e-plan.json [--os linux|windows]
-```
+- Step **Pass** = exit code 0 and no `ERROR:` line. Otherwise **Fail**.
+- On a failing step, stop that case: remaining steps are **Not Executed**, the case is
+  **Fail**; continue with the next case.
+- All steps Pass -> case **Pass**.
+- A step with no knife command -> Not Executed; the case is then not Pass.
+- Keep a log per case under `test/e2e/results/` (git-ignored): the command (masked),
+  full output, `(exit code: N)`.
 
-Run async and wait (VM creation takes minutes). Behaviour:
+If interrupted, tell the user which resource group may still hold VMs.
 
-- The knife command is extracted from each step's `testData`;
-  `{{placeholders}}` come from the `linux:`/`windows:` section of
-  `config.yml` (Windows if the case summary mentions it, else Linux).
-- `{{vm-name}}` / `{{vm-name-timestamp}}` = one unique VM per case, shared by
-  all its steps. Flags whose config value is empty are dropped.
-- `server delete` gets `--yes` automatically.
-- A failing step (non-zero exit or an `ERROR:` line) stops that case; later
-  steps are SKIP. Steps without a knife command are NOT_RUN.
-
-stdout JSON: `[{ testCaseKey, summary, hostPlatform, targetOs, status
-(PASS|FAIL|PARTIAL|NOT_RUN), durationSeconds, logFile, vmName,
-stepResults: [{ seqNo, command, status }] }]`. This is the only source of
-truth. Progress goes to stderr. Before trusting a PASS, optionally confirm
-with `az vm list -g <rg>` that the VM state matches.
-
-If interrupted, VMs may remain: tell the user which resource groups to check.
-
-### 6. Confirm QMetry writes
-
-List each case key with its result; require confirmation unless opted out.
-
-### 7. Report each result
-
-For every case, in order:
+### 8. Report to QMetry (automatic, only after the run finished)
+Pass or Fail (or Not Executed), report straight away: **do not ask again**. If a
+failure was caused by the environment (auth, license, network), still report it,
+with the error as evidence.
+For each case:
 
 ```
 qtm4j-qtm4j_start_new_execution({ testCycleKey, testCaseKey,
-  executionPlannedDate: "<today dd/MMM/yyyy, e.g. 22/Oct/2026>" })
-
+  executionPlannedDate: "<today dd/MMM/yyyy>" })
 qtm4j-qtm4j_update_test_case_execution({ testCycleKey, testCaseKey,
-  executionResultId: "<result NAME: PASS->Pass, FAIL->Fail, PARTIAL/NOT_RUN->Not Executed>",
-  comment: "<summary> — <Status> on <hostPlatform> host, <targetOs> VM. <on Fail: last ~20 log lines>",
-  actualTime: "<HH:mm:ss, e.g. 125s -> 00:02:05>" })
+  executionResultId: "Pass|Fail|Not Executed",
+  comment: "<summary> - <Result> on <host> host, <OS> VM. <on Fail: last ~20 log lines>",
+  actualTime: "HH:mm:ss" })
 ```
-
-(Assignee is optional; omit it if no Jira user tool is available.)
-
-Then **every step** of the case:
-`qtm4j-qtm4j_update_test_step_execution({ testCycleKey, testCaseKey,
+Then every step: `qtm4j-qtm4j_update_test_step_execution({ testCycleKey, testCaseKey,
 testStepSeqNo, executionResultId, actualResult, comment })`.
 
-- Result per `stepResults` entry: PASS->Pass, FAIL->Fail,
-  SKIP/NOT_RUN->Not Executed.
-- `actualResult` = full, untruncated evidence from `logFile` between
-  `=== STEP N/… ===` and `=== STEP N RESULT: … ===`: the `$ bundle exec
-  knife …` line (password already masked), entire output and the
-  `(exit code: N)` line. Never summarize or truncate.
-- `comment` = plain-language interpretation for a reviewer: what the step
-  checked, what happened, and whether it matches the expected result.
+- `actualResult` = the full, untruncated step evidence: masked command line, entire
+  output and the `(exit code: N)` line.
+- `comment` = plain-language reviewer note: what the step checked, what happened,
+  whether it matches the expected result.
+- If a QMetry call errors, note it and continue.
 
-If any MCP call errors, record it prominently and continue.
-
-### 8. Final summary
-
+### 9. Final summary
 | QMetry Key | Steps (pass/total) | Host | Target VM | Result | QMetry Update |
 |---|---|---|---|---|---|
 
-Plus any ❌ QMetry updates in prose, and **any VMs still running** in Azure
-(cases with no delete step, or failed/interrupted runs) with an offer to
-delete them.
+Mention any QMetry failures, and any VMs possibly still running (failed case that
+never reached delete). Offer to delete them.
 
 ## Rules
-
-- Always start a new execution round per run; keep no local state/cache.
-- Never write or print secrets (connection passwords, client secrets).
-- No custom QMetry client code — only the `qtm4j` MCP tools.
-- Only set the cycle status to Done (`qtm4j_update_test_cycle`) if asked.
-
-## Example prompts
-
-- `/qmetry-test-cycle` (the skill asks which cycle)
-- `/qmetry-test-cycle Run QMetry cycle CHEF-TR-3787.`
-- `/qmetry-test-cycle Run CHEF-TR-3721 on linux VMs only, skip confirmation.`
-- `/qmetry-test-cycle Preview CHEF-TR-3787, don't run anything.`
+- Never print or store secrets (passwords, license key, API keys).
+- Only the `qtm4j` MCP tools for QMetry; no custom client code.
+- Always a new execution round per run; keep no local cache of QMetry data.
+- Set the cycle to Done only if the user asks.
