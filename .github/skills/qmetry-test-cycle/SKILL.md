@@ -124,6 +124,28 @@ takes minutes), capture the full output and exit code.
 - Keep a log per case under `test/e2e/results/` (git-ignored): the command (masked),
   full output, `(exit code: N)`.
 
+#### Negative / license-removal cases (only when the step says so)
+Applies only to a step whose `expectedResult` says the command "should fail" and to a
+step that deletes the license (`licenses.yaml`). All other cases keep the rules above.
+- **License deletion step** (`~/.chef/licenses.yaml`; Windows `C:\Users\<user>\.chef\licenses.yaml`):
+  first back the file up (e.g. to `licenses.yaml.e2e-bak`), then delete it. Pass = file
+  no longer exists. For the following steps of this case also **unset `CHEF_LICENSE_KEY`**
+  in the process running knife (`Remove-Item Env:CHEF_LICENSE_KEY` / `unset`), otherwise
+  knife stays licensed. If `licenses.yaml` is already absent the step still passes.
+- **Expected-failure step:** the step **Passes only if knife fails** (non-zero exit code
+  or an `ERROR:` line), ideally with a license error. Exit 0 and no `ERROR:` = **Fail**.
+  Without a license, `server create` may sit on a license prompt for about 90 seconds
+  before failing (`LicenseKeyNotFetchedError: Unable to obtain a License Key`). Do not
+  answer the prompt and do not kill it early: use a timeout of at least 5 minutes and
+  wait for knife to exit by itself (when run non-interactively it can fail at once).
+  Do not stop the case on such a step; run the remaining steps.
+- Steps that follow (e.g. `server show` of a VM that was never created) are also
+  expected to fail: same rule. Never create or delete real VMs for these steps.
+- When the case ends (even on error) **always restore** the backup to `licenses.yaml`
+  and restore `CHEF_LICENSE_KEY`, so later cases are licensed again.
+- Report actualResult/comment with the real error text and state that the failure was
+  the expected outcome.
+
 If interrupted, tell the user which resource group may still hold VMs.
 
 ### 8. Report to QMetry (automatic, only after the run finished)
