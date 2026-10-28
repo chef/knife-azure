@@ -13,7 +13,8 @@ installed `knife` (the released knife-azure gem). No Ruby/bundler setup is neede
 beyond what `knife` itself needs.
 
 The real run creates **real, billable Azure VMs**. The only questions are: which
-cycle, which cases, and whether to show a dry run (plus missing config values).
+cycle, which cases (this choice is the explicit approval to create/delete those VMs),
+and whether to show a dry run (plus missing config values).
 **No other confirmation is asked**: once cases are chosen (and the dry run shown, if
 chosen), run for real straight away and report to QMetry automatically.
 Never write to QMetry before the real run finished.
@@ -40,7 +41,10 @@ only in a trusted environment). Agent: never add your own confirmation questions
 3. `test/e2e/config.yml` (copy of `test/e2e/config.template.yml`, git-ignored; never
    commit it or print passwords). **config.yml has priority:** every placeholder value
    is taken from it first. If the file or a value is missing, empty, `<fill-me>` or an
-   unresolved `{{...}}` (other than `{{current-timestamp}}` in the vm-name keys), **ask
+   unresolved `{{...}}` (other than `{{current-timestamp}}` / `{{case-seq}}` in the
+   vm-name keys), or a `connection-password` is a known public/sample value (e.g.
+   `TestPass123!@#`, `Password123!`) or fails Azure complexity (12+ chars, 3 of
+   upper/lower/digit/symbol), **ask
    the user for that value** with ask_user (secrets like passwords: never echo them
    back), use it for this run, and offer to save it into `config.yml`.
    Exception: `bootstrap-version` and other optional keys may stay empty (flag
@@ -76,6 +80,10 @@ If no cycle key (`CHEF-TR-...`) was given, ask with ask_user. A test case key
   keys and the answer is empty, ask once more in plain free text. Show the cases with
   their numbers in the question text so the user can type them;
 - **show dry run first?** (yes/no, default yes).
+The question text must state that the selected cases will **create and delete real,
+billable Azure VMs** in the configured resource group(s); choosing cases is the
+approval for that. Offer a **cancel** choice; on cancel/decline stop without touching
+Azure or QMetry.
 If the user already named cases or the dry run in the request, don't ask for those.
 
 ### 4. Read all steps and clear doubts
@@ -96,18 +104,24 @@ invent defaults, never use values from the template).
 - `{{key}}` -> value of `key` in the section.
 - `{{vm-name}}`, `{{vm-name-timestamp}}`, `{{vm-name-linux}}`, `{{vm-name-window}}`
   -> the section's `vm-name-linux` / `vm-name-window` with `{{current-timestamp}}`
-  replaced by `date +%m%d%H%M%S`. **One unique VM name per test case**, shared by all
-  its steps. Always timestamped, so names never collide.
+  replaced by `date +%m%d%H%M%S` (taken once at run start) and `{{case-seq}}` by the
+  case's 2-digit position in this run (01, 02, ...). **One unique VM name per test
+  case**, shared by all its steps. If the configured name has no `{{case-seq}}`,
+  append `-<case-seq>` (Linux) so same-OS cases never share a name. Check that all
+  resolved names in the run are distinct and that Windows names are at most 15
+  characters (letters, digits, hyphens; not all digits); otherwise ask the user for a
+  shorter `vm-name-window` before going on. Record the resolved name per case and
+  reuse it everywhere (logs, QMetry comments, summary, cleanup).
 - Empty optional keys (e.g. `bootstrap-version`) -> drop that flag. A required
   value that is missing or empty in config -> ask the user (see Prerequisites 3),
   before the dry run so the dry run shows the final values.
 - `server delete` gets `--yes`.
 
 ### 6. Dry run (only if chosen in step 3; do not ask again)
-If the user chose the dry run in step 3, print, per case and step, the **exact
-command with real values, including the password exactly as it will be executed**
-(the dry run is only for the user; logs and QMetry evidence still mask the password),
-plus the resource group, VM name and OS. Execute nothing, make no Azure or QMetry
+If the user chose the dry run in step 3, print, per case and step, the exact
+command with real values **except secrets: passwords (and any license/API key) are
+always shown as `********`**, never in clear text, because the conversation/terminal
+transcript is persisted. Also show the resource group, VM name and OS. Execute nothing, make no Azure or QMetry
 calls. Ask again for any remaining doubt. If the user declined the dry run, skip it.
 
 ### 7. Real run (no confirmation)
@@ -116,13 +130,21 @@ beyond Prerequisites. Start immediately. For each case, in order, for each step 
 run the command (a single `knife ...` invocation) with a long timeout (VM creation
 takes minutes), capture the full output and exit code.
 
-- Step **Pass** = exit code 0 and no `ERROR:` line. Otherwise **Fail**.
+- Step **Pass** = exit code 0, no `ERROR:` line, **and the output shows the step's
+  `expectedResult` postcondition was met**. Check it explicitly, e.g.: `server create`
+  -> output reports the VM created/provisioned with the resolved VM name (and bootstrap
+  succeeded if expected); `server show` -> details of that VM name are printed;
+  `server list` -> the VM name appears (or is absent if expected); `server delete` ->
+  output confirms the VM was deleted. Anything else is **Fail**; if the expected result
+  cannot be verified from the output, run a read-only check (`knife azurerm server
+  show`/`list`) and fail the step if it does not confirm it. Never pass on exit code
+  alone.
 - On a failing step, stop that case: remaining steps are **Not Executed**, the case is
   **Fail**; continue with the next case.
 - All steps Pass -> case **Pass**.
 - A step with no knife command -> Not Executed; the case is then not Pass.
-- Keep a log per case under `test/e2e/results/` (git-ignored): the command (masked),
-  full output, `(exit code: N)`.
+- Keep a log per case under `test/e2e/results/` (git-ignored): the resolved VM name,
+  the command (masked), full output (secrets redacted), `(exit code: N)`.
 
 #### Negative / license-removal cases (only when the step says so)
 Applies only to a step whose `expectedResult` says the command "should fail" and to a
@@ -133,7 +155,11 @@ step that deletes the license (`licenses.yaml`). All other cases keep the rules 
   in the process running knife (`Remove-Item Env:CHEF_LICENSE_KEY` / `unset`), otherwise
   knife stays licensed. If `licenses.yaml` is already absent the step still passes.
 - **Expected-failure step:** the step **Passes only if knife fails** (non-zero exit code
-  or an `ERROR:` line), ideally with a license error. Exit 0 and no `ERROR:` = **Fail**.
+  or an `ERROR:` line) **with the error the step expects** (for license cases: a license
+  error such as `LicenseKeyNotFetchedError` / "Unable to obtain a License Key"; for a
+  `server show` of a never-created VM: VM not found). Exit 0 and no `ERROR:` = **Fail**.
+  A failure for any other reason (Azure auth/token, network, invalid argument, quota,
+  missing gem) = **Fail**, with the real error as evidence.
   Without a license, `server create` may sit on a license prompt for about 90 seconds
   before failing (`LicenseKeyNotFetchedError: Unable to obtain a License Key`). Do not
   answer the prompt and do not kill it early: use a timeout of at least 5 minutes and
@@ -165,8 +191,13 @@ qtm4j-qtm4j_update_test_case_execution({ testCycleKey, testCaseKey,
 Then every step: `qtm4j-qtm4j_update_test_step_execution({ testCycleKey, testCaseKey,
 testStepSeqNo, executionResultId, actualResult, comment })`.
 
+- Only update the case/steps if `start_new_execution` **succeeded** (returned a new
+  execution). If it errors or returns none, do not call the update tools for that
+  case (they would overwrite an older execution); mark its QMetry Update as failed
+  and continue with the next case.
 - `actualResult` = the full, untruncated step evidence: masked command line, entire
-  output and the `(exit code: N)` line.
+  output and the `(exit code: N)` line. Before sending, redact any occurrence of the
+  password, license key or tokens in the output as well (`********`).
 - `comment` = plain-language reviewer note: what the step checked, what happened,
   whether it matches the expected result.
 - If a QMetry call errors, note it and continue.
@@ -179,7 +210,8 @@ Mention any QMetry failures, and any VMs possibly still running (failed case tha
 never reached delete). Offer to delete them.
 
 ## Rules
-- Never print or store secrets (passwords, license key, API keys).
+- Never print or store secrets (passwords, license key, API keys), including in the
+  dry run, logs and QMetry evidence: always `********`.
 - Only the `qtm4j` MCP tools for QMetry; no custom client code.
 - Always a new execution round per run; keep no local cache of QMetry data.
 - Set the cycle to Done only if the user asks.
