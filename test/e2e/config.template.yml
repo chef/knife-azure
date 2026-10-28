@@ -1,6 +1,6 @@
 # knife-azure e2e config template.
 #
-# Copy to test/e2e/config.yml (git-ignored) and replace every <fill-me> value.
+# Copy to test/e2e/config.yml (local only, never commit it) and replace every <fill-me> value.
 # QMetry step commands contain {{placeholders}}; they are resolved from the
 # section matching the VM OS (linux: / windows:).
 #

@@ -42,7 +42,7 @@ real-run approval described above.
    as values); missing config values are asked, see item 3.
 2. Chef license: `CHEF_LICENSE_KEY` is set in the environment (or knife is already
    licensed). Never print it.
-3. `test/e2e/config.yml` (copy of `test/e2e/config.template.yml`, git-ignored; never
+3. `test/e2e/config.yml` (copy of `test/e2e/config.template.yml`; local only, never
    commit it or print passwords). **config.yml has priority:** every placeholder value
    is taken from it first. If the file or a value is missing, empty, `<fill-me>` or an
    unresolved `{{...}}` (other than `{{current-timestamp}}` / `{{case-seq}}` in the
@@ -152,7 +152,7 @@ takes minutes), capture the full output and exit code.
   **Fail**; continue with the next case.
 - All steps Pass -> case **Pass**.
 - A step with no knife command -> Not Executed; the case is then not Pass.
-- Keep a log per case under `test/e2e/results/` (git-ignored): the resolved VM name,
+- Keep a log per case under `test/e2e/results/` (local only, never commit): the resolved VM name,
   the command (masked), full output (secrets redacted), `(exit code: N)`.
 
 #### Negative / license-removal cases (only when the step says so)
