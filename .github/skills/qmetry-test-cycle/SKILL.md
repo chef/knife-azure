@@ -7,16 +7,19 @@ user-invocable: true
 
 # knife-azure QMetry Test Cycle Runner
 
-Flow: **cycle -> cases -> read steps (ask doubts) -> dry run -> real run -> report to QMetry.**
+Flow: **cycle -> cases -> read steps (ask doubts) -> dry run -> approve -> real run -> report to QMetry.**
 No runner script: you (the agent) run each step's knife command yourself with the
 installed `knife` (the released knife-azure gem). No Ruby/bundler setup is needed
 beyond what `knife` itself needs.
 
 The real run creates **real, billable Azure VMs**. The only questions are: which
-cycle, which cases (this choice is the explicit approval to create/delete those VMs),
-and whether to show a dry run (plus missing config values).
-**No other confirmation is asked**: once cases are chosen (and the dry run shown, if
-chosen), run for real straight away and report to QMetry automatically.
+cycle, which cases, whether to show a dry run (plus missing config values), and the
+**real-run approval**:
+- No dry run chosen: choosing the cases (with the billable-VM warning) is the approval.
+- Dry run chosen: after the preview, ask once **"Run for real / Stop after dry run"**.
+  Only "Run for real" starts Azure and QMetry work; anything else ends the skill with
+  nothing created or reported (dry-run-only outcome).
+No other confirmation is asked: once approved, run and report to QMetry automatically.
 Never write to QMetry before the real run finished.
 
 ## Avoiding tool-permission prompts
@@ -29,7 +32,8 @@ copilot --allow-tool 'qtm4j' --allow-tool 'shell(knife)' --allow-tool 'shell(rub
 ```
 
 (or choose "always allow" on first use; `--allow-all-tools` approves everything, use
-only in a trusted environment). Agent: never add your own confirmation questions.
+only in a trusted environment). Agent: never add confirmation questions beyond the
+real-run approval described above.
 
 ## Prerequisites (check ALL first; if any is missing, stop and tell the user. Do not touch QMetry)
 
@@ -117,16 +121,21 @@ invent defaults, never use values from the template).
   before the dry run so the dry run shows the final values.
 - `server delete` gets `--yes`.
 
-### 6. Dry run (only if chosen in step 3; do not ask again)
+### 6. Dry run (only if chosen in step 3), then real-run approval
 If the user chose the dry run in step 3, print, per case and step, the exact
 command with real values **except secrets: passwords (and any license/API key) are
 always shown as `********`**, never in clear text, because the conversation/terminal
 transcript is persisted. Also show the resource group, VM name and OS. Execute nothing, make no Azure or QMetry
-calls. Ask again for any remaining doubt. If the user declined the dry run, skip it.
+calls. Ask again for any remaining doubt.
+Then ask once (ask_user): **"Run for real"** (creates/deletes the listed billable VMs
+and reports to QMetry) or **"Stop after dry run"** (default). Proceed to step 7 only on
+"Run for real"; otherwise stop: no Azure commands, no QMetry writes.
+If the user declined the dry run in step 3, skip this step (case selection was the
+approval).
 
-### 7. Real run (no confirmation)
-Do NOT ask for any confirmation, and do not pre-check or ask about passwords/tokens
-beyond Prerequisites. Start immediately. For each case, in order, for each step in order:
+### 7. Real run (approved)
+Do NOT ask for any further confirmation, and do not pre-check or ask about
+passwords/tokens beyond Prerequisites. Start immediately. For each case, in order, for each step in order:
 run the command (a single `knife ...` invocation) with a long timeout (VM creation
 takes minutes), capture the full output and exit code.
 
