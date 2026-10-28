@@ -28,7 +28,7 @@ The only prompts besides the case/dry-run question come from the Copilot CLI's
 tool-permission system, not from this skill. Start the CLI pre-approved:
 
 ```
-copilot --allow-tool 'qtm4j' --allow-tool 'shell(knife)' --allow-tool 'shell(ruby)' --allow-tool 'write'
+copilot --allow-tool 'qtm4j' --allow-tool 'shell(knife)' --allow-tool 'shell(ruby)' --allow-tool 'shell(az)' --allow-tool 'write'
 ```
 
 (or choose "always allow" on first use; `--allow-all-tools` approves everything, use
@@ -56,7 +56,14 @@ real-run approval described above.
 4. Azure auth for knife: `~/.azure/accessTokens.json` (from `az login` /
    `az account get-access-token --resource https://management.azure.com/`) with
    more than 10 minutes left, or service principal values in a knife.rb
-   (`KNIFE_CONFIG=/path/to/knife.rb`).
+   (`KNIFE_CONFIG=/path/to/knife.rb`). **Both routes also need
+   `knife[:azure_subscription_id]`** in the loaded knife config (knife-azure's
+   `validate_arm_keys!` always requires it). Check with
+   `knife config show knife.azure_subscription_id` (or by reading the config file);
+   if it is missing, stop and tell the user before any case runs or anything is
+   reported to QMetry.
+6. Azure CLI `az` logged in to that same subscription (used only for post-case
+   cleanup of run-owned resources, see step 7).
 5. QMetry MCP server `qtm4j` (tools `qtm4j-qtm4j_*`). Setup: Jira -> QMetry ->
    Configuration -> Open API -> API key; install `@smartbear/mcp` (Node 22+) under
    `~/.copilot/mcp-servers/smartbear-mcp`; merge `mcp-config.template.json` into
@@ -181,7 +188,25 @@ step that deletes the license (`licenses.yaml`). All other cases keep the rules 
 - Report actualResult/comment with the real error text and state that the failure was
   the expected outcome.
 
-If interrupted, tell the user which resource group may still hold VMs.
+#### Cleanup of run-owned resources (every case, Pass or Fail)
+`knife azurerm server delete` removes only the VM; the OS disk, NIC, public IP, NSG
+and vnet that `server create` made stay behind and are billed. After each case that
+ran a `server create` (even if it failed or never reached delete), clean up in that
+case's resource group **only the resources this run created**, identified by the
+case's resolved VM name (unless overridden in the step, knife names them after it):
+- VM `<vm>` (if still present), NIC `<vm>`, public IP `<vm>`, NSG `<vm>_sec_grp_*`,
+  vnet `<vm>`, OS disk `<vm with - and _ removed>`.
+- List candidates first (`az resource list -g <rg> --query "[?starts_with(name,
+  '<vm>') || name=='<disk>']"`), then delete in dependency order: VM, NIC, public IP,
+  NSG, vnet, disk (`az resource delete --ids ...`). Never delete a resource group, or
+  any resource not matching these names (e.g. a vnet/NSG given explicitly in the step
+  or config is shared: leave it).
+- Record cleanup per case (deleted / left behind + error) in the log, QMetry case
+  comment and final summary. A cleanup failure does not change the step results.
+Skip cleanup for expected-failure cases that never created a VM.
+
+If interrupted, tell the user which resource group and VM names may still hold
+resources.
 
 ### 8. Report to QMetry (automatic, only after the run finished)
 Pass or Fail (or Not Executed), report straight away: **do not ask again**. If a
@@ -212,11 +237,11 @@ testStepSeqNo, executionResultId, actualResult, comment })`.
 - If a QMetry call errors, note it and continue.
 
 ### 9. Final summary
-| QMetry Key | Steps (pass/total) | Host | Target VM | Result | QMetry Update |
-|---|---|---|---|---|---|
+| QMetry Key | Steps (pass/total) | Host | Target VM | Result | Cleanup | QMetry Update |
+|---|---|---|---|---|---|---|
 
-Mention any QMetry failures, and any VMs possibly still running (failed case that
-never reached delete). Offer to delete them.
+Mention any QMetry failures and any resources cleanup could not delete (with
+resource group and names). Offer to retry deleting them.
 
 ## Rules
 - Never print or store secrets (passwords, license key, API keys), including in the
