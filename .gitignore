@@ -23,5 +23,5 @@ tmp/
 .idea/
 
 # e2e harness local-only artifacts
-test/e2e/config.yml
-test/e2e/results/
+/test/e2e/config.yml
+/test/e2e/results/
