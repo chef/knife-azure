@@ -191,19 +191,27 @@ step that deletes the license (`licenses.yaml`). All other cases keep the rules 
 #### Cleanup of run-owned resources (every case, Pass or Fail)
 `knife azurerm server delete` removes only the VM; the OS disk, NIC, public IP, NSG
 and vnet that `server create` made stay behind and are billed. After each case that
-ran a `server create` (even if it failed or never reached delete), clean up in that
-case's resource group **only the resources this run created**, identified by the
-case's resolved VM name (unless overridden in the step, knife names them after it):
-- VM `<vm>` (if still present), NIC `<vm>`, public IP `<vm>`, NSG `<vm>_sec_grp_*`,
-  vnet `<vm>`, OS disk `<vm with - and _ removed>`.
-- List candidates first (`az resource list -g <rg> --query "[?starts_with(name,
-  '<vm>') || name=='<disk>']"`), then delete in dependency order: VM, NIC, public IP,
-  NSG, vnet, disk (`az resource delete --ids ...`). Never delete a resource group, or
-  any resource not matching these names (e.g. a vnet/NSG given explicitly in the step
-  or config is shared: leave it).
-- Record cleanup per case (deleted / left behind + error) in the log, QMetry case
+ran a `server create` (even if it failed, was an expected failure, or never reached
+delete), clean up in that case's resource group **only the resources this run
+created**. Unless overridden in the step, knife names them after the case's VM:
+VM `<vm>`, NIC `<vm>`, public IP `<vm>`, NSG `<vm>_sec_grp_*`, vnet `<vm>`, OS disk
+`<vm with - and _ removed>`. The ARM template creates the public IP, vnet and NIC
+before the VM, so a failed create can leave them even when no VM exists.
+
+- **Ownership snapshot (before the real run, for every case):** list the resources
+  in its resource group matching those names (`az resource list -g <rg> --query
+  "[?starts_with(name, '<vm>') || name=='<disk>'].id"`). If **any** exists, the name
+  collides: do not run that case; pick a fresh name (new `{{current-timestamp}}`)
+  and re-check, or ask the user. Record the (empty) snapshot per case. This also
+  guarantees the case's `server delete` steps only target a VM this run created.
+- **Reconcile (after the case):** list the same names again; the run-owned set is
+  the current IDs **minus the snapshot**. Delete only those exact IDs, in dependency
+  order: VM, NIC, public IP, NSG, vnet, disk (`az resource delete --ids ...`). Never
+  delete a resource group, any ID from the snapshot, or a vnet/NSG/disk given
+  explicitly in the step or config (shared: leave it).
+- Record cleanup per case (deleted IDs / left behind + error) in the log, QMetry case
   comment and final summary. A cleanup failure does not change the step results.
-Skip cleanup for expected-failure cases that never created a VM.
+Skip cleanup only for cases that ran no `server create` command.
 
 If interrupted, tell the user which resource group and VM names may still hold
 resources.
