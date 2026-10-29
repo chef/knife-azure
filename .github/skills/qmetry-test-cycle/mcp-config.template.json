@@ -1,0 +1,18 @@
+{
+  "mcpServers": {
+    "qtm4j": {
+      "type": "local",
+      "command": "node",
+      "args": [
+        "<HOME>/.copilot/mcp-servers/smartbear-mcp/node_modules/@smartbear/mcp/dist/index.js"
+      ],
+      "env": {
+        "QTM4J_API_KEY": "<your QTM4J API key>",
+        "QTM4J_BASE_URL": "https://qtmcloud.qmetry.com"
+      },
+      "tools": [
+        "*"
+      ]
+    }
+  }
+}

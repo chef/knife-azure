@@ -1,0 +1,47 @@
+# knife-azure e2e config template.
+#
+# Copy to test/e2e/config.yml (git-ignored; never commit it) and replace every <fill-me> value.
+# QMetry step commands contain {{placeholders}}; they are resolved from the
+# section matching the VM OS (linux: / windows:).
+#
+# Placeholder -> config key:
+#   {{vm-name}}, {{vm-name-timestamp}}, {{vm-name-linux}}, {{vm-name-window}}
+#                          -> vm-name-linux / vm-name-window with {{case-seq}} and
+#                             {{current-timestamp}} resolved (one unique VM per test
+#                             case, shared by its steps)
+#   {{<any other key>}}    -> same key in the section (e.g. {{vm-size}})
+# Keys with an empty value are dropped from the command (with their flag).
+# {{current-timestamp}} = MMddHHmmss, resolved when the run starts.
+# {{case-seq}} = 2-digit position of the case in this run (01, 02, ...), so cases
+#                of the same OS never share a VM name.
+# Passwords must be your own strong values: <fill-me> is rejected and asked for.
+
+linux:
+  resource-group-name: "resource-group-name"
+  vm-name-linux: "knife-azure-test-vm{{case-seq}}-{{current-timestamp}}"
+  service-location: "eastus"
+  image-reference-publisher: "Canonical"
+  image-reference-offer: "0001-com-ubuntu-server-jammy"
+  image-reference-sku: "22_04-lts"
+  image-reference-version: "latest"
+  vm-size: "Standard_B1s"
+  connection-user: "azureuser"
+  connection-password: "<fill-me>"
+  node-ssl-verify-mode: "none"
+  node-verify-api-cert: false
+  confirm: true
+
+windows:
+  resource-group-name: "resource-group-name"
+  vm-name-window: "kaw{{case-seq}}{{current-timestamp}}"   # resolves to 15 chars (Windows max)
+  service-location: "eastus"
+  image-reference-publisher: "MicrosoftWindowsServer"
+  image-reference-offer: "WindowsServer"
+  image-reference-sku: "2022-datacenter-azure-edition"
+  image-reference-version: "latest"
+  vm-size: "Standard_D4s_v6"
+  connection-user: "azureuser"
+  connection-password: "<fill-me>"
+  node-ssl-verify-mode: "none"
+  node-verify-api-cert: false
+  confirm: true
