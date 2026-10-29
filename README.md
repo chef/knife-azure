@@ -37,6 +37,11 @@ We have added a utility to bootstrap existing VM. This will install the Chef Inf
 
 1. [Bootstrap Doc for ARM Mode](docs/bootstrap.md#arm-mode)
 
+## End-to-end tests
+
+E2E tests run QMetry test cycles against real Azure VMs through a Copilot CLI skill.
+See [.github/skills/qmetry-test-cycle/README.md](.github/skills/qmetry-test-cycle/README.md) for Azure and QMetry setup, configuration and how to run it.
+
 ## Contributing
 
 For information on contributing to this project see <https://github.com/chef/chef/blob/master/CONTRIBUTING.md>

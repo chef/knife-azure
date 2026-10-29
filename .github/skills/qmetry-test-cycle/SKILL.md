@@ -8,8 +8,10 @@ user-invocable: true
 # knife-azure QMetry Test Cycle Runner
 
 Flow: **cycle -> cases -> read steps (ask doubts) -> dry run -> approve -> real run -> report to QMetry.**
+Setup guide for users (Azure auth, QMetry MCP, config.yml, how to run):
+[`README.md`](README.md).
 No runner script: you (the agent) run each step's knife command yourself with the
-installed `knife` (the released knife-azure gem). No Ruby/bundler setup is needed
+installed `knife` (the `chef/knife` Habitat package, which bundles knife-azure). No Ruby/bundler setup is needed
 beyond what `knife` itself needs.
 
 The real run creates **real, billable Azure VMs**. The only questions are: which
@@ -37,7 +39,7 @@ real-run approval described above.
 
 ## Prerequisites (check ALL first; if any is missing, stop and tell the user. Do not touch QMetry)
 
-1. `knife azurerm server create --help` works (knife-azure gem installed). Missing
+1. `knife azurerm server create --help` works (`chef/knife` hab package installed). Missing
    `knife`, license, Azure token or MCP server are stop-and-tell items (not asked
    as values); missing config values are asked, see item 3.
 2. Chef license: `CHEF_LICENSE_KEY` is set in the environment (or knife is already
